@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -263,6 +263,8 @@ OSCL_EXPORT_REF Int PVMP4AudioDecoderInitLibrary(
     pExt->aacPlusUpsamplingFactor = 1;  /*  Default for regular AAC */
     pVars->aacPlusEnabled = pExt->aacPlusEnabled;
 
+
+    pVars->multichannel_detected = false;
 
 #if defined(AAC_PLUS)
     pVars->sbrDecoderData.setStreamType = 1;        /* Enable Lock for AAC stream type setting  */

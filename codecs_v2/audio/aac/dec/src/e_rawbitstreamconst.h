@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,6 +96,7 @@ typedef enum
     LEN_CC_SGN      = 1,
     LEN_CCH_GES     = 2,
     LEN_CCH_CGP     = 1,
+    LEN_IND_SW_CCE  = 1,
 
     LEN_D_ALIGN     = 1,
     LEN_D_CNT       = 8,

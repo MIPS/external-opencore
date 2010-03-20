@@ -120,6 +120,7 @@
 #include    "e_huffmanconst.h"
 #include    "sfb.h"
 #include    "huffman.h"
+#include    "aac_mem_funcs.h"
 
 /*----------------------------------------------------------------------------
 ; MACROS
@@ -306,3 +307,6 @@ Int infoinit(
     return SUCCESS;
 
 } /* infoinit */
+
+
+

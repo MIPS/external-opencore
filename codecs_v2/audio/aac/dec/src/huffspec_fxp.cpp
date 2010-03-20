@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -497,14 +497,14 @@ Int huffspec_fxp(
     though each one of them for re-quant and scaling, and pick the right qFormat to apply to
     all spectral coeffs.*/
 
-    if ((max < 0) || (max > 8192))    /* (8192>>ORDER) == 1024 is the inverseQuantTable size */
-    {
-        return (-1);   /*  error condition */
-    }
-    else
+    if ((max >= 0) && (max <= 8192))    /* (8192>>ORDER) == 1024 is the inverseQuantTable size */
     {
         /* Get  (max/SPACING) ^ (1/3), in Q Format  */
         temp = inverseQuantTable[(max >> ORDER) + 1];
+    }
+    else
+    {
+        return (-1);   /*  error condition */
     }
 
 
@@ -566,10 +566,10 @@ Int huffspec_fxp(
                                max);
 
             pQuantSpec += sfbWidth;
-            qFormat[tot_sfb] -= power_scale_div_4;
             pCoef += sfbWidth;
 
-            tot_sfb++;
+            qFormat[tot_sfb++] -= power_scale_div_4;
+
 
         } /* for (sfb) */
     } /* for (i) */
@@ -581,3 +581,6 @@ Int huffspec_fxp(
     return SUCCESS;
 
 } /* huffspec_fxp */
+
+
+

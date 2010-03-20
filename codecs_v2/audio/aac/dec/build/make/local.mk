@@ -47,6 +47,7 @@ SRCS := analysis_sub_band.cpp \
 	get_adif_header.cpp \
 	get_adts_header.cpp \
 	get_audio_specific_config.cpp \
+	get_cce.cpp \
 	get_dse.cpp \
 	get_ele_list.cpp \
 	get_ga_specific_config.cpp \

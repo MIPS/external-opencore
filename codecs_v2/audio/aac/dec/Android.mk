@@ -35,6 +35,7 @@ LOCAL_SRC_FILES := \
  	src/get_adif_header.cpp \
  	src/get_adts_header.cpp \
  	src/get_audio_specific_config.cpp \
+ 	src/get_cce.cpp \
  	src/get_dse.cpp \
  	src/get_ele_list.cpp \
  	src/get_ga_specific_config.cpp \

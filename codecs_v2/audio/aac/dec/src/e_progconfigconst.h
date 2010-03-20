@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,6 @@ typedef enum
     LEN_MMIX_IDX    = 2,
     LEN_PSUR_ENAB   = 1,
     LEN_ELE_IS_CPE  = 1,
-    LEN_IND_SW_CCE  = 1,
     LEN_COMMENT_BYTES   = 8
 
 } eProgConfigConst;

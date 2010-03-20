@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,6 +129,12 @@ extern "C"
         FrameInfo   **ppWin_seq_info,
         Int    *pSfbwidth128);
 
+    void initScratchChannel(
+        tDec_Int_File *pt_Scratch,
+        tDec_Int_File *pVars,
+        tDec_Int_Chan *pt_ChScratch[]);
+
+
     Int huffcb(
         SectInfo *pSect,
         BITS     *pInputStream,
@@ -160,11 +166,20 @@ extern "C"
         PulseInfo  *pPulseInfo,
         Int         qFormat[]);
 
+
+    Int huffspec_fxp_parse_bits(
+        FrameInfo *pFrameInfo,
+        BITS      *pInputStream,
+        Int       nsect,
+        SectInfo  *pSectInfo);
+
     Int huffdecode(
         Int           id_syn_ele,
         BITS          *pInputStream,
-        tDec_Int_File *pVars,
-        tDec_Int_Chan *pChVars[]);
+        tDec_Int_File *pVars_0,
+        tDec_Int_Chan *pChVars_0[]
+    );
+
 
     void deinterleave(
         Int16          interleaved[],
@@ -172,7 +187,7 @@ extern "C"
         FrameInfo   *pFrameInfo);
 
     Int getics(
-
+        Int             id_syn_ele,
         BITS            *pInputStream,
         Int             common_window,
         tDec_Int_File   *pVars,
@@ -184,6 +199,7 @@ extern "C"
         FrameInfo       **pWinMap,
         PulseInfo       *pPulseInfo,
         SectInfo        sect[]);
+
 
     void  calc_gsfb_table(
         FrameInfo   *pFrameInfo,

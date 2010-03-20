@@ -257,8 +257,7 @@
 ; Include all pre-processor statements here. Include conditional
 ; compile variables also.
 ----------------------------------------------------------------------------*/
-#define LEFT  (0)
-#define RIGHT (1)
+
 /*----------------------------------------------------------------------------
 ; LOCAL FUNCTION DEFINITIONS
 ; Function Prototype declaration
@@ -286,8 +285,9 @@
 Int huffdecode(
     Int           id_syn_ele,
     BITS          *pInputStream,
-    tDec_Int_File *pVars,
-    tDec_Int_Chan *pChVars[])
+    tDec_Int_File *pVars_0,
+    tDec_Int_Chan *pChVars_0[]
+)
 
 {
     /*----------------------------------------------------------------------------
@@ -298,18 +298,23 @@ Int huffdecode(
     Int      hasmask;
     Int      status   = SUCCESS;
     Int      num_channels = 0;
-    Int      tag;
+    Int      tag = 0;
     MC_Info  *pMcInfo;
 
+    tDec_Int_File *pVars   = (tDec_Int_File *)pVars_0;
+    tDec_Int_Chan *pChVars[2];
+
+    pChVars[0] = pChVars_0[0];
+    pChVars[1] = pChVars_0[1];
     per_chan_share_w_fxpCoef *pChLeftShare;  /* Helper pointer */
     per_chan_share_w_fxpCoef *pChRightShare; /* Helper pointer */
     /*----------------------------------------------------------------------------
     ; Function body here
     ----------------------------------------------------------------------------*/
 
-    tag = get9_n_lessbits(LEN_TAG, pInputStream);
-
-    /* suppose an un-supported id_syn_ele will never be passed */
+    {
+        tag = get9_n_lessbits(LEN_TAG, pInputStream);
+    }
 
 
     if (id_syn_ele == ID_CPE)
@@ -319,6 +324,7 @@ Int huffdecode(
     }
 
     pMcInfo = &pVars->mc_info;
+
 
     /*
      *  check if provided info (num of channels) on audio config,
@@ -343,6 +349,9 @@ Int huffdecode(
             status = 1; /* ERROR break if syntax error persist  */
         }
     }
+
+
+
 
     if (status == SUCCESS)
     {
@@ -383,12 +392,14 @@ Int huffdecode(
                 else
                 {
 
-
                     status = 1; /* ERROR == incorrect tag identifying dual-mono channel  */
+
 
                 }
 
-                pMcInfo->nch = pVars->prog_config.front.num_ele;
+                {
+                    pMcInfo->nch = pVars->prog_config.front.num_ele;  // dual mono
+                }
             }
 
             if ((pMcInfo->nch > 1) && (pMcInfo->psPresentFlag))
@@ -426,17 +437,16 @@ Int huffdecode(
                     pChVars[RIGHT]->wnd_shape_this_bk =
                         pChVars[LEFT]->wnd_shape_this_bk;
                     pChRightShare->max_sfb = pChLeftShare->max_sfb;
-                    pv_memcpy(
-                        pChRightShare->group,
-                        pChLeftShare->group,
-                        NSHORT*sizeof(pChLeftShare->group[0]));
 
-                    hasmask = getmask(
-                                  pVars->winmap[pChVars[LEFT]->wnd],
-                                  pInputStream,
-                                  pChLeftShare->group,
-                                  pChLeftShare->max_sfb,
-                                  pVars->mask);
+                    pv_memcpy(pChRightShare->group,
+                              pChLeftShare->group,
+                              NSHORT*sizeof(pChLeftShare->group[0]));
+
+                    hasmask = getmask(pVars->winmap[pChVars[LEFT]->wnd],
+                                      pInputStream,
+                                      pChLeftShare->group,
+                                      pChLeftShare->max_sfb,
+                                      pVars->mask);
 
                     if (hasmask == MASK_ERROR)
                     {
@@ -460,18 +470,18 @@ Int huffdecode(
     {
         pChLeftShare = pChVars[ch]->pShareWfxpCoef;
 
-        status = getics(
-                     pInputStream,
-                     common_window,
-                     pVars,
-                     pChVars[ch],
-                     pChLeftShare->group,
-                     &pChLeftShare->max_sfb,
-                     pChLeftShare->cb_map,
-                     &pChLeftShare->tns,
-                     pVars->winmap,
-                     &pVars->share.a.pulseInfo,
-                     pVars->share.a.sect);
+        status = getics(id_syn_ele,
+                        pInputStream,
+                        common_window,
+                        pVars,
+                        pChVars[ch],
+                        pChLeftShare->group,
+                        &pChLeftShare->max_sfb,
+                        pChLeftShare->cb_map,
+                        &pChLeftShare->tns,
+                        pVars->winmap,
+                        &pVars->share.a.pulseInfo,
+                        pVars->share.a.sect);
 
         ch++;
 

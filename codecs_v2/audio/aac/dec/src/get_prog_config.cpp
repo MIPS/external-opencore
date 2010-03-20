@@ -404,12 +404,12 @@ Int get_prog_config(
     ProgConfig    *pScratchPCE)
 {
     Int    i;
-    UInt    tag;
+    UInt   tag;
     Int    numChars;
-    UInt    temp;
+    UInt   temp;
     Bool   flag;
     Int    status          = SUCCESS;
-    BITS  *pInputStream   = &(pVars->inputStream);
+    BITS   *pInputStream   = &(pVars->inputStream);
 
 
     /*
@@ -428,20 +428,11 @@ Int get_prog_config(
      * getbits is saved into a temporary variable, then transfered to
      * the structure item.
      */
-    tag =
-        get9_n_lessbits(
-            LEN_TAG,
-            pInputStream);
+    tag = get9_n_lessbits(LEN_TAG, pInputStream);
 
-    pScratchPCE->profile =
-        get9_n_lessbits(
-            LEN_PROFILE,
-            pInputStream);
+    pScratchPCE->profile = get9_n_lessbits(LEN_PROFILE, pInputStream);
 
-    pScratchPCE->sampling_rate_idx =
-        get9_n_lessbits(
-            LEN_SAMP_IDX,
-            pInputStream);
+    pScratchPCE->sampling_rate_idx = get9_n_lessbits(LEN_SAMP_IDX, pInputStream);
 
     if (!pVars->adif_test && (pScratchPCE->sampling_rate_idx != pVars->prog_config.sampling_rate_idx))
     {
@@ -478,49 +469,31 @@ Int get_prog_config(
      * The next six function calls could be combined into one, then use
      * shifts and masks to retrieve the individual fields.
      */
-    temp =
-        get9_n_lessbits(
-            LEN_NUM_ELE,
-            pInputStream);
+    temp = get9_n_lessbits(LEN_NUM_ELE, pInputStream);
 
     pScratchPCE->front.num_ele = temp;
 
     /* Needed only to read in the element list. */
-    temp =
-        get9_n_lessbits(
-            LEN_NUM_ELE,
-            pInputStream);
+    temp = get9_n_lessbits(LEN_NUM_ELE, pInputStream);
 
     pScratchPCE->side.num_ele = temp;
 
     /* Needed only to read in the element list. */
-    temp =
-        get9_n_lessbits(
-            LEN_NUM_ELE,
-            pInputStream);
+    temp = get9_n_lessbits(LEN_NUM_ELE, pInputStream);
 
     pScratchPCE->back.num_ele = temp;
 
     /* Needed only to read in the element list. */
-    temp =
-        get9_n_lessbits(
-            LEN_NUM_LFE,
-            pInputStream);
+    temp = get9_n_lessbits(LEN_NUM_LFE, pInputStream);
 
     pScratchPCE->lfe.num_ele = temp;
 
     /* Needed only to read in the element list. */
-    temp =
-        get9_n_lessbits(
-            LEN_NUM_DAT,
-            pInputStream);
+    temp = get9_n_lessbits(LEN_NUM_DAT, pInputStream);
     pScratchPCE->data.num_ele = temp;
 
     /* Needed only to read in the element list. */
-    temp =
-        get9_n_lessbits(
-            LEN_NUM_CCE,
-            pInputStream);
+    temp = get9_n_lessbits(LEN_NUM_CCE, pInputStream);
 
     pScratchPCE->coupling.num_ele = temp;
 
@@ -532,9 +505,7 @@ Int get_prog_config(
      */
 
     /* Read presence of mono_mix */
-    flag =
-        get1bits(/*            LEN_MIX_PRES,*/
-            pInputStream);
+    flag = get1bits(pInputStream);/* LEN_MIX_PRES,*/
 
     pScratchPCE->mono_mix.present = flag;
 
@@ -547,42 +518,30 @@ Int get_prog_config(
     } /* end if (flag != FALSE) */
 
     /* Read presence of stereo mix */
-    flag =
-        get1bits(/*            LEN_MIX_PRES,*/
-            pInputStream);
+    flag = get1bits(pInputStream);   /* LEN_MIX_PRES,*/
 
     pScratchPCE->stereo_mix.present = flag;
 
     if (flag != FALSE)
     {
-        temp =
-            get9_n_lessbits(
-                LEN_TAG,
-                pInputStream);
+        temp = get9_n_lessbits(LEN_TAG, pInputStream);
 
         pScratchPCE->stereo_mix.ele_tag = temp;
 
     } /* end if (flag != FALSE) */
 
     /* Read presence of matrix mix */
-    flag =
-        get1bits(/*            LEN_MIX_PRES,*/
-            pInputStream);
+    flag = get1bits(pInputStream);  /* LEN_MIX_PRES,*/
 
     pScratchPCE->matrix_mix.present = flag;
 
     if (flag != FALSE)
     {
-        temp =
-            get9_n_lessbits(
-                LEN_MMIX_IDX,
-                pInputStream);
+        temp = get9_n_lessbits(LEN_MMIX_IDX, pInputStream);
 
         pScratchPCE->matrix_mix.ele_tag = temp;
 
-        temp =
-            get1bits(/*                LEN_PSUR_ENAB,*/
-                pInputStream);
+        temp = get1bits(pInputStream);  /* LEN_PSUR_ENAB,*/
 
         pScratchPCE->matrix_mix.pseudo_enab = temp;
 
@@ -596,35 +555,29 @@ Int get_prog_config(
      * This could be optimized by advancing the bit stream for the
      * elements that do not need to be read.
      */
-    get_ele_list(
-        &pScratchPCE->front,
-        pInputStream,
-        TRUE);
+    get_ele_list(&pScratchPCE->front,
+                 pInputStream,
+                 TRUE);
 
-    get_ele_list(
-        &pScratchPCE->side,
-        pInputStream,
-        TRUE);
+    get_ele_list(&pScratchPCE->side,
+                 pInputStream,
+                 TRUE);
 
-    get_ele_list(
-        &pScratchPCE->back,
-        pInputStream,
-        TRUE);
+    get_ele_list(&pScratchPCE->back,
+                 pInputStream,
+                 TRUE);
 
-    get_ele_list(
-        &pScratchPCE->lfe,
-        pInputStream,
-        FALSE);
+    get_ele_list(&pScratchPCE->lfe,
+                 pInputStream,
+                 FALSE);
 
-    get_ele_list(
-        &pScratchPCE->data,
-        pInputStream,
-        FALSE);
+    get_ele_list(&pScratchPCE->data,
+                 pInputStream,
+                 FALSE);
 
-    get_ele_list(
-        &pScratchPCE->coupling,
-        pInputStream,
-        TRUE);
+    get_ele_list(&pScratchPCE->coupling,
+                 pInputStream,
+                 TRUE);
 
     /*
      * The standard requests a byte alignment before reading in the
@@ -632,9 +585,7 @@ Int get_prog_config(
      */
     byte_align(pInputStream);
 
-    numChars =
-        get9_n_lessbits(
-            LEN_COMMENT_BYTES, pInputStream);
+    numChars = get9_n_lessbits(LEN_COMMENT_BYTES, pInputStream);
 
     /*
      * Ignore the comment - it requires 65 bytes to store (or worse on DSP).
@@ -681,7 +632,7 @@ Int get_prog_config(
              *  Keep adts setting in case of a redundant PCE (only applicable when
              *  using aac-lib own adts parser)
              */
-            pScratchPCE->file_is_adts = pVars->prog_config.file_is_adts;
+            pScratchPCE->file_is_adts      = pVars->prog_config.file_is_adts;
             pScratchPCE->headerless_frames = pVars->prog_config.headerless_frames;
         }
 
@@ -689,21 +640,13 @@ Int get_prog_config(
                   pScratchPCE,
                   sizeof(ProgConfig));
 
-        /* enter configuration into MC_Info structure */
-        status =
-            set_mc_info(
-                &pVars->mc_info,
-                (tMP4AudioObjectType)(pVars->prog_config.profile + 1),
-                pVars->prog_config.sampling_rate_idx,
-                pVars->prog_config.front.ele_tag[0],
-                pVars->prog_config.front.ele_is_cpe[0],
-                pVars->winmap,
-                pVars->SFBWidth128);
+
+        tag = 0;
 
         /*
          *  Check that dual-mono does not carry more than 2 tracks, otherwise flag an non-supported error
          */
-        if ((pVars->prog_config.front.num_ele > 2) && !(pVars->prog_config.front.ele_is_cpe[0]))
+        if ((pVars->prog_config.front.num_ele > 2) && !(pVars->prog_config.front.ele_is_cpe[tag]))
         {
             status = 1;
         }
@@ -711,10 +654,26 @@ Int get_prog_config(
         /*
          *  Check that stereo does not carry more than 1 track, otherwise flag an non-supported error
          */
-        if ((pVars->prog_config.front.num_ele > 1) && (pVars->prog_config.front.ele_is_cpe[0]))
+        if ((pVars->prog_config.front.num_ele > 1) && (pVars->prog_config.front.ele_is_cpe[tag]))
         {
             status = 1;
         }
+
+
+
+        if (!status)
+        {
+
+            /* enter configuration into MC_Info structure */
+            status = set_mc_info(&pVars->mc_info,
+                                 (tMP4AudioObjectType)(pVars->prog_config.profile + 1),
+                                 pVars->prog_config.sampling_rate_idx,
+                                 pVars->prog_config.front.ele_tag[tag],
+                                 pVars->prog_config.front.ele_is_cpe[tag],
+                                 pVars->winmap,
+                                 pVars->SFBWidth128);
+        }
+
 
 
     } /* end if (tag == pVars->current_program) */

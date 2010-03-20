@@ -102,6 +102,9 @@ extern "C"
         bool           aacPlusEnabled;
         bool           aacConfigUtilityEnabled;
 
+        bool           multichannel_detected;
+        Int            multichannel_numChannels;
+
         Int            current_program;
         Int            frameLength;
         Int            adif_test;
@@ -131,15 +134,6 @@ extern "C"
 
         Int            ltp_buffer_state;
 
-        /*
-         *  For eaac+, a scratch matrix is created with the rigth element ( perChan[1] is not used)
-         *  and the fxpCoef matrix. These  2 matrices are [2][38][64] == 4864 Int32
-         *    2349 coming from the perChan[1] plus 4096 coming from fxpCoef
-         */
-        tDec_Int_Chan  perChan[Chans];
-
-        Int32          fxpCoef[2][LN];         /* LN  = 2048     */
-
 
 
 #ifdef AAC_PLUS
@@ -162,6 +156,17 @@ extern "C"
         Int         hasmask;
 
 
+        /*
+         *  For eaac+, a scratch matrix is created with the rigth element ( perChan[1] is not used)
+         *  and the fxpCoef matrix. These  2 matrices are [2][38][64] == 4864 Int32
+         *    2349 coming from the perChan[1] plus 4096 coming from fxpCoef
+         */
+        tDec_Int_Chan  perChan[Chans];
+
+        Int32          fxpCoef[2][LN];         /* LN  = 2048     */
+
+
+
         /*  SBR usage
          *  These two unions are used for the SBR tool and used
          *  as a single 2560 int32 continuous memory for circular
@@ -177,8 +182,11 @@ extern "C"
         {
             Int32  fft[LONG_WINDOW];    /* 1024, as needed by the FFT */
             Int32  tns_inv_filter[TNS_MAX_ORDER];
-            Int32  tns_decode_coef[2*TNS_MAX_ORDER];
-            Int    huffbook_used[248];
+            struct
+            {
+                Int32  tns_decode_coef[2*TNS_MAX_ORDER];
+                Int    huffbook_used[248];
+            } a;
             Int16  tmp_spec[LN2];  /* Used in conjunction with quant_spec */
 
             ADIF_Header    adif_header;

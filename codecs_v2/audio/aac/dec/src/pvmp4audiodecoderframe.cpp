@@ -282,6 +282,7 @@
 #include "get_sbr_bitstream.h"
 #include "e_sbr_element_id.h"
 
+#include "get_cce.h"
 
 
 /*----------------------------------------------------------------------------
@@ -294,9 +295,6 @@
 ; Include all pre-processor statements here. Include conditional
 ; compile variables also.
 ----------------------------------------------------------------------------*/
-
-#define LEFT (0)
-#define RIGHT (1)
 
 
 /*----------------------------------------------------------------------------
@@ -322,6 +320,7 @@
 ; Declare variables used in this module but defined elsewhere
 ----------------------------------------------------------------------------*/
 
+
 /*----------------------------------------------------------------------------
 ; FUNCTION CODE
 ----------------------------------------------------------------------------*/
@@ -346,6 +345,8 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
     per_chan_share_w_fxpCoef *pChLeftShare;  /* Helper pointer */
     per_chan_share_w_fxpCoef *pChRightShare; /* Helper pointer */
 
+
+
     Int            status = MP4AUDEC_SUCCESS;
 
 
@@ -362,6 +363,8 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
      * Initialize "helper" pointers to existing memory.
      */
     pVars = (tDec_Int_File *)pMem;
+
+
 
     pMC_Info = &pVars->mc_info;
 
@@ -504,6 +507,9 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
     leaveGetLoop = FALSE;
     empty_frame  = TRUE;
 
+
+
+
     while ((leaveGetLoop == FALSE) && (status == SUCCESS))
     {
         /* get audio syntactic element */
@@ -531,16 +537,16 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
                 status = huffdecode(id_syn_ele,
                                     &(pVars->inputStream),
                                     pVars,
-                                    pChVars);
+                                    pChVars
+                                   );
 
 #ifdef AAC_PLUS
                 sbrBitStream->sbrElement[sbrBitStream->NrElements].ElementID = id_syn_ele;
                 sbrBitStream->NrElementsCore++;
-
-
 #endif
-
                 break;
+
+
 
             case ID_PCE:        /* program config element */
                 /*
@@ -583,6 +589,8 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
                 get_dse(pVars->share.data_stream_bytes,
                         &pVars->inputStream);
                 break;
+
+
 
             default: /* Unsupported element, including ID_LFE */
                 status = -1;  /* ERROR CODE needs to be updated */
@@ -688,16 +696,15 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
 
         pFrameInfo = pVars->winmap[pChVars[LEFT]->wnd];
 
-        pns_left(
-            pFrameInfo,
-            pChLeftShare->group,
-            pChLeftShare->cb_map,
-            pChLeftShare->factors,
-            pChLeftShare->lt_status.sfb_prediction_used,
-            pChLeftShare->lt_status.ltp_data_present,
-            pChVars[LEFT]->fxpCoef,
-            pChLeftShare->qFormat,
-            &(pVars->pns_cur_noise_state));
+        pns_left(pFrameInfo,
+                 pChLeftShare->group,
+                 pChLeftShare->cb_map,
+                 pChLeftShare->factors,
+                 pChLeftShare->lt_status.sfb_prediction_used,
+                 pChLeftShare->lt_status.ltp_data_present,
+                 pChVars[LEFT]->fxpCoef,
+                 pChLeftShare->qFormat,
+                 &(pVars->pns_cur_noise_state));
 
         /*
          *  For dual-mono clips, process second channel as well
@@ -707,16 +714,15 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
         {
             pFrameInfo = pVars->winmap[pChVars[RIGHT]->wnd];
 
-            pns_left(
-                pFrameInfo,
-                pChRightShare->group,
-                pChRightShare->cb_map,
-                pChRightShare->factors,
-                pChRightShare->lt_status.sfb_prediction_used,
-                pChRightShare->lt_status.ltp_data_present,
-                pChVars[RIGHT]->fxpCoef,
-                pChRightShare->qFormat,
-                &(pVars->pns_cur_noise_state));
+            pns_left(pFrameInfo,
+                     pChRightShare->group,
+                     pChRightShare->cb_map,
+                     pChRightShare->factors,
+                     pChRightShare->lt_status.sfb_prediction_used,
+                     pChRightShare->lt_status.ltp_data_present,
+                     pChVars[RIGHT]->fxpCoef,
+                     pChRightShare->qFormat,
+                     &(pVars->pns_cur_noise_state));
         }
 
 
@@ -731,15 +737,14 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
 
         if (pVars->hasmask > 0)
         {
-            apply_ms_synt(
-                pFrameInfo,
-                pChLeftShare->group,
-                pVars->mask,
-                pChLeftShare->cb_map,
-                pChVars[LEFT]->fxpCoef,
-                pChVars[RIGHT]->fxpCoef,
-                pChLeftShare->qFormat,
-                pChRightShare->qFormat);
+            apply_ms_synt(pFrameInfo,
+                          pChLeftShare->group,
+                          pVars->mask,
+                          pChLeftShare->cb_map,
+                          pChVars[LEFT]->fxpCoef,
+                          pChVars[RIGHT]->fxpCoef,
+                          pChLeftShare->qFormat,
+                          pChRightShare->qFormat);
         }
 
         for (ch = 0; (ch < pMC_Info->nch); ch++)
@@ -870,24 +875,21 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
              * the forward filter, but is passed in to maintain
              * common interface for inverse and forward filter
              */
-            apply_tns(
-                pChVars[ch]->fxpCoef,
-                pChVars[ch]->pShareWfxpCoef->qFormat,
-                pFrameInfo,
-                &(pChVars[ch]->pShareWfxpCoef->tns),
-                FALSE,                   /* FALSE is IIR */
-                pVars->scratch.tns_inv_filter);
+            apply_tns(pChVars[ch]->fxpCoef,
+                      pChVars[ch]->pShareWfxpCoef->qFormat,
+                      pFrameInfo,
+                      &(pChVars[ch]->pShareWfxpCoef->tns),
+                      FALSE,                   /* FALSE is IIR */
+                      pVars->scratch.tns_inv_filter);
 
             /*
              * Normalize the q format across all scale factor bands
              * to one value.
              */
-            qFormatNorm =
-                q_normalize(
-                    pChVars[ch]->pShareWfxpCoef->qFormat,
-                    pFrameInfo,
-                    pChVars[ch]->abs_max_per_window,
-                    pChVars[ch]->fxpCoef);
+            qFormatNorm = q_normalize(pChVars[ch]->pShareWfxpCoef->qFormat,
+                                      pFrameInfo,
+                                      pChVars[ch]->abs_max_per_window,
+                                      pChVars[ch]->fxpCoef);
 
             /*
              *  filterbank - converts frequency coeficients to time domain.
@@ -973,15 +975,11 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
 
             }
 
-
 #endif
-
-
             /* Update the window shape */
             pChVars[ch]->wnd_shape_prev_bk = pChVars[ch]->wnd_shape_this_bk;
 
         } /* end for() */
-
 
         /*
          * Copy to the final output buffer, taking into account the desired
@@ -1002,7 +1000,6 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
          *
          */
 
-
 #ifdef AAC_PLUS
 
         if (sbrBitStream->NrElements || pMC_Info->upsamplingFactor == 2)
@@ -1017,11 +1014,9 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
                              sbrDecoderData,
                              pVars->mc_info.bDownSampledSbr);
                 }
-
             }
             pMC_Info->upsamplingFactor =
                 sbrDecoderData->SbrChannel[0].frameData.sbr_header.sampleRateMode;
-
 
             /* reuse right aac spectrum channel  */
             {
@@ -1182,9 +1177,6 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
 
         }
 
-
-
-
         /* pVars->ltp_buffer_state cycles between 0 and 1024.  The value
          * indicates the location of the data corresponding to t == -2.
          *
@@ -1207,7 +1199,6 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
         pVars->ltp_buffer_state ^= frameLength;
 #endif
 
-
         if (pVars->bno <= 1)
         {
             /*
@@ -1221,7 +1212,6 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
                                                       * only the first time
                                                       */
 
-
 #ifdef AAC_PLUS
 
             if (pMC_Info->upsamplingFactor == 2)
@@ -1229,7 +1219,6 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
                 pExt->samplingRate *= pMC_Info->upsamplingFactor;
                 pExt->aacPlusUpsamplingFactor = pMC_Info->upsamplingFactor;
             }
-
 #endif
 
             pExt->extendedAudioObjectType = pMC_Info->ExtendedAudioObjectType;
@@ -1237,6 +1226,13 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
 
             pExt->encodedChannels = pMC_Info->nch;
             pExt->frameLength = pVars->frameLength;
+
+
+            pExt->multichannel_detected = pVars->multichannel_detected;
+            if (pVars->multichannel_detected)
+            {
+                pExt->multichannel_numChannels = pVars->multichannel_numChannels ;
+            }
         }
 
         pVars->bno++;

@@ -82,8 +82,11 @@ extern "C"
      * The constant value is 6144 * 2 channels / 8 bits per byte
      */
 
+#define  PV_MAX_AAC_FRAME_SIZE_2_CH  1536
 
-#define PVMP4AUDIODECODER_INBUFSIZE  1536
+
+#define PVMP4AUDIODECODER_INBUFSIZE  PV_MAX_AAC_FRAME_SIZE_2_CH
+
 
     /*----------------------------------------------------------------------------
     ; EXTERNAL VARIABLES REFERENCES
@@ -309,6 +312,19 @@ extern "C"
         * in file e_tMP4AudioObjectType.h. It carries the output Audio Object Type
         */
         Int     extendedAudioObjectType;
+
+        /*
+        * This value indicates if the clip is multichannel, if true, it will only decode the
+        * front channel stereo or mono(if stereo not available)
+        */
+        bool     multichannel_detected;
+
+        /*
+        * This value indicates the total number of channels detected in a multichannel clip
+        * format (number of channel)<<1 + lfe
+        *  i.e.   5.1  ===  11  <>  (5 channels)<<1 + 1 lfe
+        */
+        Int     multichannel_numChannels;
 
 
     } tPVMP4AudioDecoderExternal;

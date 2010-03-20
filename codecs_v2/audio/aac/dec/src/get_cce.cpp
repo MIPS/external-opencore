@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,49 +16,92 @@
  * -------------------------------------------------------------------
  */
 /*
-
- Filename: pvmp4audiodecodergetmemrequirements.cpp
-
 ------------------------------------------------------------------------------
  INPUT AND OUTPUT DEFINITIONS
 
- Inputs: None
+ Inputs:
+    pInputStream = pointer to a BITS structure that holds information
+                   regarding the input stream.
 
- Local Stores/Buffers/Pointers Needed: None
+    pVars       = pointer to structure that holds information for decoding,
+                  tDec_Int_File
 
- Global Stores/Buffers/Pointers Needed: None
+    pChVars[]   = pointer to structure that holds channel information,
+                  tDec_Int_Chan
+
+
+ Local Stores/Buffers/Pointers Needed:
+    None
+
+ Global Stores/Buffers/Pointers Needed:
+    None
 
  Outputs:
-    size = amount of memory needed to be allocated by the calling
-        environment.
+    None
 
- Pointers and Buffers Modified: None
+ Pointers and Buffers Modified:
+    pInputStream->usedBits is rounded up to a number that represents the next
+    byte boundary.
 
- Local Stores Modified: None
+ Local Stores Modified:
+    None
 
- Global Stores Modified: None
+ Global Stores Modified:
+    None
 
 ------------------------------------------------------------------------------
  FUNCTION DESCRIPTION
 
- This function returns the amount of internal memory needed by the library.
- Presently this is a constant value, but could later be more sophisticated
- by taking into account mono or stereo, and whether LTP is to be used.
+    Adquire Coupling Channel Element (CCE) from raw bitstream
+    At this time this function just drops the information.
 
 ------------------------------------------------------------------------------
  REQUIREMENTS
 
+  This function shall not use global or static variables.
 
 ------------------------------------------------------------------------------
  REFERENCES
 
+ (1) MPEG-2 NBC Audio Decoder
+   "This software module was originally developed by AT&T, Dolby
+   Laboratories, Fraunhofer Gesellschaft IIS in the course of development
+   of the MPEG-2 NBC/MPEG-4 Audio standard ISO/IEC 13818-7, 14496-1,2 and
+   3. This software module is an implementation of a part of one or more
+   MPEG-2 NBC/MPEG-4 Audio tools as specified by the MPEG-2 NBC/MPEG-4
+   Audio standard. ISO/IEC gives users of the MPEG-2 NBC/MPEG-4 Audio
+   standards free license to this software module or modifications thereof
+   for use in hardware or software products claiming conformance to the
+   MPEG-2 NBC/MPEG-4 Audio  standards. Those intending to use this software
+   module in hardware or software products are advised that this use may
+   infringe existing patents. The original developer of this software
+   module and his/her company, the subsequent editors and their companies,
+   and ISO/IEC have no liability for use of this software module or
+   modifications thereof in an implementation. Copyright is not released
+   for non MPEG-2 NBC/MPEG-4 Audio conforming products.The original
+   developer retains full right to use the code for his/her own purpose,
+   assign or donate the code to a third party and to inhibit third party
+   from using the code for non MPEG-2 NBC/MPEG-4 Audio conforming products.
+   This copyright notice must be included in all copies or derivative
+   works."
+   Copyright(c)1996.
 
 ------------------------------------------------------------------------------
  PSEUDO-CODE
 
-    size = sizeof(tDec_Int_File);
 
- RETURN (size)
+------------------------------------------------------------------------------
+ RESOURCES USED
+
+ STACK USAGE:
+
+     where:
+
+ DATA MEMORY USED: x words
+
+ PROGRAM MEMORY USED: x words
+
+ CLOCK CYCLES:
 
 ------------------------------------------------------------------------------
 */
@@ -69,8 +112,14 @@
 ----------------------------------------------------------------------------*/
 
 #include "pv_audio_type_defs.h"
-#include "s_tdec_int_file.h"
-#include "pvmp4audiodecoder_api.h" /* Where this function is declared */
+#include "get_cce.h"
+#include "ibstream.h"
+#include "getbits.h"
+#include "s_bits.h"
+#include "e_elementid.h"
+#include "huffman.h"
+#include "e_huffmanconst.h"
+
 
 /*----------------------------------------------------------------------------
 ; MACROS
@@ -82,6 +131,7 @@
 ; Include all pre-processor statements here. Include conditional
 ; compile variables also.
 ----------------------------------------------------------------------------*/
+
 
 /*----------------------------------------------------------------------------
 ; LOCAL FUNCTION DEFINITIONS
@@ -106,14 +156,5 @@
 /*----------------------------------------------------------------------------
 ; FUNCTION CODE
 ----------------------------------------------------------------------------*/
-OSCL_EXPORT_REF UInt32 PVMP4AudioDecoderGetMemRequirements(void)
-{
-    UInt32 size;
 
-    size = (UInt32) sizeof(tDec_Int_File);
-
-
-    return (size);
-
-} /* PVMP4AudioDecoderGetMemRequirements() */
 

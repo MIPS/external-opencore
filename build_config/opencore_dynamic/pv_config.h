@@ -147,6 +147,7 @@
 #define wmadecoder_lib 0
 #define useoldwmadecoder 0
 #define usepv_one_segment_broadcast 0
+#define usemultichannlefriendly 0
 #define wma_audio_support m
 
 //
@@ -567,7 +568,6 @@
 #define pvmp4ff_y_lib ""
 #define pvamrffparsernode_y_mk ""
 #define pvmshttpfsp_y_mk ""
-#define USE_OLD_WMA_DECODER 0
 #define LIBS_omxenc_static "   "
 #define pvstreamingmanagernode_y_mk ""
 #define smmshttpplugininterface_m_lib ""
@@ -984,6 +984,7 @@
 #define rtspbasedpluginselected 1
 #define pvwavffrecognizer_y_lib ""
 #define MODS_pvdb_recovery_utility "-lopencore_common -lpvdb"
+#define USE_OLD_WMA_DECODER 0
 #define pvomx_proxy_m_mk "/codecs_v2/omx/omx_proxy/build/make"
 #define pvra8decoder_imp_m_mk ""
 #define pvrtsptunicastfsp_y_mk ""
@@ -1562,6 +1563,7 @@
 #define LIBDIR_nodes_static "                                               "
 #define smrtspunicastplugininterface_m_mk "/modules/linux_rtsp/smplugins/unicast/core/build/make"
 #define pvmshttp_streaming_aggregate_libtype "static"
+#define PV_MULTICHANNEL_FRIENDLY 0
 #define asfrecognizer_utility_m_mk ""
 #define pvrmffparsernode_m_mk ""
 #define realaudio_deinterleaver_m_mk ""

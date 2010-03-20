@@ -17,28 +17,36 @@
  */
 /*
 
- Filename: unpack_idx.h
+ Pathname: get_dse.h
+ Funtions:
+    get_dse
+
 
 ------------------------------------------------------------------------------
- INCLUDE DESCRIPTION
+ REVISION HISTORY
 
- This header file includes the function definition for unpack_idx()
 
+ Who:                                   Date: MM/DD/YYYY
+ Description:
 ------------------------------------------------------------------------------
+
 */
 
 /*----------------------------------------------------------------------------
 ; CONTINUE ONLY IF NOT ALREADY DEFINED
 ----------------------------------------------------------------------------*/
-#ifndef UNPACK_IDX_H
-#define UNPACK_IDX_H
+#ifndef GET_CCE_H
+#define GET_CCE_H
 
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/
-#include    "pv_audio_type_defs.h"
-#include    "s_hcb.h"
-#include    "s_bits.h"
+#include    "s_tdec_int_file.h"
+#include    "s_tdec_int_chan.h"
+#include "pv_audio_type_defs.h"
+#include "s_elelist.h"
+#include "s_bits.h"
+
 /*----------------------------------------------------------------------------
 ; MACROS
 ; Define module specific macros here
@@ -48,7 +56,6 @@
 ; DEFINES
 ; Include all pre-processor statements here.
 ----------------------------------------------------------------------------*/
-#define DIMENSION_4     4
 
 /*----------------------------------------------------------------------------
 ; EXTERNAL VARIABLES REFERENCES
@@ -71,48 +78,15 @@
 ; GLOBAL FUNCTION DEFINITIONS
 ; Function Prototype declaration
 ----------------------------------------------------------------------------*/
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+
+Int get_cce(BITS          *pInputStream,
+            tDec_Int_File *pVars,
+            tDec_Int_Chan *pChVars[]);
 
 
-    void unpack_idx(
-        Int16  QuantSpec[],
-        Int  codeword_indx,
-        const Hcb *pHuffCodebook,
-        BITS  *pInputStream,
-        Int *max);
-    void unpack_idx_sgn(
-        Int16  quant_spec[],
-        Int  codeword_indx,
-        const Hcb *pHuffCodebook,
-        BITS  *pInputStream,
-        Int *max);
-    void unpack_idx_esc(
-        Int16  quant_spec[],
-        Int  codeword_indx,
-        const Hcb *pHuffCodebook,
-        BITS  *pInputStream,
-        Int *max);
 
-
-    void unpack_idx_sgn_parse_bits(
-        Int  codeword_indx,
-        const Hcb *pHuffCodebook,
-        BITS  *pInputStream);
-    void unpack_idx_esc_parse_bits(
-        Int  codeword_indx,
-        const Hcb *pHuffCodebook,
-        BITS  *pInputStream);
-
-#ifdef __cplusplus
-}
-#endif
 
 /*----------------------------------------------------------------------------
 ; END
 ----------------------------------------------------------------------------*/
 #endif
-
-

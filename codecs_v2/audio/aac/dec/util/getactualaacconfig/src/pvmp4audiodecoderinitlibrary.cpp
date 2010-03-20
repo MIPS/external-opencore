@@ -264,6 +264,8 @@ OSCL_EXPORT_REF Int PVMP4AudioDecoderInitLibrary(
     pVars->aacPlusEnabled = pExt->aacPlusEnabled;
 
 
+    pVars->multichannel_detected = false;
+
 #if defined(AAC_PLUS)
     pVars->sbrDecoderData.setStreamType = 1;        /* Enable Lock for AAC stream type setting  */
 #endif
