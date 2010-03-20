@@ -18,5 +18,5 @@ opencore_common_PRELINK := true
 opencore_player_PRELINK := true
 opencore_author_PRELINK := true
 
-include $(MK)/cml2_shared.mk
+include $(MK)/cml2_parser.mk
 
