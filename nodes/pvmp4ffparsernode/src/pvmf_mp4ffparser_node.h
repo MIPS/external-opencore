@@ -163,6 +163,12 @@ typedef struct
     //This will hold the total number of ID3 specific values present in the value list
     uint32 iTotalID3MetaDataTagInValueList;
     uint32 iMetadataValueCount;
+    // for matching AAC encoding params in audio-only playlists
+    uint32 iFormatTypeInteger;
+    uint32 iAACNumChans;
+    uint8 iAACAudioObjectType;
+    uint8 iAACSampleRateIndex;
+    uint32 iAACSamplesPerFrame;
 } PVMFMp4ClipInfo;
 
 enum BaseKeys_SelectionType
@@ -485,6 +491,7 @@ class PVMFMP4FFParserNode
         int32 iNextInitializedClipIndex;
         bool iPlaylistExhausted;
         bool iUpdateExistingClip;
+        int32 iFirstValidClipIndex;
 
         Oscl_Vector<PVMFMp4ClipInfo, OsclMemAllocator> iClipInfoList;
         IMpeg4File* iPlaybackParserObj;

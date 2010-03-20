@@ -169,6 +169,11 @@ class PVMP4FFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
             iTargetNPTInMediaTimeScale = 0;
             iLogger = PVLogger::GetLoggerObject("datapath.sourcenode.mp4parsernode");
             //PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,"PVMP4FFNodeTrackPortInfo::PVMP4FFNodeTrackPortInfo"));
+
+            iAACNumChans = 0;
+            iAACAudioObjectType = 0;
+            iAACSampleRateIndex = 0;
+            iAACSamplesPerFrame = 0;
         }
 
         PVMP4FFNodeTrackPortInfo(const PVMP4FFNodeTrackPortInfo& aSrc) :
@@ -219,6 +224,11 @@ class PVMP4FFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
             iTargetNPTInMediaTimeScale = aSrc.iTargetNPTInMediaTimeScale;
 
             iLogger = aSrc.iLogger;
+
+            iAACNumChans = aSrc.iAACNumChans;
+            iAACAudioObjectType = aSrc.iAACAudioObjectType;
+            iAACSampleRateIndex = aSrc.iAACSampleRateIndex;
+            iAACSamplesPerFrame = aSrc.iAACSamplesPerFrame;
         }
 
         virtual ~PVMP4FFNodeTrackPortInfo()
@@ -337,6 +347,12 @@ class PVMP4FFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
 
         // no-render related
         uint32 iTargetNPTInMediaTimeScale;
+
+        // for matching AAC encoding params in audio-only playlists
+        uint32 iAACNumChans;
+        uint8 iAACAudioObjectType;
+        uint8 iAACSampleRateIndex;
+        uint32 iAACSamplesPerFrame;
 };
 
 class PVMP4FFNodeTrackOMA2DRMInfo

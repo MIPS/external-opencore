@@ -1098,6 +1098,7 @@ PVMFStatus PVMFMP4FFParserNode::InitMetaData(uint32 aParserIndex)
 
         parserObj->getTrackMIMEType(trackID, (OSCL_String&)trackMIMEType);
 
+        // leave the PVMFMp4ClipInfo.iFormatTypeInteger as PVMF_MP4_PARSER_NODE_FORMAT_UNKNOWN for video and text tracks
         if ((oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_M4V, oscl_strlen(PVMF_MIME_M4V)) == 0) ||
                 (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_H2632000, oscl_strlen(PVMF_MIME_H2632000)) == 0) ||
                 (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_H264_VIDEO_MP4, oscl_strlen(PVMF_MIME_H264_VIDEO_MP4)) == 0))
@@ -1113,7 +1114,33 @@ PVMFStatus PVMFMP4FFParserNode::InitMetaData(uint32 aParserIndex)
                 PushToAvailableMetadataKeysList(aParserIndex, PVMP4METADATA_TRACKINFO_VIDEO_HEIGHT_KEY, indexparam);
             }
         }
-    }
+        else if (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_AMR_IETF, oscl_strlen(PVMF_MIME_AMR_IETF)) == 0)
+        {
+            iClipInfoList[aParserIndex].iFormatTypeInteger = PVMF_MP4_PARSER_NODE_AMR_IETF;
+        }
+        else if (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_AMRWB_IETF, oscl_strlen(PVMF_MIME_AMRWB_IETF)) == 0)
+        {
+            iClipInfoList[aParserIndex].iFormatTypeInteger = PVMF_MP4_PARSER_NODE_AMRWB_IETF;
+        }
+        else if (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_MPEG4_AUDIO, oscl_strlen(PVMF_MIME_MPEG4_AUDIO)) == 0)
+        {
+            iClipInfoList[aParserIndex].iFormatTypeInteger = PVMF_MP4_PARSER_NODE_MPEG4_AUDIO;
+
+            int32 specInfoSize = (int32)(parserObj->getTrackDecoderSpecificInfoSize(trackID));
+            if (specInfoSize != 0)
+            {
+                // Retrieve the decoder specific info from file parser
+                uint8* specInfoPtr = parserObj->getTrackDecoderSpecificInfoContent(trackID);
+
+                GetActualAacConfig(specInfoPtr,
+                                   &iClipInfoList[aParserIndex].iAACAudioObjectType,
+                                   &specInfoSize,
+                                   &iClipInfoList[aParserIndex].iAACSampleRateIndex,
+                                   &iClipInfoList[aParserIndex].iAACNumChans,
+                                   &iClipInfoList[aParserIndex].iAACSamplesPerFrame);
+            }
+        }
+    } // end for
 
     if (parserObj->getMovieDuration() > (uint64)0)
     {

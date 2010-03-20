@@ -82,6 +82,7 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
     iPlaybackParserObj = NULL;
     iMetadataParserObj = NULL;
     iFirstClipNonAudioOnly = false;
+    iFirstValidClipIndex = -1;
 
     iClientPlayBackClock = NULL;
     iClockNotificationsInf = NULL;
@@ -418,6 +419,11 @@ PVMFStatus PVMFMP4FFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
     mp4clipInfo.iAvailableMetadataKeys.clear();
     mp4clipInfo.iTotalID3MetaDataTagInValueList = 0;
     mp4clipInfo.iMetadataValueCount = 0;
+    mp4clipInfo.iFormatTypeInteger = PVMF_MP4_PARSER_NODE_FORMAT_UNKNOWN;
+    mp4clipInfo.iAACNumChans = 0;
+    mp4clipInfo.iAACAudioObjectType = 0;
+    mp4clipInfo.iAACSampleRateIndex = 0;
+    mp4clipInfo.iAACSamplesPerFrame = 0;
 
     PVMFSourceClipInfo info;
     iUpdateExistingClip = false;
@@ -1622,10 +1628,19 @@ PVMFStatus PVMFMP4FFParserNode::DoRequestPort(PVMFPortInterface*& aPort)
     {
         trackportinfo.iFormatTypeInteger = PVMF_MP4_PARSER_NODE_3GPP_TIMED_TEXT;
     }
+    else if (formattype == PVMF_MIME_AMR_IETF)
+    {
+        trackportinfo.iFormatTypeInteger = PVMF_MP4_PARSER_NODE_AMR_IETF;
+    }
+    else if (formattype == PVMF_MIME_AMRWB_IETF)
+    {
+        trackportinfo.iFormatTypeInteger = PVMF_MP4_PARSER_NODE_AMRWB_IETF;
+    }
     else
     {
         trackportinfo.iFormatTypeInteger = PVMF_MP4_PARSER_NODE_FORMAT_UNKNOWN;
     }
+
     RetrieveTrackConfigInfo(trackid,
                             formattype,
                             trackportinfo.iFormatSpecificConfig);
@@ -1670,6 +1685,11 @@ PVMFStatus PVMFMP4FFParserNode::DoRequestPort(PVMFPortInterface*& aPort)
     else if (formattype == PVMF_MIME_MPEG4_AUDIO)
     {
         trackportinfo.iNumSamples = MPEG4_AUDIO_NUMSAMPLES;
+        // fill in the encoder params in the track
+        trackportinfo.iAACNumChans = iClipInfoList[iPlaybackClipIndex].iAACNumChans;
+        trackportinfo.iAACAudioObjectType = iClipInfoList[iPlaybackClipIndex].iAACAudioObjectType;
+        trackportinfo.iAACSampleRateIndex = iClipInfoList[iPlaybackClipIndex].iAACSampleRateIndex;
+        trackportinfo.iAACSamplesPerFrame = iClipInfoList[iPlaybackClipIndex].iAACSamplesPerFrame;
     }
     else if (formattype == PVMF_MIME_AMR_IETF)
     {
@@ -8755,11 +8775,17 @@ PVMFStatus PVMFMP4FFParserNode::ConstructMP4FileParser(PVMFStatus* aStatus, int3
             }
         }
 
-        if (aClipIndex == 0)
+        // check if this is the first valid clip
+        // there may be invalid clips at the start of the playlist
+        if (iFirstValidClipIndex == -1)
         {
             if ((numAudio == 0) || ((numText != 0) || (numVideo != 0)))
             {
                 iFirstClipNonAudioOnly = true;
+            }
+            else
+            {
+                iFirstClipNonAudioOnly = false;
             }
         }
         else
@@ -8768,7 +8794,7 @@ PVMFStatus PVMFMP4FFParserNode::ConstructMP4FileParser(PVMFStatus* aStatus, int3
             if (iFirstClipNonAudioOnly ||
                     ((numAudio == 0) || ((numText != 0) || (numVideo != 0))))
             {
-                PVMF_MP4FFPARSERNODE_LOGERROR((0, "PVMFMP4FFParserNode::ConstructMP4FileParser() Found non-audio-only clip in playlist"));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP4FFParserNode::ConstructMP4FileParser() Found non-audio-only clip in playlist"));
 
                 // clean up the parser object
                 IMpeg4File::DestroyMP4FileObject(mp4ParserObj);
@@ -8839,6 +8865,56 @@ PVMFStatus PVMFMP4FFParserNode::ConstructMP4FileParser(PVMFStatus* aStatus, int3
     {
         *aStatus = status;
     }
+
+    // for audio-only playlist
+    // match audio encoding params of subsequent clips with the first valid clip/track port setting
+    // until RECONFIG for decnode is figured out
+    if ((status == PVMFSuccess) && (!iFirstClipNonAudioOnly) && (iFirstValidClipIndex != -1) && (iClipInfoList.size() > 1))
+    {
+        bool matching = false;
+        // should only have a track
+        for (uint32 i = 0; i < iNodeTrackPortList.size(); i++)
+        {
+            if (iNodeTrackPortList[i].iFormatTypeInteger == iClipInfoList[aClipIndex].iFormatTypeInteger)
+            {
+                if ((iNodeTrackPortList[i].iFormatTypeInteger == PVMF_MP4_PARSER_NODE_AMR_IETF) ||
+                        (iNodeTrackPortList[i].iFormatTypeInteger == PVMF_MP4_PARSER_NODE_AMRWB_IETF))
+                {
+                    matching = true;
+                    break;
+                }
+                else if (iNodeTrackPortList[i].iFormatTypeInteger == PVMF_MP4_PARSER_NODE_MPEG4_AUDIO)
+                {
+                    if ((iNodeTrackPortList[i].iAACNumChans == iClipInfoList[aClipIndex].iAACNumChans) &&
+                            (iNodeTrackPortList[i].iAACAudioObjectType == iClipInfoList[aClipIndex].iAACAudioObjectType) &&
+                            (iNodeTrackPortList[i].iAACSampleRateIndex == iClipInfoList[aClipIndex].iAACSampleRateIndex) &&
+                            (iNodeTrackPortList[i].iAACSamplesPerFrame == iClipInfoList[aClipIndex].iAACSamplesPerFrame))
+                    {
+                        matching = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!matching)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP4FFParserNode::ConstructMP4FileParser Failed - Mismatched encoding params"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMP4FFNodeTrackPortInfo[0] iFormatTypeInteger=%d iAACNumChans=%d iAACAudioObjectType=%d iAACSampleRateIndex=%d iAACSamplesPerFrame=%d",
+                            iNodeTrackPortList[0].iFormatTypeInteger, iNodeTrackPortList[0].iAACNumChans, iNodeTrackPortList[0].iAACAudioObjectType,
+                            iNodeTrackPortList[0].iAACSampleRateIndex, iNodeTrackPortList[0].iAACSamplesPerFrame));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "iClipInfoList[%d] iFormatTypeInteger=%d iAACNumChans=%d iAACAudioObjectType=%d iAACSampleRateIndex=%d iAACSamplesPerFrame=%d",
+                            aClipIndex, iClipInfoList[aClipIndex].iFormatTypeInteger, iClipInfoList[aClipIndex].iAACNumChans, iClipInfoList[aClipIndex].iAACAudioObjectType,
+                            iClipInfoList[aClipIndex].iAACSampleRateIndex, iClipInfoList[aClipIndex].iAACSamplesPerFrame));
+
+            if (NULL != aStatus)
+            {
+                *aStatus = PVMFErrResource;
+            }
+            return PVMFFailure;
+        }
+    }
+
     // playlist is not supported for download/protected content
     // so the following needs to be done only for playback clip index 0
     // and when the node is initialized
@@ -8962,6 +9038,7 @@ PVMFStatus PVMFMP4FFParserNode::InitNextValidClipInPlaylist(PVMFStatus* aStatus,
             // set first valid clip in list
             iPlaybackClipIndex = iClipIndexForMetadata = iNextInitializedClipIndex;
             iPlaybackParserObj = iMetadataParserObj = parserObj;
+            iFirstValidClipIndex = iPlaybackClipIndex;
         }
         iClipInfoList[clipIndex].iClipInfo.iIsInitialized = true;
 
