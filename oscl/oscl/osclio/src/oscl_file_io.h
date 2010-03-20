@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -405,11 +405,9 @@ class Oscl_File : public HeapBase
 
         /**
         * The File SetSize operation
-        * If the file has been opened for writing
-        * This sets the size of the file.  The file pointer position
-        * is unchanged unless the pointers position is greated than
-        * the new filesize.
-        *
+        * If the file has been opened for writing this will set the size of the file.
+        * The file pointer position is undefined after calling SetSize.
+        * If file size is increased the contents of the new section are undefined.
         * @return returns 0 if successful, and a non-zero value otherwise
         */
         OSCL_IMPORT_REF int32 SetSize(uint32 size);

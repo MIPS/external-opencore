@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -646,7 +646,27 @@ OSCL_EXPORT_REF int32 Oscl_File::SetSize(uint32 size)
 
     if (iIsOpen)
     {
-        result = CallNativeSetSize(size);
+        if (iFileCache)
+        {
+            // do nothing. NOT SUPPORTED
+            if (iLogger)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                (0, "SetSize() not implemented with File Cache ON"));
+            }
+        }
+        else if (iAsyncFile)
+        {
+            // do nothing. NOT SUPPORTED
+            if (iLogger)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                (0, "SetSize() not implemented for AsyncFile"));
+            }
+
+        }
+        else
+            result = CallNativeSetSize(size);
     }
 
     if (iFileStats
@@ -660,6 +680,7 @@ OSCL_EXPORT_REF int32 Oscl_File::SetSize(uint32 size)
     }
     return result;
 }
+
 OSCL_EXPORT_REF int32 Oscl_File::Flush()
 {
     if (iLogger)

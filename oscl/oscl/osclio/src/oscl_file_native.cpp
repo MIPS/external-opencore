@@ -508,6 +508,7 @@ int32 OsclNativeFile::Seek(TOsclFileOffset offset, Oscl_File::seek_type origin)
 
 int32 OsclNativeFile::SetSize(uint32 size)
 {
+    // unix leaves file position unchanged
     int32 fd = fileno(iFile);
     if (-1 != fd)
     {
