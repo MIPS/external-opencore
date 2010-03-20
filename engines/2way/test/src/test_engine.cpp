@@ -31,7 +31,6 @@
 #include "basic_lipsync_test.h"
 #include "acceptable_formats_test.h"
 #include "negotiated_formats_test.h"
-#include "pvmf_fileoutput_factory.h"
 #include "oscl_string_utils.h"
 #include "oscl_mem_audit.h"
 #include "pv_2way_mio.h"

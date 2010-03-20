@@ -73,6 +73,7 @@ class test_base : public engine_test,
 
         virtual ~test_base()
         {
+            CancelTimers();
             cleanup();
             if (iSourceAndSinks)
             {

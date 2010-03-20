@@ -5,6 +5,7 @@ LOCAL_SRC_FILES := \
 	./common/src/pvt_common.cpp \
  	./common/src/lipsync_singleton_object.cpp \
  	./common/src/h324utils.cpp \
+ 	./common/src/pv_2way_h324m_types.cpp \
  	./h223/src/adaptationlayer.cpp \
  	./h223/src/cpvh223multiplex.cpp \
  	./h223/src/h223api.cpp \

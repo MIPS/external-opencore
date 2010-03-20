@@ -991,7 +991,7 @@ TPVStatusCode TSC_324m::RequestFrameUpdate(PVMFPortInterface* port)
     return EPVT_Success;
 }
 
-PVMFStatus TSC_324m::SetLogicalChannelPause(TPVChannelId aChannelId, TPVDirection aDir, bool aPause)
+OSCL_EXPORT_REF PVMFStatus TSC_324m::SetLogicalChannelPause(TPVChannelId aChannelId, TPVDirection aDir, bool aPause)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_324m::SetPause ChannelId(%d), Direction(%d), Pause(%d)", aChannelId, aDir, aPause));
@@ -2572,6 +2572,9 @@ void TSC_324m::SetTerminalStatus(uint32 aStatus)
                     break;
                 case PhaseG_Dis:
                     statusString[index] = "PhaseG_Dis";
+                    break;
+                default:
+                    statusString[index] = NULL;
                     break;
             }
         }

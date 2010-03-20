@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 #include "pv_2way_source_and_sinks_lipsync.h"
 
 
-PV2WayLipSyncSourceAndSinks::PV2WayLipSyncSourceAndSinks(PV2Way324InitInfo& aSdkInitInfo):
+OSCL_EXPORT_REF PV2WayLipSyncSourceAndSinks::PV2WayLipSyncSourceAndSinks(PV2Way324InitInfo& aSdkInitInfo):
         PV2WayDummySourceAndSinks(aSdkInitInfo)
 {
     if (iDummyMioAudioInputFactory)
@@ -44,6 +44,9 @@ PV2WayLipSyncSourceAndSinks::PV2WayLipSyncSourceAndSinks(PV2Way324InitInfo& aSdk
     iDummyMioVideoOutputFactory = OSCL_NEW(PV2WayLipSyncOutputMIONodeFactory, ());
 }
 
+OSCL_EXPORT_REF PV2WayLipSyncSourceAndSinks::~PV2WayLipSyncSourceAndSinks()
+{
 
+}
 
 

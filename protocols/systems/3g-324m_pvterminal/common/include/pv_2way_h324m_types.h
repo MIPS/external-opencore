@@ -22,6 +22,14 @@
 #include "pv_2way_basic_types.h"
 #endif
 
+#ifndef PV_UUID_H_INCLUDED
+#include "pv_uuid.h"
+#endif
+
+#ifndef PV_INTERFACE_H
+#include "pv_interface.h"
+#endif
+
 // MACROS
 /** The maximum number of supported formats for user input **/
 #define PV_2WAY_MAX_USER_INPUT_FORMATS 4
@@ -207,7 +215,7 @@ class CPVUserInput: public HeapBase, public PVInterface
          * Constructor of CPVUserInputDtmf class.
          *
          **/
-        OSCL_IMPORT_REF CPVUserInput(): iRefCounter(1) {};
+        OSCL_IMPORT_REF CPVUserInput();
 
         /**
          * Virtual destructor
@@ -266,52 +274,37 @@ class CPVUserInputDtmf : public CPVUserInput
          *          KErrNoMemory if the SDK failed to allocate memory during this operation.
          * @returns void
          **/
-        OSCL_IMPORT_REF CPVUserInputDtmf(uint8 aInput, bool aUpdate, uint16 aDuration = 0) :
-                iInput(aInput),
-                iIsUpdate(aUpdate),
-                iDuration(aDuration)
-        {};
+        OSCL_IMPORT_REF CPVUserInputDtmf(uint8 aInput, bool aUpdate, uint16 aDuration = 0);
 
         /**
          * Destructor.
          **/
-        OSCL_IMPORT_REF ~CPVUserInputDtmf() {};
+        //OSCL_IMPORT_REF ~CPVUserInputDtmf() {};
+        OSCL_IMPORT_REF ~CPVUserInputDtmf();
 
         // from CPVUserInput
-        OSCL_IMPORT_REF PV2WayUserInputType GetType()
-        {
-            return PV_DTMF;
-        }
+        OSCL_IMPORT_REF PV2WayUserInputType GetType();
 
         /**
          * Return the user input DTMF tone
          *
          * @returns Returns the input DTMF tone.
          **/
-        OSCL_IMPORT_REF uint8 GetInput()
-        {
-            return iInput;
-        }
+        OSCL_IMPORT_REF uint8 GetInput();
 
         /**
          * Return if the DTMF tone is an update
          *
          * @returns Returns if the input DTMF tone is an update.
          **/
-        OSCL_IMPORT_REF bool IsUpdate()
-        {
-            return iIsUpdate;
-        }
+        OSCL_IMPORT_REF bool IsUpdate();
 
         /**
          * Return the duration of the update.
          *
          * @returns Returns the duration of the update.
          **/
-        OSCL_IMPORT_REF uint16 GetDuration()
-        {
-            return iDuration;
-        }
+        OSCL_IMPORT_REF uint16 GetDuration();
 
     private:
         /**
@@ -347,57 +340,29 @@ class CPVUserInputAlphanumeric : public CPVUserInput
          * @leave  This method can leave with one of the following error codes
          *         OsclErrGeneral memory copy failed
          **/
-        OSCL_IMPORT_REF CPVUserInputAlphanumeric(uint8* apInput, uint16 aLen)
-        {
-            if (aLen)
-            {
-                int err;
-                ipInput = OSCL_STATIC_CAST(uint8*, OSCL_MALLOC(aLen));
-                OSCL_TRY(err, oscl_memcpy(ipInput, apInput, aLen));
-                OSCL_FIRST_CATCH_ANY(err,
-                                     OSCL_DELETE(ipInput);
-                                     OSCL_LEAVE(OsclErrGeneral);
-                                    );
-                iLength = aLen;
-            }
-        }
+        OSCL_IMPORT_REF CPVUserInputAlphanumeric(uint8* apInput, uint16 aLen);
 
         /**
          * Destructor.
          **/
-        OSCL_IMPORT_REF ~CPVUserInputAlphanumeric()
-        {
-            if (ipInput)
-            {
-                OSCL_DELETE(ipInput);
-            }
-        }
+        OSCL_IMPORT_REF ~CPVUserInputAlphanumeric();
 
         // from CPVUserInput
-        OSCL_IMPORT_REF PV2WayUserInputType GetType()
-        {
-            return PV_ALPHANUMERIC;
-        }
+        OSCL_IMPORT_REF PV2WayUserInputType GetType();
 
         /**
          * Return the user input alphanumeric user input
          *
          * @returns Returns pointer to alphanumeric user input.
          **/
-        OSCL_IMPORT_REF uint8* GetInput()
-        {
-            return ipInput;
-        }
+        OSCL_IMPORT_REF uint8* GetInput();
 
         /**
          * Return the size of alphanumeric user input
          *
          * @returns Returns size of alphanumeric user input.
          **/
-        OSCL_IMPORT_REF uint16 GetLength()
-        {
-            return iLength;
-        }
+        OSCL_IMPORT_REF uint16 GetLength();
 
     protected:
         /**

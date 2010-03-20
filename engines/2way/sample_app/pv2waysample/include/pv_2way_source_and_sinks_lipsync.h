@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,8 +47,7 @@ class PV2WayLipSyncSourceAndSinks : public PV2WayDummySourceAndSinks
 {
     public:
         OSCL_IMPORT_REF PV2WayLipSyncSourceAndSinks(PV2Way324InitInfo& aSdkInitInfo);
-        OSCL_IMPORT_REF virtual ~PV2WayLipSyncSourceAndSinks()
-        {}
+        OSCL_IMPORT_REF virtual ~PV2WayLipSyncSourceAndSinks();
 
     protected:
 

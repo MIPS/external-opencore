@@ -1098,7 +1098,7 @@ CPvtTerminalCapability* TSC_324m::GetRemoteCapability()
     return iTSCcapability.GetRemoteCapability();
 }
 
-CPvtMediaCapability* TSC_324m::GetRemoteCodecCapability(FormatCapabilityInfo aFormatCapabilityInfo)
+OSCL_EXPORT_REF CPvtMediaCapability* TSC_324m::GetRemoteCodecCapability(FormatCapabilityInfo aFormatCapabilityInfo)
 {
     CPvtMediaCapability* pMediaCapability = NULL;
     CPvtTerminalCapability* pRemoteCaps = GetRemoteCapability();

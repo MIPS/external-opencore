@@ -989,6 +989,7 @@ PVCmnAsyncErrorEvent* CPV2WayProxyAdapter::GetErrorMsgL()
 
 OSCL_EXPORT_REF void PV2WayLogger::CreateLogger()
 {
+    //output file
     OSCL_HeapString<OsclMemAllocator> logfilename(PVLOG_PREPEND_OUT_FILENAME);
     logfilename += PVLOG_OUT_FILENAME;
     PVLoggerCfgFileParser::SetupLogAppender(PVLoggerCfgFileParser::ePVLOG_APPENDER_FILE,

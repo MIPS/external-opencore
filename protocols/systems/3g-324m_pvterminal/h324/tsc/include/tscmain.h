@@ -437,7 +437,7 @@ class TSC_324m : public OsclActiveObject,
          *
          * @returns A pointer to a CPvtMediaCapability
          **/
-        CPvtMediaCapability* GetRemoteCodecCapability(FormatCapabilityInfo aFormatCapabilityInfo);
+        OSCL_IMPORT_REF CPvtMediaCapability* GetRemoteCodecCapability(FormatCapabilityInfo aFormatCapabilityInfo);
 
         OSCL_IMPORT_REF void SetClock(PVMFMediaClock* aClock);
         OSCL_IMPORT_REF void SetMioLatency(int32 aLatency, bool aAudio);
@@ -451,7 +451,7 @@ class TSC_324m : public OsclActiveObject,
          *
          * @returns TPVStatusCode Fails if channel is not found
          **/
-        TPVStatusCode SetLogicalChannelPause(TPVChannelId aChannelId, TPVDirection aDir, bool aPause);
+        OSCL_IMPORT_REF TPVStatusCode SetLogicalChannelPause(TPVChannelId aChannelId, TPVDirection aDir, bool aPause);
 
     private:
         void Cleanup();

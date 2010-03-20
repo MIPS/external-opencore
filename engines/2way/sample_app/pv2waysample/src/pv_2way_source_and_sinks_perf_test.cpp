@@ -24,7 +24,6 @@
 #include "pvmf_media_input_node_factory.h"
 
 #include "pv_2way_interface.h"
-#include "pvmf_fileoutput_factory.h"
 #include "pv_2way_media.h"
 #include "pvmf_dummy_fileinput_node_factory.h"
 #include "pvmf_dummy_fileoutput_factory.h"
