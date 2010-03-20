@@ -10343,35 +10343,36 @@ PVMFStatus PVPlayerEngine::DoCapConfigGetParametersSync(PvmiKeyType aIdentifier,
     }
     else
     {
-        PVMFStatus retval = PVMFFailure;
-
-        // Go through each datapath's cap-config IF in the datapath list and check for the string.
-        for (uint32 i = 0; i < iDatapathList.size(); i++)
+        if (iSourceNodeCapConfigIF != NULL)
         {
-            if (iDatapathList[i].iDecNodeCapConfigIF != NULL)
-            {
-                retval = iDatapathList[i].iDecNodeCapConfigIF->getParametersSync(NULL, aIdentifier, aParameters, aNumParamElements, aContext);
-                if (retval == PVMFSuccess)
-                {
-                    // Key matched break the loop.
-                    break;
-                }
-            }
-
-            if (iDatapathList[i].iSinkNodeCapConfigIF != NULL)
-            {
-                retval = iDatapathList[i].iSinkNodeCapConfigIF->getParametersSync(NULL, aIdentifier, aParameters, aNumParamElements, aContext);
-                if (retval == PVMFSuccess)
-                {
-                    // Key matched break the loop.
-                    break;
-                }
-            }
+            iSourceNodeCapConfigIF->getParametersSync(NULL, aIdentifier, aParameters, aNumParamElements, aContext);
         }
 
-        if (retval != PVMFSuccess)
+        if (aNumParamElements == 0) // Source node did not find the parameter
         {
-            return retval;
+            // Go through each datapath's cap-config IF in the datapath list and check for the string.
+            for (uint32 i = 0; i < iDatapathList.size(); i++)
+            {
+                if (iDatapathList[i].iDecNodeCapConfigIF != NULL)
+                {
+                    iDatapathList[i].iDecNodeCapConfigIF->getParametersSync(NULL, aIdentifier, aParameters, aNumParamElements, aContext);
+                    if (aNumParamElements != 0)
+                    {
+                        // Parameter matched. Break the loop.
+                        break;
+                    }
+                }
+
+                if (iDatapathList[i].iSinkNodeCapConfigIF != NULL)
+                {
+                    iDatapathList[i].iSinkNodeCapConfigIF->getParametersSync(NULL, aIdentifier, aParameters, aNumParamElements, aContext);
+                    if (aNumParamElements != 0)
+                    {
+                        // Parameter matched. Break the loop.
+                        break;
+                    }
+                }
+            }
         }
     }
 
@@ -10384,6 +10385,7 @@ PVMFStatus PVPlayerEngine::DoCapConfigGetParametersSync(PvmiKeyType aIdentifier,
     }
     else
     {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoCapConfigGetParametersSync() - key supported"));
         return PVMFSuccess;
     }
 }
@@ -10470,33 +10472,39 @@ PVMFStatus PVPlayerEngine::DoCapConfigReleaseParameters(PvmiKvp* aParameters, in
     else
     {
         PVMFStatus retval = PVMFFailure;
-
-        // Go through each datapath's cap-config IF in the datapath list and check for the string.
-        for (uint32 i = 0; i < iDatapathList.size(); i++)
+        if (iSourceNodeCapConfigIF != NULL)
         {
-            if (iDatapathList[i].iDecNodeCapConfigIF != NULL)
+            retval = iSourceNodeCapConfigIF->releaseParameters(NULL, aParameters, aNumElements);
+        }
+        if (retval != PVMFSuccess)
+        {
+            // Go through each datapath's cap-config IF in the datapath list and check for the string.
+            for (uint32 i = 0; i < iDatapathList.size(); i++)
             {
-                retval = iDatapathList[i].iDecNodeCapConfigIF->releaseParameters(NULL, aParameters, aNumElements);
-                if (retval == PVMFSuccess)
+                if (iDatapathList[i].iDecNodeCapConfigIF != NULL)
                 {
-                    // Key matched break the loop.
-                    break;
+                    retval = iDatapathList[i].iDecNodeCapConfigIF->releaseParameters(NULL, aParameters, aNumElements);
+                    if (retval == PVMFSuccess)
+                    {
+                        // Key matched break the loop.
+                        break;
+                    }
                 }
-            }
 
-            if (iDatapathList[i].iSinkNodeCapConfigIF != NULL)
-            {
-                retval = iDatapathList[i].iSinkNodeCapConfigIF->releaseParameters(NULL, aParameters, aNumElements);
-                if (retval == PVMFSuccess)
+                if (iDatapathList[i].iSinkNodeCapConfigIF != NULL)
                 {
-                    // Key matched break the loop.
-                    break;
+                    retval = iDatapathList[i].iSinkNodeCapConfigIF->releaseParameters(NULL, aParameters, aNumElements);
+                    if (retval == PVMFSuccess)
+                    {
+                        // Key matched break the loop.
+                        break;
+                    }
                 }
             }
         }
-
         if (retval != PVMFSuccess)
         {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoCapConfigReleaseParametersSync() Unsupported key"));
             return retval;
         }
     }
@@ -10688,31 +10696,36 @@ PVMFStatus PVPlayerEngine::DoCapConfigVerifyParameters(PvmiKvp* aParameters, int
         else
         {
             PVMFStatus retval = PVMFFailure;
-
-            // Go through each datapath's cap-config IF in the datapath list and check for the string.
-            for (uint32 i = 0; i < iDatapathList.size(); i++)
+            if (iSourceNodeCapConfigIF != NULL)
             {
-                if (iDatapathList[i].iDecNodeCapConfigIF != NULL)
+                retval = iSourceNodeCapConfigIF->releaseParameters(NULL, aParameters, aNumElements);
+            }
+            if (retval != PVMFSuccess)
+            {
+                // Go through each datapath's cap-config IF in the datapath list and check for the string.
+                for (uint32 i = 0; i < iDatapathList.size(); i++)
                 {
-                    retval = iDatapathList[i].iDecNodeCapConfigIF->verifyParametersSync(NULL, &aParameters[paramind], 1);
-                    if (retval == PVMFSuccess)
+                    if (iDatapathList[i].iDecNodeCapConfigIF != NULL)
                     {
-                        // Key matched break the loop.
-                        break;
+                        retval = iDatapathList[i].iDecNodeCapConfigIF->verifyParametersSync(NULL, &aParameters[paramind], 1);
+                        if (retval == PVMFSuccess)
+                        {
+                            // Key matched break the loop.
+                            break;
+                        }
                     }
-                }
 
-                if (iDatapathList[i].iSinkNodeCapConfigIF != NULL)
-                {
-                    retval = iDatapathList[i].iSinkNodeCapConfigIF->verifyParametersSync(NULL, &aParameters[paramind], 1);
-                    if (retval == PVMFSuccess)
+                    if (iDatapathList[i].iSinkNodeCapConfigIF != NULL)
                     {
-                        // Key matched break the loop.
-                        break;
+                        retval = iDatapathList[i].iSinkNodeCapConfigIF->verifyParametersSync(NULL, &aParameters[paramind], 1);
+                        if (retval == PVMFSuccess)
+                        {
+                            // Key matched break the loop.
+                            break;
+                        }
                     }
                 }
             }
-
             if (retval != PVMFSuccess)
             {
                 return retval;
