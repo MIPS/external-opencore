@@ -264,10 +264,9 @@ OSCL_EXPORT_REF OsclFileCacheBuffer* OsclFileCache::AddFixedCache(const Oscl_Fil
 void OsclFileCache::Close()
 {
     //flush any cache updates & free the buffers
-
-    _movableCache.WriteUpdatesToFile();
     if (_movableCache.pBuffer)
     {
+        _movableCache.WriteUpdatesToFile();
         OSCL_FREE(_movableCache.pBuffer);
         _movableCache.pBuffer = NULL;
         _movableCache.capacity = _movableCache.usableSize = 0;
