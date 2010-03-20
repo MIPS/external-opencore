@@ -20,6 +20,20 @@ PRINTF:=printf
 ############################################################################
 esc_dollar := \$$
 
+ifneq ($(NON_OVERLAY),)
+  # Prefix to add to library names
+  NON_OVERLAY_LIB_IDENTIFIER := 2
+  # Change PV headers path
+  PV_COPY_HEADERS_TO=lib2pv
+  # Change Config.mk guard macro name
+  EXTERNAL_OPENCORE_CONFIG_GUARD_MACRO_NAME=EXTERNAL_OPENCORE2_CONFIG_ONCE
+else
+  NON_OVERLAY_LIB_IDENTIFIER :=
+  PV_COPY_HEADERS_TO=libpv
+  EXTERNAL_OPENCORE_CONFIG_GUARD_MACRO_NAME=EXTERNAL_OPENCORE_CONFIG_ONCE
+endif
+
+
 
 ############################################################################
 # Original method using multiple echo statements separated by ';', but this 
@@ -36,11 +50,11 @@ define output_list
 endef
 
 define output_lib_list
-  $(PRINTF) "$(foreach elem,$(call truncate,$1),\\tlib$(elem) \\\\\n) \\tlib$(lastword $1)\\n" >> $2
+  $(PRINTF) "$(foreach elem,$(call truncate,$1),\\tlib$(NON_OVERLAY_LIB_IDENTIFIER)$(elem) \\\\\n) \\tlib$(NON_OVERLAY_LIB_IDENTIFIER)$(lastword $1)\\n" >> $2
 endef
 
 define format_shared_lib_names
-  $(subst -l,lib,$1)
+  $(subst -l,lib$(NON_OVERLAY_LIB_IDENTIFIER),$1)
 endef
 
 define convert_component_lib_makefile_name
@@ -59,9 +73,16 @@ define output_assembly_srcs
   $(if $(strip $1),$(PRINTF) "ifeq (\$$(TARGET_ARCH),arm)\\nLOCAL_SRC_FILES += \\\\\n$(foreach elem,$(call truncate,$1),\\t$(elem) \\\\\n)\\t$(lastword $1)\\nendif\\n\\n" >> $2,)
 endef
 
-define extra_lib_list
-  $(if $(strip $1),$(PRINTF) "\nLOCAL_WHOLE_STATIC_LIBRARIES += $1\n" >> $2,)
-endef
+ifneq ($(NON_OVERLAY),)
+  # Add library prefix via substitution
+  define extra_lib_list
+    $(if $(strip $1),$(PRINTF) "\nLOCAL_WHOLE_STATIC_LIBRARIES += $(patsubst lib%,lib$(NON_OVERLAY_LIB_IDENTIFIER)%, $1)\n" >> $2,)
+  endef
+else
+  define extra_lib_list
+    $(if $(strip $1),$(PRINTF) "\nLOCAL_WHOLE_STATIC_LIBRARIES += $1\n" >> $2,)
+  endef
+endif
 
 define extra_sharedlib_list
   $(if $(strip $1),$(PRINTF) "\nLOCAL_SHARED_LIBRARIES := $1\n" >> $2,)
@@ -75,13 +96,26 @@ define extra_include_list
   $(if $(strip $1),$(PRINTF) "$(foreach elem, $1,include $(patsubst %,%/Android.mk,$(patsubst %,\$$(PV_TOP)%,$(strip $(elem))))\n)" >> $2,)
 endef
 
-define is_prelinking_allowed
-  $(if $(strip $1),,$(PRINTF) "\nLOCAL_PRELINK_MODULE := false\n" >> $2)
-endef
+ifneq ($(NON_OVERLAY),)
+  # No prelinking in non-overlay builds
+  define is_prelinking_allowed
+    $(PRINTF) "\nLOCAL_PRELINK_MODULE := false\n" >> $2
+  endef
+else
+  define is_prelinking_allowed
+    $(if $(strip $1),,$(PRINTF) "\nLOCAL_PRELINK_MODULE := false\n" >> $2)
+  endef
+endif
 
-define cfg_list
-  $(if $(strip $1),$(PRINTF) "\$$(call add-prebuilt-files, ETC, $1)\ninclude \$$(CLEAR_VARS)\n" >> $2)
-endef
+ifneq ($(NON_OVERLAY),)
+  define cfg_list
+    $(if $(strip $1),$(PRINTF) "\$$(call add-prebuilt-files, ETC, $(patsubst pvplayer%,pvplayer2%,$(patsubst %.cfg,%.yac, $1)))\ninclude \$$(CLEAR_VARS)\n" >> $2)
+  endef
+else
+  define cfg_list
+    $(if $(strip $1),$(PRINTF) "\$$(call add-prebuilt-files, ETC, $1)\ninclude \$$(CLEAR_VARS)\n" >> $2)
+  endef
+endif
 
 ############################################################################
 
@@ -106,7 +140,7 @@ Android_$1.mk: FORCE
 	$$(quiet) $$(call output_lib_list,$$($1_CUMULATIVE_TARGET_LIST),$$@)
 	$$(quiet) $$(call extra_lib_list, $$(EXTRA_LIBS_$1),$$@)
 	$$(quiet) echo "" >> $$@
-	$$(quiet) echo "LOCAL_MODULE := lib$1" >> $$@
+	$$(quiet) echo "LOCAL_MODULE := lib$(NON_OVERLAY_LIB_IDENTIFIER)$1" >> $$@
 	$$(quiet) $$(call is_prelinking_allowed,$$($1_PRELINK),$$@)
 	$$(quiet) echo "ifeq ($$(esc_dollar)(PLATFORM_VERSION),1.5)" >> $$@
 	$$(quiet) $$(call conditional_extra_sharedlib_list, $$(EXTRA_SHARED_LIBRARIES_$1_1.5),$$@)
@@ -139,7 +173,7 @@ Android_$1.mk: FORCE
 	$$(quiet) $$(call output_lib_list,$$($1_CUMULATIVE_TARGET_LIST),$$@)
 	$$(quiet) $$(call extra_lib_list, $$(EXTRA_LIBS_$1),$$@)
 	$$(quiet) echo "" >> $$@
-	$$(quiet) echo "LOCAL_MODULE := lib$1" >> $$@
+	$$(quiet) echo "LOCAL_MODULE := lib$(NON_OVERLAY_LIB_IDENTIFIER)$1" >> $$@
 	$$(quiet) $$(call is_prelinking_allowed,$$($1_PRELINK),$$@)
 	$$(quiet) $$(call extra_sharedlib_list, $$(EXTRA_SHARED_LIBRARIES_$1),$$@)
 	$$(quiet) echo "" >> $$@
@@ -200,9 +234,9 @@ BUILD_CFG_DIR := $(patsubst $(SRC_ROOT)/%,(PV_TOP)/%,$(CFG_DIR))
 
 define create_opencore_config_mk
 $1: FORCE
-	$$(quiet) echo "ifneq ($$(esc_dollar)(strip $$(esc_dollar)(EXTERNAL_OPENCORE_CONFIG_ONCE)),true)" > $$@
+	$$(quiet) echo "ifneq ($$(esc_dollar)(strip $$(esc_dollar)($(EXTERNAL_OPENCORE_CONFIG_GUARD_MACRO_NAME))),true)" > $$@
 	$$(quiet) echo "  # This is the first attempt to include this file" >> $$@
-	$$(quiet) echo "  EXTERNAL_OPENCORE_CONFIG_ONCE := true" >> $$@
+	$$(quiet) echo "  $(EXTERNAL_OPENCORE_CONFIG_GUARD_MACRO_NAME) := true" >> $$@
 	$$(quiet) echo "" >> $$@
 	$$(quiet) echo "  PV_TOP := $$(esc_dollar)(my-dir)" >> $$@
 	$$(quiet) echo "" >> $$@
@@ -233,7 +267,7 @@ $1: FORCE
 	$$(quiet) echo "" >> $$@
 	$$(quiet) echo "  FORMAT := android" >> $$@
 	$$(quiet) echo "" >> $$@
-	$$(quiet) echo "  PV_COPY_HEADERS_TO := libpv" >> $$@
+	$$(quiet) echo "  PV_COPY_HEADERS_TO := $(PV_COPY_HEADERS_TO)" >> $$@
 	$$(quiet) echo "" >> $$@
 	$$(quiet) echo "  PV_CFLAGS_MINUS_VISIBILITY := $$(esc_dollar)(PV_CFLAGS)" >> $$@
 	$$(quiet) echo "  PV_CFLAGS += -fvisibility=hidden" >> $$@
@@ -449,7 +483,7 @@ AND_LOCAL_EXPORT_ALL_SYMBOLS := $(LOCAL_EXPORT_ALL_SYMBOLS)
 
 $(ANDROID_MAKE_NAMES): ANDROID_CPP_SRCS := $(if $(strip $(SRCS)),$(patsubst %,$(call go_up_two_levels,$(ANDROID_TMP_SRCDIR))/%,$(filter %.cpp,$(SRCS))),)
 $(ANDROID_MAKE_NAMES): ANDROID_ASM_SRCS := $(if $(strip $(SRCS)),$(patsubst %,$(call go_up_two_levels,$(ANDROID_TMP_SRCDIR))/%,$(filter-out %.cpp,$(SRCS))),)
-$(ANDROID_MAKE_NAMES): ANDROID_TARGET := $(if $(strip $(filter prog,$(TARGET_TYPE))),"LOCAL_MODULE :=" $(TARGET),$(if $(strip $(TARGET)),"LOCAL_MODULE :=" lib$(ANDROID_TMP_TARGET),))
+$(ANDROID_MAKE_NAMES): ANDROID_TARGET := $(if $(strip $(filter prog,$(TARGET_TYPE))),"LOCAL_MODULE :=" $(TARGET)$(NON_OVERLAY_LIB_IDENTIFIER),$(if $(strip $(TARGET)),"LOCAL_MODULE :=" lib$(NON_OVERLAY_LIB_IDENTIFIER)$(ANDROID_TMP_TARGET),))
 $(ANDROID_MAKE_NAMES): ANDROID_HDRS := $(patsubst %,$(call go_up_two_levels,$(INCSRCDIR))/%,$(HDRS))
 $(ANDROID_MAKE_NAMES): ANDROID_C_FLAGS := $(filter-out %PV_ARM_GCC_V5,$(ANDROID_TMP_C_FLAGS)) $(ANDROID_TMP_ASMDIRS)
 $(ANDROID_MAKE_NAMES): ANDROID_C_FLAGS_X := $($(TARGET)_DISABLE_COMPILE_WARNINGS_AS_ERRORS)
@@ -457,8 +491,8 @@ $(ANDROID_MAKE_NAMES): ANDROID_C_INC := $(ANDROID_TMP_LOCAL_INC)
 $(ANDROID_MAKE_NAMES): ANDROID_ARM_MODE := $(AND_LOCAL_ARM_MODE)
 $(ANDROID_MAKE_NAMES): ANDROID_EXPORT_ALL_SYMBOLS := $(AND_LOCAL_EXPORT_ALL_SYMBOLS)
 $(ANDROID_MAKE_NAMES): ANDROID_MAKE_TYPE := $(if $(strip $(filter prog,$(TARGET_TYPE))),BUILD_EXECUTABLE,$(if $(strip $(SRCS)),BUILD_STATIC_LIBRARY,BUILD_COPY_HEADERS))
-$(ANDROID_MAKE_NAMES): ANDROID_STATIC_LIBS := $(foreach library,$(LIBS),$(if $(findstring $(strip $(BUILD_ROOT)/installed_lib/$(BUILD_ARCH)/lib$(library)$(TARGET_NAME_SUFFIX).a), $(ALL_LIBS)),lib$(library),))
-$(ANDROID_MAKE_NAMES): ANDROID_SHARED_LIBS := $(foreach library,$(LIBS),$(if $(findstring $(strip $(BUILD_ROOT)/installed_lib/$(BUILD_ARCH)/lib$(library)$(TARGET_NAME_SUFFIX).so), $(SHARED_LIB_FULLNAMES)),lib$(library),))
+$(ANDROID_MAKE_NAMES): ANDROID_STATIC_LIBS := $(foreach library,$(LIBS),$(if $(findstring $(strip $(BUILD_ROOT)/installed_lib/$(BUILD_ARCH)/lib$(library)$(TARGET_NAME_SUFFIX).a), $(ALL_LIBS)),lib$(NON_OVERLAY_LIB_IDENTIFIER)$(library),))
+$(ANDROID_MAKE_NAMES): ANDROID_SHARED_LIBS := $(foreach library,$(LIBS),$(if $(findstring $(strip $(BUILD_ROOT)/installed_lib/$(BUILD_ARCH)/lib$(library)$(TARGET_NAME_SUFFIX).so), $(SHARED_LIB_FULLNAMES)),lib$(NON_OVERLAY_LIB_IDENTIFIER)$(library),))
 
 
 

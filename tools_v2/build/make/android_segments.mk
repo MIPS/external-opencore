@@ -27,20 +27,21 @@ CFG_pvrmffparser_node := pvrmff.cfg
 
 CFG_pvrtsptunicastforrm_streaming := pvrealstreaming.cfg
 
-EXTRA_SHARED_LIBRARIES_pvwmdrm := libutils libcutils libandroid_runtime libbinder
-EXTRA_SHARED_LIBRARIES_pvwmdrm_1.5 := libutils libcutils libandroid_runtime
-EXTRA_SHARED_LIBRARIES_pvwmdrm_1.6 := libutils libcutils libandroid_runtime
-EXTRA_SHARED_LIBRARIES_pvwmdrm_2.1 := libutils libcutils libandroid_runtime libbinder
-EXTRA_SHARED_LIBRARIES_pvwmdrmservice := libutils libcutils libandroid_runtime libbinder
-EXTRA_SHARED_LIBRARIES_pvwmdrmservice_1.5 := libutils libcutils libandroid_runtime
-EXTRA_SHARED_LIBRARIES_pvwmdrmservice_1.6 := libutils libcutils libandroid_runtime
-EXTRA_SHARED_LIBRARIES_pvwmdrmservice_2.1 := libutils libcutils libandroid_runtime libbinder
+EXTRA_SHARED_LIBRARIES_pvdb := libsqlite
+EXTRA_SHARED_LIBRARIES_pvwmdrm := libutils libcutils libandroid_runtime libmedia libbinder
+EXTRA_SHARED_LIBRARIES_pvwmdrm_1.5 := libutils libcutils libandroid_runtime libmedia
+EXTRA_SHARED_LIBRARIES_pvwmdrm_1.6 := libutils libcutils libandroid_runtime libmedia
+EXTRA_SHARED_LIBRARIES_pvwmdrm_2.1 := libutils libcutils libandroid_runtime libmedia libbinder
+EXTRA_SHARED_LIBRARIES_pvwmdrmservice := libutils libcutils libandroid_runtime libmedia libnativehelper libGLESv1_CM libui libbinder
+EXTRA_SHARED_LIBRARIES_pvwmdrmservice_1.5 := libutils libcutils libandroid_runtime libmedia libnativehelper libGLESv1_CM libcorecg libui
+EXTRA_SHARED_LIBRARIES_pvwmdrmservice_1.6 := libutils libcutils libandroid_runtime libmedia libnativehelper libGLESv1_CM libcorecg libui
+EXTRA_SHARED_LIBRARIES_pvwmdrmservice_2.1 := libutils libcutils libandroid_runtime libmedia libnativehelper libGLESv1_CM libui libbinder
 CFG_pvwmdrm := pvwmdrm.cfg
 
-EXTRA_SHARED_LIBRARIES_pvmtpservice := libutils libcutils libandroid_runtime libbinder
-EXTRA_SHARED_LIBRARIES_pvmtpservice_1.5 := libutils libcutils libandroid_runtime
-EXTRA_SHARED_LIBRARIES_pvmtpservice_1.6 := libutils libcutils libandroid_runtime
-EXTRA_SHARED_LIBRARIES_pvmtpservice_2.1 := libutils libcutils libandroid_runtime libbinder
+EXTRA_SHARED_LIBRARIES_pvmtpservice := libutils libcutils libandroid_runtime libmedia libbinder
+EXTRA_SHARED_LIBRARIES_pvmtpservice_1.5 := libutils libcutils libandroid_runtime libmedia
+EXTRA_SHARED_LIBRARIES_pvmtpservice_1.6 := libutils libcutils libandroid_runtime libmedia
+EXTRA_SHARED_LIBRARIES_pvmtpservice_2.1 := libutils libcutils libandroid_runtime libmedia libbinder
 EXTRA_SHARED_LIBRARIES_pvmtp_jni := libutils libcutils libandroid_runtime
 CFG_pvmtp_jni := mtpdb.cfg
 
