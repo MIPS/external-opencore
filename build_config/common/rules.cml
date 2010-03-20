@@ -769,8 +769,6 @@ derive TARGET_aggregate from (pv_so_name.opencore_common_so_name.
 
 # Derive compile directives
 derive USE_LOADABLE_MODULES from module_support==y 
-derive cml2_support_flag from 1==1 ? "USE_CML2_CONFIG" : "" #Should be always set when using CML2
-derive CONFIG_FLAGS from cml2_support_flag
 
 # Concatenate all the derived makefile paths to get the list of library paths
 # LIBDIR_static is the list of libraries selected to build as static library

@@ -4,7 +4,7 @@ ifneq ($(strip $(EXTERNAL_OPENCORE_CONFIG_ONCE)),true)
 
   PV_TOP := $(my-dir)
 
-  PV_CFLAGS := -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -DUSE_CML2_CONFIG
+  PV_CFLAGS := -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
   ifeq ($(PLATFORM_VERSION),1.5)
   else ifeq ($(PLATFORM_VERSION),1.6)
   else ifeq ($(PLATFORM_VERSION),2.1)
@@ -45,7 +45,6 @@ ifneq ($(strip $(EXTERNAL_OPENCORE_CONFIG_ONCE)),true)
 	$(PV_TOP)/engines/player/config/android \
 	$(PV_TOP)/engines/player/include \
 	$(PV_TOP)/nodes/pvmediaoutputnode/include \
-	$(PV_TOP)/nodes/pvdownloadmanagernode/config/opencore \
 	$(PV_TOP)/pvmi/pvmf/include \
 	$(PV_TOP)/fileformats/mp4/parser/config/opencore \
 	$(PV_TOP)/oscl/oscl/config/android \

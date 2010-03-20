@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ typedef int16 MOT;   /*  : "int" type runs faster on RISC machine */
 /*    not well-optimized.    04/19/2000.                        */
 #define CLIP_THE_RANGE(x,LB,UB) if (x<LB) x = LB; else if (x>UB) x = UB
 
+// Setting up the default values if not already defined by CML2
 
 #define PV_MPEG4  0x0
 #define PV_H263   0x1

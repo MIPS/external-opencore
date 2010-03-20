@@ -68,8 +68,6 @@
 #include "cpm.h"
 #endif
 
-// only include pvmf_downloadmanager_config.h if CML2 is NOT being used
-
 #if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
 #ifndef  PVMF_MEMORYBUFFERDATASTREAM_FACTORY_H_INCLUDED
 #include "pvmf_memorybufferdatastream_factory.h"

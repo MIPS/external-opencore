@@ -19,7 +19,6 @@
 #ifndef PVMF_MP3FFPARSER_DEFS_H_INCLUDED
 #define PVMF_MP3FFPARSER_DEFS_H_INCLUDED
 
-
 #ifndef OSCL_BASE_H_INCLUDED
 #include "oscl_base.h"
 #endif

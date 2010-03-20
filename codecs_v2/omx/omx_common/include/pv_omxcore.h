@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,6 @@
 #include "omx_proxy_interface.h"
 #endif
 #endif
-
 
 #if USE_DYNAMIC_LOAD_OMX_COMPONENTS
 #ifndef OSCL_SHARED_LIBRARY_H_INCLUDED

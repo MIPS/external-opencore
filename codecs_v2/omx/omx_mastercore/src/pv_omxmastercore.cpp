@@ -34,7 +34,15 @@
 
 #define MAX_PATHNAME_LENGTH 512
 
+// Setting up the default values if not already defined by CML2
 
+#ifndef MAX_NUMBER_OF_OMX_CORES
+#define MAX_NUMBER_OF_OMX_CORES 10
+#endif
+
+#ifndef MAX_NUMBER_OF_OMX_COMPONENTS
+#define MAX_NUMBER_OF_OMX_COMPONENTS 50
+#endif
 
 typedef class OMXMasterCoreGlobalData
 {

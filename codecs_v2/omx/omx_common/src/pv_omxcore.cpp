@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,8 +50,6 @@
 #ifndef PV_OMX_CONFIG_PARSER_H
 #include "pv_omx_config_parser.h"
 #endif
-
-// pv_omxregistry.h is only needed if NOT using CML2
 
 #include "oscl_init.h"
 

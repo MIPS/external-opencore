@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,5 +54,22 @@
 
 *********************************************************************************************/
 
+// Setting up the default values if not already defined by CML2
+
+#ifndef UY0VY1
+#define UY0VY1 1
+#endif
+
+#ifndef Y1VY0U
+#define Y1VY0U 0
+#endif
+
+#ifndef Y0VY1U
+#define Y0VY1U 0
+#endif
+
+#ifndef RGB_FORMAT
+#define RGB_FORMAT  1
+#endif
 
 #endif // COLORCONV_CONFIG_H_INCLUDED

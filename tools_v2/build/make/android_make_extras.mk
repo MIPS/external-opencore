@@ -241,7 +241,7 @@ $1: FORCE
 	$$(quiet) echo "  PV_TOP := $$(esc_dollar)(my-dir)" >> $$@
 	$$(quiet) echo "" >> $$@
 
-	$$(quiet) echo "  PV_CFLAGS := -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -DUSE_CML2_CONFIG" >> $$@
+	$$(quiet) echo "  PV_CFLAGS := -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64" >> $$@
 	$$(quiet) echo "  ifeq ($$(esc_dollar)(PLATFORM_VERSION),1.5)" >> $$@
 	$$(quiet) echo "  else ifeq ($$(esc_dollar)(PLATFORM_VERSION),1.6)" >> $$@
 	$$(quiet) echo "  else ifeq ($$(esc_dollar)(PLATFORM_VERSION),2.1)" >> $$@
@@ -282,7 +282,6 @@ $1: FORCE
 	$$(quiet) $(PRINTF) "\t$$(esc_dollar)(PV_TOP)/engines/player/config/android \\\\\n" >> $$@
 	$$(quiet) $(PRINTF) "\t$$(esc_dollar)(PV_TOP)/engines/player/include \\\\\n" >> $$@
 	$$(quiet) $(PRINTF) "\t$$(esc_dollar)(PV_TOP)/nodes/pvmediaoutputnode/include \\\\\n" >> $$@
-	$$(quiet) $(PRINTF) "\t$$(esc_dollar)(PV_TOP)/nodes/pvdownloadmanagernode/config/opencore \\\\\n" >> $$@
 	$$(quiet) $(PRINTF) "\t$$(esc_dollar)(PV_TOP)/pvmi/pvmf/include \\\\\n" >> $$@
 	$$(quiet) $(PRINTF) "\t$$(esc_dollar)(PV_TOP)/fileformats/mp4/parser/config/opencore \\\\\n" >> $$@
 	$$(quiet) $(PRINTF) "\t$$(esc_dollar)(PV_TOP)/oscl/oscl/config/android \\\\\n" >> $$@

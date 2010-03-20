@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-// only include pvmf_downloadmanager_config.h if CML2 is NOT being used
 
 #if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
 

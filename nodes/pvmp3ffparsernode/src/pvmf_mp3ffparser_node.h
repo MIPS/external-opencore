@@ -41,7 +41,6 @@
 #include "pvmf_mp3ffparser_outport.h"
 #endif
 
-
 #ifndef PVMF_SHOUTCAST_STREAM_PARSER_H_INCLUDED
 #include "pvmf_shoutcast_stream_parser.h"
 #endif

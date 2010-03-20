@@ -30,9 +30,6 @@
 #include "OMX_Component.h"
 #include "pv_omxcore.h"
 
-// pv_omxregistry.h is only needed if NOT using CML2
-
-
 // Use default DLL entry point
 #ifndef OSCL_DLL_H_INCLUDED
 #include "oscl_dll.h"

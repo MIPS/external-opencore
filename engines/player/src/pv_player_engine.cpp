@@ -19,7 +19,6 @@
 
 #include "pv_player_config.h"
 
-
 #include "pv_player_sdkinfo.h"
 
 #include "pvmf_node_interface.h"

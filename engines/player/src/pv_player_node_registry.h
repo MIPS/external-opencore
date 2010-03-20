@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,6 @@
 #ifndef OSCL_FILE_HANDLE_H_INCLUDED
 #include "oscl_file_handle.h"
 #endif
-
 
 class OsclSharedLibrary;
 class NodeRegistryPopulatorInterface;
