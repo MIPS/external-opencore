@@ -439,7 +439,13 @@ PVMFStatus H223LowerLayer::Mux()
                 OsclRefCounterMemFrag frag;
                 iSendPacketList[pktnum]->getMediaFragment(frag_num, frag);
                 if (pos - start_pos + frag.getMemFragSize() > max_size)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
+                                    (0, "H223LowerLayer::Mux data does not fit into dispatch frag size(%d), max_size(%d)",
+                                     pos - start_pos + frag.getMemFragSize(), max_size)
+                                   );
                     break;
+                }
                 oscl_memcpy(pos, frag.getMemFragPtr(), frag.getMemFragSize());
                 pos += frag.getMemFragSize();
             }

@@ -351,11 +351,13 @@ unsigned CPVH223Multiplex::DispatchPduPacket(MuxPduPacketList& packets,
 PVMFStatus CPVH223Multiplex::GetOutgoingMuxPdus(MuxPduPacketList& packets)
 {
     unsigned cur_pdus_size = 0;
-    uint16 stuffing_size = (uint16)iLowerLayer->GetStuffingSize();
+    uint32 stuffing_size = 0;
     OsclSharedPtr<PVMFMediaDataImpl> pkt;
 
     for (unsigned n = 0; n < iNumMuxIntervalsPerTimerInterval; n++)
     {
+        stuffing_size = iLowerLayer->GetStuffingSize();
+
         // fill the sdu data lists with lcns that contain data
         UpdateSduDataLists();
 
@@ -432,7 +434,10 @@ PVMFStatus CPVH223Multiplex::GetOutgoingMuxPdus(MuxPduPacketList& packets)
         {
             if (!iStuffOnlyFirstSend || (iPduNum == 1))
             {
-                stuffing_size = (uint16)((max_pdus_size > stuffing_size) ? max_pdus_size : stuffing_size);
+                if (max_pdus_size > OSCL_STATIC_CAST(int32, stuffing_size))
+                {
+                    stuffing_size = OSCL_STATIC_CAST(uint32, max_pdus_size);
+                }
             }
         }
         pkt = iMuxPduPacketAlloc->allocate(1);
@@ -1543,6 +1548,8 @@ void CPVH223Multiplex::SetMioLatency(int32 aLatency, bool aAudio)
 
 void CPVH223Multiplex::CalculateSkew(int alcn, bool aCheckAudVid, int aTimestamp, bool aCheckEot)
 {
+    OSCL_UNUSED_ARG(alcn);
+
     if (aCheckEot)
     {
         if (iTotalCountOut == 0)
