@@ -474,7 +474,7 @@ void OmxComponentAmrEncoderAO::ProcessData()
                                                 &OutputLength,
                                                 ipFrameDecodeBuffer,
                                                 iInputCurrLength,
-                                                iCurrentTimestamp,
+                                                iFrameTimestamp,
                                                 &OutputTimeStamp);
 
 
@@ -612,7 +612,6 @@ OmxComponentAmrEncoderAO::OmxComponentAmrEncoderAO()
     iOutputFrameLength = 0;
     iActualNumberOutputFrames = 0;
     iMaxNumberOutputFrames = 0;
-    iCurrentTimestamp = 0;
     iInputCurrLength = 0;
 
     if (!IsAdded())

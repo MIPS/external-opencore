@@ -31,11 +31,11 @@ OmxAmrEncoder::OmxAmrEncoder()
     // Codec and encoder setting structure
     ipGsmEncoder = NULL;
     ipEncProps   = NULL;
-    iNextStartTime = 0;
+//    iNextStartTime = 0;
 
     iOutputFormat             = PVMF_MIME_AMR_IETF;
     ipSizeArrayForOutputFrames = NULL;
-    iNextStartTime            = 0;
+//    iNextStartTime            = 0;
 
     iMaxNumOutputFramesPerBuffer = MAX_NUM_OUTPUT_FRAMES_PER_BUFFER;
     iOneInputFrameLength         = 320;
@@ -218,13 +218,10 @@ OMX_BOOL OmxAmrEncoder::AmrEncodeFrame(OMX_U8*    aOutputBuffer,
     StreamInput.iSampleBuffer = (uint8*) aInBuffer;
     StreamInput.iSampleLength = (int32) aInBufSize;
     StreamInput.iMode         = ipEncProps->iMode;
-    StreamInput.iStartTime    = (iNextStartTime >= aInTimeStamp  ? iNextStartTime : aInTimeStamp);
+//    StreamInput.iStartTime    = (iNextStartTime >= aInTimeStamp  ? iNextStartTime : aInTimeStamp);
+    StreamInput.iStartTime    = aInTimeStamp; // totally rely on IL Client to provide correct timestamp.
     StreamInput.iStopTime     = StreamInput.iStartTime + AMR_FRAME_LENGTH_IN_TIMESTAMP * InputFrameNum;
-    iNextStartTime            = StreamInput.iStopTime; // for the next encoding
-
-#if PROFILING_ON
-    OMX_U32 Start = OsclTickCount::TickCount();
-#endif
+//    iNextStartTime            = StreamInput.iStopTime; // for the next encoding, not necessary
 
     // Do encoding at one time for multiple frame input
     if (ipGsmEncoder->Encode(StreamInput, StreamOutput) < 0 || StreamOutput.iNumSampleFrames != InputFrameNum)
