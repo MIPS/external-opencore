@@ -2140,11 +2140,6 @@ OSCL_EXPORT_REF bool PVRefFileOutputActiveTimingSupport::queryInterface(const PV
     return false;
 }
 
-void PVRefFileOutputActiveTimingSupport::queryUuid(PVUuid& uuid)
-{
-    uuid = PvmiClockExtensionInterfaceUuid;
-}
-
 bool PVRefFileOutputActiveTimingSupport::FrameStepMode()
 {
     if (iClock && iClock->GetCountTimebase())
