@@ -1025,9 +1025,7 @@ cache size in bytes. Zero disables the cache. </td></tr>
     <td>
 
 <p>
-The File SetSize operation If the file has been opened for writing This sets the size of the file. The file pointer position is unchanged unless the pointers position is greated than the new filesize.
-<p>
-<dl compact><dt><b>Returns: </b></dt><dd>
+The File SetSize operation If the file has been opened for writing this will set the size of the file. The file pointer position is undefined after calling SetSize. If file size is increased the contents of the new section are undefined. <dl compact><dt><b>Returns: </b></dt><dd>
 returns 0 if successful, and a non-zero value otherwise </dl>    </td>
   </tr>
 </table>
@@ -1292,7 +1290,7 @@ The number of elements written </dl>    </td>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__file__io_8h-source.html">oscl_file_io.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.504.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.505.1.1 </small>
 </small></address>
 </body>
 </html>

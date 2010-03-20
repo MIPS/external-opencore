@@ -151,111 +151,111 @@
 00379 
 00387         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__File.html#a19">Flush</a>();
 00388 
-00398         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__File.html#a20">SetSize</a>(uint32 size);
-00399 
-00407         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__File.html#a21">EndOfFile</a>();
-00408 
-00409 
-00417         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__File.html#a22">GetError</a>();
-00418 
-<a name="l00424"></a><a class="code" href="classOscl__File.html#a23">00424</a>         <a class="code" href="classOsclFileHandle.html">OsclFileHandle</a>* <a class="code" href="classOscl__File.html#a23">Handle</a>()
-00425         {
-00426             <span class="keywordflow">return</span> iOpenFileHandle;
-00427         }
-00428 
-00434         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="osclconfig__io_8h.html#a67">TOsclFileOffset</a> <a class="code" href="classOscl__File.html#a24">Size</a>();
-00435 
-00444         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__File.html#a25">SetLoggingEnable</a>(<span class="keywordtype">bool</span> aEnable);
-00445 
-00453         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__File.html#a26">SetSummaryStatsLoggingEnable</a>(<span class="keywordtype">bool</span> aEnable);
-00454 
-00455 
-00456     <span class="keyword">private</span>:
-<a name="l00457"></a><a class="code" href="classOscl__File.html#l0">00457</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclFileCache.html">OsclFileCache</a>;
-<a name="l00458"></a><a class="code" href="classOscl__File.html#l1">00458</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclFileCacheBuffer.html">OsclFileCacheBuffer</a>;
-<a name="l00459"></a><a class="code" href="classOscl__File.html#l2">00459</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOscl__File.html#l2">asyncfilereadwrite_test</a>;
-<a name="l00460"></a><a class="code" href="classOscl__File.html#l3">00460</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOscl__File.html#l3">largeasyncfilereadwrite_test</a>;
-<a name="l00461"></a><a class="code" href="classOscl__File.html#l4">00461</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOscl__File.html#l4">asyncfilereadcancel_test</a>;
-00462 
-00463         <span class="keywordtype">void</span> Construct();
-00464         <span class="keywordtype">void</span> OldCacheDefaults();
-00465         <span class="keywordtype">void</span> OldCacheSelect(uint32);
-00466 
-00467         <span class="comment">//state info</span>
-00468         <span class="keywordtype">bool</span> iIsOpen;
-00469 
-00470         <span class="comment">//For Logging</span>
-00471         <a class="code" href="classPVLogger.html">PVLogger</a>* iLogger;
-00472         <a class="code" href="classPVLogger.html">PVLogger</a>* iStatsLogger;
-00473         <a class="code" href="classPVLogger.html">PVLogger</a>* iNativeLogger;
-00474         <a class="code" href="classPVLogger.html">PVLogger</a>* iAsyncLogger;
-00475         <a class="code" href="classOsclFileStats.html">OsclFileStats</a>* iFileStats;
-00476         <span class="keywordtype">void</span> CreateFileStats();
-00477 
-00478         <span class="comment">//External file handle.</span>
-00479         <a class="code" href="classOsclFileHandle.html">OsclFileHandle</a>* iOpenFileHandle;
-00480 
-00481         <span class="comment">//For PV File Cache</span>
-00482         uint32 iPVCacheSize;
-00483         <a class="code" href="classOsclFileCache.html">OsclFileCache</a>* iFileCache;
-00484         <a class="code" href="classOscl__Vector.html">Oscl_Vector&lt;OsclFixedCacheParam, OsclMemAllocator&gt;</a> iAddFixedCache;
-00485         <a class="code" href="classOscl__Vector.html">Oscl_Vector&lt;TOsclFileOffset, OsclMemAllocator&gt;</a> iRemoveFixedCache;
-00486         <a class="code" href="classOscl__File_1_1OsclCacheObserver.html">OsclCacheObserver</a>* iCacheObserver;
-00487 
-00488         int32 OpenFileCacheOrAsyncBuffer(<span class="keyword">const</span> <span class="keywordtype">char</span> *filename
-00489                                          , <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a34">oscl_wchar</a>* wfilename
-00490                                          , uint32 mode
-00491                                          , <span class="keyword">const</span> <a class="code" href="classOsclNativeFileParams.html">OsclNativeFileParams</a>&amp; params
-00492                                          , <a class="code" href="classOscl__FileServer.html">Oscl_FileServer</a>&amp; fileserv) ;
-00493 
-00494         <span class="comment">//For native file I/O.</span>
-00495         <a class="code" href="classOsclNativeFile.html">OsclNativeFile</a>* iNativeFile;
-00496         int32 iNativeBufferSize;
-00497         uint32 iNativeAccessMode;
-00498 
-00499         <span class="comment">//For async read feature</span>
-00500         uint32 iAsyncReadBufferSize;
-00501         <a class="code" href="classOsclAsyncFile.html">OsclAsyncFile</a>* iAsyncFile;
-00502 
-00503         <span class="comment">// These are wrappers to call the Native OS File IO calls with</span>
-00504         <span class="comment">// stats and logging.</span>
-00505 
-00506         int32  CallNativeOpen(<span class="keyword">const</span> <a class="code" href="classOsclFileHandle.html">OsclFileHandle</a>&amp;, uint32 mode
-00507                               , <span class="keyword">const</span> <a class="code" href="classOsclNativeFileParams.html">OsclNativeFileParams</a>&amp; params
-00508                               , <a class="code" href="classOscl__FileServer.html">Oscl_FileServer</a>&amp; fileserv);
-00509         int32  CallNativeOpen(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a34">oscl_wchar</a> *filename, uint32 mode
-00510                               , <span class="keyword">const</span> <a class="code" href="classOsclNativeFileParams.html">OsclNativeFileParams</a>&amp; params
-00511                               , <a class="code" href="classOscl__FileServer.html">Oscl_FileServer</a>&amp; fileserv);
-00512         int32  CallNativeOpen(<span class="keyword">const</span> <span class="keywordtype">char</span> *filename, uint32 mode
-00513                               , <span class="keyword">const</span> <a class="code" href="classOsclNativeFileParams.html">OsclNativeFileParams</a>&amp; params
-00514                               , <a class="code" href="classOscl__FileServer.html">Oscl_FileServer</a>&amp; fileserv);
-00515         uint32 CallNativeRead(<a class="code" href="group__osclbase.html#a27">OsclAny</a> *buffer, uint32 size, uint32 numelements);
-00516         uint32 CallNativeWrite(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a> *buffer, uint32 size, uint32 numelements);
-00517         int32  CallNativeSeek(<a class="code" href="osclconfig__io_8h.html#a67">TOsclFileOffset</a> offset, <a class="code" href="classOscl__File.html#s11">Oscl_File::seek_type</a> origin);
-00518         int32  CallNativeSetSize(uint32 size);
-00519         <a class="code" href="osclconfig__io_8h.html#a67">TOsclFileOffset</a>  CallNativeTell();
-00520         int32  CallNativeFlush();
-00521         int32  CallNativeEndOfFile();
-00522         <a class="code" href="osclconfig__io_8h.html#a67">TOsclFileOffset</a> CallNativeSize();
-00523         int32 CallNativeClose();
-00524         uint32 CallNativeMode();
-00525         int32 CallNativeGetError();
-00526         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> uint32 GetAsyncFileNumOfRun();
-00527         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> uint32 GetAsyncFileNumOfRunError();
+00396         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__File.html#a20">SetSize</a>(uint32 size);
+00397 
+00405         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__File.html#a21">EndOfFile</a>();
+00406 
+00407 
+00415         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> int32 <a class="code" href="classOscl__File.html#a22">GetError</a>();
+00416 
+<a name="l00422"></a><a class="code" href="classOscl__File.html#a23">00422</a>         <a class="code" href="classOsclFileHandle.html">OsclFileHandle</a>* <a class="code" href="classOscl__File.html#a23">Handle</a>()
+00423         {
+00424             <span class="keywordflow">return</span> iOpenFileHandle;
+00425         }
+00426 
+00432         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <a class="code" href="osclconfig__io_8h.html#a67">TOsclFileOffset</a> <a class="code" href="classOscl__File.html#a24">Size</a>();
+00433 
+00442         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__File.html#a25">SetLoggingEnable</a>(<span class="keywordtype">bool</span> aEnable);
+00443 
+00451         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keywordtype">void</span> <a class="code" href="classOscl__File.html#a26">SetSummaryStatsLoggingEnable</a>(<span class="keywordtype">bool</span> aEnable);
+00452 
+00453 
+00454     <span class="keyword">private</span>:
+<a name="l00455"></a><a class="code" href="classOscl__File.html#l0">00455</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclFileCache.html">OsclFileCache</a>;
+<a name="l00456"></a><a class="code" href="classOscl__File.html#l1">00456</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclFileCacheBuffer.html">OsclFileCacheBuffer</a>;
+<a name="l00457"></a><a class="code" href="classOscl__File.html#l2">00457</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOscl__File.html#l2">asyncfilereadwrite_test</a>;
+<a name="l00458"></a><a class="code" href="classOscl__File.html#l3">00458</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOscl__File.html#l3">largeasyncfilereadwrite_test</a>;
+<a name="l00459"></a><a class="code" href="classOscl__File.html#l4">00459</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOscl__File.html#l4">asyncfilereadcancel_test</a>;
+00460 
+00461         <span class="keywordtype">void</span> Construct();
+00462         <span class="keywordtype">void</span> OldCacheDefaults();
+00463         <span class="keywordtype">void</span> OldCacheSelect(uint32);
+00464 
+00465         <span class="comment">//state info</span>
+00466         <span class="keywordtype">bool</span> iIsOpen;
+00467 
+00468         <span class="comment">//For Logging</span>
+00469         <a class="code" href="classPVLogger.html">PVLogger</a>* iLogger;
+00470         <a class="code" href="classPVLogger.html">PVLogger</a>* iStatsLogger;
+00471         <a class="code" href="classPVLogger.html">PVLogger</a>* iNativeLogger;
+00472         <a class="code" href="classPVLogger.html">PVLogger</a>* iAsyncLogger;
+00473         <a class="code" href="classOsclFileStats.html">OsclFileStats</a>* iFileStats;
+00474         <span class="keywordtype">void</span> CreateFileStats();
+00475 
+00476         <span class="comment">//External file handle.</span>
+00477         <a class="code" href="classOsclFileHandle.html">OsclFileHandle</a>* iOpenFileHandle;
+00478 
+00479         <span class="comment">//For PV File Cache</span>
+00480         uint32 iPVCacheSize;
+00481         <a class="code" href="classOsclFileCache.html">OsclFileCache</a>* iFileCache;
+00482         <a class="code" href="classOscl__Vector.html">Oscl_Vector&lt;OsclFixedCacheParam, OsclMemAllocator&gt;</a> iAddFixedCache;
+00483         <a class="code" href="classOscl__Vector.html">Oscl_Vector&lt;TOsclFileOffset, OsclMemAllocator&gt;</a> iRemoveFixedCache;
+00484         <a class="code" href="classOscl__File_1_1OsclCacheObserver.html">OsclCacheObserver</a>* iCacheObserver;
+00485 
+00486         int32 OpenFileCacheOrAsyncBuffer(<span class="keyword">const</span> <span class="keywordtype">char</span> *filename
+00487                                          , <span class="keyword">const</span> <a class="code" href="group__osclbase.html#a34">oscl_wchar</a>* wfilename
+00488                                          , uint32 mode
+00489                                          , <span class="keyword">const</span> <a class="code" href="classOsclNativeFileParams.html">OsclNativeFileParams</a>&amp; params
+00490                                          , <a class="code" href="classOscl__FileServer.html">Oscl_FileServer</a>&amp; fileserv) ;
+00491 
+00492         <span class="comment">//For native file I/O.</span>
+00493         <a class="code" href="classOsclNativeFile.html">OsclNativeFile</a>* iNativeFile;
+00494         int32 iNativeBufferSize;
+00495         uint32 iNativeAccessMode;
+00496 
+00497         <span class="comment">//For async read feature</span>
+00498         uint32 iAsyncReadBufferSize;
+00499         <a class="code" href="classOsclAsyncFile.html">OsclAsyncFile</a>* iAsyncFile;
+00500 
+00501         <span class="comment">// These are wrappers to call the Native OS File IO calls with</span>
+00502         <span class="comment">// stats and logging.</span>
+00503 
+00504         int32  CallNativeOpen(<span class="keyword">const</span> <a class="code" href="classOsclFileHandle.html">OsclFileHandle</a>&amp;, uint32 mode
+00505                               , <span class="keyword">const</span> <a class="code" href="classOsclNativeFileParams.html">OsclNativeFileParams</a>&amp; params
+00506                               , <a class="code" href="classOscl__FileServer.html">Oscl_FileServer</a>&amp; fileserv);
+00507         int32  CallNativeOpen(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a34">oscl_wchar</a> *filename, uint32 mode
+00508                               , <span class="keyword">const</span> <a class="code" href="classOsclNativeFileParams.html">OsclNativeFileParams</a>&amp; params
+00509                               , <a class="code" href="classOscl__FileServer.html">Oscl_FileServer</a>&amp; fileserv);
+00510         int32  CallNativeOpen(<span class="keyword">const</span> <span class="keywordtype">char</span> *filename, uint32 mode
+00511                               , <span class="keyword">const</span> <a class="code" href="classOsclNativeFileParams.html">OsclNativeFileParams</a>&amp; params
+00512                               , <a class="code" href="classOscl__FileServer.html">Oscl_FileServer</a>&amp; fileserv);
+00513         uint32 CallNativeRead(<a class="code" href="group__osclbase.html#a27">OsclAny</a> *buffer, uint32 size, uint32 numelements);
+00514         uint32 CallNativeWrite(<span class="keyword">const</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a> *buffer, uint32 size, uint32 numelements);
+00515         int32  CallNativeSeek(<a class="code" href="osclconfig__io_8h.html#a67">TOsclFileOffset</a> offset, <a class="code" href="classOscl__File.html#s11">Oscl_File::seek_type</a> origin);
+00516         int32  CallNativeSetSize(uint32 size);
+00517         <a class="code" href="osclconfig__io_8h.html#a67">TOsclFileOffset</a>  CallNativeTell();
+00518         int32  CallNativeFlush();
+00519         int32  CallNativeEndOfFile();
+00520         <a class="code" href="osclconfig__io_8h.html#a67">TOsclFileOffset</a> CallNativeSize();
+00521         int32 CallNativeClose();
+00522         uint32 CallNativeMode();
+00523         int32 CallNativeGetError();
+00524         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> uint32 GetAsyncFileNumOfRun();
+00525         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> uint32 GetAsyncFileNumOfRunError();
+00526 
+00527 };
 00528 
-00529 };
-00530 
-00531 
-00532 <span class="comment">//Include all public file apis for convenience here.</span>
-00533 <span class="preprocessor">#include "<a class="code" href="oscl__file__server_8h.html">oscl_file_server.h</a>"</span>
-00534 <span class="preprocessor">#include "<a class="code" href="oscl__file__find_8h.html">oscl_file_find.h</a>"</span>
-00535 <span class="preprocessor">#include "<a class="code" href="oscl__file__dir__utils_8h.html">oscl_file_dir_utils.h</a>"</span>
-00536 <span class="preprocessor">#include "<a class="code" href="oscl__file__handle_8h.html">oscl_file_handle.h</a>"</span>
-00537 
-00538 <span class="preprocessor">#endif // OSCL_FILE_IO_H_INCLUDED</span>
-00539 <span class="preprocessor"></span>
+00529 
+00530 <span class="comment">//Include all public file apis for convenience here.</span>
+00531 <span class="preprocessor">#include "<a class="code" href="oscl__file__server_8h.html">oscl_file_server.h</a>"</span>
+00532 <span class="preprocessor">#include "<a class="code" href="oscl__file__find_8h.html">oscl_file_find.h</a>"</span>
+00533 <span class="preprocessor">#include "<a class="code" href="oscl__file__dir__utils_8h.html">oscl_file_dir_utils.h</a>"</span>
+00534 <span class="preprocessor">#include "<a class="code" href="oscl__file__handle_8h.html">oscl_file_handle.h</a>"</span>
+00535 
+00536 <span class="preprocessor">#endif // OSCL_FILE_IO_H_INCLUDED</span>
+00537 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.504.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.505.1.1 </small>
 </small></address>
 </body>
 </html>
