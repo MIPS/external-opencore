@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -500,7 +500,7 @@ int _local_main(FILE* filehandle, cmd_line* command_line)
         // Print out the results
         text_test_interpreter interp;
         _STRING rs = interp.interpretation(pvme_tests->last_result());
-        fprintf(file, rs.c_str());
+        fprintf(file, "%s", rs.c_str());
 
         const test_result the_result = pvme_tests->last_result();
         delete pvme_tests;

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2928,7 +2928,7 @@ int local_main(FILE* filehandle, cmd_line *command_line)
         _STRING rs = interp.interpretation(pTestSuite->last_result());
 
         //Print in filehandle
-        fprintf(filehandle, rs.c_str());
+        fprintf(filehandle, "%s", rs.c_str());
 
         int result;
         const test_result the_result = pTestSuite->last_result();

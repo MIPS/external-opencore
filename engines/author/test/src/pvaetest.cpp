@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2594,7 +2594,7 @@ int RunCompressedTest(cmd_line *aCommandLine, int32 &iFirstTest, int32 &iLastTes
              WriteFinalXmlSummary(xmlresultsfile, testSuite->last_result());
              text_test_interpreter interp;
              _STRING rs = interp.interpretation(testSuite->last_result());
-             fprintf(file, rs.c_str());
+             fprintf(file, "%s", rs.c_str());
              const test_result the_result = testSuite->last_result();
              retVal = (int)(the_result.success_count() != the_result.total_test_count());
 
@@ -2744,7 +2744,7 @@ int RunUnCompressedTest(cmd_line *aCommandLine, int32 &aFirstTest, int32 &aLastT
              WriteFinalXmlSummary(xmlresultsfile, test_suite->last_result());
              text_test_interpreter interp;
              _STRING rs = interp.interpretation(test_suite->last_result());
-             fprintf(file, rs.c_str());
+             fprintf(file, "%s", rs.c_str());
              const test_result the_result = test_suite->last_result();
              retVal = (int)(the_result.success_count() != the_result.total_test_count());
 

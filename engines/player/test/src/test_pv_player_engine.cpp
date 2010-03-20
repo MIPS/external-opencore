@@ -2342,7 +2342,7 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
     WriteFinalXmlSummary(xmlresultsfile, *testResult);
     text_test_interpreter interp;
     _STRING rs = interp.interpretation(*testResult);
-    fprintf(file, rs.c_str());
+    fprintf(file, "%s", rs.c_str());
     OSCL_DELETE(testResult);
     testResult = NULL;
     return result;
