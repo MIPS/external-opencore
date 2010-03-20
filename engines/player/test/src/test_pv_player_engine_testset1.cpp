@@ -3997,6 +3997,7 @@ void pvplayer_async_test_preparedstop::StartTest()
 {
     AddToScheduler();
     iState = STATE_CREATE;
+    iFormatUpdatedEventReceived = false;
     RunIfNotReady();
 }
 
@@ -4030,10 +4031,15 @@ void pvplayer_async_test_preparedstop::Run()
             iDataSource = new PVPlayerDataSourceURL;
 
             OSCL_wHeapString<OsclMemAllocator> sourcefile = SOURCENAME_PREPEND_WSTRING;
+            if (!iCheckForFormatUpdatedEvent)
+            {
+                // Set the format type only if we want to force recognition
+                // for the PVMFInfoSourceFormatUpdated event.
+                iDataSource->SetDataSourceFormatType(PVMF_MIME_MPEG4FF);
+            }
             sourcefile += _STRLIT_WCHAR("test.mp4");
             iDataSource->SetDataSourceURL(sourcefile);
 
-            iDataSource->SetDataSourceFormatType(PVMF_MIME_MPEG4FF);
             OSCL_TRY(error, iCurrentCmdId = iPlayer->AddDataSource(*iDataSource, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
@@ -4086,6 +4092,12 @@ void pvplayer_async_test_preparedstop::Run()
 
         case STATE_STOP:
         {
+            if (iCheckForFormatUpdatedEvent)
+            {
+                // We should have received the event by now.
+                // Report failure if not.
+                PVPATB_TEST_IS_TRUE(iFormatUpdatedEventReceived);
+            }
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Stop((OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
@@ -4387,8 +4399,24 @@ void pvplayer_async_test_preparedstop::HandleErrorEvent(const PVAsyncErrorEvent&
 }
 
 
-void pvplayer_async_test_preparedstop::HandleInformationalEvent(const PVAsyncInformationalEvent& /*aEvent*/)
+void pvplayer_async_test_preparedstop::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
 {
+    if (iCheckForFormatUpdatedEvent)
+    {
+        switch (aEvent.GetEventType())
+        {
+            case PVMFInfoSourceFormatUpdated:
+            {
+                fprintf(iTestMsgOutputFile, "\n\nPVMFInfoSourceFormatUpdated event received\n");
+                const char* localBuf = (const char*)aEvent.GetLocalBuffer();
+                fprintf(iTestMsgOutputFile, "Format: %s\n\n", localBuf);
+                iFormatUpdatedEventReceived = true;
+            }
+            break;
+            default:
+                break;
+        }
+    }
 }
 
 

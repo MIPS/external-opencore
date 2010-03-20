@@ -2944,6 +2944,11 @@ void PVPlayerEngine::RecognizeCompleted(PVMFFormatType aSourceFormatType, OsclAn
         AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_ADD_DATA_SOURCE, retval, NULL);
         return;
     }
+
+    // Send the event to notify the user of the updated format type
+    int32 len = iSourceFormatType.getMIMEStrLen();
+    uint8* localbuffer = (uint8*)iSourceFormatType.getMIMEStrPtr();
+    SendInformationalEvent(PVMFInfoSourceFormatUpdated, NULL, NULL, localbuffer, len);
 }
 
 void PVPlayerEngine::CPMCommandCompleted(const PVMFCmdResp& aResponse)

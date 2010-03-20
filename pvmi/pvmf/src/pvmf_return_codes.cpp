@@ -123,6 +123,7 @@ OSCL_EXPORT_REF const char *PVMFStatusToString(const PVMFStatus status)
             CONSIDER(PVMFInfoShoutcastMediaDataLength);
             CONSIDER(PVMFInfoShoutcastClipBitrate);
             CONSIDER(PVMFInfoIsShoutcastSesssion);
+            CONSIDER(PVMFInfoSourceFormatUpdated);
             // PVMF status code for RTSP errors begins
             CONSIDER(PVMFErrRTSP400BadRequest);
             CONSIDER(PVMFErrRTSP401Unauthorized);

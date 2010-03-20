@@ -556,6 +556,10 @@ const PVMFStatus PVMFInfoTrackSelectionNeeded = 53;
  */
 const PVMFStatus PVMFInfoClipCorrupted = 54;
 /*
+ Notification that source format has been updated
+ */
+const PVMFStatus PVMFInfoSourceFormatUpdated = 55;
+/*
  Placeholder for end of range
  */
 const PVMFStatus PVMFInfoLast = 100;

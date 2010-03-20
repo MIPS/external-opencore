@@ -1013,8 +1013,12 @@ void PVMetadataEngine::RecognizeCompleted(PVMFFormatType aSourceFormatType, Oscl
         return;
     }
 
-    retval = DoSourceNodeInit(cmdid, cmdcontext);
+    // Send the event to notify the user of the updated format type
+    int32 len = iSourceFormatType.getMIMEStrLen();
+    uint8* localbuffer = (uint8*)iSourceFormatType.getMIMEStrPtr();
+    SendInformationalEvent(PVMFInfoSourceFormatUpdated, NULL, NULL, localbuffer, len);
 
+    retval = DoSourceNodeInit(cmdid, cmdcontext);
     if (retval != PVMFSuccess)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,

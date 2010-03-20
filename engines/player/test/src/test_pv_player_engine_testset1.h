@@ -638,7 +638,7 @@ class pvplayer_async_test_invalidstate : public pvplayer_async_test_base
 class pvplayer_async_test_preparedstop : public pvplayer_async_test_base
 {
     public:
-        pvplayer_async_test_preparedstop(PVPlayerAsyncTestParam aTestParam):
+        pvplayer_async_test_preparedstop(PVPlayerAsyncTestParam aTestParam, bool aCheckForFormatUpdatedEvent = false):
                 pvplayer_async_test_base(aTestParam)
                 , iPlayer(NULL)
                 , iDataSource(NULL)
@@ -649,8 +649,16 @@ class pvplayer_async_test_preparedstop : public pvplayer_async_test_base
                 , iMIOFileOutVideo(NULL)
                 , iMIOFileOutAudio(NULL)
                 , iCurrentCmdId(0)
+                , iCheckForFormatUpdatedEvent(aCheckForFormatUpdatedEvent)
         {
-            iTestCaseName = _STRLIT_CHAR("Stop When Prepared");
+            if (iCheckForFormatUpdatedEvent)
+            {
+                iTestCaseName = _STRLIT_CHAR("Source Format Updated Event test");
+            }
+            else
+            {
+                iTestCaseName = _STRLIT_CHAR("Stop When Prepared");
+            }
         }
 
         ~pvplayer_async_test_preparedstop() {}
@@ -689,6 +697,9 @@ class pvplayer_async_test_preparedstop : public pvplayer_async_test_base
         PvmiMIOControl* iMIOFileOutVideo;
         PvmiMIOControl* iMIOFileOutAudio;
         PVCommandId iCurrentCmdId;
+
+        bool iCheckForFormatUpdatedEvent;
+        bool iFormatUpdatedEventReceived;
 };
 
 

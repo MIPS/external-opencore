@@ -2963,6 +2963,9 @@ void pvplayer_engine_test::test()
             case PreparedStopTest:
                 iCurrentTest = new pvplayer_async_test_preparedstop(testparam);
                 break;
+            case SourceFormatUpdatedTest:
+                iCurrentTest = new pvplayer_async_test_preparedstop(testparam, true);
+                break;
 
             case VideoOnlyPlay7Seconds:
                 iCurrentTest = new pvplayer_async_test_videoonlyplay7seconds(testparam);

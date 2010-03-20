@@ -692,8 +692,8 @@ class pvplayer_engine_test : public test_case,
             OpenPlayStopResetCPMRecognizeTest = 89, //Start of testing recognizer using DataStream input
 
             SetPlaybackBeforePrepare,
-
             SetPlaybackRate2XWithIFrameModePlybk,
+            SourceFormatUpdatedTest,
             LastLocalTest,//placeholder
 
             FirstDownloadTest = 100,  //placeholder
