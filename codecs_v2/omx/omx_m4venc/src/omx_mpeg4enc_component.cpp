@@ -632,7 +632,9 @@ void OmxComponentMpeg4EncAO::ProcessData()
     OMX_BOOL                EncodeReturn = OMX_FALSE;
     OMX_COMPONENTTYPE*      pHandle = &iOmxComponent;
 
-    if ((!iIsInputBufferEnded) || (iEndofStream))
+
+    if ((!iIsInputBufferEnded) || (iEndofStream) ||
+            ((OMX_TRUE == iSendVolHeaderFlag) && (MODE_MPEG4 == iEncMode)))
     {
         //Send port reconfiguration callback for encoder components if required
         if (OMX_TRUE == iPortReconfigurationNeeded)
@@ -741,6 +743,22 @@ void OmxComponentMpeg4EncAO::ProcessData()
         }
         //Mark buffer code ends here
 
+        //Send the VOL Header in the beginning before processing any input frames
+        if ((OMX_TRUE == iSendVolHeaderFlag) && (MODE_MPEG4 == iEncMode))
+        {
+            EncodeReturn = ipMpegEncoderObject->Mp4GetVolHeader(ipOutputBuffer->pBuffer, &(ipOutputBuffer->nFilledLen));
+
+            if (OMX_TRUE == EncodeReturn)
+            {
+                iSendVolHeaderFlag = OMX_FALSE;
+                ipOutputBuffer->nOffset = 0;
+                ipOutputBuffer->nFlags |= OMX_BUFFERFLAG_ENDOFFRAME;
+                ReturnOutputBuffer(ipOutputBuffer, pOutPort);
+            }
+
+            return;
+        }
+
         //Call the encoder only if there is some data to encode
         if (iInputCurrLength > 0)
         {
@@ -795,19 +813,13 @@ void OmxComponentMpeg4EncAO::ProcessData()
                  NULL);
             }
 
+            //Input bytes consumed now, return the buffer
+            ipInputBuffer->nFilledLen = 0;
+            ReturnInputBuffer(ipInputBuffer, pInPort);
+            ipInputBuffer = NULL;
 
-            //For the first time, encoder returns the volheader in output buffer and input remains unconsumed
-            //so do not return the input buffer yet
-            if (0 != iFrameCount)
-            {
-                //Input bytes consumed now, return the buffer
-                ipInputBuffer->nFilledLen = 0;
-                ReturnInputBuffer(ipInputBuffer, pInPort);
-                ipInputBuffer = NULL;
-
-                iIsInputBufferEnded = OMX_TRUE;
-                iInputCurrLength = 0;
-            }
+            iIsInputBufferEnded = OMX_TRUE;
+            iInputCurrLength = 0;
 
             iFrameCount++;
         }
@@ -953,6 +965,7 @@ OmxComponentMpeg4EncAO::OmxComponentMpeg4EncAO()
     iSyncFlag = OMX_FALSE;
     iBufferOverRun = OMX_FALSE;
     iPortReconfigurationNeeded = OMX_FALSE;
+    iSendVolHeaderFlag = OMX_TRUE;
 
     if (!IsAdded())
     {

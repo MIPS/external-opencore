@@ -81,6 +81,7 @@ class OmxComponentMpeg4EncAO : public OmxComponentVideo
         OMX_BOOL          iSyncFlag;
         OMX_U32           iOutputBufferSizeAfterInit;
         OMX_BOOL          iPortReconfigurationNeeded;
+        OMX_BOOL          iSendVolHeaderFlag;
 };
 
 #endif // OMX_MPEG4ENC_COMPONENT_H_INCLUDED

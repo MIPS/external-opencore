@@ -102,6 +102,8 @@ class Mpeg4Encoder_OMX
 
         OMX_ERRORTYPE Mp4OutBufferSize(OMX_U32 *aMaxVideoFrameSize);
 
+        OMX_BOOL Mp4GetVolHeader(OMX_U8* aOutBuffer, OMX_U32* aOutputLength);
+
 #if PROFILING_ON
         // Profile Statistics
         struct PVEncNodeStats
@@ -141,9 +143,7 @@ class Mpeg4Encoder_OMX
 
         OMX_U8 iVolHeader[DEFAULT_VOL_HEADER_LENGTH]; /** Vol header */
         OMX_U32 iVolHeaderSize;
-        OMX_BOOL iVolHeaderFlag;
-
-
+        OMX_BOOL iModTimeInitialized;
 
 };
 

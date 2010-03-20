@@ -37,7 +37,7 @@ const uint8 DEFAULT_VOL_HEADER[DEFAULT_VOL_HEADER_LENGTH] =
 
 Mpeg4Encoder_OMX::Mpeg4Encoder_OMX()
 {
-    iVolHeaderFlag = OMX_FALSE;
+    iModTimeInitialized = OMX_FALSE;
 
     iInitialized = OMX_FALSE;
     iYUVIn = NULL;
@@ -671,6 +671,28 @@ OMX_ERRORTYPE Mpeg4Encoder_OMX::Mp4OutBufferSize(OMX_U32 *aMaxVideoFrameSize)
 }
 
 
+OMX_BOOL Mpeg4Encoder_OMX::Mp4GetVolHeader(OMX_U8* aOutBuffer, OMX_U32* aOutputLength)
+{
+    //Send the VOL Header only if encoder has been initialized
+    if (OMX_TRUE == iInitialized)
+    {
+        //Copy the vol header in the output buffer in case of m4v format
+        if ((DATA_PARTITIONING_MODE == ENC_Mode) ||
+                (COMBINE_MODE_WITH_ERR_RES == ENC_Mode) ||
+                (COMBINE_MODE_NO_ERR_RES == ENC_Mode) ||
+                (SHORT_HEADER == ENC_Mode) ||
+                (SHORT_HEADER_WITH_ERR_RES == ENC_Mode))
+        {
+            oscl_memcpy(aOutBuffer, iVolHeader, iVolHeaderSize);
+            *aOutputLength = iVolHeaderSize;
+            return OMX_TRUE;
+        }
+    }
+
+    return OMX_FALSE;
+}
+
+
 /*Encode routine */
 OMX_BOOL Mpeg4Encoder_OMX::Mp4EncodeVideo(OMX_U8*    aOutBuffer,
         OMX_U32*   aOutputLength,
@@ -684,23 +706,10 @@ OMX_BOOL Mpeg4Encoder_OMX::Mp4EncodeVideo(OMX_U8*    aOutBuffer,
 {
     *aSyncFlag = OMX_FALSE;
 
-    if (OMX_FALSE == iVolHeaderFlag)
+    if (OMX_FALSE == iModTimeInitialized)
     {
-        iVolHeaderFlag = OMX_TRUE;
         iNextModTime = aInTimeStamp;
-
-        //Send the first output buffer as vol header in case of m4v format
-        if ((DATA_PARTITIONING_MODE == ENC_Mode) ||
-                (COMBINE_MODE_WITH_ERR_RES == ENC_Mode) ||
-                (COMBINE_MODE_NO_ERR_RES == ENC_Mode) ||
-                (SHORT_HEADER == ENC_Mode) ||
-                (SHORT_HEADER_WITH_ERR_RES == ENC_Mode))
-        {
-            oscl_memcpy(aOutBuffer, iVolHeader, iVolHeaderSize);
-            *aOutputLength = iVolHeaderSize;
-            *aOutTimeStamp = aInTimeStamp;
-            return OMX_TRUE;
-        }
+        iModTimeInitialized = OMX_TRUE;
     }
 
 
