@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1725,3 +1725,28 @@ PVMFStatus PVMFRTPJitterBufferImpl::GetParsedMediaMsg(PVMFSharedMediaMsgPtr& aMe
     return status;
 }
 
+OSCL_EXPORT_REF uint32 PVMFRTPJitterBufferImpl::GetPrevSampleDuration(uint32 aCurrentSampleRTPTime, uint32 aPrevSampleRTPTime, uint32 aCurrPacketSequenceNum)
+{
+    uint32 duration = 0;
+    bool isEarly = PVTimeComparisonUtils::IsEarlier(aCurrentSampleRTPTime, aPrevSampleRTPTime, duration);
+    PVMF_JB_LOGDATATRAFFIC_OUT((0, "PVMFRTPJitterBufferImpl::GetPrevSampleDuration aCurrentSampleRTPTime [%u] aPrevSampleRTPTime [%u] Duration[%u] SequenceNo[%u] Early[%d]", aCurrentSampleRTPTime, aPrevSampleRTPTime, duration, aCurrPacketSequenceNum, isEarly));
+    if (isEarly && (duration != 0))
+    {
+        duration = 0;
+        PVMFRTPInfoParams* rtpInfoToRefer = FindRTPInfoParams(aCurrPacketSequenceNum);
+        if (!rtpInfoToRefer || (rtpInfoToRefer->rtpTime != aPrevSampleRTPTime))
+        {
+            //Curr ts is allowed to be earlier only in the use case where:
+            //Client received the rtp info from the server.
+            //the rtptime of the first valid packet in the streaming session is less than the rtpinof's rtptime
+            //Log the error here and send duration to be zero.
+            //For debug build assert here
+            PVMF_JB_LOGDATATRAFFIC_OUT_E((0, "PVMFRTPJitterBufferImpl::GetPrevSampleDuration aCurrentSampleRTPTime [%u] aPrevSampleRTPTime [%u] Duration[%u] SequenceNo[%u] Early[%d] RTPInfoTs[%u]", aCurrentSampleRTPTime, aPrevSampleRTPTime, duration, aCurrPacketSequenceNum, isEarly, rtpInfoToRefer->rtpTime));
+            OSCL_ASSERT(false);
+            PVMFAsyncEvent jbEvent(PVMFInfoEvent, PVMFErrInvalidRTPTimeInPkt, NULL, NULL);
+            ReportJBInfoEvent(jbEvent);
+            return duration;
+        }
+    }
+    return duration;
+}

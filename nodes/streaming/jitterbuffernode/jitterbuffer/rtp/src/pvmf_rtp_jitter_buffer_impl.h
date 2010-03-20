@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ class PVMFRTPJitterBufferImpl: public PVMFJitterBufferImpl
         OSCL_IMPORT_REF virtual void SetBurstThreshold(float burstThreshold);
         OSCL_IMPORT_REF virtual bool IsDelayEstablished(uint32& aClockDiff);
         OSCL_IMPORT_REF bool IsSeqTsValidForPkt(uint32 aSeqNum, uint32 aTs, PVMFJitterBufferStats& jbStats);
-
+        OSCL_IMPORT_REF uint32 GetPrevSampleDuration(uint32 aCurrentSampleRTPTime, uint32 aPrevSampleRTPTime, uint32 aCurrPacketSequenceNum);
     protected:
         void Construct();
         virtual bool CanRetrievePacket();

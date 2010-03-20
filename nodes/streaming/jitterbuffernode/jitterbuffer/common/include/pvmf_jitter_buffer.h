@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1371,6 +1371,15 @@ class PVMFJitterBuffer
            Can leave: No
         */
         virtual void SetDataLogging(bool aEnableLogging, OSCL_String* aLogFilePath = NULL) = 0;
+
+
+        /**
+           This API provides the duration of the prev data pushed out of JB
+           Params(s): [in]  aCurrentSampleTime - timestamp of the current packet
+                      [in]  aPrevSampleTime - timestamp of the current packet
+                      [out] aCurrentSampleNum - context data to validate the curr and prev ts(if required)
+        */
+        virtual uint32 GetPrevSampleDuration(uint32 aCurrentSampleTime, uint32 aPrevSampleTime, uint32 aCurrentSampleNum) = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

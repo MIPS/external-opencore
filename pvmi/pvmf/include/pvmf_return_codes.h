@@ -560,6 +560,11 @@ const PVMFStatus PVMFInfoClipCorrupted = 54;
  */
 const PVMFStatus PVMFInfoSourceFormatUpdated = 55;
 /*
+Notification for invalid ts in the RTP packet
+*/
+const PVMFStatus PVMFErrInvalidRTPTimeInPkt = 56;
+
+/*
  Placeholder for end of range
  */
 const PVMFStatus PVMFInfoLast = 100;

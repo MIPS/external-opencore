@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -583,7 +583,7 @@ OSCL_EXPORT_REF PVMFTimestamp PVMFJitterBufferImpl::peekNextElementTimeStamp()
         iJitterBuffer->peekNextElementTimeStamp(currTS, aSeqNum);
         DeterminePrevTimeStampPeek(aSeqNum, prevTS);
         uint64 ts64 = iMonotonicTimeStamp;
-        ts64 += (currTS - prevTS);
+        ts64 += GetPrevSampleDuration(currTS, prevTS, aSeqNum);
         PVMFTimestamp adjTS =
             (PVMFTimestamp)(Oscl_Int64_Utils::get_uint64_lower32(ts64));
         return (adjTS);
@@ -608,7 +608,7 @@ OSCL_EXPORT_REF PVMFTimestamp PVMFJitterBufferImpl::peekMaxElementTimeStamp()
         DeterminePrevTimeStampPeek(aSeqNum, prevTS);
         iJitterBuffer->peekMaxElementTimeStamp(maxTS, aSeqNum);
         uint64 ts64 = iMonotonicTimeStamp;
-        ts64 += (maxTS - prevTS);
+        ts64 += GetPrevSampleDuration(maxTS, prevTS, aSeqNum);
         PVMFTimestamp adjTS =
             (PVMFTimestamp)(Oscl_Int64_Utils::get_uint64_lower32(ts64));
         return (adjTS);
@@ -1397,7 +1397,7 @@ OSCL_EXPORT_REF PVMFSharedMediaDataPtr PVMFJitterBufferImpl::RetrievePacketPaylo
          */
         PVMFTimestamp currTS = elem->getTimestamp();
         DeterminePrevTimeStamp(elem->getSeqNum());
-        iMonotonicTimeStamp += (currTS - iPrevTSOut);
+        iMonotonicTimeStamp += GetPrevSampleDuration(currTS, iPrevTSOut, elem->getSeqNum());
         PVMFTimestamp adjustedTS =
             (PVMFTimestamp)(Oscl_Int64_Utils::get_uint64_lower32(iMonotonicTimeStamp));
         elem->setTimestamp(adjustedTS);
