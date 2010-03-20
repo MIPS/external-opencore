@@ -7494,8 +7494,8 @@ PVMFStatus PVMFOMXEncNode::DoGetNodeMetadataKey(PVMFOMXEncNodeCommand& aCmd)
             leavecode = Push_Back_MetadataKeys(PVOMXENCMETADATA_CODECINFO_VIDEO_HEIGHT_KEY);
     }
     // add the profile, level and avgbitrate
-    PVMF_MPEGVideoProfileType aProfile;
-    PVMF_MPEGVideoLevelType aLevel;
+    uint32 aProfile; //PVMF_MPEGVideoProfileType
+    uint32 aLevel; //PVMF_MPEGVideoLevelType
     if (GetProfileAndLevel(aProfile, aLevel) == PVMFSuccess)
     {
         // For H263 this metadata will be available only after first frame decoding
@@ -7704,8 +7704,8 @@ PVMFStatus PVMFOMXEncNode::DoGetNodeMetadataValue(PVMFOMXEncNodeCommand& aCmd)
 
                 if (leavecode == 0)
                 {
-                    PVMF_MPEGVideoProfileType aProfile;
-                    PVMF_MPEGVideoLevelType aLevel;
+                    uint32 aProfile; //PVMF_MPEGVideoProfileType
+                    uint32 aLevel; //PVMF_MPEGVideoLevelType
                     if (GetProfileAndLevel(aProfile, aLevel) == PVMFSuccess)
                     {
                         // Copy the key string
@@ -7715,7 +7715,7 @@ PVMFStatus PVMFOMXEncNode::DoGetNodeMetadataValue(PVMFOMXEncNodeCommand& aCmd)
                         oscl_strncat(KeyVal.key, PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR));
                         KeyVal.key[KeyLen-1] = NULL_TERM_CHAR;
                         // Copy the value
-                        KeyVal.value.uint32_value = (uint32)aProfile; // This is to be decided, who will interpret these value
+                        KeyVal.value.uint32_value = aProfile; // This is to be decided, who will interpret these value
                         // Set the length and capacity
                         KeyVal.length = 1;
                         KeyVal.capacity = 1;
@@ -7756,8 +7756,8 @@ PVMFStatus PVMFOMXEncNode::DoGetNodeMetadataValue(PVMFOMXEncNodeCommand& aCmd)
 
                 if (leavecode == 0)
                 {
-                    PVMF_MPEGVideoProfileType aProfile;
-                    PVMF_MPEGVideoLevelType aLevel;
+                    uint32 aProfile; //PVMF_MPEGVideoProfileType
+                    uint32 aLevel; //PVMF_MPEGVideoLevelType
                     if (GetProfileAndLevel(aProfile, aLevel) == PVMFSuccess)
                     {
                         // Copy the key string
@@ -7767,7 +7767,7 @@ PVMFStatus PVMFOMXEncNode::DoGetNodeMetadataValue(PVMFOMXEncNodeCommand& aCmd)
                         oscl_strncat(KeyVal.key, PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR));
                         KeyVal.key[KeyLen-1] = NULL_TERM_CHAR;
                         // Copy the value
-                        KeyVal.value.uint32_value = (uint32)aLevel; // This is to be decided, who will interpret these value
+                        KeyVal.value.uint32_value = aLevel; // This is to be decided, who will interpret these value
                         // Set the length and capacity
                         KeyVal.length = 1;
                         KeyVal.capacity = 1;
@@ -8360,8 +8360,8 @@ uint32 PVMFOMXEncNode::GetNumMetadataKeys(char* aQueryKeyString)
                  iAvailableMetadataKeys.push_back(PVOMXENCMETADATA_CODECINFO_VIDEO_HEIGHT_KEY));
     }
     // add the profile, level and avgbitrate
-    PVMF_MPEGVideoProfileType aProfile;
-    PVMF_MPEGVideoLevelType aLevel;
+    uint32 aProfile; //PVMF_MPEGVideoProfileType
+    uint32 aLevel; //PVMF_MPEGVideoLevelType
     if (GetProfileAndLevel(aProfile, aLevel) == PVMFSuccess)
     {
         // For H263 this metadata will be available only after first frame decoding
@@ -8447,8 +8447,8 @@ uint32 PVMFOMXEncNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
 
     // Count the number of value entries for the provided key list
     uint32 numvalentries = 0;
-    PVMF_MPEGVideoProfileType aProfile;
-    PVMF_MPEGVideoLevelType aLevel;
+    uint32 aProfile; //PVMF_MPEGVideoProfileType
+    uint32 aLevel; //PVMF_MPEGVideoLevelType
     for (uint32 lcv = 0; lcv < numkeys; lcv++)
     {
         if ((oscl_strcmp(aKeyList[lcv].get_cstr(), PVOMXENCMETADATA_CODECINFO_VIDEO_WIDTH_KEY) == 0) &&
@@ -8573,31 +8573,50 @@ PVMFStatus PVMFOMXEncNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, OsclMe
     return PVMFSuccess;
 }
 
-
-
-
-
-
-PVMFStatus PVMFOMXEncNode::GetProfileAndLevel(PVMF_MPEGVideoProfileType& aProfile, PVMF_MPEGVideoLevelType& aLevel)
+/////////////////////////////////////////////////////////////////////////////
+PVMFStatus PVMFOMXEncNode::GetProfileAndLevel(uint32& aProfile, uint32& aLevel)
 {
+    OMX_ERRORTYPE Err = OMX_ErrorNone;
+    OMX_VIDEO_PARAM_PROFILELEVELTYPE nProfileLevel;
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXEncNode-%s::GetProfileAndLevel() In", iNodeTypeId));
 
     if (NULL == iOMXEncoder)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncNode-%s::GetProfileAndLevel() iEncoder is Null", iNodeTypeId));
-        aProfile = PV_MPEG_VIDEO_RESERVED_PROFILE;
-        aLevel  = PV_MPEG_VIDEO_LEVEL_UNKNOWN;
         return PVMFFailure;
     }
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncNode-%s::GetProfileAndLevel() iEncoder is Null", iNodeTypeId));
-    aProfile = PV_MPEG_VIDEO_RESERVED_PROFILE;
-    aLevel  = PV_MPEG_VIDEO_LEVEL_UNKNOWN;
-    // DV: FOR NOW, JUST RETURN FAILURE, WE DON'T SUPPORT THIS FEATURE YET
-    return PVMFFailure;
+    switch (iInterfaceState)
+    {
+        case EPVMFNodeInitialized:
+        case EPVMFNodePrepared:
+        case EPVMFNodeStarted:
+        case EPVMFNodePaused:
+            break;
 
+        default:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFOMXEncNode-%s::GetProfileAndLevel: Error - Wrong state", iNodeTypeId));
+            return PVMFFailure;
+    }
 
+    CONFIG_SIZE_AND_VERSION(nProfileLevel);
+    nProfileLevel.nPortIndex = iOutputPortIndex;
+    //Get the parameters now
+    Err = OMX_GetParameter(iOMXEncoder, OMX_IndexParamVideoProfileLevelCurrent, &nProfileLevel);
+    if (OMX_ErrorNone != Err)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PVMFOMXEncNode-%s::Error getting Profile&Level from OMX component. Use default setting.", iNodeTypeId));
+        return PVMFFailure;
+    }
+
+    // Get the Profile and Level
+    aProfile = (uint32)nProfileLevel.eProfile;
+    aLevel  = (uint32)nProfileLevel.eLevel;
+
+    return PVMFSuccess;
 }
 
 

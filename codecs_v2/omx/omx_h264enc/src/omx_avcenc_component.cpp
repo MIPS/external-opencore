@@ -1155,7 +1155,8 @@ OMX_ERRORTYPE OmxComponentAvcEncAO::ComponentInit()
                  ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoQuantType,
                  ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoMotionVector,
                  ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoIntraRefresh,
-                 ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoBlockMotionSize);
+                 ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->VideoBlockMotionSize,
+                 &(ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->ProfileLevel));
 
     iInputCurrLength = 0;
 

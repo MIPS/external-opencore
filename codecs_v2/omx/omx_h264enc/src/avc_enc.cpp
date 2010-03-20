@@ -131,7 +131,8 @@ OMX_ERRORTYPE AvcEncoder_OMX::AvcEncInit(OMX_VIDEO_PORTDEFINITIONTYPE aInputPara
         OMX_VIDEO_PARAM_QUANTIZATIONTYPE aQuantType,
         OMX_VIDEO_PARAM_MOTIONVECTORTYPE aSearchRange,
         OMX_VIDEO_PARAM_INTRAREFRESHTYPE aIntraRefresh,
-        OMX_VIDEO_PARAM_VBSMCTYPE aVbsmcType)
+        OMX_VIDEO_PARAM_VBSMCTYPE aVbsmcType,
+        OMX_VIDEO_PARAM_PROFILELEVELTYPE* aProfileLevel)
 {
 
     AVCEncParams aEncOption; /* encoding options */
@@ -548,6 +549,97 @@ OMX_ERRORTYPE AvcEncoder_OMX::AvcEncInit(OMX_VIDEO_PORTDEFINITIONTYPE aInputPara
     {
         iInitialized = OMX_FALSE;
         return OMX_ErrorBadParameter;
+    }
+
+    //Updating the profile and level from the encoder after initialization
+    AVCProfile profile_idc;
+    AVCLevel level_idc;
+
+    if (AVCENC_SUCCESS != PVAVCEncGetProfileLevel(&iAvcHandle, &profile_idc, &level_idc))
+    {
+        return OMX_ErrorInsufficientResources;
+    }
+
+    switch (profile_idc)
+    {
+        case AVC_BASELINE:
+            aProfileLevel->eProfile = OMX_VIDEO_AVCProfileBaseline;
+            break;
+        case AVC_MAIN:
+            aProfileLevel->eProfile = OMX_VIDEO_AVCProfileMain;
+            break;
+        case AVC_EXTENDED:
+            aProfileLevel->eProfile = OMX_VIDEO_AVCProfileExtended;
+            break;
+        case AVC_HIGH:
+            aProfileLevel->eProfile = OMX_VIDEO_AVCProfileHigh;
+            break;
+        case AVC_HIGH10:
+            aProfileLevel->eProfile = OMX_VIDEO_AVCProfileHigh10;
+            break;
+        case AVC_HIGH422:
+            aProfileLevel->eProfile = OMX_VIDEO_AVCProfileHigh422;
+            break;
+        case AVC_HIGH444:
+            aProfileLevel->eProfile = OMX_VIDEO_AVCProfileHigh444;
+            break;
+        default:
+            aProfileLevel->eProfile = OMX_VIDEO_AVCProfileVendorStartUnused;
+    }
+
+    switch (level_idc)
+    {
+        case AVC_LEVEL1_B:
+            aProfileLevel->eLevel = OMX_VIDEO_AVCLevel1b;
+            break;
+        case AVC_LEVEL1:
+            aProfileLevel->eLevel = OMX_VIDEO_AVCLevel1;
+            break;
+        case AVC_LEVEL1_1:
+            aProfileLevel->eLevel = OMX_VIDEO_AVCLevel11;
+            break;
+        case AVC_LEVEL1_2 :
+            aProfileLevel->eLevel = OMX_VIDEO_AVCLevel12;
+            break;
+        case AVC_LEVEL1_3 :
+            aProfileLevel->eLevel = OMX_VIDEO_AVCLevel13;
+            break;
+        case AVC_LEVEL2 :
+            aProfileLevel->eLevel = OMX_VIDEO_AVCLevel2;
+            break;
+        case AVC_LEVEL2_1 :
+            aProfileLevel->eLevel = OMX_VIDEO_AVCLevel21;
+            break;
+        case AVC_LEVEL2_2 :
+            aProfileLevel->eLevel = OMX_VIDEO_AVCLevel22;
+            break;
+        case AVC_LEVEL3 :
+            aProfileLevel->eLevel = OMX_VIDEO_AVCLevel3;
+            break;
+        case AVC_LEVEL3_1 :
+            aProfileLevel->eLevel = OMX_VIDEO_AVCLevel31;
+            break;
+        case AVC_LEVEL3_2 :
+            aProfileLevel->eLevel = OMX_VIDEO_AVCLevel32;
+            break;
+        case AVC_LEVEL4 :
+            aProfileLevel->eLevel = OMX_VIDEO_AVCLevel4;
+            break;
+        case AVC_LEVEL4_1 :
+            aProfileLevel->eLevel = OMX_VIDEO_AVCLevel41;
+            break;
+        case AVC_LEVEL4_2 :
+            aProfileLevel->eLevel = OMX_VIDEO_AVCLevel42;
+            break;
+        case AVC_LEVEL5 :
+            aProfileLevel->eLevel = OMX_VIDEO_AVCLevel5 ;
+            break;
+        case AVC_LEVEL5_1 :
+            aProfileLevel->eLevel = OMX_VIDEO_AVCLevel51;
+            break;
+        case AVC_LEVEL_AUTO:
+        default:
+            aProfileLevel->eLevel = OMX_VIDEO_AVCLevelVendorStartUnused;
     }
 
     iIDR = OMX_TRUE;

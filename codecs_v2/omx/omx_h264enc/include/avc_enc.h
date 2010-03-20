@@ -70,7 +70,8 @@ class AvcEncoder_OMX
                                  OMX_VIDEO_PARAM_QUANTIZATIONTYPE aQuantType,
                                  OMX_VIDEO_PARAM_MOTIONVECTORTYPE aSearchRange,
                                  OMX_VIDEO_PARAM_INTRAREFRESHTYPE aIntraRefresh,
-                                 OMX_VIDEO_PARAM_VBSMCTYPE aVbsmcType);
+                                 OMX_VIDEO_PARAM_VBSMCTYPE aVbsmcType,
+                                 OMX_VIDEO_PARAM_PROFILELEVELTYPE* aProfileLevel);
 
 
         AVCEnc_Status AvcEncodeVideo(OMX_U8*    aOutBuffer,

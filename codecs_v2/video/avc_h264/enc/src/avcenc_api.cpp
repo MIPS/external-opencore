@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,31 @@ OSCL_EXPORT_REF AVCEnc_Status PVAVCEncGetNALType(unsigned char *bitstream, int s
     }
 
     return AVCENC_FAIL;
+}
+
+/* ======================================================================== */
+/*  Function : PVAVCEncGetProfileLevel()                                            */
+/*  Date     : 3/4/2010                                                    */
+/*  Purpose  : Get profile and level type from the bitstream                            */
+/*  In/out   :                                                              */
+/*  Return   : AVCENC_SUCCESS if succeed, AVCENC_FAIL if fail.              */
+/*  Modified :                                                              */
+/* ======================================================================== */
+OSCL_EXPORT_REF AVCEnc_Status PVAVCEncGetProfileLevel(AVCHandle* avcHandle, AVCProfile* profile, AVCLevel* level)
+{
+    AVCEncObject *encvid = (AVCEncObject*)avcHandle->AVCObject;
+    AVCCommonObj *video = encvid->common;
+    AVCSeqParamSet *seqParam = video->currSeqParams;
+
+    if (encvid == NULL)
+    {
+        return AVCENC_UNINITIALIZED;
+    }
+
+    *profile = (AVCProfile)seqParam->profile_idc;
+    *level = (AVCLevel)seqParam->level_idc;
+
+    return AVCENC_SUCCESS;
 }
 
 
