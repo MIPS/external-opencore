@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,6 @@
 
 
 #define OSCL_HAS_UNIX_TIME_FUNCS        1
-#define OSCL_HAS_MSWIN_TIME_FUNCS       0
-
 
 typedef struct timeval OsclBasicTimeStruct;
 typedef tm      OsclBasicDateTimeStruct;

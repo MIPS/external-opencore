@@ -46,7 +46,6 @@
 //osclconfig_time
 #define OSCL_HAS_PV_C_OS_TIME_FUNCS 0
 #define OSCL_HAS_UNIX_TIME_FUNCS    0
-#define OSCL_HAS_MSWIN_TIME_FUNCS   0
 
 //osclconfig_util
 #define OSCL_HAS_SYMBIAN_TIMERS 0
