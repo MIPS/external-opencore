@@ -339,13 +339,6 @@ int32 CreatePlaylist(const char* aFileName, PVMFFormatType& aFileType, char**& a
         invalidFileName += DEFAULT_INVALID_MP4_PLAYLIST;
         defaultPlaylist = true;
     }
-    else if (oscl_strstr(aFileName, ".wma") != NULL || oscl_strstr(aFileName, ".WMA") != NULL ||
-             oscl_strstr(aFileName, ".asf") != NULL || oscl_strstr(aFileName, ".ASF") != NULL)
-    {
-        validFileName += DEFAULT_VALID_WMA_PLAYLIST;
-        invalidFileName += DEFAULT_INVALID_WMA_PLAYLIST;
-        defaultPlaylist = true;
-    }
     else if (oscl_strstr(aFileName, ".txt") != NULL || oscl_strstr(aFileName, ".TXT") != NULL)
     {
         // using input text file from command line
