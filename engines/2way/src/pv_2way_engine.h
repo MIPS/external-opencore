@@ -233,6 +233,7 @@ enum TPV2WayCommandType
      * class
      **/
     PVT_COMMAND_ADD_DATA_SOURCE,
+
     /**
      * This  indicates the completion status of a previously issued RemoveMediaSource command.
      *
@@ -325,7 +326,78 @@ enum TPV2WayCommandType
      **/
     PVT_COMMAND_CANCEL_ALL_COMMANDS,
 
+    /**
+     * Indicates TSC stack is reporting that channel is established
+     *
+     **/
+    PVT_ESTABLISH_CHANNEL,
+    /**
+     * Indicates TSC stack is requesting a frame update
+     *
+     **/
+    PVT_REQUEST_FRAME_UPDATE,
+    /**
+     * Indicates TSC stack found channel is closed
+     *
+     **/
+    PVT_CHANNEL_CLOSED,
     PVT_LAST_COMMAND
+};
+
+class PV2WayChannelData : public HeapBase, PVInterface
+{
+    public:
+        PV2WayChannelData(TPVDirection aDir,
+                          TPVChannelId aId,
+                          PVCodecType_t aCodec,
+                          uint8* aFormatSpecificInfo,
+                          uint32 aFormatSpecificInfoLen):
+                iDir(aDir),
+                iId(aId),
+                iCodec(aCodec),
+                iFormatSpecificInfoLen(aFormatSpecificInfoLen),
+                iRefCounter(1)
+        {
+            iFormatSpecificInfo = OSCL_ARRAY_NEW(uint8, aFormatSpecificInfoLen);
+            for (uint32 ii = 0; ii < aFormatSpecificInfoLen; ++ii)
+            {
+                iFormatSpecificInfo[ii] = aFormatSpecificInfo[ii];
+            }
+        }
+
+        ~PV2WayChannelData()
+        {
+            OSCL_ARRAY_DELETE(iFormatSpecificInfo);
+        }
+        void addRef()
+        {
+            iRefCounter++;
+        }
+        void removeRef()
+        {
+            if (iRefCounter)
+            {
+                iRefCounter--;
+                if (iRefCounter == 0)
+                {
+                    OSCL_DELETE(this);
+                }
+            }
+        }
+        bool queryInterface(const PVUuid& uuid, PVInterface*& iface)
+        {
+            OSCL_UNUSED_ARG(uuid);
+            OSCL_UNUSED_ARG(iface);
+            return false;
+        }
+
+        TPVDirection iDir;
+        TPVChannelId iId;
+        PVCodecType_t iCodec;
+        uint8* iFormatSpecificInfo;
+        uint32 iFormatSpecificInfoLen;
+    private:
+        uint32 iRefCounter;
 };
 
 class TPV2WayNotificationInfo
@@ -410,7 +482,7 @@ class TPV2WayEventInfo : public TPV2WayNotificationInfo
 };
 
 /**
- * TPV2WayPortStatus Class
+ * TPV2WayPortStatus
  *
  * An enumeration of port status
  **/
@@ -748,6 +820,7 @@ class CPV324m2Way : OsclActiveObject,
                                       PVCodecType_t aCodec,
                                       uint8* aFormatSpecificInfo = NULL, uint32 aFormatSpecificInfoLen = 0);
         void ChannelClosed(TPVDirection direction, TPVChannelId id, PVCodecType_t codec, PVMFStatus status = PVMFSuccess);
+        void FinishChannelClosed(TPVDirection direction, TPVChannelId id, PVCodecType_t codec);
         void RequestFrameUpdate(PVMFPortInterface *port);
 
         // OsclTimerObserver virtuals
@@ -1160,11 +1233,12 @@ class CPV324m2Way : OsclActiveObject,
         // test interface (which will be another thread)
         OsclMutex iReadDataLock;
 
+        bool iUsingExternalVideoDecBuffers;
+        bool iUsingExternalAudioDecBuffers;
+
         // interface for omx enc node capability and config
         PvmiCapabilityAndConfig* ipEncNodeCapabilityAndConfig;
         PVInterface* ipEncNodeCapConfigInterface;
-        bool iUsingExternalVideoDecBuffers;
-        bool iUsingExternalAudioDecBuffers;
 
 };
 

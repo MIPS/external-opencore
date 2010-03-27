@@ -2541,7 +2541,7 @@ void TSC_324m::SetTerminalStatus(uint32 aStatus)
     if (aStatus != iTerminalStatus)
     {
         uint32 status[2] = {iTerminalStatus, aStatus};
-        const char *statusString[2];
+        const char* statusString[2];
         for (int16 index = 0; index < 2; index++)
         {
             switch (status[index])
@@ -2574,7 +2574,7 @@ void TSC_324m::SetTerminalStatus(uint32 aStatus)
                     statusString[index] = "PhaseG_Dis";
                     break;
                 default:
-                    statusString[index] = NULL;
+                    statusString[index] = "";
                     break;
             }
         }

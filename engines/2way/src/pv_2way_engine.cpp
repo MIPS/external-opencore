@@ -265,7 +265,9 @@ CPV324m2Way::CPV324m2Way() :
         iPendingVideoEncReset(-1),
         iReferenceCount(1),
         iUsingExternalVideoDecBuffers(false),
-        iUsingExternalAudioDecBuffers(false)
+        iUsingExternalAudioDecBuffers(false),
+        ipEncNodeCapabilityAndConfig(NULL),
+        ipEncNodeCapConfigInterface(NULL)
 {
     iLogger = PVLogger::GetLoggerObject("2wayEngine");
     iSyncControlPVUuid = PvmfNodesSyncControlUuid;
@@ -1540,11 +1542,15 @@ void CPV324m2Way::StartClock()
     /* set clock to 0 and start */
     uint32 startTime = 0;
     bool overflowFlag = false;
-
-    if (!iClock.SetStartTime32(startTime, PVMF_MEDIA_CLOCK_MSEC, overflowFlag))
+    if (iMuxClock.GetState() == PVMFMediaClock::RUNNING)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_WARNING,
+                        (0, "CPV324m2Way::StartTscClock: clock already started\n"));
+    }
+    else if (!iClock.SetStartTime32(startTime, PVMF_MEDIA_CLOCK_MSEC, overflowFlag))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_REL, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::Connect: unable to set clock time\n"));
+                        (0, "CPV324m2Way::StartTscClock: unable to set clock time\n"));
         OSCL_LEAVE(PVMFFailure);
     }
     iClock.Start();
@@ -1913,15 +1919,15 @@ void CPV324m2Way::CheckDisconnect()
         //Else remote disconnect
         else
         {
-            TPV2WayEventInfo* aEvent = NULL;
-            if (!GetEventInfo(aEvent))
+            TPV2WayEventInfo* event = NULL;
+            if (!GetEventInfo(event))
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "CPV324m2Way::CheckDisconnect unable to notify app!\n"));
                 return;
             }
-            aEvent->type = PVT_INDICATION_DISCONNECT;
-            Dispatch(aEvent);
+            event->type = PVT_INDICATION_DISCONNECT;
+            Dispatch(event);
         }
     }
     else
@@ -3207,7 +3213,76 @@ void CPV324m2Way::Run()
                     iCommNode.iNode->ThreadLogoff();
                     iCommNode.Clear();
                     break;
+                case PVT_ESTABLISH_CHANNEL:
+                {
 
+                    PV2WayChannelData* pChannelData = (PV2WayChannelData*)cmd->contextData;
+                    // call EstablishChannel using cmd->ContextData
+                    if (pChannelData)
+                    {
+                        int err = 0;
+                        if (pChannelData->iDir == INCOMING)
+                        {
+                            OSCL_TRY(err, StartTscClock(););
+                            OSCL_FIRST_CATCH_ANY(err, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                                 (0, "CPV324m2Way::Run ERROR calling StartTscClock: %d .\n", err)););
+
+                        }
+
+                        OSCL_TRY(err, EstablishChannel(pChannelData->iDir, pChannelData->iId,
+                                                       pChannelData->iCodec, pChannelData->iFormatSpecificInfo,
+                                                       pChannelData->iFormatSpecificInfoLen));
+                        OSCL_FIRST_CATCH_ANY(err, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                             (0, "CPV324m2Way::Run ERROR EstablishChannel: %d .\n", err)););
+
+
+                        pChannelData->removeRef();
+                        pChannelData = NULL;
+                    }
+                    else
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                        (0, "CPV324m2Way::Run ERROR EstablishChannel called without channel information.\n"));
+                    }
+                    break;
+                }
+                case PVT_REQUEST_FRAME_UPDATE:
+                {
+                    PVMFPortInterface* pPort = (PVMFPortInterface*)cmd->contextData;
+                    if (pPort)
+                    {
+                        GenerateIFrame(pPort);
+                    }
+                    else
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                        (0, "CPV324m2Way::Run ERROR GenerateIFrame called without port.\n"));
+                    }
+
+                    break;
+                }
+                case PVT_CHANNEL_CLOSED:
+                {
+                    PV2WayChannelData* pChannelData = (PV2WayChannelData*)cmd->contextData;
+                    // call FinishChannelClosed using cmd->ContextData
+                    if (pChannelData)
+                    {
+                        int32 err = 0;
+                        OSCL_TRY(err, FinishChannelClosed(pChannelData->iDir, pChannelData->iId,
+                                                          pChannelData->iCodec));
+                        OSCL_FIRST_CATCH_ANY(err, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                             (0, "CPV324m2Way::Run ERROR FinishChannelClosed: %d .\n", err)););
+
+                        pChannelData->removeRef();
+                        pChannelData = NULL;
+                    }
+                    else
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                        (0, "CPV324m2Way::Run ERROR ChannelClosed called without channel information.\n"));
+                    }
+                    break;
+                }
                 case PVT_COMMAND_ADD_DATA_SOURCE:
                     if (cmd->status == PVMFSuccess)
                     {
@@ -3242,7 +3317,7 @@ void CPV324m2Way::Run()
                     }
                     if (datapath == NULL)
                     {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                                         (0, "CPV324m2Way::Run ERROR Failed to lookup dec datapath.\n"));
                         break;
                     }
@@ -3297,6 +3372,9 @@ void CPV324m2Way::Run()
                     break;
             }
 
+            if (cmd->type != PVT_ESTABLISH_CHANNEL &&
+                    cmd->type != PVT_REQUEST_FRAME_UPDATE &&
+                    cmd->type != PVT_CHANNEL_CLOSED)
             {
                 PVCmdResponse resp(cmd->id, cmd->contextData, cmd->status, NULL, 0);
                 OSCL_TRY(error, iCmdStatusObserver->CommandCompleted(resp));
@@ -3364,9 +3442,9 @@ void CPV324m2Way::Run()
             }
 
             {
-                PVAsyncInformationalEvent aEvent(event->type, event->exclusivePtr,
-                                                 &event->localBuffer[0], event->localBufferSize);
-                OSCL_TRY(error, iInfoEventObserver->HandleInformationalEvent(aEvent));
+                PVAsyncInformationalEvent infoEvent(event->type, event->exclusivePtr,
+                                                    &event->localBuffer[0], event->localBufferSize);
+                OSCL_TRY(error, iInfoEventObserver->HandleInformationalEvent(infoEvent));
                 OSCL_FIRST_CATCH_ANY(error, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger,
                                      PVLOGMSG_ERR, (0, "CPV324m2Way::Run HandleInformationalEventL leave %d\n",
                                                     error)));
@@ -4179,16 +4257,9 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
     PV2WayMediaType media_type = ::GetMediaType(aCodec);
     OSCL_ASSERT(media_type == PV_AUDIO || media_type == PV_VIDEO);
     // aFormatType is the Codec that the establishing channel wants
-    PVMFFormatType aFormatType = PVCodecTypeToPVMFFormatType(aCodec);
-    PVMFFormatType aAppFormatType = PVMF_MIME_FORMAT_UNKNOWN;
+    PVMFFormatType formatType = PVCodecTypeToPVMFFormatType(aCodec);
+    PVMFFormatType appFormatType = PVMF_MIME_FORMAT_UNKNOWN;
 
-    TPV2WayEventInfo* aEvent = NULL;
-    if (!GetEventInfo(aEvent))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::EstablishChannel Memory allocation failed!\n"));
-        return PVMFErrNoMemory;
-    }
 
     ////////////////////////////////////////////////////////////////
 
@@ -4208,7 +4279,7 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
             if (!(iAudioDecDatapath))
             {
                 iAudioDecDatapath = CPV2WayDecDataChannelDatapath::NewL(iLogger,
-                                    aFormatType, this);
+                                    formatType, this);
 
             }
             datapath = iAudioDecDatapath;
@@ -4218,7 +4289,7 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
         {
             if (!(iVideoDecDatapath))
             {
-                iVideoDecDatapath = CPV2WayDecDataChannelDatapath::NewL(iLogger, aFormatType, this);
+                iVideoDecDatapath = CPV2WayDecDataChannelDatapath::NewL(iLogger, formatType, this);
             }
             datapath = iVideoDecDatapath;
             codec_list = &iIncomingVideoCodecs;
@@ -4233,7 +4304,7 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
             if (!(iAudioEncDatapath))
             {
                 iAudioEncDatapath = CPV2WayEncDataChannelDatapath::NewL(iLogger,
-                                    aFormatType, this);
+                                    formatType, this);
             }
 
             datapath = iAudioEncDatapath;
@@ -4243,7 +4314,7 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
         {
             if (!(iVideoEncDatapath))
             {
-                iVideoEncDatapath = CPV2WayEncDataChannelDatapath::NewL(iLogger, aFormatType, this);
+                iVideoEncDatapath = CPV2WayEncDataChannelDatapath::NewL(iLogger, formatType, this);
             }
 
             datapath = iVideoEncDatapath;
@@ -4252,7 +4323,7 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
         app_format_for_engine_format = &iAppFormatForEngineFormatOutgoing;
     }
     Oscl_Map < PVMFFormatType, FormatCapabilityInfo, OsclMemAllocator,
-    pvmf_format_type_key_compare_class >::iterator it = codec_list->find(aFormatType);
+    pvmf_format_type_key_compare_class >::iterator it = codec_list->find(formatType);
 
     if (it == codec_list->end())
     {
@@ -4266,7 +4337,7 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
     if ((*it).second.iPriority == ENG)
     {
         // Set the app format to the stored raw format type
-        aAppFormatType = (*app_format_for_engine_format)[aFormatType];
+        appFormatType = (*app_format_for_engine_format)[formatType];
 
         if (aDir == INCOMING)
         {
@@ -4291,36 +4362,41 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
                 AddVideoEncoderNode();
             }
         }
-
-
     }
     else
     {
         // Set the app format to the compressed type
-        aAppFormatType = aFormatType;
+        appFormatType = formatType;
     }
     ////////////////////////////////////////////////////////////////
 
-    datapath->SetFormat(aFormatType);
-    datapath->SetSourceSinkFormat(aAppFormatType);
+    datapath->SetFormat(formatType);
+    datapath->SetSourceSinkFormat(appFormatType);
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
                     (0, "CPV324m2Way::EstablishChannel setting codec=%d formatType:%s appFormat: %s\n", aCodec,
-                     aFormatType.getMIMEStrPtr(), aAppFormatType.getMIMEStrPtr()));
+                     formatType.getMIMEStrPtr(), appFormatType.getMIMEStrPtr()));
 
+    TPV2WayEventInfo* event = NULL;
+    if (!GetEventInfo(event))
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "CPV324m2Way::EstablishChannel Memory allocation failed!\n"));
+        return PVMFErrNoMemory;
+    }
     // Send the informational event to the app
-    aEvent->localBuffer[0] = (uint8) media_type;
+    event->localBuffer[0] = (uint8) media_type;
     // bytes 1,2,3 are unused
-    *((TPVChannelId*)(aEvent->localBuffer + 4)) = aId;
-    aEvent->localBufferSize = 8;
+    *((TPVChannelId*)(event->localBuffer + 4)) = aId;
+    event->localBufferSize = 8;
 
-    PVEventType aEventType = (aDir == INCOMING) ? PVT_INDICATION_INCOMING_TRACK : PVT_INDICATION_OUTGOING_TRACK;
+    PVEventType eventType = (aDir == INCOMING) ? PVT_INDICATION_INCOMING_TRACK : PVT_INDICATION_OUTGOING_TRACK;
     PVUuid puuid = PV2WayTrackInfoInterfaceUUID;
     PV2WayTrackInfoInterface* pTrackInfo = OSCL_NEW(PV2WayTrackInfoImpl,
-                                           (aAppFormatType, aFormatSpecificInfo, aFormatSpecificInfoLen, aEventType, puuid));
-    PVAsyncInformationalEvent infoEvent(aEventType, NULL,
+                                           (appFormatType, aFormatSpecificInfo, aFormatSpecificInfoLen, eventType, puuid));
+    PVAsyncInformationalEvent infoEvent(eventType, NULL,
                                         OSCL_STATIC_CAST(PVInterface*, pTrackInfo), NULL,
-                                        aEvent->localBuffer, aEvent->localBufferSize);
+                                        event->localBuffer, event->localBufferSize);
     if (iInfoEventObserver != NULL)
     {
         iInfoEventObserver->HandleInformationalEvent(infoEvent);
@@ -4341,7 +4417,13 @@ void CPV324m2Way::OutgoingChannelEstablished(TPVChannelId aId,
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::OutgoingChannelEstablished id=%d, codec=%d, fsi=%x, fsi_len=%d",
                      aId, aCodec, aFormatSpecificInfo, aFormatSpecificInfoLen));
-    EstablishChannel(OUTGOING, aId, aCodec, aFormatSpecificInfo, aFormatSpecificInfoLen);
+    TPV2WayCmdInfo* nodeEvent = GetCmdInfoL();
+    nodeEvent->type = PVT_ESTABLISH_CHANNEL;
+    PV2WayChannelData* pChannelData = OSCL_NEW(PV2WayChannelData, (OUTGOING,
+                                      aId, aCodec, aFormatSpecificInfo, aFormatSpecificInfoLen));
+    nodeEvent->contextData = pChannelData;
+    Dispatch(nodeEvent);
+
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::OutgoingChannelEstablished - done\n"));
 }
@@ -4354,8 +4436,13 @@ TPVStatusCode CPV324m2Way::IncomingChannel(TPVChannelId aId,
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::IncomingChannel channel id=%d, codec %d\n",
                      aId, aCodec));
-    StartTscClock();
-    return EstablishChannel(INCOMING, aId, aCodec, aFormatSpecificInfo, aFormatSpecificInfoLen);
+    TPV2WayCmdInfo* nodeEvent = GetCmdInfoL();
+    nodeEvent->type = PVT_ESTABLISH_CHANNEL;
+    PV2WayChannelData* pChannelData = OSCL_NEW(PV2WayChannelData, (INCOMING,
+                                      aId, aCodec, aFormatSpecificInfo, aFormatSpecificInfoLen));
+    nodeEvent->contextData = pChannelData;
+    Dispatch(nodeEvent);
+    return PVMFSuccess;
 }
 
 bool CPV324m2Way::GetEventInfo(TPV2WayEventInfo*& event)
@@ -4371,49 +4458,66 @@ bool CPV324m2Way::GetEventInfo(TPV2WayEventInfo*& event)
     return true;
 }
 
-void CPV324m2Way::ChannelClosed(TPVDirection direction,
-                                TPVChannelId id,
-                                PVCodecType_t codec,
+void CPV324m2Way::ChannelClosed(TPVDirection aDirection,
+                                TPVChannelId aId,
+                                PVCodecType_t aCodec,
                                 PVMFStatus status)
 {
     OSCL_UNUSED_ARG(status);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::ChannelClosed id %d, codec %d, direction %d\n",
-                     id, codec, direction));
-    PV2WayMediaType media_type = ::GetMediaType(codec);
+                     aId, aCodec, aDirection));
+    TPV2WayCmdInfo* nodeEvent = GetCmdInfoL();
+    nodeEvent->type = PVT_CHANNEL_CLOSED;
+    PV2WayChannelData* pChannelData = OSCL_NEW(PV2WayChannelData, (aDirection,
+                                      aId, aCodec, NULL, 0));
+    nodeEvent->contextData = pChannelData;
+    Dispatch(nodeEvent);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::ChannelClosed - done\n"));
+}
+
+void CPV324m2Way::FinishChannelClosed(TPVDirection aDirection,
+                                      TPVChannelId aId,
+                                      PVCodecType_t aCodec)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "CPV324m2Way::FinishChannelClosed id %d, codec %d, direction %d\n",
+                     aId, aCodec, aDirection));
+    PV2WayMediaType media_type = ::GetMediaType(aCodec);
     TPV2WayEventInfo* event = NULL;
     bool track_closed = false;
     // Send the closing track indication
     if (!GetEventInfo(event))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::ChannelClosed unable to allocate memory\n"));
+                        (0, "CPV324m2Way::FinishChannelClosed unable to allocate memory\n"));
         return;
     }
 
     event->type = PVT_INDICATION_CLOSING_TRACK;
     event->localBufferSize = 8;
-    event->localBuffer[0] = (uint8)direction;
+    event->localBuffer[0] = (uint8)aDirection;
     // bytes 1,2,3 are unused
-    *((TPVChannelId*)(event->localBuffer + 4)) = id;
+    *((TPVChannelId*)(event->localBuffer + 4)) = aId;
     Dispatch(event);
 
     switch (media_type)
     {
         case PV_AUDIO:
-            switch (direction)
+            switch (aDirection)
             {
                 case INCOMING:
                     if (iAudioDecDatapath)
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                                        (0, "CPV324m2Way::ChannelClosed audio dec path state %d, id %d\n",
+                                        (0, "CPV324m2Way::FinishChannelClosed audio dec path state %d, id %d\n",
                                          iAudioDecDatapath->GetState(), iAudioDecDatapath->GetChannelId()));
                         if (iAudioDecDatapath->GetChannelId() == CHANNEL_ID_UNKNOWN)
                         {
                             track_closed = true;
                         }
-                        else if (id == iAudioDecDatapath->GetChannelId())
+                        else if (aId == iAudioDecDatapath->GetChannelId())
                         {
                             switch (iAudioDecDatapath->GetState())
                             {
@@ -4430,8 +4534,8 @@ void CPV324m2Way::ChannelClosed(TPVDirection direction,
                         else
                         {
                             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                                            (0, "CPV324m2Way::ChannelClosed ERROR Channel id mismatch id=%d, datapath id=%d\n",
-                                             id, iAudioDecDatapath->GetChannelId()));
+                                            (0, "CPV324m2Way::FinishChannelClosed ERROR Channel id mismatch id=%d, datapath id=%d\n",
+                                             aId, iAudioDecDatapath->GetChannelId()));
                         }
                     }
                     break;
@@ -4440,13 +4544,13 @@ void CPV324m2Way::ChannelClosed(TPVDirection direction,
                     if (iAudioEncDatapath)
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                                        (0, "CPV324m2Way::ChannelClosed audio enc path state %d, id %d\n",
+                                        (0, "CPV324m2Way::FinishChannelClosed audio enc path state %d, id %d\n",
                                          iAudioEncDatapath->GetState(), iAudioEncDatapath->GetChannelId()));
                         if (iAudioEncDatapath->GetChannelId() == CHANNEL_ID_UNKNOWN)
                         {
                             track_closed = true;
                         }
-                        else if (id == iAudioEncDatapath->GetChannelId())
+                        else if (aId == iAudioEncDatapath->GetChannelId())
                         {
                             switch (iAudioEncDatapath->GetState())
                             {
@@ -4463,34 +4567,34 @@ void CPV324m2Way::ChannelClosed(TPVDirection direction,
                         else
                         {
                             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                                            (0, "CPV324m2Way::ChannelClosed ERROR Channel id mismatch id=%d, datapath id=%d\n",
-                                             id, iAudioEncDatapath->GetChannelId()));
+                                            (0, "CPV324m2Way::FinishChannelClosed ERROR Channel id mismatch id=%d, datapath id=%d\n",
+                                             aId, iAudioEncDatapath->GetChannelId()));
                         }
                     }
                     break;
 
                 default:
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "CPV324m2Way::ChannelClosed unknown audio direction %d\n",
-                                     direction));
+                                    (0, "CPV324m2Way::FinishChannelClosed unknown audio direction %d\n",
+                                     aDirection));
                     break;
             }
             break;
         case PV_VIDEO:
-            switch (direction)
+            switch (aDirection)
             {
                 case INCOMING:
                     if (iVideoDecDatapath)
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                                        (0, "CPV324m2Way::ChannelClosed video dec path state %d, id %d\n",
+                                        (0, "CPV324m2Way::FinishChannelClosed video dec path state %d, id %d\n",
                                          iVideoDecDatapath->GetState(),
                                          iVideoDecDatapath->GetChannelId()));
                         if (iVideoDecDatapath->GetChannelId() == CHANNEL_ID_UNKNOWN)
                         {
                             track_closed = true;
                         }
-                        else if (id == iVideoDecDatapath->GetChannelId())
+                        else if (aId == iVideoDecDatapath->GetChannelId())
                         {
                             switch (iVideoDecDatapath->GetState())
                             {
@@ -4507,8 +4611,8 @@ void CPV324m2Way::ChannelClosed(TPVDirection direction,
                         else
                         {
                             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                                            (0, "CPV324m2Way::ChannelClosed ERROR Channel id mismatch id=%d, datapath id=%d\n",
-                                             id, iVideoDecDatapath->GetChannelId()));
+                                            (0, "CPV324m2Way::FinishChannelClosed ERROR Channel id mismatch id=%d, datapath id=%d\n",
+                                             aId, iVideoDecDatapath->GetChannelId()));
                         }
                     }
                     break;
@@ -4517,14 +4621,14 @@ void CPV324m2Way::ChannelClosed(TPVDirection direction,
                     if (iVideoEncDatapath)
                     {
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                                        (0, "CPV324m2Way::ChannelClosed video enc path state %d, id %d\n",
+                                        (0, "CPV324m2Way::FinishChannelClosed video enc path state %d, id %d\n",
                                          iVideoEncDatapath->GetState(),
                                          iVideoEncDatapath->GetChannelId()));
                         if (iVideoEncDatapath->GetChannelId() == CHANNEL_ID_UNKNOWN)
                         {
                             track_closed = true;
                         }
-                        else if (id == iVideoEncDatapath->GetChannelId())
+                        else if (aId == iVideoEncDatapath->GetChannelId())
                         {
                             switch (iVideoEncDatapath->GetState())
                             {
@@ -4541,22 +4645,22 @@ void CPV324m2Way::ChannelClosed(TPVDirection direction,
                         else
                         {
                             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE,
-                                            (0, "CPV324m2Way::ChannelClosed ERROR Channel id mismatch id=%d, datapath id=%d\n",
-                                             id, iVideoEncDatapath->GetChannelId()));
+                                            (0, "CPV324m2Way::FinishChannelClosed ERROR Channel id mismatch id=%d, datapath id=%d\n",
+                                             aId, iVideoEncDatapath->GetChannelId()));
                         }
                     }
                     break;
 
                 default:
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "CPV324m2Way::ChannelClosed unknown video direction %d\n",
-                                     direction));
+                                    (0, "CPV324m2Way::FinishChannelClosed unknown video direction %d\n",
+                                     aDirection));
                     break;
             }
             break;
         default:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "CPV324m2Way::ChannelClosed unknown media type %d\n",
+                            (0, "CPV324m2Way::FinishChannelClosed unknown media type %d\n",
                              media_type));
             break;
     }
@@ -4567,17 +4671,17 @@ void CPV324m2Way::ChannelClosed(TPVDirection direction,
     if (!GetEventInfo(event))
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "CPV324m2Way::ChannelClosed unable to allocate memory\n"));
+                        (0, "CPV324m2Way::FinishChannelClosed unable to allocate memory\n"));
         return;
     }
     event->type = PVT_INDICATION_CLOSE_TRACK;
     event->localBufferSize = 8;
-    event->localBuffer[0] = (uint8)direction;
+    event->localBuffer[0] = (uint8)aDirection;
     // bytes 1,2,3 are unused
-    *((TPVChannelId*)(event->localBuffer + 4)) = id;
+    *((TPVChannelId*)(event->localBuffer + 4)) = aId;
     Dispatch(event);
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "CPV324m2Way::ChannelClosed - done\n"));
+                    (0, "CPV324m2Way::FinishChannelClosed - done\n"));
 }
 
 void CPV324m2Way::RequestFrameUpdate(PVMFPortInterface* aPort)
@@ -4586,7 +4690,10 @@ void CPV324m2Way::RequestFrameUpdate(PVMFPortInterface* aPort)
                     (0, "CPV324m2Way::RequestFrameUpdate\n"));
     if (iVideoEncDatapath)
     {
-        GenerateIFrame(aPort);
+        TPV2WayCmdInfo* nodeEvent = GetCmdInfoL();
+        nodeEvent->type = PVT_REQUEST_FRAME_UPDATE;
+        nodeEvent->contextData = aPort;
+        Dispatch(nodeEvent);
     }
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "CPV324m2Way::RequestFrameUpdate - done\n"));

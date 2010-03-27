@@ -856,6 +856,8 @@ void CPV2WayProxyAdapter::ProcessMessageL(CPVCmnInterfaceCmdMessage *aMsg)
             OSCL_TRY(error, iterminalEngine->CancelAllCommands(
                          aMsg));
             break;
+        default:
+            break;
     }
 
     if (error)

@@ -1407,7 +1407,7 @@ H223IncomingChannel::~H223IncomingChannel()
 void H223IncomingChannel::Init()
 {
     OsclSharedPtr<PVMFMediaDataImpl> tempImpl;
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::Init"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H223IncomingChannel(%d)::Init", lcn));
     H223LogicalChannel::Init();
 
     int bitrate = (GetBitrate() > 0) ? GetBitrate() : DEF_CHANNEL_BITRATE;
