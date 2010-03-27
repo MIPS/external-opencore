@@ -626,15 +626,12 @@ Int get_prog_config(
          * the one official program configuration.
          */
 
-        if (pVars->prog_config.file_is_adts == TRUE)
-        {
-            /*
-             *  Keep adts setting in case of a redundant PCE (only applicable when
-             *  using aac-lib own adts parser)
-             */
-            pScratchPCE->file_is_adts      = pVars->prog_config.file_is_adts;
-            pScratchPCE->headerless_frames = pVars->prog_config.headerless_frames;
-        }
+        /*
+         *  Keep adts setting in case of a redundant PCE (only applicable when
+         *  using aac-lib own adts parser)
+         */
+        pScratchPCE->file_is_adts = pVars->prog_config.file_is_adts;
+        pScratchPCE->headerless_frames = pVars->prog_config.headerless_frames;
 
         pv_memcpy(&pVars->prog_config,
                   pScratchPCE,
@@ -672,8 +669,18 @@ Int get_prog_config(
                                  pVars->prog_config.front.ele_is_cpe[tag],
                                  pVars->winmap,
                                  pVars->SFBWidth128);
-        }
 
+            if (pVars->mc_info.upsamplingFactor == 2)
+            {
+                /*
+                 *  prog_config.sampling_rate_idx corresponds to the aac base layer,
+                 *  if the upsampling factor is active, then the output frequency needs
+                 *  to be adjusted accordingly
+                 */
+                pVars->prog_config.sampling_rate_idx = -3;
+            }
+
+        }
 
 
     } /* end if (tag == pVars->current_program) */
