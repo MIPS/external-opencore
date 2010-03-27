@@ -5505,7 +5505,7 @@ uint32 Mpeg4File::GetNumMetadataValues(PVMFMetadataList& aKeyList)
                 break;
             }
             uint32 startindex = 0;
-            uint32 endindex = 0;
+            uint32 endindex = numtracks - 1;
             // Check if the index parameter is present
             const char* indexstr = oscl_strstr(aKeyList[lcv].get_cstr(), PVMP4METADATA_INDEX);
             if (indexstr != NULL)
@@ -5513,21 +5513,26 @@ uint32 Mpeg4File::GetNumMetadataValues(PVMFMetadataList& aKeyList)
                 // Retrieve the index values
                 GetIndexParamValues(indexstr, startindex, endindex);
             }
-            // Validate the indices - there should only be one index
-            if (startindex != endindex || startindex > (uint32)(numtracks) || endindex > (uint32)(numtracks))
+            // Validate the indices
+            if (startindex > endindex || startindex >= (uint32)(numtracks) || endindex >= (uint32)(numtracks))
             {
                 break;
             }
-            //get track id from index
-            uint32 trackID = startindex + 1;
 
-            OSCL_HeapString<OsclMemAllocator> trackMIMEType;
-            getTrackMIMEType(trackID, trackMIMEType);
-
-            if (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_H2632000, oscl_strlen(PVMF_MIME_H2632000)) == 0)
+            uint32 iIdList[16];
+            getTrackIDList(iIdList, (numtracks < 16) ? numtracks : 16);
+            for (uint32 i = startindex; i <= endindex; ++i)
             {
-                // Increment the counter for the number of values found so far
-                ++numvalentries;
+                uint32 trackID = iIdList[i];
+
+                OSCL_HeapString<OsclMemAllocator> trackMIMEType;
+                getTrackMIMEType(trackID, trackMIMEType);
+
+                if (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_H2632000, oscl_strlen(PVMF_MIME_H2632000)) == 0)
+                {
+                    // Increment the counter for the number of values found so far
+                    ++numvalentries;
+                }
             }
         }
         else if (oscl_strstr(aKeyList[lcv].get_cstr(), PVMP4METADATA_TRACKINFO_FRAME_RATE_KEY) != NULL)
@@ -5541,7 +5546,7 @@ uint32 Mpeg4File::GetNumMetadataValues(PVMFMetadataList& aKeyList)
                 break;
             }
             uint32 startindex = 0;
-            uint32 endindex = 0;
+            uint32 endindex = numtracks - 1;
             // Check if the index parameter is present
             const char* indexstr = oscl_strstr(aKeyList[lcv].get_cstr(), PVMP4METADATA_INDEX);
             if (indexstr != NULL)
@@ -5549,26 +5554,30 @@ uint32 Mpeg4File::GetNumMetadataValues(PVMFMetadataList& aKeyList)
                 // Retrieve the index values
                 GetIndexParamValues(indexstr, startindex, endindex);
             }
-            // Validate the indices - there should only be one index
-            if (startindex != endindex || startindex > (uint32)(numtracks) || endindex > (uint32)(numtracks))
+            // Validate the indices
+            if (startindex > endindex || startindex >= (uint32)(numtracks) || endindex >= (uint32)(numtracks))
             {
                 break;
             }
-            //get track id from index
+
             uint32 iIdList[16];
             getTrackIDList(iIdList, (numtracks < 16) ? numtracks : 16);
-            uint32 trackID = iIdList[startindex];
-
-            OSCL_HeapString<OsclMemAllocator> trackMIMEType;
-
-            getTrackMIMEType(trackID, trackMIMEType);
-
-            if ((oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_M4V, oscl_strlen(PVMF_MIME_M4V)) == 0) ||
-                    (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_H2632000, oscl_strlen(PVMF_MIME_H2632000)) == 0) ||
-                    (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_H264_VIDEO_MP4, oscl_strlen(PVMF_MIME_H264_VIDEO_MP4)) == 0))
+            // Go through all tracks
+            for (uint32 i = startindex; i <= endindex; i++)
             {
-                // Increment the counter for the number of values found so far
-                ++numvalentries;
+                uint32 trackID = iIdList[i];
+
+                OSCL_HeapString<OsclMemAllocator> trackMIMEType;
+
+                getTrackMIMEType(trackID, trackMIMEType);
+
+                if ((oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_M4V, oscl_strlen(PVMF_MIME_M4V)) == 0) ||
+                        (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_H2632000, oscl_strlen(PVMF_MIME_H2632000)) == 0) ||
+                        (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_H264_VIDEO_MP4, oscl_strlen(PVMF_MIME_H264_VIDEO_MP4)) == 0))
+                {
+                    // Increment the counter for the number of values found so far
+                    ++numvalentries;
+                }
             }
         }
         else if ((oscl_strstr(aKeyList[lcv].get_cstr(), PVMP4METADATA_TRACKINFO_TYPE_KEY) != NULL) ||
@@ -7504,7 +7513,7 @@ PVMFStatus Mpeg4File::GetMetadataValues(PVMFMetadataList& aKeyList, Oscl_Vector<
                 break;
             }
             uint32 startindex = 0;
-            uint32 endindex = 0;
+            uint32 endindex = numtracks - 1;
             // Check if the index parameter is present
             const char* indexstr = oscl_strstr(aKeyList[lcv].get_cstr(), PVMP4METADATA_INDEX);
             if (indexstr != NULL)
@@ -7512,39 +7521,44 @@ PVMFStatus Mpeg4File::GetMetadataValues(PVMFMetadataList& aKeyList, Oscl_Vector<
                 // Retrieve the index values
                 GetIndexParamValues(indexstr, startindex, endindex);
             }
-            // Validate the indices - there should only be one index
-            if (startindex != endindex || startindex > (uint32)(numtracks) || endindex > (uint32)(numtracks))
+            // Validate the indices
+            if (startindex > endindex || startindex >= (uint32)(numtracks) || endindex >= (uint32)(numtracks))
             {
                 break;
             }
-            //get track id from index
-            uint32 trackID = startindex + 1;
+
             uint32 iProfile = 0;
-
             OSCL_HeapString<OsclMemAllocator> trackMIMEType;
-
-            getTrackMIMEType(trackID, trackMIMEType);
-
-            if (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_H2632000, oscl_strlen(PVMF_MIME_H2632000)) == 0)
+            // Go through all tracks
+            uint32 iIdList[16];
+            getTrackIDList(iIdList, (numtracks < 16) ? numtracks : 16);
+            // Go through all tracks
+            for (uint32 i = startindex; i <= endindex; i++)
             {
-                H263DecoderSpecificInfo *ptr = (H263DecoderSpecificInfo *)getTrackDecoderSpecificInfoAtSDI(trackID, 0);
-                iProfile = ptr->getCodecProfile();
-                // Increment the counter for the number of values found so far
-                ++numvalentries;
-                // Create a value entry if past the starting index
-                if (numvalentries > aStartingValueIndex)
-                {
-                    char indexparam[16];
-                    oscl_snprintf(indexparam, 16, ";%s%d", PVMP4METADATA_INDEX, startindex);
-                    indexparam[15] = '\0';
+                uint32 trackID = iIdList[i];
+                getTrackMIMEType(trackID, trackMIMEType);
 
-                    PVMFStatus retval = PVMFCreateKVPUtils::CreateKVPForUInt32Value(KeyVal,
-                                        PVMP4METADATA_TRACKINFO_VIDEO_PROFILE_KEY,
-                                        iProfile,
-                                        indexparam);
-                    if (retval != PVMFSuccess && retval != PVMFErrArgument)
+                if (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_H2632000, oscl_strlen(PVMF_MIME_H2632000)) == 0)
+                {
+                    H263DecoderSpecificInfo *ptr = (H263DecoderSpecificInfo *)getTrackDecoderSpecificInfoAtSDI(trackID, 0);
+                    iProfile = ptr->getCodecProfile();
+                    // Increment the counter for the number of values found so far
+                    ++numvalentries;
+                    // Create a value entry if past the starting index
+                    if (numvalentries > aStartingValueIndex)
                     {
-                        break;
+                        char indexparam[16];
+                        oscl_snprintf(indexparam, 16, ";%s%d", PVMP4METADATA_INDEX, startindex);
+                        indexparam[15] = '\0';
+
+                        PVMFStatus retval = PVMFCreateKVPUtils::CreateKVPForUInt32Value(KeyVal,
+                                            PVMP4METADATA_TRACKINFO_VIDEO_PROFILE_KEY,
+                                            iProfile,
+                                            indexparam);
+                        if (retval != PVMFSuccess && retval != PVMFErrArgument)
+                        {
+                            break;
+                        }
                     }
                 }
             }
@@ -7560,7 +7574,7 @@ PVMFStatus Mpeg4File::GetMetadataValues(PVMFMetadataList& aKeyList, Oscl_Vector<
                 break;
             }
             uint32 startindex = 0;
-            uint32 endindex = 0;
+            uint32 endindex = numtracks - 1;
             // Check if the index parameter is present
             const char* indexstr = oscl_strstr(aKeyList[lcv].get_cstr(), PVMP4METADATA_INDEX);
             if (indexstr != NULL)
@@ -7568,38 +7582,43 @@ PVMFStatus Mpeg4File::GetMetadataValues(PVMFMetadataList& aKeyList, Oscl_Vector<
                 // Retrieve the index values
                 GetIndexParamValues(indexstr, startindex, endindex);
             }
-            // Validate the indices - there should only be one index
-            if (startindex != endindex || startindex > (uint32)(numtracks) || endindex > (uint32)(numtracks))
+            // Validate the indices
+            if (startindex > endindex || startindex >= (uint32)(numtracks) || endindex >= (uint32)(numtracks))
             {
                 break;
             }
-            //get track id from index
-            uint32 trackID = startindex + 1;
+
             uint32 iLevel = 0;
-
             OSCL_HeapString<OsclMemAllocator> trackMIMEType;
-
-            getTrackMIMEType(trackID, trackMIMEType);
-
-            if (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_H2632000, oscl_strlen(PVMF_MIME_H2632000)) == 0)
+            // Go through all tracks
+            uint32 iIdList[16];
+            getTrackIDList(iIdList, (numtracks < 16) ? numtracks : 16);
+            for (uint32 i = startindex; i <= endindex; i++)
             {
-                H263DecoderSpecificInfo *ptr = (H263DecoderSpecificInfo *)getTrackDecoderSpecificInfoAtSDI(trackID, 0);
-                iLevel = ptr->getCodecLevel();
-                // Increment the counter for the number of values found so far
-                ++numvalentries;
-                // Create a value entry if past the starting index
-                if (numvalentries > aStartingValueIndex)
+                uint32 trackID = iIdList[i];
+
+                getTrackMIMEType(trackID, trackMIMEType);
+
+                if (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_H2632000, oscl_strlen(PVMF_MIME_H2632000)) == 0)
                 {
-                    char indexparam[16];
-                    oscl_snprintf(indexparam, 16, ";%s%d", PVMP4METADATA_INDEX, startindex);
-                    indexparam[15] = '\0';
-                    PVMFStatus retval = PVMFCreateKVPUtils::CreateKVPForUInt32Value(KeyVal,
-                                        PVMP4METADATA_TRACKINFO_VIDEO_LEVEL_KEY,
-                                        iLevel,
-                                        indexparam);
-                    if (retval != PVMFSuccess && retval != PVMFErrArgument)
+                    H263DecoderSpecificInfo *ptr = (H263DecoderSpecificInfo *)getTrackDecoderSpecificInfoAtSDI(trackID, 0);
+                    iLevel = ptr->getCodecLevel();
+                    // Increment the counter for the number of values found so far
+                    ++numvalentries;
+                    // Create a value entry if past the starting index
+                    if (numvalentries > aStartingValueIndex)
                     {
-                        break;
+                        char indexparam[16];
+                        oscl_snprintf(indexparam, 16, ";%s%d", PVMP4METADATA_INDEX, startindex);
+                        indexparam[15] = '\0';
+                        PVMFStatus retval = PVMFCreateKVPUtils::CreateKVPForUInt32Value(KeyVal,
+                                            PVMP4METADATA_TRACKINFO_VIDEO_LEVEL_KEY,
+                                            iLevel,
+                                            indexparam);
+                        if (retval != PVMFSuccess && retval != PVMFErrArgument)
+                        {
+                            break;
+                        }
                     }
                 }
             }
@@ -7615,7 +7634,7 @@ PVMFStatus Mpeg4File::GetMetadataValues(PVMFMetadataList& aKeyList, Oscl_Vector<
                 break;
             }
             uint32 startindex = 0;
-            uint32 endindex = 0;
+            uint32 endindex = (uint32)numtracks - 1;
             // Check if the index parameter is present
             const char* indexstr = oscl_strstr(aKeyList[lcv].get_cstr(), PVMP4METADATA_INDEX);
             if (indexstr != NULL)
@@ -7623,76 +7642,76 @@ PVMFStatus Mpeg4File::GetMetadataValues(PVMFMetadataList& aKeyList, Oscl_Vector<
                 // Retrieve the index values
                 GetIndexParamValues(indexstr, startindex, endindex);
             }
-            // Validate the indices - there should only be one index
-            if (startindex != endindex || startindex > (uint32)(numtracks) || endindex > (uint32)(numtracks))
+            // Validate the indices
+            if (startindex > endindex || startindex >= (uint32)(numtracks) || endindex >= (uint32)(numtracks))
             {
                 break;
             }
 
-            //get track id from index
-            //uint32 trackID = startindex+1;
-
             uint32 iIdList[16];
             getTrackIDList(iIdList, numtracks);
-            uint32 trackID = iIdList[startindex];
-
-            OSCL_HeapString<OsclMemAllocator> trackMIMEType;
-
-            getTrackMIMEType(trackID, trackMIMEType);
-
-            if ((oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_H2632000, oscl_strlen(PVMF_MIME_H2632000)) == 0) ||
-                    (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_H264_VIDEO_MP4, oscl_strlen(PVMF_MIME_H264_VIDEO_MP4)) == 0) ||
-                    (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_M4V, oscl_strlen(PVMF_MIME_M4V)) == 0))
+            for (uint32 i = startindex; i <= endindex; i++)
             {
-                uint64 trackduration  = getTrackMediaDuration(trackID);
-                uint32 samplecount = getSampleCountInTrack(trackID);
+                uint32 trackID = iIdList[i];
 
-                MediaClockConverter mcc(getTrackMediaTimescale(trackID));
-                mcc.set_clock(trackduration, 0);
-                uint32 TrackDurationInSec = mcc.get_converted_ts(1);
-                uint32 frame_rate = 0;
+                OSCL_HeapString<OsclMemAllocator> trackMIMEType;
 
-                uint32 OverflowThreshold = PVMF_MP4_MAX_UINT32 / MILLISECOND_TIMESCALE;
-                // If overflow could not happen, we calculate it in millisecond
-                if (TrackDurationInSec < OverflowThreshold && samplecount < OverflowThreshold)
-                {
-                    uint32 TrackDurationInMilliSec = mcc.get_converted_ts(MILLISECOND_TIMESCALE);
-                    if (TrackDurationInMilliSec > 0)
-                    {
-                        frame_rate = samplecount * MILLISECOND_TIMESCALE / TrackDurationInMilliSec;
-                    }
-                    else
-                    {
-                        continue;
-                    }
-                }
-                else // if overflow could happen when calculate in millisecond, we calculate it in second
-                {
-                    if (TrackDurationInSec > 0)
-                    {
-                        frame_rate = samplecount / TrackDurationInSec;
-                    }
-                    else
-                    {
-                        continue;
-                    }
-                }
+                getTrackMIMEType(trackID, trackMIMEType);
 
-                // Increment the counter for the number of values found so far
-                ++numvalentries;
-                // Create a value entry if past the starting index
-                if (numvalentries > aStartingValueIndex)
+                if ((oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_H2632000, oscl_strlen(PVMF_MIME_H2632000)) == 0) ||
+                        (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_H264_VIDEO_MP4, oscl_strlen(PVMF_MIME_H264_VIDEO_MP4)) == 0) ||
+                        (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_M4V, oscl_strlen(PVMF_MIME_M4V)) == 0))
                 {
-                    char indexparam[16];
-                    oscl_snprintf(indexparam, 16, ";%s%d", PVMP4METADATA_INDEX, startindex);
-                    indexparam[15] = '\0';
-                    PVMFStatus retval = PVMFCreateKVPUtils::CreateKVPForUInt32Value(KeyVal,
-                                        PVMP4METADATA_TRACKINFO_FRAME_RATE_KEY,
-                                        frame_rate,
-                                        indexparam);
-                    if (retval != PVMFSuccess && retval != PVMFErrArgument)
+                    uint64 trackduration  = getTrackMediaDuration(trackID);
+                    uint32 samplecount = getSampleCountInTrack(trackID);
+
+                    MediaClockConverter mcc(getTrackMediaTimescale(trackID));
+                    mcc.set_clock(trackduration, 0);
+                    uint32 TrackDurationInSec = mcc.get_converted_ts(1);
+                    uint32 frame_rate = 0;
+
+                    uint32 OverflowThreshold = PVMF_MP4_MAX_UINT32 / MILLISECOND_TIMESCALE;
+                    // If overflow could not happen, we calculate it in millisecond
+                    if (TrackDurationInSec < OverflowThreshold && samplecount < OverflowThreshold)
                     {
-                        break;
+                        uint32 TrackDurationInMilliSec = mcc.get_converted_ts(MILLISECOND_TIMESCALE);
+                        if (TrackDurationInMilliSec > 0)
+                        {
+                            frame_rate = samplecount * MILLISECOND_TIMESCALE / TrackDurationInMilliSec;
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+                    else // if overflow could happen when calculate in millisecond, we calculate it in second
+                    {
+                        if (TrackDurationInSec > 0)
+                        {
+                            frame_rate = samplecount / TrackDurationInSec;
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+
+                    // Increment the counter for the number of values found so far
+                    ++numvalentries;
+                    // Create a value entry if past the starting index
+                    if (numvalentries > aStartingValueIndex)
+                    {
+                        char indexparam[16];
+                        oscl_snprintf(indexparam, 16, ";%s%d", PVMP4METADATA_INDEX, i);
+                        indexparam[15] = '\0';
+                        PVMFStatus retval = PVMFCreateKVPUtils::CreateKVPForUInt32Value(KeyVal,
+                                            PVMP4METADATA_TRACKINFO_FRAME_RATE_KEY,
+                                            frame_rate,
+                                            indexparam);
+                        if (retval != PVMFSuccess && retval != PVMFErrArgument)
+                        {
+                            break;
+                        }
                     }
                 }
             }
