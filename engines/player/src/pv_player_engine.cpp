@@ -4113,7 +4113,7 @@ PVMFStatus PVPlayerEngine::DoCancelPendingNodeDatapathCommand()
     // Determine where the pending commands were issued to and then cancel them
     int32 leavecode = 0;
     iNumberCancelCmdPending = 0;
-    for (uint32 i = 0; i < iCurrentContextList.size(); ++i)
+    for (int32 i = (OSCL_STATIC_CAST(int32, iCurrentContextList.size()) - 1); i >= 0; i--)
     {
         if (iCurrentContextList[i]->iNode)
         {
