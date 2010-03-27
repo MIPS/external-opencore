@@ -2730,7 +2730,7 @@ PVMFStatus PVMFMP4FFParserNode::SetPlaybackStartupTime(uint32& aTargetNPT,
     {
         // Convert to milliseconds
         MediaClockConverter mcc(timescale);
-        mcc.update_clock(duration);
+        mcc.set_clock(duration64, 0);
         duration = mcc.get_converted_ts(1000);
     }
     if ((aTargetNPT >= duration) && (PVMF_DATA_SOURCE_DIRECTION_REVERSE != iPlayBackDirection))
