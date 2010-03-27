@@ -54,13 +54,13 @@
 00060 <span class="comment">//Default for OSCL_HAS_GLOBAL_NEW_DELETE in case it is *not* defined</span>
 00061 <span class="comment">//in the osclconfig_memory.h</span>
 00062 <span class="preprocessor">#ifndef OSCL_HAS_GLOBAL_NEW_DELETE</span>
-00063 <span class="preprocessor"></span><span class="preprocessor">#ifdef NDEBUG</span>
+00063 <span class="preprocessor"></span><span class="preprocessor">#if (OSCL_RELEASE_BUILD)</span>
 00064 <span class="preprocessor"></span><span class="comment">//Release Mode - No definition for global new and delete.</span>
 00065 <span class="preprocessor">#define OSCL_HAS_GLOBAL_NEW_DELETE 0</span>
 00066 <span class="preprocessor"></span><span class="preprocessor">#else</span>
 00067 <span class="preprocessor"></span><span class="comment">//Debug Mode - Define global new and delete.</span>
 <a name="l00068"></a><a class="code" href="group__osclmemory.html#a34">00068</a> <span class="preprocessor">#define OSCL_HAS_GLOBAL_NEW_DELETE 1</span>
-00069 <span class="preprocessor"></span><span class="preprocessor">#endif //NDEBUG</span>
+00069 <span class="preprocessor"></span><span class="preprocessor">#endif //OSCL_RELEASE_BUILD</span>
 00070 <span class="preprocessor"></span><span class="preprocessor">#endif //OSCL_HAS_GLOBAL_NEW_DELETE</span>
 00071 <span class="preprocessor"></span>
 <a name="l00072"></a><a class="code" href="classOsclMem.html">00072</a> <span class="keyword">class </span><a class="code" href="classOsclMem.html">OsclMem</a>
@@ -659,7 +659,7 @@
 01037 
 01038 
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.505.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.506.1.1 </small>
 </small></address>
 </body>
 </html>

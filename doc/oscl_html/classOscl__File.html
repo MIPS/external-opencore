@@ -433,7 +433,7 @@ The File EOF(end of file) operation returns a nonzero value after the first read
     <td>
 
 <p>
-The File Flush operation On an output stream OSCL_FileFlush causes any buffered but unwritten data to be written to the file.
+The File Flush operation On an output stream OSCL_FileFlush causes any buffered but unwritten data to be written to the file. Flush is meant for writable files. The behavior when calling it on read-only files is OS-dependent.
 <p>
 <dl compact><dt><b>Returns: </b></dt><dd>
 returns 0 if successful, and a non-zero value otherwise </dl>    </td>
@@ -1290,7 +1290,7 @@ The number of elements written </dl>    </td>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="oscl__file__io_8h-source.html">oscl_file_io.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.505.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.506.1.1 </small>
 </small></address>
 </body>
 </html>

@@ -75,7 +75,7 @@
 00144 
 00148         <a class="code" href="oscl__mutex_8h.html#a0">OsclNoYieldMutex</a>()
 00149         {
-00150 <span class="preprocessor">#ifndef NDEBUG</span>
+00150 <span class="preprocessor">#if (!OSCL_RELEASE_BUILD)</span>
 00151 <span class="preprocessor"></span>            iNumLock = 0;
 00152             bCreated = <span class="keyword">false</span>;
 00153 <span class="preprocessor">#endif</span>
@@ -86,7 +86,7 @@
 00161 
 00170         <a class="code" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a> <a class="code" href="classOsclMutex.html#a2">Create</a>(<span class="keywordtype">void</span>)
 00171         {
-00172 <span class="preprocessor">#ifndef NDEBUG</span>
+00172 <span class="preprocessor">#if (!OSCL_RELEASE_BUILD)</span>
 00173 <span class="preprocessor"></span>            <span class="keywordflow">if</span> (bCreated)
 00174                 <span class="keywordflow">return</span> <a class="code" href="classOsclProcStatus.html#s35s21">OsclProcStatus::INVALID_OPERATION_ERROR</a>;
 00175             bCreated = <span class="keyword">true</span>;
@@ -97,7 +97,7 @@
 00180 
 00188         <span class="keywordtype">void</span> <a class="code" href="classOsclMutex.html#a3">Lock</a>()
 00189         {
-00190 <span class="preprocessor">#ifndef NDEBUG</span>
+00190 <span class="preprocessor">#if (!OSCL_RELEASE_BUILD)</span>
 00191 <span class="preprocessor"></span>            <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(bCreated);
 00192             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(iNumLock == 0);<span class="comment">//detect deadlock condition.</span>
 00193             iNumLock++;
@@ -106,7 +106,7 @@
 00196 
 00208         <a class="code" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a> <a class="code" href="classOsclMutex.html#a4">TryLock</a>()
 00209         {
-00210 <span class="preprocessor">#ifndef NDEBUG</span>
+00210 <span class="preprocessor">#if (!OSCL_RELEASE_BUILD)</span>
 00211 <span class="preprocessor"></span>            <span class="keywordflow">if</span> (!bCreated)
 00212                 <span class="keywordflow">return</span> <a class="code" href="classOsclProcStatus.html#s35s21">OsclProcStatus::INVALID_OPERATION_ERROR</a>;
 00213             <span class="keywordflow">if</span> (iNumLock)
@@ -120,7 +120,7 @@
 00221 
 00229         <span class="keywordtype">void</span> <a class="code" href="classOsclMutex.html#a5">Unlock</a>()
 00230         {
-00231 <span class="preprocessor">#ifndef NDEBUG</span>
+00231 <span class="preprocessor">#if (!OSCL_RELEASE_BUILD)</span>
 00232 <span class="preprocessor"></span>            <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(bCreated);
 00233             <a class="code" href="group__osclbase.html#a85">OSCL_ASSERT</a>(iNumLock);
 00234             <span class="keywordflow">if</span> (iNumLock &gt; 0)
@@ -131,7 +131,7 @@
 00239 
 00248         <a class="code" href="classOsclProcStatus.html#s35">OsclProcStatus::eOsclProcError</a> <a class="code" href="classOsclMutex.html#a6">Close</a>(<span class="keywordtype">void</span>)
 00249         {
-00250 <span class="preprocessor">#ifndef NDEBUG</span>
+00250 <span class="preprocessor">#if (!OSCL_RELEASE_BUILD)</span>
 00251 <span class="preprocessor"></span>            <span class="keywordflow">if</span> (!bCreated)
 00252                 <span class="keywordflow">return</span> <a class="code" href="classOsclProcStatus.html#s35s21">OsclProcStatus::INVALID_OPERATION_ERROR</a>;
 00253             bCreated = <span class="keyword">false</span>;
@@ -141,7 +141,7 @@
 00257 
 00258     <span class="keyword">private</span>:
 00259 
-00260 <span class="preprocessor">#ifndef NDEBUG</span>
+00260 <span class="preprocessor">#if (!OSCL_RELEASE_BUILD)</span>
 00261 <span class="preprocessor"></span>        uint32 iNumLock;
 00262         <span class="keywordtype">bool</span> bCreated;
 00263 <span class="preprocessor">#endif</span>
@@ -165,7 +165,7 @@
 00284 
 00285 
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.505.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.506.1.1 </small>
 </small></address>
 </body>
 </html>

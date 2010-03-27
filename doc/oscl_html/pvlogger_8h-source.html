@@ -63,9 +63,9 @@
 00109 <span class="comment">**                            + mid-level debug + low-level debug</span>
 00110 <span class="comment">*/</span>
 00111 <span class="preprocessor">#ifndef PVLOGGER_INST_LEVEL</span>
-00112 <span class="preprocessor"></span><span class="preprocessor">#if defined(NDEBUG)</span>
-00113 <span class="preprocessor"></span><span class="comment">/* Release mode-- No logging */</span>
-00114 <span class="preprocessor">#define PVLOGGER_INST_LEVEL 0</span>
+00112 <span class="preprocessor"></span><span class="preprocessor">#if (OSCL_RELEASE_BUILD)</span>
+00113 <span class="preprocessor"></span><span class="comment">/* Release mode-- Profile logging */</span>
+00114 <span class="preprocessor">#define PVLOGGER_INST_LEVEL 2</span>
 00115 <span class="preprocessor"></span><span class="preprocessor">#else</span>
 00116 <span class="preprocessor"></span><span class="comment">/* Debug mode-- Complete logging */</span>
 <a name="l00117"></a><a class="code" href="pvlogger_8h.html#a5">00117</a> <span class="preprocessor">#define PVLOGGER_INST_LEVEL 5</span>
@@ -405,7 +405,7 @@
 00706 
 00707 <span class="preprocessor">#endif // PVLOGGER_H_INCLUDED</span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.505.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.506.1.1 </small>
 </small></address>
 </body>
 </html>

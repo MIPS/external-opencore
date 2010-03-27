@@ -17,7 +17,7 @@
 00020 <span class="comment">//for debug and profiling.</span>
 00021 <span class="preprocessor">#ifndef PV_SCHED_ENABLE_AO_STATS</span>
 00022 <span class="preprocessor"></span><span class="comment">//defaults for cases where the flag is not defined in the osclconfig_proc.h</span>
-00023 <span class="preprocessor">#if defined( NDEBUG)||(OSCL_RELEASE_BUILD)</span>
+00023 <span class="preprocessor">#if (OSCL_RELEASE_BUILD)</span>
 00024 <span class="preprocessor"></span><span class="comment">//for release builds</span>
 00025 <span class="preprocessor">#define PV_SCHED_ENABLE_AO_STATS 0</span>
 00026 <span class="preprocessor"></span><span class="preprocessor">#else</span>
@@ -31,7 +31,7 @@
 00034 <span class="comment">//for debug and profiling.</span>
 00035 <span class="preprocessor">#ifndef PV_SCHED_ENABLE_LOOP_STATS</span>
 00036 <span class="preprocessor"></span><span class="comment">//defaults for cases where the flag is not defined in the osclconfig_proc.h</span>
-00037 <span class="preprocessor">#if defined( NDEBUG)||(OSCL_RELEASE_BUILD)</span>
+00037 <span class="preprocessor">#if (OSCL_RELEASE_BUILD)</span>
 00038 <span class="preprocessor"></span><span class="comment">//for release builds</span>
 00039 <span class="preprocessor">#define PV_SCHED_ENABLE_LOOP_STATS 0</span>
 00040 <span class="preprocessor"></span><span class="preprocessor">#else</span>
@@ -50,7 +50,7 @@
 00053 <span class="comment">//for debug and profiling.</span>
 00054 <span class="preprocessor">#ifndef PV_SCHED_ENABLE_PERF_LOGGING</span>
 00055 <span class="preprocessor"></span><span class="comment">//defaults for cases where the flag is not defined in the osclconfig_proc.h</span>
-00056 <span class="preprocessor">#if defined( NDEBUG)||(OSCL_RELEASE_BUILD)</span>
+00056 <span class="preprocessor">#if (OSCL_RELEASE_BUILD)</span>
 00057 <span class="preprocessor"></span><span class="comment">//for release builds</span>
 00058 <span class="preprocessor">#define PV_SCHED_ENABLE_PERF_LOGGING 0</span>
 00059 <span class="preprocessor"></span><span class="preprocessor">#else</span>
@@ -66,7 +66,7 @@
 00069 <span class="preprocessor"></span>
 00070 <span class="comment">//Enable/disable thread context checking here. Context checks are important during</span>
 00071 <span class="comment">//development but may be costly depending on the OS thread ID retrieval efficiency.</span>
-00072 <span class="preprocessor">#if defined( NDEBUG)||(OSCL_RELEASE_BUILD)</span>
+00072 <span class="preprocessor">#if (OSCL_RELEASE_BUILD)</span>
 00073 <span class="preprocessor"></span><span class="comment">//for release builds</span>
 00074 <span class="preprocessor">#define PV_SCHED_ENABLE_THREAD_CONTEXT_CHECKS 0</span>
 00075 <span class="preprocessor"></span><span class="preprocessor">#else</span>
@@ -101,7 +101,7 @@
 00104 <span class="comment">//------------------------------------</span>
 00105 <span class="preprocessor">#ifndef OSCL_PERF_SUMMARY_LOGGING</span>
 00106 <span class="preprocessor"></span><span class="comment">//defaults for cases where the flag is not defined in the osclconfig_proc.h</span>
-00107 <span class="preprocessor">#if defined( NDEBUG)||(OSCL_RELEASE_BUILD)</span>
+00107 <span class="preprocessor">#if (OSCL_RELEASE_BUILD)</span>
 00108 <span class="preprocessor"></span><span class="comment">//release builds</span>
 00109 <span class="preprocessor">#define OSCL_PERF_SUMMARY_LOGGING 0</span>
 00110 <span class="preprocessor"></span><span class="preprocessor">#else</span>
@@ -127,7 +127,7 @@
 00130 <span class="preprocessor"></span>
 00131 
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.505.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.506.1.1 </small>
 </small></address>
 </body>
 </html>

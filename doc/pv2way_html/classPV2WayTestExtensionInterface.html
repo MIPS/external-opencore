@@ -15,6 +15,8 @@
 <tr><td nowrap align=right valign=top>virtual void&nbsp;</td><td valign=bottom><a class="el" href="classPV2WayTestExtensionInterface.html#a1">removeRef</a> ()=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual bool&nbsp;</td><td valign=bottom><a class="el" href="classPV2WayTestExtensionInterface.html#a2">queryInterface</a> (const PVUuid &amp;uuid, PVInterface *&amp;iface)=0</td></tr>
 <tr><td nowrap align=right valign=top>virtual bool&nbsp;</td><td valign=bottom><a class="el" href="classPV2WayTestExtensionInterface.html#a3">NegotiatedFormatsMatch</a> (Oscl_Vector&lt; FormatCapabilityInfo, OsclMemAllocator &gt; &amp;iInAudFormatCapability, Oscl_Vector&lt; FormatCapabilityInfo, OsclMemAllocator &gt; &amp;iOutAudFormatCapability, Oscl_Vector&lt; FormatCapabilityInfo, OsclMemAllocator &gt; &amp;iInVidFormatCapability, Oscl_Vector&lt; FormatCapabilityInfo, OsclMemAllocator &gt; &amp;iOutVidFormatCapability)=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual bool&nbsp;</td><td valign=bottom><a class="el" href="classPV2WayTestExtensionInterface.html#a4">UsingExternalVideoDecBuffers</a> ()=0</td></tr>
+<tr><td nowrap align=right valign=top>virtual bool&nbsp;</td><td valign=bottom><a class="el" href="classPV2WayTestExtensionInterface.html#a5">UsingExternalAudioDecBuffers</a> ()=0</td></tr>
 </table>
 <hr><h2>Member Function Documentation</h2>
 <a name="a0" doxytag="PV2WayTestExtensionInterface::addRef"></a><p>
@@ -169,10 +171,66 @@ True if successful, else false. </dl>    </td>
 Decrement reference counter for this interface.     </td>
   </tr>
 </table>
+<a name="a5" doxytag="PV2WayTestExtensionInterface::UsingExternalAudioDecBuffers"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> virtual bool PV2WayTestExtensionInterface::UsingExternalAudioDecBuffers </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap><code> [pure virtual]</code></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="a4" doxytag="PV2WayTestExtensionInterface::UsingExternalVideoDecBuffers"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> virtual bool PV2WayTestExtensionInterface::UsingExternalVideoDecBuffers </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
+          <td class="md" valign="top">)&nbsp;</td>
+          <td class="md" nowrap><code> [pure virtual]</code></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="pv__2way__test__extension__interface_8h-source.html">pv_2way_test_extension_interface.h</a></ul>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>PV2Way Engine</small>
-<address style="align: left;"><small>Posting Version: CORE_8.505.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.506.1.1 </small>
 </small></address>
 </body>
 </html>

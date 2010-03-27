@@ -28,31 +28,31 @@
 00020 <span class="preprocessor"></span><span class="preprocessor">#include "<a class="code" href="osclconfig__ansi__memory_8h.html">osclconfig_ansi_memory.h</a>"</span>
 00021 <span class="preprocessor">#endif</span>
 00022 <span class="preprocessor"></span>
-00023 <span class="preprocessor">#ifdef NDEBUG</span>
-00024 <span class="preprocessor"></span><span class="preprocessor">#define OSCL_BYPASS_MEMMGT 1</span>
-00025 <span class="preprocessor"></span><span class="preprocessor">#else</span>
-<a name="l00026"></a><a class="code" href="osclconfig__memory_8h.html#a0">00026</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_BYPASS_MEMMGT 1  //Temporarily disabling</span>
-00027 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
-00028 <span class="preprocessor"></span>
+00023 <span class="comment">/* OSCL_HAS_GLOBAL_NEW_DELETE - Enables or disables the definition of overloaded</span>
+00024 <span class="comment"> * global memory operators in oscl_mem.h</span>
+00025 <span class="comment"> *</span>
+00026 <span class="comment"> * Release Mode: OSCL_HAS_GLOBAL_NEW_DELETE 0</span>
+00027 <span class="comment"> * Debug Mode: OSCL_HAS_GLOBAL_NEW_DELETE 1</span>
+00028 <span class="comment"> */</span>
 00029 
-00030 <span class="comment">/* PVMEM_INST_LEVEL - Memory leak instrumentation level enables the compilation</span>
-00031 <span class="comment"> * of detailed memory leak info (filename + line number).</span>
-00032 <span class="comment"> * PVMEM_INST_LEVEL 0: Release mode.</span>
-00033 <span class="comment"> * PVMEM_INST_LEVEL 1: Debug mode.</span>
-00034 <span class="comment"> */</span>
-00035 
-00036 <span class="comment">/* OSCL_HAS_GLOBAL_NEW_DELETE - Enables or disables the definition of overloaded</span>
-00037 <span class="comment"> * global memory operators in oscl_mem.h</span>
-00038 <span class="comment"> *</span>
-00039 <span class="comment"> * Release Mode: OSCL_HAS_GLOBAL_NEW_DELETE 0</span>
-00040 <span class="comment"> * Debug Mode: OSCL_HAS_GLOBAL_NEW_DELETE 1</span>
-00041 <span class="comment"> */</span>
-00042 
-00043 <span class="preprocessor">#if(OSCL_RELEASE_BUILD)</span>
-00044 <span class="preprocessor"></span><span class="preprocessor">#define OSCL_HAS_GLOBAL_NEW_DELETE 0</span>
-00045 <span class="preprocessor"></span><span class="preprocessor">#define PVMEM_INST_LEVEL 0</span>
-00046 <span class="preprocessor"></span><span class="preprocessor">#else</span>
-<a name="l00047"></a><a class="code" href="osclconfig__memory_8h.html#a1">00047</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_HAS_GLOBAL_NEW_DELETE 1</span>
+00030 
+00031 <span class="preprocessor">#if (OSCL_RELEASE_BUILD)</span>
+00032 <span class="preprocessor"></span><span class="preprocessor">#define OSCL_BYPASS_MEMMGT 1</span>
+00033 <span class="preprocessor"></span><span class="preprocessor">#define OSCL_HAS_GLOBAL_NEW_DELETE 0</span>
+00034 <span class="preprocessor"></span><span class="preprocessor">#else</span>
+<a name="l00035"></a><a class="code" href="osclconfig__memory_8h.html#a0">00035</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_BYPASS_MEMMGT 1  //Temporarily disabling</span>
+<a name="l00036"></a><a class="code" href="osclconfig__memory_8h.html#a1">00036</a> <span class="preprocessor"></span><span class="preprocessor">#define OSCL_HAS_GLOBAL_NEW_DELETE 1</span>
+00037 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
+00038 <span class="preprocessor"></span>
+00039 <span class="comment">/* PVMEM_INST_LEVEL - Memory leak instrumentation level enables the compilation</span>
+00040 <span class="comment"> * of detailed memory leak info (filename + line number).</span>
+00041 <span class="comment"> * PVMEM_INST_LEVEL 0: Release mode.</span>
+00042 <span class="comment"> * PVMEM_INST_LEVEL 1: Debug mode.</span>
+00043 <span class="comment"> */</span>
+00044 
+00045 <span class="preprocessor">#if(OSCL_RELEASE_BUILD)</span>
+00046 <span class="preprocessor"></span><span class="preprocessor">#define PVMEM_INST_LEVEL 0</span>
+00047 <span class="preprocessor"></span><span class="preprocessor">#else</span>
 <a name="l00048"></a><a class="code" href="osclconfig__memory_8h.html#a2">00048</a> <span class="preprocessor"></span><span class="preprocessor">#define PVMEM_INST_LEVEL 1</span>
 00049 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
 00050 <span class="preprocessor"></span>
@@ -81,7 +81,7 @@
 00073 
 00074 <span class="preprocessor">#endif</span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.505.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.506.1.1 </small>
 </small></address>
 </body>
 </html>

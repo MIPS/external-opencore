@@ -32,12 +32,12 @@
 00032 <span class="preprocessor"></span>
 00033 
 00034 <span class="comment">//Logging instrumentation level default.  To change this for a project, add a definition of</span>
-00035 <span class="comment">//PVLOGGER_C_INST_LEVEL to the osclconfig.h file.  This default sets level to none for release</span>
+00035 <span class="comment">//PVLOGGER_C_INST_LEVEL to the osclconfig.h file.  This default sets level to 2 for release</span>
 00036 <span class="comment">//mode, full logging for debug build.</span>
 00037 
 00038 <span class="preprocessor">#ifndef PVLOGGER_C_INST_LEVEL</span>
-00039 <span class="preprocessor"></span><span class="preprocessor">#if defined(NDEBUG)</span>
-00040 <span class="preprocessor"></span><span class="preprocessor">#define PVLOGGER_C_INST_LEVEL 0</span>
+00039 <span class="preprocessor"></span><span class="preprocessor">#if (OSCL_RELEASE_BUILD)</span>
+00040 <span class="preprocessor"></span><span class="preprocessor">#define PVLOGGER_C_INST_LEVEL 2</span>
 00041 <span class="preprocessor"></span><span class="preprocessor">#else</span>
 <a name="l00042"></a><a class="code" href="pvlogger__c_8h.html#a0">00042</a> <span class="preprocessor"></span><span class="preprocessor">#define PVLOGGER_C_INST_LEVEL 5</span>
 00043 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
@@ -75,7 +75,7 @@
 00075 
 00076 <span class="preprocessor">#endif // PVLOGGER_C_H_INCLUDED</span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.505.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.506.1.1 </small>
 </small></address>
 </body>
 </html>
