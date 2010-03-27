@@ -397,7 +397,8 @@ class Oscl_File : public HeapBase
         /**
          * The File Flush operation
          * On an output stream OSCL_FileFlush causes any buffered
-         * but unwritten data to be written to the file.
+         * but unwritten data to be written to the file. Flush is meant for writable files.
+        * The behavior when calling it on read-only files is OS-dependent.
          *
          * @return returns 0 if successful, and a non-zero value otherwise
          */
