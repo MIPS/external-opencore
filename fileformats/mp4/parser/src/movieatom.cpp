@@ -2239,12 +2239,12 @@ int32 MovieAtom::getTimestampForRandomAccessPointsBeforeAfter(uint32 id, uint64 
 
 }
 
-MP4_ERROR_CODE MovieAtom::GetUserDataAtomInfo(uint32 &atomSize, TOsclFileOffset &atomPointer)
+MP4_ERROR_CODE MovieAtom::GetUserDataAtomInfo(uint32 &atomSize, TOsclFileOffset &atomOffset)
 {
     if (iUserDataAtomSize && iUserDataAtomOffset)
     {
         atomSize = iUserDataAtomSize;
-        atomPointer = iUserDataAtomOffset;
+        atomOffset = iUserDataAtomOffset;
         return EVERYTHING_FINE;
     }
     else

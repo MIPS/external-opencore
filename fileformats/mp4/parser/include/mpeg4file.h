@@ -216,7 +216,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
 
 
         // Fetch the user data atom related info...
-        MP4_ERROR_CODE GetUserDataAtomInfo(uint32 &atomSize, TOsclFileOffset &atomPointer);
+        MP4_ERROR_CODE GetUserDataAtomInfo(uint32 &atomSize, TOsclFileOffset &atomOffset);
 
         virtual DecoderSpecificInfo* getTrackDecoderSpecificInfoAtSDI(uint32 trackID, uint32 index);
 

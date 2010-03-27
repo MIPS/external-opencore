@@ -8696,10 +8696,10 @@ void Mpeg4File::SetMoofAtomsCnt(const uint32 aMoofAtmsCnt)
     iTotalMoofAtmsCnt = aMoofAtmsCnt;
 }
 
-MP4_ERROR_CODE Mpeg4File::GetUserDataAtomInfo(uint32 &atomSize, TOsclFileOffset &atomPointer)
+MP4_ERROR_CODE Mpeg4File::GetUserDataAtomInfo(uint32 &atomSize, TOsclFileOffset &atomOffset)
 {
     if (_pmovieAtom)
-        return _pmovieAtom->GetUserDataAtomInfo(atomSize, atomPointer);
+        return _pmovieAtom->GetUserDataAtomInfo(atomSize, atomOffset);
 
     return DEFAULT_ERROR;
 }

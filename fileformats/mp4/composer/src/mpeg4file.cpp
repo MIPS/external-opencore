@@ -387,8 +387,11 @@ PVA_FF_Mpeg4File::init(int32 mediaType,
 
         _interLeaveDuration = DEFAULT_INTERLEAVE_INTERVAL;
     }
+    if ((fileAuthoringFlags & PVMP4FF_USE_EXTN_UDTA) != PVMP4FF_USE_EXTN_UDTA)
     {
-        _pmovieAtom->createAssetInfoAtoms();
+        {
+            _pmovieAtom->createAssetInfoAtoms();
+        }
     }
     recomputeSize();
 

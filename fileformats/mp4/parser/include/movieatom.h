@@ -471,7 +471,7 @@ class MovieAtom : public Atom
 
         uint16 getID3V2LangCode() ;
 
-        MP4_ERROR_CODE GetUserDataAtomInfo(uint32 &atomSize, TOsclFileOffset &atomPointer);
+        MP4_ERROR_CODE GetUserDataAtomInfo(uint32 &atomSize, TOsclFileOffset &atomOffset);
 
         bool IsID3V2Present()
         {
