@@ -2772,7 +2772,7 @@ void PVMFDownloadManagerSubNodeContainerBase::CommandDone(PVMFStatus aStatus, PV
     }
 
     // Watch for recognizer start failure
-    if (iType == ERecognizer && iCmd == ERecognizerStart && aStatus != PVMFSuccess)
+    if (iType == ERecognizer && iCmd == ERecognizerStart && aStatus != PVMFSuccess && aStatus != PVMFErrCancelled)
     {
         iContainer->iRecognizerError = true;
         //save the error code to report after recognizer close.
