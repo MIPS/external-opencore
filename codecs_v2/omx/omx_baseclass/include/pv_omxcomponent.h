@@ -197,6 +197,7 @@ typedef struct ComponentPortType
 
     //This will be used to dynamically request the Iframe using SetConfig API
     OMX_CONFIG_INTRAREFRESHVOPTYPE      VideoIFrame;
+    OMX_VIDEO_CONFIG_AVCINTRAPERIOD     AvcIntraPeriod;
 
     OMX_U32  ActualNumPortFormatsSupported;
 
@@ -682,3 +683,4 @@ class OmxComponentVideo : public OmxComponentBase
 
 
 #endif      //#ifndef PV_OMXCOMPONENT_H_INCLUDED
+

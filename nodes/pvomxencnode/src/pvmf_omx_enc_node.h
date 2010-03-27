@@ -1101,6 +1101,9 @@ class PVMFOMXEncNode
         OSCL_IMPORT_REF bool SetResyncMarker(bool aResyncMarkerFlag);
         OSCL_IMPORT_REF bool SetTimeIncRes(int32 aTimeIncRes);
         OSCL_IMPORT_REF bool SetGOBHdrInterval(uint32 aGOBHdrIntrvl);
+        OSCL_IMPORT_REF bool UpdateOutputBitRate(uint32 aLayer, uint32 aBitRate);
+        OSCL_IMPORT_REF bool UpdateOutputFrameRate(uint32 aLayer, OsclFloat aFrameRate);
+        OSCL_IMPORT_REF bool UpdateIFrameInterval(uint32 aIFrameInterval);
 
         // from AudioEncExtensionInterface
         OSCL_IMPORT_REF PVMFStatus SetOutputBitRate(PVMF_GSMAMR_Rate aBitRate);

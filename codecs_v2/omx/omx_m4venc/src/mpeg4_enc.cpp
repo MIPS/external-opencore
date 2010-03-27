@@ -614,7 +614,7 @@ OMX_ERRORTYPE Mpeg4Encoder_OMX::Mp4EncInit(OMX_S32 iEncMode,
 
 }
 
-
+/* Request I frame routine */
 OMX_ERRORTYPE Mpeg4Encoder_OMX::Mp4RequestIFrame()
 {
     if (PV_TRUE != PVIFrameRequest(&iEncoderControl))
@@ -625,11 +625,11 @@ OMX_ERRORTYPE Mpeg4Encoder_OMX::Mp4RequestIFrame()
     return OMX_ErrorNone;
 }
 
-
+/* Request Update BitRate routine */
 OMX_BOOL Mpeg4Encoder_OMX::Mp4UpdateBitRate(OMX_U32 aEncodedBitRate)
 {
     Int BitRate[2] = {0, 0};
-    OMX_BOOL Status = OMX_TRUE;
+    OMX_BOOL Status = OMX_FALSE;
 
     //Update the bit rate only if encoder has been initialized
     if (OMX_TRUE == iInitialized)
@@ -641,17 +641,29 @@ OMX_BOOL Mpeg4Encoder_OMX::Mp4UpdateBitRate(OMX_U32 aEncodedBitRate)
     return Status;
 }
 
-
+/* Request Update FrameRate routine */
 OMX_BOOL Mpeg4Encoder_OMX::Mp4UpdateFrameRate(OMX_U32 aEncodeFramerate)
 {
     float EncFrameRate[2] = {0., 0.};
-    OMX_BOOL Status = OMX_TRUE;
+    OMX_BOOL Status = OMX_FALSE;
 
     //Update the frame rate only if encoder has been initialized
     if (OMX_TRUE == iInitialized)
     {
-        EncFrameRate[0] = (float)(aEncodeFramerate >> 16);
+        EncFrameRate[0] = ((float)aEncodeFramerate / (1 << 16));
         Status = (OMX_BOOL) PVUpdateEncFrameRate(&iEncoderControl, EncFrameRate);
+    }
+    return Status;
+
+}
+
+/* Request Update I-FrameInterval routine */
+OMX_BOOL Mpeg4Encoder_OMX::Mp4UpdateIFrameInterval(OMX_U32 aIntraPeriod)
+{
+    OMX_BOOL Status = OMX_FALSE;
+    if (OMX_TRUE == iInitialized)
+    {
+        Status = (OMX_BOOL) PVUpdateIFrameInterval(&iEncoderControl, (Int)aIntraPeriod);
     }
     return Status;
 

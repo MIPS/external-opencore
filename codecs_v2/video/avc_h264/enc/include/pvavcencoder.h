@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ class PVAVCEncoder : public PVAVCEncoderInterface
 
         OSCL_IMPORT_REF virtual TAVCEI_RETVAL UpdateBitRate(int32* aBitRate);
         OSCL_IMPORT_REF virtual TAVCEI_RETVAL UpdateFrameRate(OsclFloat* aFrameRate);
-        OSCL_IMPORT_REF virtual TAVCEI_RETVAL UpdateIDRFrameInterval(int32 aIFrameInterval);
+        OSCL_IMPORT_REF virtual TAVCEI_RETVAL UpdateIDRFrameInterval(int32 aIDRFrameInterval);
         OSCL_IMPORT_REF virtual TAVCEI_RETVAL IDRRequest();
 
         OSCL_IMPORT_REF virtual int32 GetEncodeWidth(int32 aLayer);

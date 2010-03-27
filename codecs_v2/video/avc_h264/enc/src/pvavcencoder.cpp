@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -288,10 +288,10 @@ TAVCEI_RETVAL PVAVCEncoder::Init(TAVCEIInputFormat* aVidInFormat, TAVCEIEncodePa
     switch (aEncParam->iIFrameInterval)
     {
         case -1:
-            aEncOption.idr_period = -1;
+            aEncOption.idr_period = 0;  /* all P-frames */
             break;
         case 0:
-            aEncOption.idr_period = 0;
+            aEncOption.idr_period = 1;  /* all IDR-frames */
             break;
         default:
             aEncOption.idr_period = (int)(aEncParam->iIFrameInterval *  aVidInFormat->iFrameRate);
@@ -682,9 +682,9 @@ OSCL_EXPORT_REF TAVCEI_RETVAL PVAVCEncoder::UpdateFrameRate(OsclFloat *aFrameRat
 }
 
 /* ///////////////////////////////////////////////////////////////////////// */
-OSCL_EXPORT_REF TAVCEI_RETVAL PVAVCEncoder::UpdateIDRFrameInterval(int32 aIFrameInterval)
+OSCL_EXPORT_REF TAVCEI_RETVAL PVAVCEncoder::UpdateIDRFrameInterval(int32 aIDRFrameInterval)
 {
-    if (PVAVCEncUpdateIDRInterval(&iAvcHandle, aIFrameInterval) == AVCENC_SUCCESS)
+    if (PVAVCEncUpdateIDRInterval(&iAvcHandle, aIDRFrameInterval) == AVCENC_SUCCESS)
         return EAVCEI_SUCCESS;
     else
         return EAVCEI_FAIL;

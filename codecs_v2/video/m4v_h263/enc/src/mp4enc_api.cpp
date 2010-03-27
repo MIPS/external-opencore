@@ -2114,8 +2114,8 @@ OSCL_EXPORT_REF Bool PVUpdateEncFrameRate(VideoEncControls *encCtrl, float *fram
         encData->encParams->LayerFrameRate[i] = frameRate[i];
     }
 
-    return RC_UpdateBXRCParams((void*) encData);
-
+    RC_UpdateBXRCParams((void*) encData);
+    return PV_TRUE;
 }
 #endif
 #ifndef LIMITED_API
@@ -2152,7 +2152,8 @@ OSCL_EXPORT_REF Bool PVUpdateBitRate(VideoEncControls *encCtrl, Int *bitRate)
         encData->encParams->LayerBitRate[i] = bitRate[i];
     }
 
-    return RC_UpdateBXRCParams((void*) encData);
+    RC_UpdateBXRCParams((void*) encData);
+    return PV_TRUE;
 
 }
 #endif

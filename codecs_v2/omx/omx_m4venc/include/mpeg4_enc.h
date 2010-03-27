@@ -97,6 +97,7 @@ class Mpeg4Encoder_OMX
         OMX_ERRORTYPE Mp4RequestIFrame();
         OMX_BOOL Mp4UpdateBitRate(OMX_U32 aEncodedBitRate);
         OMX_BOOL Mp4UpdateFrameRate(OMX_U32 aEncodeFramerate);
+        OMX_BOOL Mp4UpdateIFrameInterval(OMX_U32 aIntraPeriod);
 
         OMX_ERRORTYPE Mp4EncDeinit();
 

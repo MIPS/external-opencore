@@ -1072,7 +1072,20 @@ OMX_BOOL AvcEncoder_OMX::AvcUpdateFrameRate(OMX_U32 aEncodeFramerate)
 
 }
 
+//Routine to update IDR frame interval dynamically when encoding is in progress
+OMX_BOOL AvcEncoder_OMX::AvcUpdateIDRFrameInterval(OMX_U32 aIDRInterval)
+{
+    /* Note -- Here, aIDRInterval defines encoding of IDR frame after every nPFrames.
+    ** aIDRInterval is different from aIDRPeriod.
+    */
+    if (AVCENC_SUCCESS != PVAVCEncUpdateIDRInterval(&iAvcHandle, (int)aIDRInterval))
+    {
+        return OMX_FALSE;
+    }
 
+    return OMX_TRUE;
+
+}
 
 /* ///////////////////////////////////////////////////////////////////////// */
 void AvcEncoder_OMX::AVC_FrameUnbind(int indx)

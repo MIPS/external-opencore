@@ -1002,7 +1002,7 @@ OMX_ERRORTYPE OmxComponentMpeg4EncAO::SetConfig(
     OMX_CONFIG_INTRAREFRESHVOPTYPE* pVideoIFrame;
     OMX_VIDEO_CONFIG_BITRATETYPE* pBitRateType;
     OMX_CONFIG_FRAMERATETYPE* pFrameRateType;
-
+    OMX_VIDEO_CONFIG_AVCINTRAPERIOD* pM4vIntraPeriod;
 
 
     if (NULL == pComponentConfigStructure)
@@ -1095,6 +1095,36 @@ OMX_ERRORTYPE OmxComponentMpeg4EncAO::SetConfig(
             }
 
             ipPorts[PortIndex]->VideoConfigFrameRateType.xEncodeFramerate = pFrameRateType->xEncodeFramerate;
+        }
+        break;
+
+        /* Using OMX_IndexConfigVideoAVCIntraPeriod for M4V until standard defines some struct for it*/
+        case OMX_IndexConfigVideoAVCIntraPeriod:
+        {
+            pM4vIntraPeriod = (OMX_VIDEO_CONFIG_AVCINTRAPERIOD*) pComponentConfigStructure;
+            PortIndex = pM4vIntraPeriod->nPortIndex;
+
+            if (PortIndex != iCompressedFormatPortNum)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentAvcEncAO : SetConfig error invalid port index"));
+                return OMX_ErrorBadPortIndex;
+            }
+
+            /*Check Structure Header*/
+            ErrorType = CheckHeader(pM4vIntraPeriod, sizeof(OMX_VIDEO_CONFIG_AVCINTRAPERIOD));
+            if (ErrorType != OMX_ErrorNone)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentAvcEncAO : SetConfig error param check failed"));
+                return ErrorType;
+            }
+
+            //Call the corresponding routine of the encoder in case of setconfig call
+            if (OMX_FALSE == (ipMpegEncoderObject->Mp4UpdateIFrameInterval(pM4vIntraPeriod->nPFrames + 1)))
+            {
+                return OMX_ErrorBadParameter;
+            }
+
+            ipPorts[PortIndex]->AvcIntraPeriod.nPFrames = pM4vIntraPeriod->nPFrames;
         }
         break;
 

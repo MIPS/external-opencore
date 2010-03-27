@@ -261,6 +261,32 @@ class PVVideoEncExtensionInterface : public PVInterface
          */
         virtual bool SetGOBHdrInterval(uint32 aGOBHdrIntrvl) = 0;
 
+        /**
+         * Updates Output bit rate.
+         *
+         * @param aLayer is total number of layers.
+         * @param aBitRate is updated bit rate to set.
+         * @return True if successful, else false
+         */
+        virtual bool UpdateOutputBitRate(uint32 aLayer, uint32 aBitRate)  = 0;
+
+        /**
+         * Updates Output frame rate.
+         *
+         * @param aLayer is total number of layers.
+         * @param aFrameRate is updated frame rate to set.
+         * @return True if successful, else false
+         */
+        virtual bool UpdateOutputFrameRate(uint32 aLayer, OsclFloat aFrameRate) = 0;
+
+        /**
+         * Updates Intra period i.e I frame interval.
+         *
+         * @param aIFrameInterval is updated Intra period to set.
+         * @return True if successful, else false
+         */
+        virtual bool UpdateIFrameInterval(uint32 aIFrameInterval) = 0;
+
 
 };
 #endif // PV_VIDEO_ENCNODE_EXTENSION_H_INCLUDED

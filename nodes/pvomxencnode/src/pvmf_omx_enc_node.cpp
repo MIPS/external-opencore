@@ -8953,6 +8953,142 @@ OSCL_EXPORT_REF bool PVMFOMXEncNode::SetRVLC(bool aRVLC)
     return true;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF bool PVMFOMXEncNode::UpdateOutputBitRate(uint32 aLayer, uint32 aBitRate)
+{
+    OMX_ERRORTYPE Err = OMX_ErrorNone;
+    OMX_VIDEO_CONFIG_BITRATETYPE VideoConfigBitRate;
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXEncNode-%s::UpdateOutputBitRate", iNodeTypeId));
+
+    switch (iInterfaceState)
+    {
+        case EPVMFNodeStarted:
+        case EPVMFNodePaused:
+            break;
+        default:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFOMXEncNode-%s::UpdateOutputBitRate: Error - Wrong state", iNodeTypeId));
+            return false;
+    }
+
+    //OMX_VIDEO_CONFIG_BITRATETYPE Settings
+    CONFIG_SIZE_AND_VERSION(VideoConfigBitRate);
+    VideoConfigBitRate.nPortIndex = iOutputPortIndex;
+
+    Err = OMX_GetConfig(iOMXEncoder, OMX_IndexConfigVideoBitrate, &VideoConfigBitRate);
+    if (OMX_ErrorNone != Err)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXEncNode-%s::UpdateOutputBitRate Parameter Invalid OMX_IndexConfigVideoBitrate from OMX_GetConfig", iNodeTypeId));
+    }
+
+    VideoConfigBitRate.nPortIndex = iOutputPortIndex;
+    VideoConfigBitRate.nEncodeBitrate = aBitRate;
+
+    Err = OMX_SetConfig(iOMXEncoder, OMX_IndexConfigVideoBitrate, &VideoConfigBitRate);
+    if (OMX_ErrorNone != Err)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXEncNode-%s::UpdateOutputBitRate Parameter Invalid OMX_IndexConfigVideoBitrate from OMX_SetConfig", iNodeTypeId));
+    }
+
+    return true;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF bool PVMFOMXEncNode::UpdateOutputFrameRate(uint32 aLayer, OsclFloat aFrameRate)
+{
+    OMX_ERRORTYPE Err = OMX_ErrorNone;
+    OMX_CONFIG_FRAMERATETYPE VideoConfigFrameRateType;
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXEncNode-%s::UpdateOutputFrameRate", iNodeTypeId));
+
+    switch (iInterfaceState)
+    {
+        case EPVMFNodeStarted:
+        case EPVMFNodePaused:
+            break;
+        default:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFOMXEncNode-%s::UpdateOutputFrameRate: Error - Wrong state", iNodeTypeId));
+            return false;
+    }
+
+    //OMX_CONFIG_FRAMERATETYPE Settings
+    CONFIG_SIZE_AND_VERSION(VideoConfigFrameRateType);
+    VideoConfigFrameRateType.nPortIndex = iOutputPortIndex;
+
+    Err = OMX_GetConfig(iOMXEncoder, OMX_IndexConfigVideoFramerate, &VideoConfigFrameRateType);
+    if (OMX_ErrorNone != Err)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXEncNode-%s::UpdateOutputFrameRate Parameter Invalid OMX_IndexConfigVideoFramerate from OMX_GetConfig", iNodeTypeId));
+    }
+
+    VideoConfigFrameRateType.nPortIndex = iOutputPortIndex;
+    VideoConfigFrameRateType.xEncodeFramerate = (uint32)(aFrameRate * (1 << 16));
+
+    Err = OMX_SetConfig(iOMXEncoder, OMX_IndexConfigVideoFramerate, &VideoConfigFrameRateType);
+    if (OMX_ErrorNone != Err)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXEncNode-%s::UpdateOutputFrameRate Parameter Invalid OMX_IndexConfigVideoFramerate from OMX_SetConfig", iNodeTypeId));
+    }
+
+    return true;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+OSCL_EXPORT_REF bool PVMFOMXEncNode::UpdateIFrameInterval(uint32 aIFrameInterval)
+{
+    OMX_ERRORTYPE Err = OMX_ErrorNone;
+    OMX_VIDEO_CONFIG_AVCINTRAPERIOD VideoConfigAVCIntraPeriod;
+
+    float iSrcFrameRate = 0.0;
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXEncNode-%s::UpdateIFrameInterval", iNodeTypeId));
+
+    switch (iInterfaceState)
+    {
+        case EPVMFNodeStarted:
+        case EPVMFNodePaused:
+            break;
+        default:
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFOMXEncNode-%s::UpdateIFrameInterval: Error - Wrong state", iNodeTypeId));
+            return false;
+    }
+
+    //OMX_VIDEO_CONFIG_AVCINTRAPERIOD Settings
+    CONFIG_SIZE_AND_VERSION(VideoConfigAVCIntraPeriod);
+    VideoConfigAVCIntraPeriod.nPortIndex = iOutputPortIndex;
+
+    Err = OMX_GetConfig(iOMXEncoder, OMX_IndexConfigVideoAVCIntraPeriod, &VideoConfigAVCIntraPeriod);
+    if (OMX_ErrorNone != Err)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXEncNode-%s::UpdateIFrameInterval Parameter Invalid OMX_IndexConfigVideoAVCIntraPeriod from OMX_GetConfig", iNodeTypeId));
+    }
+
+    /* For AVC, UpdateIFrameInterval specifies repetition of IDR frames after every nPFrames */
+    VideoConfigAVCIntraPeriod.nPortIndex = iOutputPortIndex;
+    iSrcFrameRate = (iParamPort.format.video.xFramerate / (float(1 << 16)));
+    VideoConfigAVCIntraPeriod.nPFrames = (OMX_U32)((aIFrameInterval * iSrcFrameRate) - 1);
+
+    Err = OMX_SetConfig(iOMXEncoder, OMX_IndexConfigVideoAVCIntraPeriod, &VideoConfigAVCIntraPeriod);
+    if (OMX_ErrorNone != Err)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXEncNode-%s::UpdateIFrameInterval Parameter Invalid OMX_IndexConfigVideoAVCIntraPeriod from OMX_SetConfig", iNodeTypeId));
+    }
+
+    return true;
+}
+
 ////////////////////////////////////////////////////////////////////////////
 //Stub GetVolHeader Function for PVVideoEncExtensionInterface
 OSCL_EXPORT_REF bool PVMFOMXEncNode::GetVolHeader(OsclRefCounterMemFrag& aVolHeader)

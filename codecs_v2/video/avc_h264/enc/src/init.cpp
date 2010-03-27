@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ AVCEnc_Status  SetEncodeParam(AVCHandle* avcHandle, AVCEncParams* encParam,
 
     if (!extS && !extP)
     {
-        maxFrameNum = (encParam->idr_period == -1) ? (1 << 16) : encParam->idr_period;
+        maxFrameNum = (encParam->idr_period == 0) ? (1 << 16) : encParam->idr_period;
         ii = 0;
         while (maxFrameNum > 0)
         {
@@ -502,7 +502,7 @@ AVCEnc_Status  SetEncodeParam(AVCHandle* avcHandle, AVCEncParams* encParam,
 
     /* now the rate control and performance related parameters */
     rateCtrl->scdEnable = (encParam->auto_scd == AVC_ON) ? TRUE : FALSE;
-    rateCtrl->idrPeriod = encParam->idr_period + 1;
+    rateCtrl->idrPeriod = encParam->idr_period;// + 1;
     rateCtrl->intraMBRate = encParam->intramb_refresh;
     rateCtrl->dpEnable = (encParam->data_par == AVC_ON) ? TRUE : FALSE;
 

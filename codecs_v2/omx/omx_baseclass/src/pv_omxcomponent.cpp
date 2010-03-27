@@ -1034,6 +1034,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentBase::GetConfig(
     OMX_CONFIG_INTRAREFRESHVOPTYPE* pVideoIFrame;
     OMX_CONFIG_FRAMERATETYPE* pFrameRateType;
     OMX_VIDEO_CONFIG_BITRATETYPE* pConfigBitRateType;
+    OMX_VIDEO_CONFIG_AVCINTRAPERIOD* pAvcIntraPeriod;
 
     if (NULL == pComponentConfigStructure)
     {
@@ -1084,6 +1085,21 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentBase::GetConfig(
             SetHeader(pConfigBitRateType, sizeof(OMX_VIDEO_CONFIG_BITRATETYPE));
         }
         break;
+
+        case OMX_IndexConfigVideoAVCIntraPeriod:
+        {
+            pAvcIntraPeriod = (OMX_VIDEO_CONFIG_AVCINTRAPERIOD*) pComponentConfigStructure;
+            if (pAvcIntraPeriod->nPortIndex != iCompressedFormatPortNum)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentBase : GetConfig error bad port index for OMX_IndexConfigVideoAVCIntraPeriod"));
+                return OMX_ErrorBadPortIndex;
+            }
+            PortIndex = pAvcIntraPeriod->nPortIndex;
+            oscl_memcpy(pAvcIntraPeriod, &ipPorts[PortIndex]->AvcIntraPeriod, sizeof(OMX_VIDEO_CONFIG_AVCINTRAPERIOD));
+            SetHeader(pAvcIntraPeriod, sizeof(OMX_VIDEO_CONFIG_AVCINTRAPERIOD));
+        }
+        break;
+
         default:
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentBase : GetParameter error Unsupported Index"));

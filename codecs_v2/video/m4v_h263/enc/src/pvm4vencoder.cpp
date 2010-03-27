@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1241,7 +1241,7 @@ OSCL_EXPORT_REF TCVEI_RETVAL CPVM4VEncoder::UpdateFrameRate(int32 aNumLayer, flo
 OSCL_EXPORT_REF TCVEI_RETVAL CPVM4VEncoder::UpdateIFrameInterval(int32 aIFrameInterval)
 {
 #ifndef LIMITED_API
-    if (PVUpdateIFrameInterval(&iEncoderControl, aIFrameInterval) == PV_TRUE)
+    if (PVUpdateIFrameInterval(&iEncoderControl, (Int)aIFrameInterval) == PV_TRUE)
         return ECVEI_SUCCESS;
     else
 #endif
