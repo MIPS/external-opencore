@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@
 
 #ifndef OSCL_UUID_H_INCLUDED
 #include "oscl_uuid.h"
+#endif
+#ifndef OSCL_TYPES_H_INCLUDED
+#include "oscl_types.h"
 #endif
 
 class OsclSharedLibraryInterface

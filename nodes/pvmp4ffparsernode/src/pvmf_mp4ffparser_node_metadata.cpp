@@ -36,6 +36,8 @@
 
 #include "getactualaacconfig.h"
 
+#include "oscl_string_utils.h"
+
 #define NUMMETADATAKEYS 64
 
 

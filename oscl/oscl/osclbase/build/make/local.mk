@@ -60,6 +60,7 @@ HDRS :=	oscl_assert.h \
 	oscl_tree.h \
 	oscl_types.h \
 	oscl_uuid.h \
+	oscl_uuid_utils.h \
 	oscl_vector.h \
 	oscl_singleton.h \
 	oscl_assert.inl \

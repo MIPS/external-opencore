@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,9 @@
 
 #include "pvmf_media_input_node.h"
 #include "pvmf_media_input_node_outport.h"
-
-#ifndef OSCL_MIME_STRING_UTILS_H
 #include "pv_mime_string_utils.h"
-#endif
-
-#ifndef PVMI_KVP_UTIL_H_INCLUDED
 #include "pvmi_kvp_util.h"
-#endif
+#include "oscl_string_utils.h"
 
 struct MediaInputNodeKeyStringData
 {

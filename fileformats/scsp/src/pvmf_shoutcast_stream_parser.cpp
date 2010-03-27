@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,9 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef OSCL_EXCEPTION_H_INCLUDED
 #include "oscl_exception.h"
-#endif
-
-#ifndef PVMF_SHOUTCAST_STREAM_PARSER_H_INCLUDED
 #include "pvmf_shoutcast_stream_parser.h"
-#endif
+#include "oscl_string_utils.h"
 
 // logging
 #define LOGDEBUG(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_VERBOSE, m);

@@ -66,6 +66,7 @@ LOCAL_COPY_HEADERS := \
  	src/oscl_tree.h \
  	src/oscl_types.h \
  	src/oscl_uuid.h \
+ 	src/oscl_uuid_utils.h \
  	src/oscl_vector.h \
  	src/oscl_singleton.h \
  	src/oscl_assert.inl \

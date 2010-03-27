@@ -20,6 +20,7 @@
 #include "atomutils.h"
 #include "oscl_int64_utils.h"
 #include "oscl_utf8conv.h"
+#include "oscl_string_utils.h"
 
 typedef Oscl_Vector<ItunesMeaningAtom*, OsclMemAllocator> ItunesMeaningAtomVecType;
 typedef Oscl_Vector<ItunesNameAtom*, OsclMemAllocator> ItunesNameAtomVecType;

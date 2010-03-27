@@ -16,6 +16,7 @@
  * -------------------------------------------------------------------
  */
 #include "pvmf_omx_audiodec_node.h"
+#include "oscl_string_utils.h"
 
 #define CONFIG_SIZE_AND_VERSION(param) \
         param.nSize=sizeof(param); \

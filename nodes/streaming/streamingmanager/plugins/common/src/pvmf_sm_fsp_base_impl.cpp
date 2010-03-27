@@ -15,37 +15,15 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef PVMF_SM_FSP_BASE_IMPL_H
 #include "pvmf_sm_fsp_base_impl.h"
-#endif
-
-#ifndef PVMF_BASIC_ERRORINFOMESSAGE_H_INCLUDED
 #include "pvmf_basic_errorinfomessage.h"
-#endif
-
-#ifndef OSCL_MIME_STRING_UTILS_H
 #include "pv_mime_string_utils.h"
-#endif
-
-#ifndef PVMI_KVP_UTIL_H_INCLUDED
 #include "pvmi_kvp_util.h"
-#endif
-
-#ifndef PVMI_DRM_KVP_H_INCLUDED
 #include "pvmi_drm_kvp.h"
-#endif
-
-#ifndef PVMF_SM_FSP_BASE_METADATA_H_INCLUDED
 #include "pvmf_sm_fsp_base_metadata.h"
-#endif
-
-#ifndef OSCL_SNPRINTF_H_INCLUDED
 #include "oscl_snprintf.h"
-#endif
-
-#ifndef PVMF_JITTER_BUFFER_FACTORY_H
 #include "pvmf_jitter_buffer_factory.h"
-#endif
+#include "oscl_string_utils.h"
 
 //////////////////////////////////////////////////
 // Node Constructor & Destructor

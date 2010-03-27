@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 #include "oscl_file_types.h"
 #include "pvlogger.h"
 #include "oscl_uuid.h"
+#include "oscl_uuid_utils.h"
 
 #define HASH '#'
 #define NEWLINE '\n'
@@ -154,7 +155,8 @@ OSCL_EXPORT_REF OsclLibStatus OsclLibraryList::Populate(const OsclUuid& aInterfa
             else
             {
                 // Create an instance of OsclUuid
-                OsclUuid tempUuidStr((char*)uuidBuf);
+                OsclUuid tempUuidStr;
+                SetOsclUuid(tempUuidStr, (char*)uuidBuf);
                 if (tempUuidStr == aInterfaceId)
                 {
                     // Parse path from line
