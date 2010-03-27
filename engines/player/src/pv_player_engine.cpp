@@ -2444,6 +2444,13 @@ void PVPlayerEngine::NodeCommandCompleted(const PVMFCmdResp& aResponse)
                             HandleSourceNodeSetDataSourceDirection(*nodecontext, aResponse);
                             break;
 
+                        case PVP_CMD_SourceNodePause:
+                            // There is no handling required here.
+                            // We would reach here in case of Pause -- SetPlaybackRange -- Resume.
+                            // If Resume is called before source node pause completes, then we would
+                            // reach here.
+                            break;
+
                         default:
                             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                                             (0, "PVPlayerEngine::NodeCommandCompleted() Invalid source node command type in PVP_ENGINE_STATE_RESUMING. Asserting"));
