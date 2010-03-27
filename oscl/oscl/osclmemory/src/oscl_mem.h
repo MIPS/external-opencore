@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,13 +77,13 @@
 //Default for OSCL_HAS_GLOBAL_NEW_DELETE in case it is *not* defined
 //in the osclconfig_memory.h
 #ifndef OSCL_HAS_GLOBAL_NEW_DELETE
-#ifdef NDEBUG
+#if (OSCL_RELEASE_BUILD)
 //Release Mode - No definition for global new and delete.
 #define OSCL_HAS_GLOBAL_NEW_DELETE 0
 #else
 //Debug Mode - Define global new and delete.
 #define OSCL_HAS_GLOBAL_NEW_DELETE 1
-#endif //NDEBUG
+#endif //OSCL_RELEASE_BUILD
 #endif //OSCL_HAS_GLOBAL_NEW_DELETE
 
 class OsclMem

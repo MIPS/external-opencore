@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@
 //Set this to 1 to enable looking for debug versions of libraries.
 //Use #ifndef to allow the compiler setting to override this definition
 #ifndef OSCL_LIB_READ_DEBUG_LIBS
-#if defined(NDEBUG)
+#if (OSCL_RELEASE_BUILD)
 #define OSCL_LIB_READ_DEBUG_LIBS 0
 #else
 #define OSCL_LIB_READ_DEBUG_LIBS 1

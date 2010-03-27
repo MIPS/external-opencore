@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@
 //for debug and profiling.
 #ifndef PV_SCHED_ENABLE_AO_STATS
 //defaults for cases where the flag is not defined in the osclconfig_proc.h
-#if defined( NDEBUG)||(OSCL_RELEASE_BUILD)
+#if (OSCL_RELEASE_BUILD)
 //for release builds
 #define PV_SCHED_ENABLE_AO_STATS 0
 #else
@@ -51,7 +51,7 @@
 //for debug and profiling.
 #ifndef PV_SCHED_ENABLE_LOOP_STATS
 //defaults for cases where the flag is not defined in the osclconfig_proc.h
-#if defined( NDEBUG)||(OSCL_RELEASE_BUILD)
+#if (OSCL_RELEASE_BUILD)
 //for release builds
 #define PV_SCHED_ENABLE_LOOP_STATS 0
 #else
@@ -70,7 +70,7 @@
 //for debug and profiling.
 #ifndef PV_SCHED_ENABLE_PERF_LOGGING
 //defaults for cases where the flag is not defined in the osclconfig_proc.h
-#if defined( NDEBUG)||(OSCL_RELEASE_BUILD)
+#if (OSCL_RELEASE_BUILD)
 //for release builds
 #define PV_SCHED_ENABLE_PERF_LOGGING 0
 #else
@@ -86,7 +86,7 @@
 
 //Enable/disable thread context checking here. Context checks are important during
 //development but may be costly depending on the OS thread ID retrieval efficiency.
-#if defined( NDEBUG)||(OSCL_RELEASE_BUILD)
+#if (OSCL_RELEASE_BUILD)
 //for release builds
 #define PV_SCHED_ENABLE_THREAD_CONTEXT_CHECKS 0
 #else
@@ -121,7 +121,7 @@
 //------------------------------------
 #ifndef OSCL_PERF_SUMMARY_LOGGING
 //defaults for cases where the flag is not defined in the osclconfig_proc.h
-#if defined( NDEBUG)||(OSCL_RELEASE_BUILD)
+#if (OSCL_RELEASE_BUILD)
 //release builds
 #define OSCL_PERF_SUMMARY_LOGGING 0
 #else

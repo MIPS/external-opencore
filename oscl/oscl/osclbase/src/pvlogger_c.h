@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,12 +49,12 @@ extern "C"
 
 
 //Logging instrumentation level default.  To change this for a project, add a definition of
-//PVLOGGER_C_INST_LEVEL to the osclconfig.h file.  This default sets level to none for release
+//PVLOGGER_C_INST_LEVEL to the osclconfig.h file.  This default sets level to 2 for release
 //mode, full logging for debug build.
 
 #ifndef PVLOGGER_C_INST_LEVEL
-#if defined(NDEBUG)
-#define PVLOGGER_C_INST_LEVEL 0
+#if (OSCL_RELEASE_BUILD)
+#define PVLOGGER_C_INST_LEVEL 2
 #else
 #define PVLOGGER_C_INST_LEVEL 5
 #endif

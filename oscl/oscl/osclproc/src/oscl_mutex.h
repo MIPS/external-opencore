@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -164,7 +164,7 @@ class OsclNoYieldMutex : public OsclLockBase
          */
         OsclNoYieldMutex()
         {
-#ifndef NDEBUG
+#if (!OSCL_RELEASE_BUILD)
             iNumLock = 0;
             bCreated = false;
 #endif
@@ -186,7 +186,7 @@ class OsclNoYieldMutex : public OsclLockBase
          */
         OsclProcStatus::eOsclProcError Create(void)
         {
-#ifndef NDEBUG
+#if (!OSCL_RELEASE_BUILD)
             if (bCreated)
                 return OsclProcStatus::INVALID_OPERATION_ERROR;
             bCreated = true;
@@ -204,7 +204,7 @@ class OsclNoYieldMutex : public OsclLockBase
          */
         void Lock()
         {
-#ifndef NDEBUG
+#if (!OSCL_RELEASE_BUILD)
             OSCL_ASSERT(bCreated);
             OSCL_ASSERT(iNumLock == 0);//detect deadlock condition.
             iNumLock++;
@@ -224,7 +224,7 @@ class OsclNoYieldMutex : public OsclLockBase
          */
         OsclProcStatus::eOsclProcError TryLock()
         {
-#ifndef NDEBUG
+#if (!OSCL_RELEASE_BUILD)
             if (!bCreated)
                 return OsclProcStatus::INVALID_OPERATION_ERROR;
             if (iNumLock)
@@ -245,7 +245,7 @@ class OsclNoYieldMutex : public OsclLockBase
          */
         void Unlock()
         {
-#ifndef NDEBUG
+#if (!OSCL_RELEASE_BUILD)
             OSCL_ASSERT(bCreated);
             OSCL_ASSERT(iNumLock);
             if (iNumLock > 0)
@@ -264,7 +264,7 @@ class OsclNoYieldMutex : public OsclLockBase
          */
         OsclProcStatus::eOsclProcError Close(void)
         {
-#ifndef NDEBUG
+#if (!OSCL_RELEASE_BUILD)
             if (!bCreated)
                 return OsclProcStatus::INVALID_OPERATION_ERROR;
             bCreated = false;
@@ -274,7 +274,7 @@ class OsclNoYieldMutex : public OsclLockBase
 
     private:
 
-#ifndef NDEBUG
+#if (!OSCL_RELEASE_BUILD)
         uint32 iNumLock;
         bool bCreated;
 #endif

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,16 +45,18 @@
 #include "osclconfig_limits_typedefs.h"
 
 //This switch turns off some profiling and debug settings
+#ifndef OSCL_RELEASE_BUILD
 #ifdef NDEBUG
 #define OSCL_RELEASE_BUILD 1
 #else
 #define OSCL_RELEASE_BUILD 0
 #endif
+#endif
 
 #ifndef PVLOGGER_INST_LEVEL
-#if defined(NDEBUG)
+#if (OSCL_RELEASE_BUILD)
 //Release mode logging - should be kept minimum
-#define PVLOGGER_INST_LEVEL 1
+#define PVLOGGER_INST_LEVEL 2
 #else
 //full logging
 #define PVLOGGER_INST_LEVEL 5

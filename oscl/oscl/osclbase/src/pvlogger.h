@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,9 +126,9 @@ const int32 PVLOGGER_LEVEL_UNINTIALIZED = -1;
 **                            + mid-level debug + low-level debug
 */
 #ifndef PVLOGGER_INST_LEVEL
-#if defined(NDEBUG)
-/* Release mode-- No logging */
-#define PVLOGGER_INST_LEVEL 0
+#if (OSCL_RELEASE_BUILD)
+/* Release mode-- Profile logging */
+#define PVLOGGER_INST_LEVEL 2
 #else
 /* Debug mode-- Complete logging */
 #define PVLOGGER_INST_LEVEL 5

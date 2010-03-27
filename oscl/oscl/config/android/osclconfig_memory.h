@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,19 +37,6 @@
 #include "osclconfig_ansi_memory.h"
 #endif
 
-#ifdef NDEBUG
-#define OSCL_BYPASS_MEMMGT 1
-#else
-#define OSCL_BYPASS_MEMMGT 1  //Temporarily disabling
-#endif
-
-
-/* PVMEM_INST_LEVEL - Memory leak instrumentation level enables the compilation
- * of detailed memory leak info (filename + line number).
- * PVMEM_INST_LEVEL 0: Release mode.
- * PVMEM_INST_LEVEL 1: Debug mode.
- */
-
 /* OSCL_HAS_GLOBAL_NEW_DELETE - Enables or disables the definition of overloaded
  * global memory operators in oscl_mem.h
  *
@@ -57,11 +44,24 @@
  * Debug Mode: OSCL_HAS_GLOBAL_NEW_DELETE 1
  */
 
-#if(OSCL_RELEASE_BUILD)
+
+#if (OSCL_RELEASE_BUILD)
+#define OSCL_BYPASS_MEMMGT 1
 #define OSCL_HAS_GLOBAL_NEW_DELETE 0
+#else
+#define OSCL_BYPASS_MEMMGT 1  //Temporarily disabling
+#define OSCL_HAS_GLOBAL_NEW_DELETE 1
+#endif
+
+/* PVMEM_INST_LEVEL - Memory leak instrumentation level enables the compilation
+ * of detailed memory leak info (filename + line number).
+ * PVMEM_INST_LEVEL 0: Release mode.
+ * PVMEM_INST_LEVEL 1: Debug mode.
+ */
+
+#if(OSCL_RELEASE_BUILD)
 #define PVMEM_INST_LEVEL 0
 #else
-#define OSCL_HAS_GLOBAL_NEW_DELETE 1
 #define PVMEM_INST_LEVEL 1
 #endif
 

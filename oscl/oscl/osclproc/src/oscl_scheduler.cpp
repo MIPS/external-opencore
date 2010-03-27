@@ -899,7 +899,7 @@ OSCL_EXPORT_REF void OsclExecScheduler::RunSchedulerNonBlocking(int32 aCount, in
     if (!IsInstalled())
         OsclError::Leave(OsclErrNotInstalled);
 
-#if !(OSCL_RELEASE_BUILD)  && !defined(NDEBUG)
+#if !(OSCL_RELEASE_BUILD)
     //make sure this scheduler is really installed in this
     //thread.
     if (GetScheduler() != this)

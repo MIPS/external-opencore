@@ -39,10 +39,12 @@
 #include "osclconfig_limits_typedefs.h"
 
 //This switch turns off some profiling and debug settings
+#ifndef OSCL_RELEASE_BUILD
 #ifdef NDEBUG
 #define OSCL_RELEASE_BUILD 1
 #else
 #define OSCL_RELEASE_BUILD 0
+#endif
 #endif
 
 #define OSCL_HAS_ANDROID_SUPPORT       0
@@ -81,11 +83,7 @@
 #define OSCL_PACKED_STRUCT_BEGIN
 #define OSCL_PACKED_STRUCT_END __attribute__((packed))
 
-#if(OSCL_RELEASE_BUILD)
-//no logging
-#define PVLOGGER_INST_LEVEL 0
-#elif defined(NDEBUG)
-//profiling only
+#if (OSCL_RELEASE_BUILD)
 #define PVLOGGER_INST_LEVEL 2
 #else
 //full logging

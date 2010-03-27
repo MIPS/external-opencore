@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ OSCL_COND_IMPORT_REF void _OSCL_Abort();
     \param filename is the name of the current source file
     \param line_number is the line number in the current source file
 */
-#if (!defined(NDEBUG) || (OSCL_ASSERT_ALWAYS))
+#if (!OSCL_RELEASE_BUILD) || (OSCL_ASSERT_ALWAYS)
 OSCL_IMPORT_REF void OSCL_Assert(const char *expr, const char *filename, int line_number);
 
 #define OSCL_ASSERT(_expr) \

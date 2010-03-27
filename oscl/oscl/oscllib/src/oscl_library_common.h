@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ const OsclLibStatus OsclLibNotLoaded = 5;
 
 #ifndef OSCL_LIBRARY_PERF_LOGGING
 //defaults for cases where the flag is not defined in the osclconfig_lib.h
-#if defined( NDEBUG)||(OSCL_RELEASE_BUILD)
+#if (OSCL_RELEASE_BUILD)
 //for release builds
 #define OSCL_LIBRARY_PERF_LOGGING 0
 #else

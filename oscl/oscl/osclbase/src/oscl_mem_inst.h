@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@
 ** values are defined here.
 */
 #ifndef PVMEM_INST_LEVEL
-#if defined(NDEBUG)
+#if (OSCL_RELEASE_BUILD)
 /* release mode-- no instrumentation */
 #define PVMEM_INST_LEVEL 0
 #else
