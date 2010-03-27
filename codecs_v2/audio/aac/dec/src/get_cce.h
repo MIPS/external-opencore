@@ -17,17 +17,11 @@
  */
 /*
 
- Pathname: get_dse.h
+ Filename: get_cce.h
  Funtions:
-    get_dse
+    get_cce
 
 
-------------------------------------------------------------------------------
- REVISION HISTORY
-
-
- Who:                                   Date: MM/DD/YYYY
- Description:
 ------------------------------------------------------------------------------
 
 */
@@ -41,8 +35,8 @@
 /*----------------------------------------------------------------------------
 ; INCLUDES
 ----------------------------------------------------------------------------*/
-#include    "s_tdec_int_file.h"
-#include    "s_tdec_int_chan.h"
+#include "s_tdec_int_file.h"
+#include "s_tdec_int_chan.h"
 #include "pv_audio_type_defs.h"
 #include "s_elelist.h"
 #include "s_bits.h"

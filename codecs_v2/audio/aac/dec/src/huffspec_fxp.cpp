@@ -542,7 +542,8 @@ Int huffspec_fxp(
         {
             sfbWidth   =  pFrameInfo->win_sfb_top[0][sfb] - stop_idx;
 
-            if ((sfbWidth < 0) || (sfbWidth > 1024))
+            /* sfbWidth must be possitive, lesser than 1024 and multiple of 4 */
+            if ((sfbWidth < 0) || (sfbWidth > 1024) || (sfbWidth & 3))
             {
                 return (-1);   /*  error condition */
             }
