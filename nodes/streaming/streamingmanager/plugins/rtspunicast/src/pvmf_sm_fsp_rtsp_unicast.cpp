@@ -3664,12 +3664,16 @@ void PVMFSMRTSPUnicastNode::DoSetDataSourcePosition(PVMFSMFSPBaseNodeCommand& aC
             }
 
             /*
-             * SetDataSource from a prepared state could mean two things:
-             *  - In Play-Stop-Play usecase engine does a SetDataSourcePosition
-             *    to get the start media TS to set its playback clock
-             *  - Engine is trying to do a play with a non-zero start offset
+             * We will always try to move the sm node to started state(and therefore do buffering etc)
+             * in the impl of the SetDataSourcePosition
+             * We will do this even if iRepositionRequestedStartNPTInMS is zero.
+             * Reason - It might be possible that user request the streaming session from 0 npt
+             * but, due to some reasons, server is able to stream from the x npt and does
+             * specify it in the Range header of Play response.
+             * This "x" npt need to be communicated to the engine in the completion of
+             * SetDataSourcePosition command.
              */
-            if (iRepositionRequestedStartNPTInMS < iSessionStopTime && iRepositionRequestedStartNPTInMS > iSessionStartTime)
+            if ((iRepositionRequestedStartNPTInMS < iSessionStopTime) && (iRepositionRequestedStartNPTInMS >= iSessionStartTime))
             {
                 // we need to use part of the logic of repositioning to start
                 // streaming from a non-zero offset. Enabled only for 3gpp streaming
@@ -3685,11 +3689,12 @@ void PVMFSMRTSPUnicastNode::DoSetDataSourcePosition(PVMFSMFSPBaseNodeCommand& aC
                 MoveCmdToCurrentQueue(aCmd);
                 return;
             }
-
-            *iActualRepositionStartNPTInMSPtr = iSessionStartTime;
-            GetActualMediaTSAfterSeek();
-            PVMF_SM_RTSP_LOG_COMMAND_SEQ((0, "PVMFSMRTSPUnicastNode::SetDataSourcePosition() - CmdComplete"));
-            CommandComplete(iInputCommands, aCmd, PVMFSuccess);
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFSMRTSPUnicastNode::DoSetDataSourcePosition - Invalid value of iRepositionRequestedStartNPTInMS [%u] -- should have been between [%u] - [%u]", iRepositionRequestedStartNPTInMS, iSessionStartTime, iSessionStopTime));
+                CommandComplete(iInputCommands, aCmd, PVMFErrArgument);
+                return;
+            }
         }
         else if ((iInterfaceState == EPVMFNodeStarted) || (iInterfaceState == EPVMFNodePaused))
         {
