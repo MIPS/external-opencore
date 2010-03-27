@@ -1472,7 +1472,7 @@ PVMFRTPInfoParams* PVMFRTPJitterBufferImpl::FindRTPInfoParams(uint32 aSeqNum)
                 it < iRTPInfoParamsVec.end();
                 it++)
         {
-            if ((it->seqNumBaseSet) && ((aSeqNum - it->seqNum) >= RTPSEQNUM_ROLLOVER_WRAP_THRESHHOLD_16BIT))
+            if ((it->seqNumBaseSet) && ((OSCL_STATIC_CAST(uint16, aSeqNum) - OSCL_STATIC_CAST(uint16, it->seqNum)) >= RTPSEQNUM_ROLLOVER_WRAP_THRESHHOLD_16BIT))
             {
                 rtpInfoParamsMustBeAvl = true;
                 PVMF_JB_LOGRTPINFO_I((0, "PVMFRTPJitterBufferImpl::FindRTPInfoParams Purging RTPInfo MimeStr[%s] SeqNum[%u] RTPSeqNum[%u]", irMimeType.get_cstr(), aSeqNum, it->seqNum));

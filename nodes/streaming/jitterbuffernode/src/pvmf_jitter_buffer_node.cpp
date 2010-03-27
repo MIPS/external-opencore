@@ -735,7 +735,7 @@ bool PVMFJitterBufferNode::SetPortRTPParams(PVMFPortInterface* aPort,
         uint32 aNPTInMS,
         bool oPlayAfterASeek)
 {
-    PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferNode::SetPortRTPParams In Port - 0x%x", aPort));
+    PVMF_JBNODE_LOGINFO((0, "PVMFJitterBufferNode::SetPortRTPParams In Port - 0x%x aSeqNumBasePresent[%d], aSeqNumBase[%u], aRTPTimeBasePresent[%d] aRTPTimeBase[%u] aNPTTimeBasePresent[%d] aNPTInMS[%u] oPlayAfterASeek[%d]", aPort, aSeqNumBasePresent, aSeqNumBase, aRTPTimeBasePresent, aRTPTimeBase, aNPTTimeBasePresent, aNPTInMS, oPlayAfterASeek));
     uint32 i;
     //The above method is called only during 3GPP repositioning, however, since the aPort param in the signature
     // takes care only of the input port, the output port msg queues aren't cleared.
