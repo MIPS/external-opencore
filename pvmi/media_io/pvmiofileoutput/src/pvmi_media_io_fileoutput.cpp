@@ -135,7 +135,8 @@ OSCL_EXPORT_REF PVRefFileOutput::PVRefFileOutput(const oscl_wchar* aFileName
 
 OSCL_EXPORT_REF PVRefFileOutput::PVRefFileOutput(const oscl_wchar* aFileName,
         MediaType aMediaType,
-        bool aCompressedMedia)
+        bool aCompressedMedia,
+        bool aTestbufferAlloc)
         : OsclTimerObject(OsclActiveObject::EPriorityNominal, "pvreffileoutput")
         , iOutputFileName(aFileName)
         , iMediaType(aMediaType)
@@ -146,7 +147,9 @@ OSCL_EXPORT_REF PVRefFileOutput::PVRefFileOutput(const oscl_wchar* aFileName,
         , iLogOutputToFile(false)
 #endif
 {
+
     initData();
+    iTest_Buffer_Alloc = aTestbufferAlloc;
 }
 
 void PVRefFileOutput::initData()
@@ -172,6 +175,7 @@ void PVRefFileOutput::initData()
     iCommandCounter = 0;
     iLogger = NULL;
     iFileOpened = false;
+    iTest_Buffer_Alloc = false;
     iFsConnected = false;
     iCommandResponseQueue.reserve(5);
     iWriteResponseQueue.reserve(5);
@@ -1521,29 +1525,31 @@ PVMFStatus PVRefFileOutput::getParametersSync(PvmiMIOSession aSession, PvmiKeyTy
         aParameters[0].value.uint32_value = DEFAULT_NUM_DECODED_FRAMES_CAPABILITY;
         return PVMFSuccess;
     }
-#if TEST_BUFFER_ALLOCATOR
-    else if (pv_mime_strcmp(aIdentifier, PVMF_SUPPORT_FOR_BUFFER_ALLOCATOR_IN_MIO_KEY) == 0)
+    if (iTest_Buffer_Alloc)
     {
-        return PVMFSuccess;
-    }
-    else if (pv_mime_strcmp(aIdentifier, PVMF_BUFFER_ALLOCATOR_KEY) == 0)
-    {
-        int32 err;
-        aParameters = (PvmiKvp*)oscl_malloc(sizeof(PvmiKvp));
-        if (!aParameters)
+        if (pv_mime_strcmp(aIdentifier, PVMF_SUPPORT_FOR_BUFFER_ALLOCATOR_IN_MIO_KEY) == 0)
         {
-            return PVMFErrNoMemory;
+            return PVMFSuccess;
         }
-
-        OSCL_TRY(err, aParameters[0].value.key_specific_value = (PVInterface *)OSCL_NEW(PVRefBufferAlloc, (iBufferSize, iNumberOfBuffers)) ;);
-        if (err || (NULL == aParameters[0].value.key_specific_value))
+        else if (pv_mime_strcmp(aIdentifier, PVMF_BUFFER_ALLOCATOR_KEY) == 0)
         {
-            return PVMFErrNoMemory;
+            int32 err;
+            aParameters = (PvmiKvp*)oscl_malloc(sizeof(PvmiKvp));
+            if (!aParameters)
+            {
+                return PVMFErrNoMemory;
+            }
 
+            OSCL_TRY(err, aParameters[0].value.key_specific_value = (PVInterface *)OSCL_NEW(PVRefBufferAlloc, (iBufferSize, iNumberOfBuffers)) ;);
+            if (err || (NULL == aParameters[0].value.key_specific_value))
+            {
+                return PVMFErrNoMemory;
+
+            }
+            return PVMFSuccess;
         }
-        return PVMFSuccess;
     }
-#endif
+
     //other queries are not currently supported.
 
     //unrecognized key.
@@ -2578,7 +2584,6 @@ void PVRefFileOutput::UpdateVideoChunkHeaderIdx()
     }
 }
 
-#if TEST_BUFFER_ALLOCATOR
 
 PVRefBufferAlloc::PVRefBufferAlloc(uint32 size, uint32 buffers): refCount(0), bufferSize(size), maxBuffers(buffers), numAllocated(0)
 {
@@ -2652,5 +2657,4 @@ bool PVRefBufferAlloc::queryInterface(const PVUuid& uuid, PVInterface*& aInterfa
     return false;
 }
 
-#endif
 

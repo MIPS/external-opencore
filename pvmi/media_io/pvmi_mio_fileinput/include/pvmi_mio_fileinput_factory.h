@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ class PvmiMIOFileInputSettings
         {
             iMediaFormat = PVMF_MIME_FORMAT_UNKNOWN;
             iLoopInputFile = true;
+            iTestBufferAlloc = false;
             iSamplingFrequency = 8000;
             iNumChannels = 1;
             iNum20msFramesPerChunk = 1;
@@ -60,6 +61,7 @@ class PvmiMIOFileInputSettings
         {
             iMediaFormat = aSettings.iMediaFormat;
             iLoopInputFile = aSettings.iLoopInputFile;
+            iTestBufferAlloc = aSettings.iTestBufferAlloc;
             iSamplingFrequency = aSettings.iSamplingFrequency;
             iNumChannels = aSettings.iNumChannels;
             iNum20msFramesPerChunk = aSettings.iNum20msFramesPerChunk;
@@ -94,6 +96,7 @@ class PvmiMIOFileInputSettings
         // General settings
         PVMFFormatType iMediaFormat;
         bool iLoopInputFile;
+        bool iTestBufferAlloc;
         OSCL_wStackString<512> iFileName;
         OSCL_wStackString<512> iLogFileName;
         OSCL_wStackString<512> iTextFileName;

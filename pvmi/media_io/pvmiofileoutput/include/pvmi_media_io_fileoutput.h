@@ -48,9 +48,7 @@
 #endif
 
 
-#define TEST_BUFFER_ALLOCATOR 0
 
-#if TEST_BUFFER_ALLOCATOR
 #ifndef PV_INTERFACE_H
 #include "pv_interface.h"
 #endif
@@ -58,7 +56,7 @@
 #ifndef PVMF_FIXEDSIZE_BUFFER_ALLOC_H_INCLUDED
 #include "pvmf_fixedsize_buffer_alloc.h"
 #endif
-#endif
+
 
 class PVLogger;
 class PVRefFileOutputTestObserver;
@@ -180,7 +178,8 @@ class PVRefFileOutput
 
         OSCL_IMPORT_REF PVRefFileOutput(const oscl_wchar* aFileName,
                                         MediaType aMediaType,
-                                        bool aCompressedMedia = false);
+                                        bool aCompressedMedia = false,
+                                        bool aTestbufferAlloc = false);
 
         OSCL_IMPORT_REF PVRefFileOutput(const OSCL_wString& aFileName, bool logStrings = false);
 
@@ -358,6 +357,7 @@ class PVRefFileOutput
         bool iFsConnected;
         Oscl_File iOutputFile;
         bool iFileOpened;
+        bool iTest_Buffer_Alloc;
 
         // Audio parameters.
         OSCL_HeapString<OsclMemAllocator> iAudioFormatString;
@@ -462,8 +462,6 @@ class PVRefFileOutputTestObserver
         OSCL_IMPORT_REF virtual void Pos(PVMFTimestamp& aTimestamp) = 0;
 };
 
-#if TEST_BUFFER_ALLOCATOR
-
 class PVRefBufferAlloc: public PVInterface, public PVMFFixedSizeBufferAlloc
 {
     public:
@@ -493,7 +491,7 @@ class PVRefBufferAlloc: public PVInterface, public PVMFFixedSizeBufferAlloc
         int32 numAllocated;
 };
 
-#endif
+
 
 #endif // PVMI_MEDIA_IO_FILEOUTPUT_H_INCLUDED
 

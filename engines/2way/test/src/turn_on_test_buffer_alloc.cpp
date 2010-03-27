@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,29 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef PV_2WAY_SDKINFO_H_INCLUDED
-#define PV_2WAY_SDKINFO_H_INCLUDED
+#include "turn_on_test_buffer_alloc.h"
 
-// This header file is automatically generated at build-time
-// *** OFFICIAL RELEASE INFO -- Will not auto update
 
-#define PV2WAY_ENGINE_SDKINFO_LABEL "1326727"
-#define PV2WAY_ENGINE_SDKINFO_DATE 0x20100316
+void turn_on_test_buffer_alloc::FinishTimerCallback()
+{
+    bool pass = false;
 
-#endif //PV_2WAY_SDKINFO_H_INCLUDED
+    // compare values to what we are expecting
+    if (iTestConfigInterface)
+    {
+
+        bool usingBuffers = iTestConfigInterface->UsingExternalVideoDecBuffers();
+        if (usingBuffers)
+        {
+            pass = true;
+        }
+    }
+
+    test_is_true(pass);
+
+
+    DisconnectSourceSinks();
+
+}
+
+

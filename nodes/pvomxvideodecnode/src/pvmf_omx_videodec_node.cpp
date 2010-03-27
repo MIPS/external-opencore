@@ -342,6 +342,14 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
 
 
         }
+        else
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_WARNING,
+                            (0, "PVMFOMXVideoDecNode::HandlePortReEnable Warning- It is OK for this KVP to fail"
+                             "Do NOT attempt to fix the failure in the MIO unless you absolutely want to implement"));
+
+            ReportInfoEvent(PVMFPvmiBufferAllocatorNotAcquired);
+        }
 
         //Buffer allocation has to be done again in case we landed to port reconfiguration
         PvmiKvp* kvp = NULL;
@@ -393,6 +401,7 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
                     {
                         iNumOutputBuffers = iNumBuffers;
                         iOMXComponentOutputBufferSize = iBufferSize;
+                        ReportInfoEvent(PVMFPvmiBufferAlloctorAcquired);
                     }
                 }
                 else
@@ -404,8 +413,12 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
         }
         else
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                            (0, "PVMFOMXVideoDecNode::HandlePortReEnable - Error calling pvmiGetBufferAllocatorSpecificInfoSync"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_WARNING,
+                            (0, "PVMFOMXVideoDecNode::HandlePortReEnable Warning- It is OK for this KVP to fail"
+                             "Do NOT attempt to fix the failure in the MIO unless you absolutely want to implement"
+                             "the MIO BUFFER ALLOCATOR -see documentation"));
+            ReportInfoEvent(PVMFPvmiBufferAllocatorNotAcquired);
+
         }
 
         // it is now safe to send command for port reenable
@@ -983,6 +996,7 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
                         // the call succeeded - no need to send extra fsi
                         iCompactFSISettingSucceeded = true;
                         sendFsi = false;
+
                     }
 
                     alloc.deallocate((OsclAny*)(KvpKey));
@@ -1005,6 +1019,14 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
                 ReportErrorEvent(PVMFErrNoMemory);
                 return false; // this is going to make everything go out of scope
             }
+        }
+        else
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_WARNING,
+                            (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters Warning- It is OK for this KVP to fail"
+                             "Do NOT attempt to fix the failure in the MIO unless you absolutely want to implement"
+                             "the MIO BUFFER ALLOCATOR -see documentation"));
+            ReportInfoEvent(PVMFPvmiBufferAllocatorNotAcquired);
         }
 
     }
@@ -1061,20 +1083,24 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
                 {
                     iNumOutputBuffers = iNumBuffers;
                     iOMXComponentOutputBufferSize = iBufferSize;
+                    ReportInfoEvent(PVMFPvmiBufferAlloctorAcquired);
                 }
             }
             else
             {
                 ipExternalOutputBufferAllocatorInterface->removeRef();
                 ipExternalOutputBufferAllocatorInterface = NULL;
-
             }
         }
     }
     else
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters - Error calling pvmiGetBufferAllocatorSpecificInfoSync"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_WARNING,
+                        (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters Warning- It is OK for this KVP to fail"
+                         "Do NOT attempt to fix the failure in the MIO unless you absolutely want to implement"
+                         "the MIO BUFFER ALLOCATOR -see documentation"));
+
+        ReportInfoEvent(PVMFPvmiBufferAllocatorNotAcquired);
     }
 
 

@@ -37,6 +37,7 @@
 #include "pause_resume_test.h"
 #include "reconnect_test.h"
 #include "error_check_audio_only_test.h"
+#include "turn_on_test_buffer_alloc.h"
 
 
 #include "tsc_h324m_config_interface.h"
@@ -120,6 +121,7 @@ void engine_test_suite::AddIncomingAudioCodecUsingFile(PV2WaySourceAndSinksFile*
     // Audio Sink   /Incoming
     if (oscl_strncmp(PVMF_MIME_PCM16, apAudSinkFormatType, oscl_strlen(PVMF_MIME_PCM16)) == 0)
     {
+
         apSourceAndSinks->AddPreferredCodec(INCOMING, PV_AUDIO, iCodecs.iAudioSinkRawFileSettings);
 
     }
@@ -140,6 +142,7 @@ void engine_test_suite::AddOutgoingVideoCodecUsingFile(PV2WaySourceAndSinksFile*
     }
     else if (oscl_strncmp(PVMF_MIME_H2632000, apVidSrcFormatType, oscl_strlen(PVMF_MIME_H2632000)) == 0)
     {
+
         apSourceAndSinks->AddPreferredCodec(OUTGOING, PV_VIDEO, iCodecs.iVideoSourceH263FileSettings);
     }
     else if (oscl_strncmp(PVMF_MIME_M4V, apVidSrcFormatType, oscl_strlen(PVMF_MIME_M4V)) == 0)
@@ -159,7 +162,9 @@ void engine_test_suite::AddIncomingVideoCodecUsingFile(PV2WaySourceAndSinksFile*
     }
     else if (oscl_strncmp(PVMF_MIME_H2632000, apVidSinkFormatType, oscl_strlen(PVMF_MIME_H2632000)) == 0)
     {
+
         apSourceAndSinks->AddPreferredCodec(INCOMING, PV_VIDEO, iCodecs.iVideoSinkH263FileSettings);
+
     }
     else if (oscl_strncmp(PVMF_MIME_M4V, apVidSinkFormatType, oscl_strlen(PVMF_MIME_M4V)) == 0)
     {
@@ -621,6 +626,7 @@ void engine_test_suite::AddNegotiatedFormatsTests(const bool aProxy,
         pTemp->AddExpectedFormat(OUTGOING, PV_AUDIO, PVMF_MIME_PCM16);
         pTemp->AddExpectedFormat(INCOMING, PV_VIDEO, PVMF_MIME_YUV420);
         pTemp->AddExpectedFormat(OUTGOING, PV_VIDEO, PVMF_MIME_H2632000);
+
         adopt_test_case(pTemp);
     }
 
@@ -1095,6 +1101,7 @@ void engine_test_suite::AddReconnectTests(const bool aProxy, int32 firstTest, in
 
 void engine_test_suite::AddMiscTests(const bool aProxy, int32 firstTest, int32 lastTest)
 {
+
     if (inRange(firstTest, lastTest))
     {
         test_base* pTemp = OSCL_NEW(error_check_audio_only_test, (aProxy));
@@ -1102,6 +1109,22 @@ void engine_test_suite::AddMiscTests(const bool aProxy, int32 firstTest, int32 l
                 PVMF_MIME_AMR_IF2, PVMF_MIME_YUV420, PVMF_MIME_YUV420);
         pTemp->AddSourceAndSinks(pSourceAndSinks);
         adopt_test_case(pTemp);
+    }
+
+    if (inRange(firstTest, lastTest))
+    {
+
+        test_base* pTemp = OSCL_NEW(turn_on_test_buffer_alloc, (aProxy));
+        PV2WaySourceAndSinksFile* pSourceAndSinks = OSCL_NEW(PV2WaySourceAndSinksFile,
+                (pTemp->GetSdkInfo()));
+        AddOutgoingAudioCodecUsingFile(pSourceAndSinks, PVMF_MIME_PCM16);
+        AddOutgoingVideoCodecUsingFile(pSourceAndSinks, PVMF_MIME_YUV420);
+        pSourceAndSinks->AddPreferredCodec(INCOMING, PV_AUDIO, iCodecs.iAudioSinkBufferAllocatorFileSettings);
+        pSourceAndSinks->AddPreferredCodec(INCOMING, PV_VIDEO, iCodecs.iVideoSinkBufferAllocatorFileSettings);
+        pTemp->AddSourceAndSinks(pSourceAndSinks);
+        adopt_test_case(pTemp);
+
+
     }
 
 }

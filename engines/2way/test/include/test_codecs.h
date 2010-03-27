@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,6 +104,11 @@ class TestCodecs
             iAudioSinkFileSettings.iFileName = AUDIO_SINK_FILENAME;
             iAudioSinkFileSettings.iMediaFormat = PVMF_MIME_AMR_IF2;
 
+            iAudioSinkBufferAllocatorFileSettings.iTestBufferAlloc = true;
+            iAudioSinkBufferAllocatorFileSettings.iFileName = AUDIO_SINK_FILENAME;
+            iAudioSinkBufferAllocatorFileSettings.iMediaFormat = PVMF_MIME_AMR_IF2;
+
+
             iAudioSinkRawFileSettings.iFileName = AUDIO_SINK_RAW_FILENAME;
             iAudioSinkRawFileSettings.iMediaFormat = PVMF_MIME_PCM16;
 
@@ -163,6 +168,10 @@ class TestCodecs
 
             iVideoSinkM4VFileSettings.iFileName = VIDEO_SINK_M4V_FILENAME;
             iVideoSinkM4VFileSettings.iMediaFormat = PVMF_MIME_M4V;
+
+            iVideoSinkBufferAllocatorFileSettings.iTestBufferAlloc = true;
+            iVideoSinkBufferAllocatorFileSettings.iFileName = VIDEO_SINK_YUV_FILENAME;
+            iVideoSinkBufferAllocatorFileSettings.iMediaFormat = PVMF_MIME_YUV420;
             return true;
         };
 
@@ -191,10 +200,14 @@ class TestCodecs
         PvmiMIOFileInputSettings iAudioSinkRawFileSettings;
         PvmiMIOFileInputSettings iAudioSink2FileSettings;
         PvmiMIOFileInputSettings iAudioSinkFileSettings;
+        PvmiMIOFileInputSettings iAudioSinkBufferAllocatorFileSettings;
 
         PvmiMIOFileInputSettings iVideoSinkYUVFileSettings;
         PvmiMIOFileInputSettings iVideoSinkH263FileSettings;
         PvmiMIOFileInputSettings iVideoSinkM4VFileSettings;
+        PvmiMIOFileInputSettings iVideoSinkBufferAllocatorFileSettings;
+
+
 
         DummyMIOSettings iLipSyncAudioSourceSettings;
         DummyMIOSettings iLipSyncAudioSinkSettings;

@@ -11,8 +11,10 @@ LOCAL_SRC_FILES := \
  	src/test_base.cpp \
  	src/../../../../protocols/systems/tools/general/common/src/test_utility.cpp \
  	src/av_test.cpp \
+ 	src/av_using_test_extension.cpp \
  	src/acceptable_formats_test.cpp \
  	src/negotiated_formats_test.cpp \
+ 	src/turn_on_test_buffer_alloc.cpp \
  	src/connect_cancel_test.cpp \
  	src/connect_test.cpp \
  	src/audio_only_test.cpp \

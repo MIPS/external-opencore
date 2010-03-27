@@ -770,6 +770,15 @@ class CPV324m2Way : OsclActiveObject,
         void addRef();
         void removeRef();
         bool queryInterface(const PVUuid& uuid, PVInterface*& iface);
+        bool UsingExternalVideoDecBuffers()
+        {
+            return iUsingExternalVideoDecBuffers;
+        }
+        bool UsingExternalAudioDecBuffers()
+        {
+            return iUsingExternalAudioDecBuffers;
+        }
+
 
     private:
         CPV324m2Way();
@@ -1154,6 +1163,9 @@ class CPV324m2Way : OsclActiveObject,
         // interface for omx enc node capability and config
         PvmiCapabilityAndConfig* ipEncNodeCapabilityAndConfig;
         PVInterface* ipEncNodeCapConfigInterface;
+        bool iUsingExternalVideoDecBuffers;
+        bool iUsingExternalAudioDecBuffers;
+
 };
 
 #endif

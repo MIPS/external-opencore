@@ -15,44 +15,42 @@
  * and limitations under the License.
  * -------------------------------------------------------------------
  */
-#ifndef NEGOTIATED_FORMATS_TEST_H_INCLUDED
-#define NEGOTIATED_FORMATS_TEST_H_INCLUDED
-#include "av_using_test_extension.h"
+#ifndef AV_USING_TEST_EXTENSION_H_INCLUDED
+#define AV_USING_TEST_EXTENSION_H_INCLUDED
+#include "av_test.h"
 
-#ifndef PV_2WAY_MIO_H_INCLUDED
-#include "pv_2way_mio.h"
-#endif
 
 #include "pv_2way_test_extension_interface.h"
 
-class negotiated_formats_test : public av_using_test_extension
+class av_using_test_extension : public av_test
 {
     public:
-        negotiated_formats_test(bool aUseProxy = false,
+        av_using_test_extension(bool aUseProxy = false,
                                 uint32 aTimeConnection = TEST_DURATION,
                                 uint32 aMaxTestDuration = MAX_TEST_DURATION)
-                : av_using_test_extension(aUseProxy, aTimeConnection, aMaxTestDuration)
+                : av_test(aUseProxy, aTimeConnection, aMaxTestDuration),
+                iTestConfigInterface(NULL),
+                iQueryTestInterfaceCmdId(0),
+                iTempTestConfigInterface(NULL)
         {
             iTestName = _STRLIT_CHAR("negotiated formats");
         }
 
-        ~negotiated_formats_test()
+        ~av_using_test_extension()
         {
         }
 
-        // need to store the expected formats that we'll find
-        void AddExpectedFormat(TPVDirection aDir, PV2WayMediaType aType, const char* const aFormat);
 
     protected:
+        void AllNodesAdded();
+        PV2WayTestExtensionInterface* iTestConfigInterface;
 
     private:
+        void CommandCompleted(const PVCmdResponse& aResponse);
+        void CreateParts();
+        PVCommandId iQueryTestInterfaceCmdId;
+        PVInterface* iTempTestConfigInterface;
 
-        void FinishTimerCallback();
-
-        Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator> iInAudFormatCapability;
-        Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator> iOutAudFormatCapability;
-        Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator> iInVidFormatCapability;
-        Oscl_Vector<FormatCapabilityInfo, OsclMemAllocator> iOutVidFormatCapability;
 };
 
 

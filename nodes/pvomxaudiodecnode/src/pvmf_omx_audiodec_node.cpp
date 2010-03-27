@@ -904,6 +904,16 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
             }
 
         }
+        else
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_WARNING,
+                            (0, "PVMFOMXAudioDecNode::HandlePortReEnable Warning- It is OK for this KVP to fail"
+                             "Do NOT attempt to fix the failure in the MIO unless you absolutely want to implement"
+                             "the MIO BUFFER ALLOCATOR - see documentation"));
+
+
+            ReportInfoEvent(PVMFPvmiBufferAllocatorNotAcquired);
+        }
 
         //Buffer allocator kvp query and allocation has to be done again if we landed into handle port reconfiguration
 
@@ -954,6 +964,7 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
                     {
                         iNumOutputBuffers = iNumBuffers;
                         iOMXComponentOutputBufferSize = iBufferSize;
+                        ReportInfoEvent(PVMFPvmiBufferAlloctorAcquired);
                     }
 
                 }
@@ -964,7 +975,15 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
                 }
             }
         }
+        else
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_WARNING,
+                            (0, "PVMFOMXAudioDecNode::HandlePortReEnable Warning- It is OK for this KVP to fail"
+                             "Do NOT attempt to fix the failure in the MIO unless you absolutely want to implement"
+                             "the MIO BUFFER ALLOCATOR -see documentation"));
 
+            ReportInfoEvent(PVMFPvmiBufferAllocatorNotAcquired);
+        }
 
         /* Allocate output buffers */
         if (!CreateOutMemPool(iNumOutputBuffers))
@@ -1427,7 +1446,15 @@ bool PVMFOMXAudioDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
 
 
     }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_WARNING,
+                        (0, "PVMFOMXAudioDecNode::NegotiateComponentParameters Warning- It is OK for this KVP to fail"
+                         "Do NOT attempt to fix the failure in the MIO unless you absolutely want to implement"
+                         "the MIO BUFFER ALLOCATOR -see documentation"));
 
+        ReportInfoEvent(PVMFPvmiBufferAllocatorNotAcquired);
+    }
     //Try querying the buffer allocator KVP for output buffer allocation outside of the node
     PvmiKvp* kvp = NULL;
     int numKvp = 0;
@@ -1476,7 +1503,7 @@ bool PVMFOMXAudioDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
                 {
                     iNumOutputBuffers = iNumBuffers;
                     iOMXComponentOutputBufferSize = iBufferSize;
-
+                    ReportInfoEvent(PVMFPvmiBufferAlloctorAcquired);
                 }
 
             }
@@ -1488,7 +1515,15 @@ bool PVMFOMXAudioDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
             }
         }
     }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_WARNING,
+                        (0, "PVMFOMXAudioDecNode::NegotiateComponentParameters Warning- It is OK for this KVP to fail"
+                         "Do NOT attempt to fix the failure in the MIO unless you absolutely want to implement"
+                         "the MIO BUFFER ALLOCATOR -see documentation"));
 
+        ReportInfoEvent(PVMFPvmiBufferAllocatorNotAcquired);
+    }
 
     iParamPort.nBufferCountActual = iNumOutputBuffers;
 

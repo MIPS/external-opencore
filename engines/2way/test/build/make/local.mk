@@ -33,8 +33,10 @@ SRCS := alloc_dealloc_test.cpp \
 	test_base.cpp \
 	../../../../protocols/systems/tools/general/common/src/test_utility.cpp  
 SRCS_324 = av_test.cpp \
+    av_using_test_extension.cpp \
 	acceptable_formats_test.cpp \
 	negotiated_formats_test.cpp \
+    turn_on_test_buffer_alloc.cpp \
 	connect_cancel_test.cpp \
 	connect_test.cpp \
 	audio_only_test.cpp \

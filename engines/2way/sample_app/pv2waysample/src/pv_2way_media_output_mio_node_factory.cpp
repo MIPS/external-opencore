@@ -49,7 +49,7 @@ int PV2WayMediaOutputMIONodeFactory::CreateMedia(PvmiMIOFileInputSettings& aFile
     }
 
     PVRefFileOutput* apRefFileOutput = OSCL_NEW(PVRefFileOutput,
-                                       (aFileSettings.iFileName.get_cstr(), mio_media_type, compressed));
+                                       (aFileSettings.iFileName.get_cstr(), mio_media_type, compressed, aFileSettings.iTestBufferAlloc));
     apRefFileOutput->setUserClockExtnInterface(compressed);
     iMediaControl =  OSCL_REINTERPRET_CAST(PvmiMIOControl*, apRefFileOutput);
     return PVMFSuccess;

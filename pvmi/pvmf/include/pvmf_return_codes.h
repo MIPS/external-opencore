@@ -563,6 +563,14 @@ const PVMFStatus PVMFInfoSourceFormatUpdated = 55;
 Notification for invalid ts in the RTP packet
 */
 const PVMFStatus PVMFErrInvalidRTPTimeInPkt = 56;
+/*
+ Notification that pvmiGetBufferAllocatorSpecificInfoSync was unsuccessful
+ */
+const PVMFStatus PVMFPvmiBufferAllocatorNotAcquired = 55;
+/*
+ Notification that pvmiGetBufferAllocatorSpecificInfoSync was successful
+ */
+const PVMFStatus PVMFPvmiBufferAlloctorAcquired = 56;
 
 /*
  Placeholder for end of range

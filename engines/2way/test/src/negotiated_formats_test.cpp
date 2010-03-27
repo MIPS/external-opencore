@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,6 @@
  */
 #include "negotiated_formats_test.h"
 
-void negotiated_formats_test::AllNodesAdded()
-{
-    LetConnectionRun();
-}
 
 
 void negotiated_formats_test::FinishTimerCallback()
@@ -91,39 +87,4 @@ void negotiated_formats_test::AddExpectedFormat(TPVDirection aDir,
     }
 }
 
-void negotiated_formats_test::CreateParts()
-{
-    // Get test extension interface handle
-    // get TSC node
-    iQueryTestInterfaceCmdId = terminal->QueryInterface(PV2WayTestEncExtensionUUID,
-                               iTempTestConfigInterface);
-}
 
-void negotiated_formats_test::CommandCompleted(const PVCmdResponse& aResponse)
-{
-    PVCommandId cmdId = aResponse.GetCmdId();
-    if (cmdId < 0)
-        return;
-
-    if (iQueryTestInterfaceCmdId == cmdId)
-    {
-
-        if (aResponse.GetCmdStatus() == PVMFSuccess)
-        {
-            if (iTempTestConfigInterface)
-            {
-                iTestConfigInterface = OSCL_STATIC_CAST(PV2WayTestExtensionInterface*,
-                                                        iTempTestConfigInterface);
-                iTempTestConfigInterface = NULL;
-                // set other values
-                test_base::CreateParts();
-            }
-
-        }
-
-    }
-    else
-    {
-        test_base::CommandCompleted(aResponse);
-    }
-}

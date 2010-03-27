@@ -263,7 +263,9 @@ CPV324m2Way::CPV324m2Way() :
         iPendingTscReset(-1),
         iPendingAudioEncReset(-1),
         iPendingVideoEncReset(-1),
-        iReferenceCount(1)
+        iReferenceCount(1),
+        iUsingExternalVideoDecBuffers(false),
+        iUsingExternalAudioDecBuffers(false)
 {
     iLogger = PVLogger::GetLoggerObject("2wayEngine");
     iSyncControlPVUuid = PvmfNodesSyncControlUuid;
@@ -3564,6 +3566,22 @@ void CPV324m2Way::HandleNodeInformationalEvent(const PVMFAsyncEvent& aEvent)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                         (0, "CPV324m2Way::HandleNodeInformationalEvent video dec node\n"));
+        if (PVMFPvmiBufferAllocatorNotAcquired == aEvent.GetEventType())
+        {
+            // do something
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
+                            (0, "CPV324m2Way::HandleNodeInformationalEvent using local buffer for video decoder\n"));
+            // now let app know somehow
+            iUsingExternalVideoDecBuffers = false;
+        }
+        if (PVMFPvmiBufferAlloctorAcquired == aEvent.GetEventType())
+        {
+            // do something
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
+                            (0, "CPV324m2Way::HandleNodeInformationalEvent using *External* buffer for video decoder\n"));
+            // now let app know somehow
+            iUsingExternalVideoDecBuffers = true;
+        }
     }
     else if (aEvent.GetContext() == iVideoEncNode)
     {
@@ -3599,6 +3617,22 @@ void CPV324m2Way::HandleNodeInformationalEvent(const PVMFAsyncEvent& aEvent)
                 iTSC324mInterface->SetLogicalChannelPause(iAudioDecDatapath->GetChannelId(), INCOMING, pause);
             }
         }
+        else if (event == PVMFPvmiBufferAllocatorNotAcquired)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_WARNING,
+                            (0, "CPV324m2Way::HandleNodeInformationalEvent using local buffer for audio decoder\n"));
+            // now let app know somehow
+            iUsingExternalAudioDecBuffers = false;
+        }
+        else if (event == PVMFPvmiBufferAlloctorAcquired)
+        {
+            // do something
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
+                            (0, "CPV324m2Way::HandleNodeInformationalEvent using *External* buffer for audio decoder\n"));
+            // now let app know somehow
+            iUsingExternalAudioDecBuffers = true;
+        }
+
     }
     else if ((iVideoEncDatapath != NULL) &&
              (iVideoEncDatapath->IsNodeInDatapath((PVMFNodeInterface *) aEvent.GetContext())))
