@@ -17,7 +17,7 @@
  */
 /**
  *
- * @file pvmi_io_interface_node_inport.cpp
+ * @file pv_media_output_node_inport.cpp
  * @brief Input port for media io interface wrapper node.
  *
  */
@@ -29,7 +29,6 @@
 #include "pv_mime_string_utils.h"
 #include "pvmf_media_cmd.h"
 #include "pvmf_media_msg_format_ids.h"
-#include "latmpayloadparser.h"
 #include "media_clock_converter.h"
 #include "time_comparison_utils.h"
 
