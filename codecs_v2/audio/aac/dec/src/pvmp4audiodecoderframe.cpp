@@ -603,13 +603,15 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
     byte_align(&pVars->inputStream);
 
     /*
-     *   After parsing the first frame ( bno=0 (adif), bno=1 (raw))
-     *   verify if implicit signalling is forcing to upsample AAC with
-     *   no AAC+/eAAC+ content. If so, disable upsampling
-     */
+
+    After parsing the first frame ( bno=0 (adif), bno=1 (raw))
+    verify if implicit signalling is forcing to upsample AAC with
+    no AAC+/eAAC+ content. Verify that the frame is not empty
+    If so, disable upsampling
+    */
 
 #ifdef AAC_PLUS
-    if (pVars->bno <= 1)
+    if ((pVars->bno <= 1) && (empty_frame == FALSE))
     {
         if ((pVars->mc_info.ExtendedAudioObjectType == MP4AUDIO_AAC_LC) &&
                 (!sbrBitStream->NrElements))
