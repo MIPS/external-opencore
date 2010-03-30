@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,8 +134,8 @@ void dst_32(Int32 vec[], Int32 scratch_mem[])   /* scratch_mem size 32 */
         tmp3         = *(pt_vec++);
         *(pt_even++) = *(pt_vec++);
         *(pt_odd++) = tmp2 + tmp1;
-        *(pt_odd++) = tmp3 + tmp2;
         tmp1         = *(pt_vec++);
+        *(pt_odd++) = tmp3 + tmp2;
         *(pt_odd++) = tmp1 + tmp3;
     }
 
@@ -177,11 +177,11 @@ void dst_32(Int32 vec[], Int32 scratch_mem[])   /* scratch_mem size 32 */
 
     for (i = 5; i != 0; i--)
     {
-        tmp3  = fxp_mul32_Q31((*(pt_vec) - tmp0) << 1, *(pt_cos--));
+        tmp3  = fxp_mul32_Q31((*(pt_vec) - tmp0), *(pt_cos--)) << 1;
         tmp2 = *(pt_even--);
         *(pt_vec--)     = tmp3 + tmp1;
         *(pt_vecN_1++)  = tmp3 - tmp1;
-        tmp3  = fxp_mul32_Q31((*(pt_vec) + tmp0) << 1, *(pt_cos--));
+        tmp3  = fxp_mul32_Q31((*(pt_vec) + tmp0), *(pt_cos--)) << 1;
         tmp1 = *(pt_even--);
         *(pt_vec--)     = tmp3 + tmp2;
         *(pt_vecN_1++)  = tmp3 - tmp2;

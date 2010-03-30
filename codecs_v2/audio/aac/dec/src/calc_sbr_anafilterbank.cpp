@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,11 +154,10 @@ void calc_sbr_anafilterbank_LC(Int32 * Sr,
     pt_X_1 = X;
 
 
-    realAccu1  =  fxp_mul32_by_16(Qfmt27(-0.51075594183097F),   pt_X_1[-192]);
-
-    realAccu1  =  fxp_mac32_by_16(Qfmt27(-0.51075594183097F), -pt_X_1[-128], realAccu1);
-    realAccu1  =  fxp_mac32_by_16(Qfmt27(-0.01876919066980F),  pt_X_1[-256], realAccu1);
-    *(p_Y_1++) =  fxp_mac32_by_16(Qfmt27(-0.01876919066980F), -pt_X_1[ -64], realAccu1);
+    realAccu1  =  fxp_mul32_by_16(Qfmt27(-0.51075594183097F), pt_X_1[-192]);
+    realAccu1  =  fxp_mac32_by_16(Qfmt27(0.51075594183097F), pt_X_1[-128], realAccu1);
+    realAccu1  =  fxp_mac32_by_16(Qfmt27(-0.01876919066980F), pt_X_1[-256], realAccu1);
+    *(p_Y_1++) =  fxp_mac32_by_16(Qfmt27(0.01876919066980F), pt_X_1[ -64], realAccu1);
 
 
     /* create array Y */
@@ -236,17 +235,14 @@ void calc_sbr_anafilterbank_LC(Int32 * Sr,
     tmp1 = pt_X_1[ -255];
     tmp2 = pt_X_2[ +255];
     *(p_Y_1++) = fxp_mac32_by_16(*(pt_C), tmp1, realAccu1);
-    *(p_Y_2--) = fxp_mac32_by_16(*(pt_C++), tmp2, realAccu2);
+    *(p_Y_2) = fxp_mac32_by_16(*(pt_C), tmp2, realAccu2);
 
-
-    pt_X_1 = X;
 
     realAccu2  = fxp_mul32_by_16(Qfmt27(0.00370548843500F), X[ -32]);
-
-    realAccu2  = fxp_mac32_by_16(Qfmt27(0.00370548843500F), pt_X_1[-288], realAccu2);
-    realAccu2  = fxp_mac32_by_16(Qfmt27(0.09949460091720F), pt_X_1[ -96], realAccu2);
-    realAccu2  = fxp_mac32_by_16(Qfmt27(0.09949460091720F), pt_X_1[-224], realAccu2);
-    *(p_Y_1++) = fxp_mac32_by_16(Qfmt27(1.20736865027288F), pt_X_1[-160], realAccu2);
+    realAccu2  = fxp_mac32_by_16(Qfmt27(0.00370548843500F), X[-288], realAccu2);
+    realAccu2  = fxp_mac32_by_16(Qfmt27(0.09949460091720F), X[ -96], realAccu2);
+    realAccu2  = fxp_mac32_by_16(Qfmt27(0.09949460091720F), X[-224], realAccu2);
+    *(p_Y_1)   = fxp_mac32_by_16(Qfmt27(1.20736865027288F), X[-160], realAccu2);
 
 
     analysis_sub_band_LC(scratch_mem[0],
@@ -290,11 +286,9 @@ void calc_sbr_anafilterbank(Int32 * Sr,
     pt_C   = &sbrDecoderFilterbankCoefficients_an_filt[0];
 
     realAccu1  =  fxp_mul32_by_16(Qfmt27(-0.36115899F),   X[-192]);
-
-
-    realAccu1  =  fxp_mac32_by_16(Qfmt27(-0.36115899F),  -X[-128], realAccu1);
+    realAccu1  =  fxp_mac32_by_16(Qfmt27(0.36115899F),   X[-128], realAccu1);
     realAccu1  =  fxp_mac32_by_16(Qfmt27(-0.013271822F),  X[-256], realAccu1);
-    *(p_Y_1++) =  fxp_mac32_by_16(Qfmt27(-0.013271822F), -X[ -64], realAccu1);
+    *(p_Y_1++) =  fxp_mac32_by_16(Qfmt27(0.013271822F),  X[ -64], realAccu1);
 
     /* create array Y */
 
@@ -333,7 +327,7 @@ void calc_sbr_anafilterbank(Int32 * Sr,
     realAccu2  = fxp_mac32_by_16(Qfmt27(0.070353307F), X[-224], realAccu2);
 
 
-    *(p_Y_1++) = fxp_mac32_by_16(Qfmt27(0.85373856F), (X[-160]), realAccu2);
+    *p_Y_2 = fxp_mac32_by_16(Qfmt27(0.85373856F), (X[-160]), realAccu2);
 
 
     analysis_sub_band(scratch_mem[0],
