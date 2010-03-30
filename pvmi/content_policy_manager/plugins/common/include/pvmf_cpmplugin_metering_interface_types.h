@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,13 +73,9 @@ class PVMFCPMMeterCertInfo
         //The URL of the metering service.
         OSCL_wHeapString<OsclMemAllocator> iURL;
 
-        //Tells if the cert is V2 (Janus).
-        bool iIsV2;
-
         void Clear()
         {
             iValid = false;
-            iIsV2 = false;
             iURL = _STRLIT_WCHAR("");
             oscl_memset(iMeterId.data, NULL, sizeof(iMeterId.data));
         }
@@ -90,7 +86,6 @@ class PVMFCPMMeterCertInfo
             {
                 iMeterId = aInfo.iMeterId;
                 iURL = aInfo.iURL;
-                iIsV2 = aInfo.iIsV2;
             }
         }
 };
