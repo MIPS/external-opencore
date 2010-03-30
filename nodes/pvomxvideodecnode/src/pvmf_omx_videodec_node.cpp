@@ -1295,11 +1295,11 @@ PVMFStatus PVMFOMXVideoDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
 
             }
             while (iConfigDataBytesProcessed < (uint8)initbufsize);
-
-            // at this point, we've sent all there is to be sent
-            iIsThereMoreConfigDataToBeSent = false;
-
         }
+        // at this point, we've sent all there is to be sent
+        iIsThereMoreConfigDataToBeSent = false;
+
+
     }
     else if (Format == PVMF_MIME_H264_VIDEO_RAW)
     {
@@ -1342,11 +1342,11 @@ PVMFStatus PVMFOMXVideoDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
                 iConfigDataBytesProcessed += (nal_length + sc_size);
             }
             while (size);
-
-            // at this point, we've sent all there is to be sent
-            iIsThereMoreConfigDataToBeSent = false;
-
         }
+        // at this point, we've sent all there is to be sent
+        iIsThereMoreConfigDataToBeSent = false;
+
+
     }
     else if (Format == PVMF_MIME_M4V ||
              Format == PVMF_MIME_H2631998 ||
@@ -1376,6 +1376,10 @@ PVMFStatus PVMFOMXVideoDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
             // at this point, we've sent all there is to be sent
             iIsThereMoreConfigDataToBeSent = false;
 
+        }
+        else
+        {
+            iIsThereMoreConfigDataToBeSent = false;
         }
     }
     else if (Format == PVMF_MIME_WMV)
@@ -1412,9 +1416,11 @@ PVMFStatus PVMFOMXVideoDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
 
             // set the flag requiring config data processing by the component
             iIsConfigDataProcessingCompletionNeeded = true;
-            // at this point, we've sent all there is to be sent
-            iIsThereMoreConfigDataToBeSent = false;
         }
+
+        // at this point, we've sent all there is to be sent
+        iIsThereMoreConfigDataToBeSent = false;
+
     }
     else
     {

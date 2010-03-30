@@ -2049,6 +2049,10 @@ PVMFStatus PVMFOMXAudioDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
         iConfigDataBuffersOutstanding++;
         iIsThereMoreConfigDataToBeSent = false;
     }
+    else
+    {
+        iIsThereMoreConfigDataToBeSent = false;
+    }
 
     return PVMFSuccess;
 }
