@@ -93,76 +93,72 @@
 00097         <span class="keyword">typedef</span> registry_type* registry_pointer_type;
 00098 
 00099     <span class="keyword">private</span>:
-00100         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> initialize(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;alloc, int32 &amp;error);
-00101         <a class="code" href="osclconfig_8h.html#a3">OSCL_IMPORT_REF</a> <span class="keyword">static</span> <span class="keywordtype">void</span> cleanup(<a class="code" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> &amp;alloc, int32 &amp;error);
-<a name="l00102"></a><a class="code" href="classOsclSingletonRegistry.html#l0">00102</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclSingletonRegistry.html#l0">OsclBase</a>;
-00103 
-00104     <span class="keyword">private</span>:
-00105         <span class="keyword">class </span>SingletonTable
-00106         {
-00107             <span class="keyword">public</span>:
-00108                 SingletonTable(): iRefCount(0)
-00109                 {
-00110                     <span class="keywordflow">for</span> (uint32 i = 0; i &lt; <a class="code" href="oscl__singleton_8h.html#a14">OSCL_SINGLETON_ID_LAST</a>; i++)
-00111                         iSingletons[i] = <a class="code" href="group__osclbase.html#a88">NULL</a>;
-00112                 }
-00113                 _OsclBasicLock iTableLock;
-00114                 uint32 iRefCount;
-00115                 <a class="code" href="group__osclbase.html#a27">OsclAny</a>* iSingletons[<a class="code" href="oscl__singleton_8h.html#a14">OSCL_SINGLETON_ID_LAST</a>];
-00116                 _OsclBasicLock iSingletonLocks[<a class="code" href="oscl__singleton_8h.html#a14">OSCL_SINGLETON_ID_LAST</a>];
-00117         };
-00118         <span class="comment">//The singleton table is a global variable.</span>
-00119         <span class="keyword">static</span> SingletonTable* iSingletonTable;
-00120 };
-<a name="l00121"></a><a class="code" href="classOsclSingleton.html">00121</a> 
-00122 <span class="keyword">template</span> &lt; <span class="keyword">class</span> T, u<span class="keywordtype">int</span>32 ID, <span class="keyword">class</span> Registry = OsclSingletonRegistry &gt; <span class="keyword">class </span><a class="code" href="classOsclSingleton.html">OsclSingleton</a>
-00123 {
-00124     <span class="keyword">private</span>:
-00125         <span class="comment">// make the copy constructor and assignment operator private</span>
-00126         <a class="code" href="classOsclSingleton.html">OsclSingleton</a>&amp; operator=(<a class="code" href="classOsclSingleton.html">OsclSingleton</a>&amp; _Y)
-00127         {
-00128             <span class="keywordflow">return</span>(*this);
-00129         }
-00130 
-<a name="l00131"></a><a class="code" href="classOsclSingleton.html#n0">00131</a>     <span class="keyword">protected</span>:
-00132         T* <a class="code" href="classOsclSingleton.html#n0">_Ptr</a>;
-00133 
-<a name="l00134"></a><a class="code" href="classOsclSingleton.html#a0">00134</a>     <span class="keyword">public</span>:
-00135         <a class="code" href="classOsclSingleton.html#a0">OsclSingleton</a>()
-00136         {
-00137             int32 err;
-00138             <a class="code" href="classOsclSingleton.html#n0">_Ptr</a> = <a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(T*, Registry::getInstance(ID, err));
-00139         }
-<a name="l00140"></a><a class="code" href="classOsclSingleton.html#a1">00140</a> 
-00141         <a class="code" href="classOsclSingleton.html#a1">~OsclSingleton</a>() {};
-00142 
-00150         T&amp; <a class="code" href="classOsclSingleton.html#a2">operator*</a>()<span class="keyword"> const</span>
-00151 <span class="keyword">        </span>{
-00152             <span class="keywordflow">return</span>(*_Ptr);
-00153         }
-00154 
-00162         T *<a class="code" href="classOsclSingleton.html#a3">operator-&gt;</a>()<span class="keyword"> const</span>
-00163 <span class="keyword">        </span>{
-00164             <span class="keywordflow">return</span>(_Ptr);
-00165         }
-00166 
-00167 
-00174         <span class="keywordtype">bool</span> <a class="code" href="classOsclSingleton.html#a4">set</a>()
-00175         {
-00176             int32 err;
-00177             <a class="code" href="classOsclSingleton.html#n0">_Ptr</a> = <a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(T*, Registry::getInstance(ID, err));
-00178             <span class="keywordflow">return</span> (<a class="code" href="classOsclSingleton.html#n0">_Ptr</a> ? <span class="keyword">true</span> : <span class="keyword">false</span>);
-00179         }
-00180 
-00181 };
-00182 
-00183 
-00184 <span class="preprocessor">#endif //OSCL_HAS_SINGLETON_SUPPORT</span>
-00185 <span class="preprocessor"></span>
-00186 <span class="preprocessor">#endif</span>
-00187 <span class="preprocessor"></span>
+<a name="l00100"></a><a class="code" href="classOsclSingletonRegistry.html#l0">00100</a>         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classOsclSingletonRegistry.html#l0">OsclBase</a>;
+00101 
+00102     <span class="keyword">private</span>:
+00103         <span class="keyword">class </span>SingletonTable
+00104         {
+00105             <span class="keyword">public</span>:
+00106                 SingletonTable()
+00107                 {
+00108                     <span class="keywordflow">for</span> (uint32 i = 0; i &lt; <a class="code" href="oscl__singleton_8h.html#a14">OSCL_SINGLETON_ID_LAST</a>; i++)
+00109                         iSingletons[i] = <a class="code" href="group__osclbase.html#a88">NULL</a>;
+00110                 }
+00111                 <a class="code" href="group__osclbase.html#a27">OsclAny</a>* iSingletons[<a class="code" href="oscl__singleton_8h.html#a14">OSCL_SINGLETON_ID_LAST</a>];
+00112                 _OsclBasicLock iSingletonLocks[<a class="code" href="oscl__singleton_8h.html#a14">OSCL_SINGLETON_ID_LAST</a>];
+00113         };
+00114         <span class="comment">//The singleton table is a global variable.</span>
+00115         <span class="keyword">static</span> SingletonTable sSingletonTable;
+00116 };
+<a name="l00117"></a><a class="code" href="classOsclSingleton.html">00117</a> 
+00118 <span class="keyword">template</span> &lt; <span class="keyword">class</span> T, u<span class="keywordtype">int</span>32 ID, <span class="keyword">class</span> Registry = OsclSingletonRegistry &gt; <span class="keyword">class </span><a class="code" href="classOsclSingleton.html">OsclSingleton</a>
+00119 {
+00120     <span class="keyword">private</span>:
+00121         <span class="comment">// make the copy constructor and assignment operator private</span>
+00122         <a class="code" href="classOsclSingleton.html">OsclSingleton</a>&amp; operator=(<a class="code" href="classOsclSingleton.html">OsclSingleton</a>&amp; _Y)
+00123         {
+00124             <span class="keywordflow">return</span>(*this);
+00125         }
+00126 
+<a name="l00127"></a><a class="code" href="classOsclSingleton.html#n0">00127</a>     <span class="keyword">protected</span>:
+00128         T* <a class="code" href="classOsclSingleton.html#n0">_Ptr</a>;
+00129 
+<a name="l00130"></a><a class="code" href="classOsclSingleton.html#a0">00130</a>     <span class="keyword">public</span>:
+00131         <a class="code" href="classOsclSingleton.html#a0">OsclSingleton</a>()
+00132         {
+00133             int32 err;
+00134             <a class="code" href="classOsclSingleton.html#n0">_Ptr</a> = <a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(T*, Registry::getInstance(ID, err));
+00135         }
+<a name="l00136"></a><a class="code" href="classOsclSingleton.html#a1">00136</a> 
+00137         <a class="code" href="classOsclSingleton.html#a1">~OsclSingleton</a>() {};
+00138 
+00146         T&amp; <a class="code" href="classOsclSingleton.html#a2">operator*</a>()<span class="keyword"> const</span>
+00147 <span class="keyword">        </span>{
+00148             <span class="keywordflow">return</span>(*_Ptr);
+00149         }
+00150 
+00158         T *<a class="code" href="classOsclSingleton.html#a3">operator-&gt;</a>()<span class="keyword"> const</span>
+00159 <span class="keyword">        </span>{
+00160             <span class="keywordflow">return</span>(_Ptr);
+00161         }
+00162 
+00163 
+00170         <span class="keywordtype">bool</span> <a class="code" href="classOsclSingleton.html#a4">set</a>()
+00171         {
+00172             int32 err;
+00173             <a class="code" href="classOsclSingleton.html#n0">_Ptr</a> = <a class="code" href="group__osclbase.html#a93">OSCL_STATIC_CAST</a>(T*, Registry::getInstance(ID, err));
+00174             <span class="keywordflow">return</span> (<a class="code" href="classOsclSingleton.html#n0">_Ptr</a> ? <span class="keyword">true</span> : <span class="keyword">false</span>);
+00175         }
+00176 
+00177 };
+00178 
+00179 
+00180 <span class="preprocessor">#endif //OSCL_HAS_SINGLETON_SUPPORT</span>
+00181 <span class="preprocessor"></span>
+00182 <span class="preprocessor">#endif</span>
+00183 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.506.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.507.1.1 </small>
 </small></address>
 </body>
 </html>

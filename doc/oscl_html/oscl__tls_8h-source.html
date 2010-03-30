@@ -90,14 +90,14 @@
 00096         {}
 00097         <span class="keyword">typedef</span> <a class="code" href="group__osclbase.html#a27">OsclAny</a>* registry_type;
 00098         <span class="keyword">typedef</span> registry_type* registry_pointer_type;
-00099 
-00100 <span class="preprocessor">#if ( OSCL_TLS_IS_KEYED)</span>
-00101 <span class="preprocessor"></span>        <span class="keyword">class </span>TlsKey
-00102         {
-00103             <span class="keyword">public</span>:
-00104                 TlsKey(): iRefCnt(0), iOsclTlsKey(<a class="code" href="group__osclbase.html#a88">NULL</a>)
-00105                 {}
-00106                 _OsclBasicLock iLock;
+00099         <span class="keyword">static</span> _OsclBasicLock sLock;  <span class="comment">// _osclbaselock declaration with TLS registry and key</span>
+00100 
+00101 <span class="preprocessor">#if ( OSCL_TLS_IS_KEYED)</span>
+00102 <span class="preprocessor"></span>        <span class="keyword">class </span>TlsKey
+00103         {
+00104             <span class="keyword">public</span>:
+00105                 TlsKey(): iRefCnt(0), iOsclTlsKey(<a class="code" href="group__osclbase.html#a88">NULL</a>)
+00106                 {}
 00107                 uint32 iRefCnt;
 00108                 <a class="code" href="group__osclbase.html#a12">TOsclTlsKey</a> *iOsclTlsKey;
 00109         };
@@ -157,7 +157,7 @@
 00187 <span class="preprocessor">#endif</span>
 00188 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.506.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.507.1.1 </small>
 </small></address>
 </body>
 </html>

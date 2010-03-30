@@ -835,3 +835,9 @@ Known Issues
   OMX_AUDIO_AMRFrameFormatFSF.
 - The OpenMAX encoder node is not handling Reset correctly in all
   cases. 
+
+===============================================================================
+2008-10-21  OpenCORE 1.0 (1.00)
+
+OpenCORE 1.0 is the initial contribution to AOSP.  It has both release-1.0
+and android-1.0 tags.
