@@ -54,6 +54,7 @@ const char* MetadataDriver::METADATA_KEYS[NUM_METADATA_KEYS] = {
         "track-info/video/format",
         "track-info/video/height",
         "track-info/video/width",
+        "writer",
 };
 
 static void dumpkeystolog(PVPMetadataList list)
