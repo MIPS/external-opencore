@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -188,6 +188,8 @@ class SampleDescriptionAtom : public FullAtom
 
         int32 getHeight();
         int32 getWidth();
+
+
     private:
         uint32 _entryCount;
         uint32 _handlerType;
@@ -205,6 +207,7 @@ class SampleDescriptionAtom : public FullAtom
         bool _o3GPPH263;
         bool _o3GPPWBAMR;
         bool _oAVC;
+        bool _oMP3; /*mp3 audio*/
 
         ProtectionSchemeInformationBox* _pProtectionSchemeInformationBox;
 

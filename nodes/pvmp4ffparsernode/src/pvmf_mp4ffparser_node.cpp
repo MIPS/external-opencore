@@ -193,6 +193,7 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
              iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_AMR_IETF));
              iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_AMRWB_IETF));
              iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_MPEG4_AUDIO));
+             iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_MP3)); /* support mp3 track */
              iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_M4V));
              iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_H2631998));
              iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_H2632000));
@@ -1620,6 +1621,10 @@ PVMFStatus PVMFMP4FFParserNode::DoRequestPort(PVMFPortInterface*& aPort)
     if (formattype == PVMF_MIME_MPEG4_AUDIO)
     {
         trackportinfo.iFormatTypeInteger = PVMF_MP4_PARSER_NODE_MPEG4_AUDIO;
+    }
+    else if (formattype == PVMF_MIME_MP3)
+    {
+        trackportinfo.iFormatTypeInteger = PVMF_MP4_PARSER_NODE_MP3_AUDIO;
     }
     else if (formattype == PVMF_MIME_H264_VIDEO_MP4)
     {
@@ -8873,6 +8878,7 @@ PVMFStatus PVMFMP4FFParserNode::ConstructMP4FileParser(PVMFStatus* aStatus, int3
     if ((status == PVMFSuccess) && (!iFirstClipNonAudioOnly) && (iFirstValidClipIndex != -1) && (iClipInfoList.size() > 1))
     {
         bool matching = false;
+
         // should only have a track
         for (uint32 i = 0; i < iNodeTrackPortList.size(); i++)
         {
