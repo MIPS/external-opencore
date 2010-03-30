@@ -885,8 +885,14 @@ uint32 TSC_324m::MiscCmdRecv(PS_ControlMsgHeader  pReceiveInf)
         }
         if (iTSC_324mObserver)
         {
-            iTSC_324mObserver->VideoSpatialTemporalTradeoffCommandReceived(mc->logicalChannelNumber,
-                    mc->mcType.videoTemporalSpatialTradeOff);
+            CPVVideoSpatialTemporalTradeoff* pVideoSpatial = OSCL_NEW(CPVVideoSpatialTemporalTradeoff,
+                    (mc->logicalChannelNumber,
+                     mc->mcType.videoTemporalSpatialTradeOff));
+            OSCL_TRAPSTACK_PUSH(pVideoSpatial);
+
+            iTSC_324mObserver->VideoSpatialTemporalTradeoffCommandReceived(pVideoSpatial);
+            OSCL_TRAPSTACK_POP(); // pVideoSpatial
+            pVideoSpatial->removeRef();
         }
     }
     else if (mc->mcType.index == 11)   // 11 = maxMuxPduSize

@@ -34,6 +34,10 @@
 #include "pvmf_node_interface.h"
 #endif
 
+#ifndef PV_2WAY_H324M_TYPES_H_INCLUDED
+#include "pv_2way_h324m_types.h"
+#endif
+
 #define PVH324MConfigUuid PVUuid(0x2b0b54e2,0x7079,0x46c6,0xb2,0x3e,0x04,0xff,0xd3,0x0e,0x14,0x36)
 
 //----f6b47190-f88d-4cbf-a6f6-c61efe98053f

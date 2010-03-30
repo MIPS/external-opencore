@@ -115,10 +115,10 @@ class H324MConfig : public OsclActiveObject,
         void IncomingVendorId(TPVH245Vendor* vendor, const uint8* pn, uint16 pn_len, const uint8* vn, uint16 vn_len);
         void UserInputReceived(CPVUserInput* apUserInput);
         void UserInputCapability(int formats);
-        void VideoSpatialTemporalTradeoffCommandReceived(TPVChannelId id, uint8 tradeoff);
-        void VideoSpatialTemporalTradeoffIndicationReceived(TPVChannelId id, uint8 tradeoff);
-        void LogicalChannelActiveIndicationReceived(TPVChannelId id);
-        void LogicalChannelInactiveIndicationReceived(TPVChannelId id);
+        void VideoSpatialTemporalTradeoffCommandReceived(CPVVideoSpatialTemporalTradeoff* apVideoSpatial);
+        void VideoSpatialTemporalTradeoffIndicationReceived(CPVVideoSpatialTemporalTradeoff* apVideoSpatial);
+        void LogicalChannelActiveIndicationReceived(CPVLogicalChannelIndication* apLCIndication);
+        void LogicalChannelInactiveIndicationReceived(CPVLogicalChannelIndication* apLCIndication);
         void SkewIndicationReceived(TPVChannelId lcn1, TPVChannelId lcn2, uint16 skew);
     private:
         void Run();

@@ -809,8 +809,6 @@ class CPV324m2Way : OsclActiveObject,
         PVCommandId RemoveLogAppender(const char* aTag, OsclSharedPtr<PVLoggerAppender>& aAppender, OsclAny* aContextData = NULL);
         PVCommandId SetLogLevel(const char* aTag, int32 aLevel, bool aSetSubtree = false, OsclAny* aContextData = NULL);
         PVCommandId GetLogLevel(const char* aTag, int32& aLogInfo, OsclAny* aContextData = NULL);
-        //PVCommandId SendUserInput(CPVUserInput& user_input, OsclAny* aContextData = NULL);
-        //PVCommandId GetCallStatistics(CPVCmn2WayStatistics& aStats, OsclAny* aContextData = NULL);
         PVCommandId QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, OsclAny* aContext = NULL);
         PVCommandId CancelAllCommands(OsclAny* aContextData = NULL);
 

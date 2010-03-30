@@ -154,10 +154,10 @@ class TSC_324mObserver
         virtual void IncomingVendorId(TPVH245Vendor* vendor, const uint8* pn, uint16 pn_len, const uint8* vn, uint16 vn_len) = 0;
         virtual void UserInputReceived(CPVUserInput* apUserInput) = 0;
         virtual void UserInputCapability(int formats) = 0;
-        virtual void VideoSpatialTemporalTradeoffCommandReceived(TPVChannelId id, uint8 tradeoff) = 0;
-        virtual void VideoSpatialTemporalTradeoffIndicationReceived(TPVChannelId id, uint8 tradeoff) = 0;
-        virtual void LogicalChannelActiveIndicationReceived(TPVChannelId id) = 0;
-        virtual void LogicalChannelInactiveIndicationReceived(TPVChannelId id) = 0;
+        virtual void VideoSpatialTemporalTradeoffCommandReceived(CPVVideoSpatialTemporalTradeoff* apVideoSpatial) = 0;
+        virtual void VideoSpatialTemporalTradeoffIndicationReceived(CPVVideoSpatialTemporalTradeoff* apVideoSpatial) = 0;
+        virtual void LogicalChannelActiveIndicationReceived(CPVLogicalChannelIndication* apLCIndication) = 0;
+        virtual void LogicalChannelInactiveIndicationReceived(CPVLogicalChannelIndication* apLCIndication) = 0;
         virtual void SkewIndicationReceived(TPVChannelId lcn1, TPVChannelId lcn2, uint16 skew) = 0;
 };
 
