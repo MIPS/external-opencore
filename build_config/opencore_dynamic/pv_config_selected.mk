@@ -48,6 +48,7 @@ pvmediadatastruct_lib=m
 pvmimeutils_lib=m
 threadsafe_callback_ao_lib=m
 pvthreadmessaging_lib=m
+secure_data_format_lib=n
 
 
 #

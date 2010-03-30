@@ -7,8 +7,12 @@ AR ?= ar
 STRIP ?= strip
 ASM_INCLUDE_FLAG := -Wa,-I
 
-override SYSLIBS = -lc -lm -ldl -lstdc++ -lpthread -lrt
+# The forced include flag is a compiler flag 
+# that includes a header file during compilation without 
+# the need for a "#include" statement in the source code
+FORCED_INCLUDE_FLAG := -include
 
+SYSLIBS = -lc -lm -ldl -lstdc++ -lpthread -lrt
 SHARED_CFLAGS ?= -fPIC
 SHARED_CXXFLAGS ?= -fPIC
 SHARED_PRE_LDFLAGS ?= -shared -Wl,-Bsymbolic -Wl,--allow-multiple-definition -Wl,--whole-archive
@@ -125,7 +129,7 @@ endef
 #########################################################
 
 define generate_shared_lib
-  $(quiet) $(SHARED_LINK) $(SHARED_PRE_LDFLAGS) $(SONAME_ARG)$(notdir $1) -o $1 $2 $(SHARED_POST_LDFLAGS)
+  $(quiet) $(SHARED_LINK) $(SHARED_PRE_LDFLAGS) $(SONAME_ARG)$(notdir $1) -o $1 $2 $4 $(SHARED_POST_LDFLAGS)
   $(if $(filter release,$(strip $(DEFAULT_LIBMODE))),$(call strip_binary,$1))
 endef
 

@@ -26,10 +26,6 @@ LIBS := unit_test opencore_author opencore_common opencore_player
 
 
 
-ifneq ($(ARCHITECTURE),win32)
-  SYSLIBS = -lpthread -ldl
-endif
-
 include $(MK)/prog.mk
 
 AE_TEST_DIR = ${BUILD_ROOT}/ae_test

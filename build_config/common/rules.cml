@@ -467,8 +467,8 @@ derive MODS_pvfileplaybackwithpvr_streamingreg from "-lopencore_common"
 
 derive pvwmdrm_so_name from janus_support==y or mtp_db_support==y ? "pvwmdrm" : ""
 derive pvwmdrm_aggregate_libtype from janus_support==y or mtp_db_support==y ? "shared":"static"
-derive SOLIBS_pvwmdrm from pvwmdrm_m_lib.csprng_m_lib.pvcrypto_m_lib.pventropysrc_m_lib
-derive AGGREGATE_LIBDIRS_pvwmdrm from pvwmdrm_m_mk.csprng_m_mk.pvcrypto_m_mk.pventropysrc_m_mk
+derive SOLIBS_pvwmdrm from pvwmdrm_m_lib.csprng_m_lib.pvcrypto_m_lib.pventropysrc_m_lib.secure_data_format_m_lib
+derive AGGREGATE_LIBDIRS_pvwmdrm from pvwmdrm_m_mk.csprng_m_mk.pvcrypto_m_mk.pventropysrc_m_mk.secure_data_format_m_mk
 derive MODS_pvwmdrm from "-lopencore_common"
 
 derive pvwmdrmoemsettings_so_name from janus_support==y or mtp_db_support==y ? "pvwmdrmoemsettings" : ""

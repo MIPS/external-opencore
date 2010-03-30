@@ -45,10 +45,6 @@ SRCS := test_pv_player_engine.cpp \
 
 LIBS := unit_test opencore_player opencore_common opencore_net_support
 
-ifneq ($(ARCHITECTURE),win32)
-  SYSLIBS = -lpthread -ldl
-endif
-
 include $(MK)/prog.mk
 
 PE_TEST_DIR = ${BUILD_ROOT}/pe_test

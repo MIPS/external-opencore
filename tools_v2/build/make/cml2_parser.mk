@@ -24,7 +24,7 @@ $(DESTDIR)/lib$(1)$(TARGET_NAME_SUFFIX).$(SHARED_LIB_EXT): $(foreach lib,$($(1)_
 	$(eval $(1)_fullname:=$(DESTDIR)/lib$1$(TARGET_NAME_SUFFIX).$(SHARED_LIB_EXT))
 	@echo "[make] Building $$@..."
 	$$(call create_objdir,$$(@D))
-	$$(call generate_shared_lib,$$@,$$^,$(strip $($(1)$(TARGET_NAME_SUFFIX)_PRELINK)))
+	$$(call generate_shared_lib,$$@,$$^,$(strip $($(1)$(TARGET_NAME_SUFFIX)_PRELINK)),$($1_LDFLAGS))
 	@echo "[make] DONE building $$@."
 endef
 endif
