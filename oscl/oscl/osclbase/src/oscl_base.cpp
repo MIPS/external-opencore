@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,32 +35,12 @@ OSCL_EXPORT_REF int32 OsclBase::Init()
         if (error)
             return error;
     }
-#if (OSCL_HAS_SINGLETON_SUPPORT)
-    {
-        _OsclBasicAllocator alloc;
-        int32 error;
-        OsclSingletonRegistry::initialize(alloc, error);
-        //exit on error
-        if (error)
-            return error;
-    }
-#endif
     return 0;
 }
 
 OSCL_EXPORT_REF int32 OsclBase::Cleanup()
 {
     int32 result = 0;
-#if (OSCL_HAS_SINGLETON_SUPPORT)
-    {
-        _OsclBasicAllocator alloc;
-        int32 error;
-        OsclSingletonRegistry::cleanup(alloc, error);
-        //continue if error
-        if (error)
-            result = error;
-    }
-#endif
     {
         _OsclBasicAllocator alloc;
         int32 error;
