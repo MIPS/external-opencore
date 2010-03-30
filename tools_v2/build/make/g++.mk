@@ -40,10 +40,13 @@ SHARED_ARCHIVE_LIB_EXT:=sa
 OBJ_EXT := o
 LIBCOMPFLAG:=-L
 DEBUG_CXXFLAGS?=-g
+DEBUG_CFLAGS?=-g
 RELEASE_CPPFLAGS?=-DNDEBUG
 OPT_CXXFLAG?=-O3
+OPT_CFLAG?=-O3
 INCDIRS += -I$(BUILD_ROOT)/installed_include
 CXXFLAGS?=-Wall
+CFLAGS?=-Wall
 
 #########################################################
 # $(call make-depend,source-file,object-file,depend-file,xpflags,xxflags)
@@ -79,7 +82,7 @@ endef
 
 # $(call combined-cc-compile-depend,source-file,object-file,depend-file,xpflags, xxflags)
 define combined-cc-compile-depend
-  $(quiet) $(CC) $4 $5 $(CPPFLAGS) $(PRE_INCDIRS) $(INCDIRS) $(CXXFLAGS) -MMD $(CO)$2 $1
+  $(quiet) $(CC) $4 $5 $(CPPFLAGS) $(PRE_INCDIRS) $(INCDIRS) $(CFLAGS) -MMD $(CO)$2 $1
   $(quiet) $(SED) -e '/^ *\\ *$$/ d' -e 's,$(BUILD_ROOT),$$(BUILD_ROOT),'  -e 's,$(SRC_ROOT),$$(SRC_ROOT),' $3 > $3.tmp
   $(quiet) $(CP) $3.tmp $3
   $(quiet) $(SED) -e 's/#.*//'  \

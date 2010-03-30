@@ -77,6 +77,7 @@ ifeq ($($(TARGET)_libtype),shared-archive)
   LIB_EXT:=$(SHARED_ARCHIVE_LIB_EXT)
   OBJSUBDIR:=shared
   XCXXFLAGS+=$(SHARED_CXXFLAGS)
+  XCFLAGS+=$(SHARED_CFLAGS)
   XCPPFLAGS+=$(SHARED_CPPFLAGS)
   TMPDEPS = $(patsubst %,$$(%_fullname),$(LIBS))
   $(eval $(TARGET)_LIBDEPS = $(TMPDEPS))
@@ -85,6 +86,7 @@ else
     LIB_EXT:=$(SHARED_LIB_EXT)
     OBJSUBDIR:=shared
     XCXXFLAGS+=$(SHARED_CXXFLAGS)
+    XCFLAGS+=$(SHARED_CFLAGS)
     XCPPFLAGS+=$(SHARED_CPPFLAGS)
     TMPDEPS = $(patsubst %,$$(%_fullname),$(LIBS))
     $(eval $(TARGET)_LIBDEPS = $(TMPDEPS))
@@ -100,17 +102,21 @@ ifeq ($($(TARGET)_libmode),debug)
   TARGET_NAME_SUFFIX:=_debug
   OBJSUBDIR:=$(OBJSUBDIR)-dbg
   XCPPFLAGS+=$(DEBUG_CPPFLAGS)
+  XCFLAGS+=$(DEBUG_CFLAGS)
   XCXXFLAGS+=$(DEBUG_CXXFLAGS)
 else
   TARGET_NAME_SUFFIX:=
   OBJSUBDIR:=$(OBJSUBDIR)-rel
   XCXXFLAGS+=$(OPT_CXXFLAG)
+  XCFLAGS+=$(OPT_CFLAG)
   XCXXFLAGS+=$(RELEASE_CXXFLAGS)
+  XCFLAGS+=$(RELEASE_CFLAGS)
   XCPPFLAGS+=$(RELEASE_CPPFLAGS)
 endif
 
 ifneq ($(strip $(LOCAL_EXPORT_ALL_SYMBOLS)),true)
   XCXXFLAGS += $(HIDE_INTERNAL_SYMBOLS_FLAG)
+  XCFLAGS += $(HIDE_INTERNAL_SYMBOLS_FLAG)
 endif
 
 ifneq ($(strip $(OPTIMIZE_FOR_PERFORMANCE_OVER_SIZE)),true)
@@ -171,9 +177,12 @@ LOCAL_ASMSRCDIR := $(abspath $(patsubst ../%,$(LOCAL_PATH)/../%,$(ASMSRCDIR)))
 
 # $(info  LOCAL_TOTAL_INCDIRS = $(LOCAL_TOTAL_INCDIRS), XCXXFLAGS = $(XCXXFLAGS))
 
+
 $(COMPILED_OBJS): XPFLAGS := $(XCPPFLAGS) $(patsubst %,-I%,$(LOCAL_TOTAL_INCDIRS)) $(LOCAL_ASM_INCDIRS)
 $(COMPILED_OBJS): XXFLAGS := $(XCXXFLAGS) $(call cond_flag_warnings_as_errors,$(LOCAL_DISABLE_COMPILE_WARNINGS_AS_ERRORS))
+$(COMPILED_OBJS): XFLAGS := $(XCFLAGS) $(call cond_flag_warnings_as_errors,$(LOCAL_DISABLE_COMPILE_WARNINGS_AS_ERRORS))
 $(COMPILED_OBJS): XADIRS := $(LOCAL_ASMSRCDIR)/$(XASMINCDIRS) 
+
 
 #$(info remote_dirs = $(REMOTE_DIRS))
 
@@ -182,12 +191,12 @@ ifneq ($(strip $(REMOTE_DIRS)),)
 $(foreach srcdir, $(strip $(REMOTE_DIRS)), $(eval $(call OBJ_TEMPLATE,$(srcdir),$(OBJDIR))))
 endif
 
-
 $(OBJDIR)/%.$(OBJ_EXT): $(LOCAL_SRCDIR)/%.cpp 
 	$(call make-cpp-obj-and-depend,$<,$@,$(subst .$(OBJ_EXT),.d,$@),$(XPFLAGS),$(XXFLAGS))
 
+
 $(OBJDIR)/%.$(OBJ_EXT): $(LOCAL_SRCDIR)/%.c
-	$(call make-c-obj-and-depend,$<,$@,$(subst .$(OBJ_EXT),.d,$@),$(XPFLAGS),$(XXFLAGS))
+	$(call make-c-obj-and-depend,$<,$@,$(subst .$(OBJ_EXT),.d,$@),$(XPFLAGS),$(XFLAGS))
 
 # $(info target = $(TARGET), LIBDEPS = $($(TARGET)_LIBDEPS))
 

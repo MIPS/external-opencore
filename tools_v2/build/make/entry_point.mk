@@ -45,7 +45,7 @@ $(2)/%.$(OBJ_EXT): $(1)/%.s
 	$$(call make-asm-obj,$$<,$$@,$$(subst .$(OBJ_EXT),.d,$$@),$$(XPFLAGS),$$(XXFLAGS),$$(XADIRS))
 
 $(2)/%.$(OBJ_EXT): $(1)/%.c
-	$$(call make-c-obj-and-depend,$$<,$$@,$$(subst .$(OBJ_EXT),.d,$$@),$$(XPFLAGS),$$(XXFLAGS))
+	$$(call make-c-obj-and-depend,$$<,$$@,$$(subst .$(OBJ_EXT),.d,$$@),$$(XPFLAGS),$$(XFLAGS))
 endef
 
 
