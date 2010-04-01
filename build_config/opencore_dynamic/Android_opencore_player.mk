@@ -33,7 +33,7 @@ else ifeq ($(PLATFORM_VERSION),1.6)
 else ifeq ($(PLATFORM_VERSION),2.1)
     LOCAL_SHARED_LIBRARIES :=  libutils libcutils libui libhardware libandroid_runtime libdrm1 libmedia libskia libvorbisidec libsonivox liblog libicuuc libbinder
 else
-    LOCAL_SHARED_LIBRARIES :=  libutils libcutils libui libhardware libandroid_runtime libdrm1 libmedia libskia libvorbisidec libsonivox liblog libicuuc libbinder
+    LOCAL_SHARED_LIBRARIES :=  libutils libcutils libui libhardware libandroid_runtime libdrm1 libmedia libskia libvorbisidec libsonivox liblog libicuuc libbinder libsurfaceflinger_client libcamera_client
 endif
 
 -include $(PV_TOP)/Android_system_extras.mk

@@ -17,7 +17,7 @@ else ifeq ($(PLATFORM_VERSION),1.6)
 else ifeq ($(PLATFORM_VERSION),2.1)
     LOCAL_SHARED_LIBRARIES :=  libutils libcutils libui libandroid_runtime libmedia liblog libicuuc libbinder
 else
-    LOCAL_SHARED_LIBRARIES :=  libutils libcutils libui libandroid_runtime libmedia liblog libicuuc libbinder
+    LOCAL_SHARED_LIBRARIES :=  libutils libcutils libui libandroid_runtime libmedia liblog libicuuc libbinder libsurfaceflinger_client libcamera_client
 endif
 
 -include $(PV_TOP)/Android_system_extras.mk
