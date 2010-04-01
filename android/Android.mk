@@ -7,6 +7,7 @@ LOCAL_SRC_FILES := \
 	playerdriver.cpp \
 	thread_init.cpp \
 	mediascanner.cpp \
+	pvmediascanner.cpp \
 	android_surface_output.cpp \
 	android_audio_output.cpp \
 	android_audio_stream.cpp \
