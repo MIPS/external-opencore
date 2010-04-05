@@ -113,6 +113,12 @@ int AvcDecoder_OMX::AllocateBuffer_OMX(void* aUserData, int i, uint8** aYuvBuffe
         return 0;
     }
 
+    //We want to go for dynamic port reconfiguration, return failure from here
+    if (OMX_TRUE == pAvcDecoder_OMX->iNewSPSActivation)
+    {
+        return 0;
+    }
+
     //*aYuvBuffer = pAvcDecoder_OMX->pDpbBuffer + i * pAvcDecoder_OMX->FrameSize;
     //Store the input timestamp at and reference to the correct index
 
@@ -155,12 +161,29 @@ int AvcDecoder_OMX::ActivateSPS_OMX(void* aUserData, uint aSizeInMbs, uint aNumB
         return 0;
     }
 
-    PVAVCDecGetSeqInfo(&(pAvcDecoder_OMX->AvcHandle), &(pAvcDecoder_OMX->SeqInfo));
+    pAvcDecoder_OMX->ReleaseReferenceBuffers();
 
+    PVAVCDecGetSeqInfo(&(pAvcDecoder_OMX->AvcHandle), &(pAvcDecoder_OMX->SeqInfo));
 
     pAvcDecoder_OMX->FrameSize = (aSizeInMbs << 7) * 3;
     pAvcDecoder_OMX->MaxNumFs = aNumBuffers;
 
+    pAvcDecoder_OMX->iReconfigWidth = pAvcDecoder_OMX->SeqInfo.frame_crop_right - pAvcDecoder_OMX->SeqInfo.frame_crop_left + 1;
+    pAvcDecoder_OMX->iReconfigHeight = pAvcDecoder_OMX->SeqInfo.frame_crop_bottom - pAvcDecoder_OMX->SeqInfo.frame_crop_top + 1;
+
+    pAvcDecoder_OMX->iReconfigStride = pAvcDecoder_OMX->SeqInfo.FrameWidth;
+    pAvcDecoder_OMX->iReconfigSliceHeight = pAvcDecoder_OMX->SeqInfo.FrameHeight;
+
+    if (pAvcDecoder_OMX->MaxWidth < pAvcDecoder_OMX->SeqInfo.FrameWidth)
+    {
+        pAvcDecoder_OMX->MaxWidth = pAvcDecoder_OMX->SeqInfo.FrameWidth;
+    }
+    if (pAvcDecoder_OMX->MaxHeight < pAvcDecoder_OMX->SeqInfo.FrameHeight)
+    {
+        pAvcDecoder_OMX->MaxHeight = pAvcDecoder_OMX->SeqInfo.FrameHeight;
+    }
+
+    pAvcDecoder_OMX->iNewSPSActivation = OMX_TRUE;
 
     return 1;
 }
@@ -258,6 +281,12 @@ OMX_ERRORTYPE AvcDecoder_OMX::AvcDecInit_OMX()
 
     iAvcActiveFlag = OMX_FALSE;
     iSkipToIDR = OMX_FALSE;
+    iNewSPSActivation = OMX_FALSE;
+
+    iReconfigWidth = 0;
+    iReconfigHeight = 0;
+    iReconfigStride = 0;
+    iReconfigSliceHeight = 0;
 
     return OMX_ErrorNone;
 }
@@ -272,7 +301,6 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_BUFFERHEADERTYPE *aOutBuffer, //
         OMX_S32* iFrameCount, OMX_BOOL aMarkerFlag, OMX_BOOL *aResizeFlag)
 {
     AVCDec_Status Status;
-    OMX_S32 Width, Height;
     uint8* pNalBuffer;
     int NalSize, NalType, NalRefId;
 
@@ -334,56 +362,7 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_BUFFERHEADERTYPE *aOutBuffer, //
             return OMX_FALSE;
         }
 
-        AVCDecSPSInfo seqInfo;
-
-        PVAVCDecGetSeqInfo(&(AvcHandle), &(seqInfo));
-
-        Width = seqInfo.frame_crop_right - seqInfo.frame_crop_left + 1;
-        Height = seqInfo.frame_crop_bottom - seqInfo.frame_crop_top + 1;
-
-        aPortParam->format.video.nFrameWidth = Width;
-        aPortParam->format.video.nFrameHeight = Height;
-        aPortParam->format.video.nStride = seqInfo.FrameWidth;
-        aPortParam->format.video.nSliceHeight = seqInfo.FrameHeight;
-
-        if (MaxWidth < seqInfo.FrameWidth)
-        {
-            MaxWidth = seqInfo.FrameWidth;
-        }
-        if (MaxHeight < seqInfo.FrameHeight)
-        {
-            MaxHeight = seqInfo.FrameHeight;
-        }
-
-        // extract the max number of frames required
-        if (MaxNumFs < (OMX_U32) seqInfo.num_frames)
-        {
-            MaxNumFs = seqInfo.num_frames;
-        }
-
-
-
-        // finally, compute the new minimum buffer size.
-        // Decoder components always output YUV420 format
-        aPortParam->nBufferSize = (aPortParam->format.video.nSliceHeight * aPortParam->format.video.nStride * 3) >> 1;
-
-
-        if ((OldStride != aPortParam->format.video.nStride) || (OldSliceHeight !=  aPortParam->format.video.nSliceHeight))
-            *aResizeFlag = OMX_TRUE;
-
-
-        // make sure that the number of buffers that the decoder requires is less than what we allocated
-        // we should have at least 2 more than the decoder (one for omx component and one for downstream)
-        if ((MaxNumFs + 2 > aPortParam->nBufferCountActual))
-        {
-            // even if buffers are the correct size - we must do port reconfig because of buffer count
-            *aResizeFlag = OMX_TRUE;
-            // adjust only buffer count min - nBufferCountActual still needs to be preserved until port becomes disabled
-            aPortParam->nBufferCountMin = MaxNumFs + 2;
-        }
-
         (*iFrameCount)++;
-
     }
 
     else if (AVC_NALTYPE_PPS == (AVCNalUnitType) NalType)
@@ -459,8 +438,6 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_BUFFERHEADERTYPE *aOutBuffer, //
 
         if (AVCDEC_NOT_SUPPORTED == Status)
         {
-
-
             return OMX_TRUE;
         }
         else if ((AVCDEC_NO_DATA == Status) || (AVCDEC_FAIL == Status) ||
@@ -469,6 +446,51 @@ OMX_BOOL AvcDecoder_OMX::AvcDecodeVideo_OMX(OMX_BUFFERHEADERTYPE *aOutBuffer, //
             if (AVCDEC_FAIL == Status)
             {
                 iSkipToIDR = OMX_TRUE;
+            }
+            else if ((AVCDEC_NO_BUFFER == Status) && (OMX_TRUE == iNewSPSActivation))
+            {
+                // SPS NAL has been activated, set the new output port parameters and
+                // signal the port reconfiguration if required
+
+                aPortParam->format.video.nFrameWidth = iReconfigWidth;
+                aPortParam->format.video.nFrameHeight = iReconfigHeight;
+                aPortParam->format.video.nStride = iReconfigStride;
+                aPortParam->format.video.nSliceHeight = iReconfigSliceHeight;
+
+                // finally, compute the new minimum buffer size.
+                // Decoder components always output YUV420 format
+                aPortParam->nBufferSize = (aPortParam->format.video.nSliceHeight * aPortParam->format.video.nStride * 3) >> 1;
+
+
+                if ((OldStride != aPortParam->format.video.nStride) || (OldSliceHeight !=  aPortParam->format.video.nSliceHeight))
+                {
+                    *aResizeFlag = OMX_TRUE;
+                }
+
+
+                // make sure that the number of buffers that the decoder requires is less than what we allocated
+                // we should have at least 2 more than the decoder (one for omx component and one for downstream)
+                if (MaxNumFs + 2 > aPortParam->nBufferCountActual)
+                {
+                    // even if buffers are the correct size - we must do port reconfig because of buffer count
+                    *aResizeFlag = OMX_TRUE;
+                    // adjust only buffer count min - nBufferCountActual still needs to be preserved until port becomes disabled
+                    aPortParam->nBufferCountMin = MaxNumFs + 2;
+                }
+
+                // Do not mark the current NAL as consumed. We will decode it once again
+                if (aMarkerFlag)
+                {
+                    *aInBufSize = NalSize;
+                }
+                else
+                {
+                    *aInBufSize += InputBytesConsumed;
+                    aInputBuf -= InputBytesConsumed;
+                }
+
+                iNewSPSActivation = OMX_FALSE;
+                return OMX_TRUE;
             }
 
             return OMX_FALSE;

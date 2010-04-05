@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,6 +73,11 @@ class AvcDecoder_OMX
             iSkipToIDR = OMX_FALSE;
             pCurrentBufferHdr = NULL;
             ipOMXComponent = pComp;
+            iNewSPSActivation = OMX_FALSE;
+            iReconfigWidth = 0;
+            iReconfigHeight = 0;
+            iReconfigStride = 0;
+            iReconfigSliceHeight = 0;
 
 #if PROFILING_ON
             iTotalTicks = 0;
@@ -95,6 +100,11 @@ class AvcDecoder_OMX
         OMX_U32         InputBytesConsumed;
         OMX_BOOL        iAvcActiveFlag;
         OMX_BOOL        iSkipToIDR;
+        OMX_BOOL        iNewSPSActivation;
+        OMX_S32         iReconfigWidth;
+        OMX_S32         iReconfigHeight;
+        OMX_S32         iReconfigStride;
+        OMX_S32         iReconfigSliceHeight;
 
 #if PROFILING_ON
         OMX_U32 iTotalTicks;

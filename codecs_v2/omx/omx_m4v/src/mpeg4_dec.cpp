@@ -102,7 +102,7 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_BUFFERHEADERTYPE* aOutBuffer, OMX_
     OMX_S32 InputSize, InitSize;
 
 
-    if (Mpeg4InitCompleteFlag == OMX_FALSE)
+    if ((Mpeg4InitCompleteFlag == OMX_FALSE) && (MPEG4_MODE == CodecMode))
     {
         if (!aMarkerFlag)
         {
@@ -142,7 +142,7 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_BUFFERHEADERTYPE* aOutBuffer, OMX_
         {
             *aResizeFlag = OMX_TRUE;
         }
-        else
+        else if (NULL != aOutBuffer)
         {
             // if there'll be no port reconfig - the current output YUV buffer is good enough
             PVSetReferenceYUV(&VideoCtrl, (uint8*)(aOutBuffer->pBuffer));
@@ -169,7 +169,7 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_BUFFERHEADERTYPE* aOutBuffer, OMX_
     InputSize = *aInBufSize;
 
     // in case of H263, read the 1st frame to find out the sizes (use the m4v_config)
-    if ((0 == *aFrameCount) && (H263_MODE == CodecMode))
+    if ((OMX_FALSE == Mpeg4InitCompleteFlag) && (H263_MODE == CodecMode))
     {
         int32 aligned_width, aligned_height;
         int32 display_width, display_height;
@@ -179,6 +179,7 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_BUFFERHEADERTYPE* aOutBuffer, OMX_
             return OMX_FALSE;
         }
 
+        Mpeg4InitCompleteFlag = OMX_TRUE;
         iDisplay_Width = display_width;
         iDisplay_Height = display_height;
         aPortParam->format.video.nFrameWidth = iDisplay_Width; // use non 16byte aligned values (display_width) for H263
@@ -202,7 +203,7 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_BUFFERHEADERTYPE* aOutBuffer, OMX_
         {
             *aResizeFlag = OMX_TRUE;
         }
-        else
+        else if (NULL != aOutBuffer)
         {
             // if there'll be no port reconfig - the current output YUV buffer is good enough
             PVSetReferenceYUV(&VideoCtrl, (uint8*)(aOutBuffer->pBuffer));
@@ -221,7 +222,7 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_BUFFERHEADERTYPE* aOutBuffer, OMX_
     }
 
     // if reference yuv has not been set yet - set it now and keep the current input buffer for later processing
-    // this can happen in the case of port reconfig
+    // this can happen either in the case of port reconfig or unavailability of output buffer during config buffer decoding
     if (iReferenceYUVWasSet == OMX_FALSE)
     {
 
