@@ -571,7 +571,8 @@ status_t MediaScanner::processFile(const char *path, const char* mimeType, Media
         } else if (extension &&
             (strcasecmp(extension, ".mp4") == 0 || strcasecmp(extension, ".m4a") == 0 ||
              strcasecmp(extension, ".3gp") == 0 || strcasecmp(extension, ".3gpp") == 0 ||
-             strcasecmp(extension, ".3g2") == 0 || strcasecmp(extension, ".3gpp2") == 0)) {
+             strcasecmp(extension, ".3g2") == 0 || strcasecmp(extension, ".m4b") == 0 || 
+               strcasecmp(extension, ".3gpp2") == 0)) {
             result = parseMP4(path, client);
         } else if (extension && strcasecmp(extension, ".ogg") == 0) {
             result = parseOgg(path, client);
