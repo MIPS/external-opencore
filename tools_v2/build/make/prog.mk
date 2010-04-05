@@ -121,11 +121,21 @@ TARGET_LIST := $(TARGET_LIST) $(TARGET)
 
 run_$(TARGET)_TEST_ARGS := $(TEST_ARGS)
 run_$(TARGET)_SOURCE_ARGS := $(SOURCE_ARGS)
-run_$(TARGET)_SOURCE_DIR := $(LOCAL_PATH)
 
-###incluede targest for test apps###########
+# If the path from where the executable should be invoked is not specified, use the default LOCAL_PATH
+ifeq ($(run_$(TARGET)_SOURCE_DIR), )
+run_$(TARGET)_SOURCE_DIR := $(LOCAL_PATH)
+endif
+
+ifneq ($(DISABLE_BUILDING_TARGET), 1)
 run_$(TARGET): $(REALTARGET)
-		$(call cd_and_run_test,$($@_SOURCE_DIR),$<,$($@_TEST_ARGS),$($@_SOURCE_ARGS))
+endif
+
+run_$(TARGET): REALTARGET := $(REALTARGET)
+
+run_$(TARGET):
+	$(call $@_pre_execution_steps,$($@_SOURCE_DIR))
+	$(call cd_and_run_test,$($@_SOURCE_DIR),$(REALTARGET),$($@_TEST_ARGS),$($@_SOURCE_ARGS))
 
 run_test: run_$(TARGET)
 build_$(TARGET): $(REALTARGET)
