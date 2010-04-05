@@ -984,6 +984,61 @@ OSCL_EXPORT_REF void ProtocolState::deleteRedirectComposer()
     }
 }
 
+bool HttpBasedProtocol::updateSeekMode()
+{
+    /* Set byte-seek param inside PE node, based on HEAD request response check in case when byte-seek
+    param was not set by the App inside the context data. */
+    if ((iComposer->getMethod() == HTTP_METHOD_HEAD) &&
+            (getByteSeekMode() == BYTE_SEEK_NOTSET))
+    {
+        /* Check whether protocolInfo is present inside the HEAD request's response i.e. we check
+           whether the header: 'contentFeatures.dlna.org' is present inside the response. */
+        StrCSumPtrLen protocolInfokey = "contentFeatures.dlna.org";
+        StrPtrLen protocolInfoValue;
+        iParser->getHttpParser()->getField(protocolInfokey, protocolInfoValue);
+        if (protocolInfoValue.size() <= 0)
+        {
+            // If protocolInfo header not present inside the response, we check for the presence of header: "Accept-Ranges".
+            StrCSumPtrLen checkRangesHeaderKey = "Accept-Ranges";
+            StrPtrLen checkRangesHeaderValue;
+            iParser->getHttpParser()->getField(checkRangesHeaderKey, checkRangesHeaderValue);
+            if (checkRangesHeaderValue.size() <= 0)
+            {
+                // If "Accept-Ranges" header also not present, we disable the byte-seek param inside PE node.
+                setByteSeekMode(BYTE_SEEK_UNSUPPORTED);
+            }
+            else
+            {
+                if (oscl_strcmp((char *)checkRangesHeaderValue.c_str(), "bytes") == 0)
+                {
+                    // If "Accept-Ranges: bytes" present, we enable the byte-seek param inside the PE node.
+                    setByteSeekMode(BYTE_SEEK_SUPPORTED);
+                }
+                else
+                {
+                    setByteSeekMode(BYTE_SEEK_UNSUPPORTED);
+                }
+            }
+        }
+        else
+        {
+            if (oscl_strstr((char *)protocolInfoValue.c_str(), "DLNA.ORG_OP=01") != NULL)
+            {
+                /* If protocolInfo header present with 'DLNA.ORG_OP=01' as one of it's value,
+                   we enable the byte-seek param inside the PE node. */
+                setByteSeekMode(BYTE_SEEK_SUPPORTED);
+            }
+            else
+            {
+                setByteSeekMode(BYTE_SEEK_UNSUPPORTED);
+            }
+
+        }
+
+    }
+    return true;
+}
+
 void RedirectComposer::storeRedirectUrl()
 {
     OSCL_HeapString<OsclMemAllocator> newUrl;

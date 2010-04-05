@@ -686,6 +686,7 @@ class PVMFMP4FFParserNode
         uint32 iTotalMoofFrags;
 
         Oscl_Vector<PVMFMP4MfraInfoUpdate, OsclMemAllocator> iMoofInfoUpdateVec;
+        bool iIsByteSeekNotSupported;
 };
 
 

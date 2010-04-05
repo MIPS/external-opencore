@@ -112,6 +112,7 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
     iAuthorizationDataKvp.key = NULL;
     oWaitingOnLicense  = false;
     iPoorlyInterleavedContentEventSent = false;
+    iIsByteSeekNotSupported = false;
 
 
     iParsingMode = PVMF_MP4FF_PARSER_NODE_ENABLE_PARSER_OPTIMIZATION;
@@ -2630,6 +2631,28 @@ PVMFStatus PVMFMP4FFParserNode::SetPlaybackStartupTime(uint32& aTargetNPT,
         iDownloadComplete = false;
     }
 
+    /* Check for repositioning request support in case of PPB.
+       In PPB, Seek is not permitted in case when byte-seek is disabled. */
+    if ((aTargetNPT != 0) && (iDataStreamInterface != NULL))
+    {
+        if ((iDataStreamInterface->QueryBufferingCapacity() != 0)
+                && (iIsByteSeekNotSupported == true))
+        {
+            if (iInterfaceState == EPVMFNodePrepared)
+            {
+                /*This means engine is trying to start the playback session at a non-zero NPT.
+                In case of PPB, this is not possible if server does not support byte-seek. */
+                PVMF_BASE_NODE_ARRAY_DELETE(trackList);
+                return PVMFFailure;
+            }
+            else
+            {
+                PVMF_BASE_NODE_ARRAY_DELETE(trackList);
+                return PVMFErrNotSupported;
+            }
+        }
+    }
+
     // Validate the parameters
     if (aActualNPT == NULL || aActualMediaDataTS == NULL)
     {
@@ -2904,6 +2927,7 @@ PVMFStatus PVMFMP4FFParserNode::SetPlaybackStartupTime(uint32& aTargetNPT,
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "PVMFMP4FFParserNode::SetPlaybackStartupTime() Memory alloc for array to keep the timestamp of the samples failed"));
+        PVMF_BASE_NODE_ARRAY_DELETE(trackList);
         OSCL_FREE(trackTSAfterRepo);
         trackTSAfterRepo = NULL;
         OSCL_FREE(retValPerTrack);
@@ -8671,6 +8695,10 @@ bool PVMFMP4FFParserNode::setProtocolInfo(Oscl_Vector<PvmiKvp*, OsclMemAllocator
             else if (oscl_strstr(aInfoKvpVec[i]->key, PVSMOOTHSTREAMING_MOOF_MFRA_INFO_UPDATE_KEY))
             {
                 mfra = *((PVMFMP4MfraInfoUpdate*)aInfoKvpVec[i]->value.key_specific_value);
+            }
+            else if (oscl_strstr(aInfoKvpVec[i]->key, PROGRESSIVE_STREAMING_IS_BYTE_SEEK_NOT_SUPPORTED_STRING))
+            {
+                iIsByteSeekNotSupported = aInfoKvpVec[i]->value.bool_value;
             }
         }
     }

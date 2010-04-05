@@ -1118,6 +1118,7 @@ void PVMFDownloadDataSourceContainer::copy(const PVMFSourceContextDataDownloadHT
     iUserID           = aSourceData.iUserID;
     iUserPasswd       = aSourceData.iUserPasswd;
     iPvxInfo          = NULL;
+    iByteSeekMode     = aSourceData.iByteSeekMode;
 }
 
 void PVMFDownloadDataSourceContainer::copy(const PVMFSourceContextDataDownloadPVX& aSourceData)

@@ -658,6 +658,8 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
         friend class PVMFCPMContainerMp3;
         friend class PVMFMP3FFParserPort;
         friend class PVMp3DurationCalculator;
+
+        bool iIsByteSeekNotSupported;
 };
 
 #endif // PVMF_MP3FFPARSER_NODE_H_INCLUDED

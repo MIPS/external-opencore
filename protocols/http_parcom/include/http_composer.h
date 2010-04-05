@@ -66,6 +66,10 @@ class HTTPComposer
         {
             iMethod = aMethod;
         }
+        char getMethod()
+        {
+            return iMethod;
+        }
         void setVersion(const HTTPVersion aVersion)
         {
             iVersion = aVersion;
