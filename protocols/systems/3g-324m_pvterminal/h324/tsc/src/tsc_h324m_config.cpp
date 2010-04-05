@@ -547,6 +547,7 @@ class PVH324MessageSendUserInput: public CPVCmnInterfaceCmdMessage
             if (input)
             {
                 iUserInput = input;
+                iUserInput->addRef();
             }
         }
         CPVUserInput* iUserInput;
