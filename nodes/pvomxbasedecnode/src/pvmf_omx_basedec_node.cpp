@@ -3490,12 +3490,7 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
             //  this state can be reached either going from OMX_Loaded->OMX_Idle (preparing)
             //  or going from OMX_Executing->OMX_Idle (stopping)
 
-            // reset the flag requiring config data processing by the component (even if it has been set previously) -
-            // when we next send config data (if a data format requires it) - we may set this flag to true
-            iIsConfigDataProcessingCompletionNeeded = false;
-            iIsThereMoreConfigDataToBeSent = false;
-            iConfigDataBuffersOutstanding = 0; // no need to keep track of this any more
-            iConfigDataBytesProcessed = 0;
+
 
             if (PVMF_GENERIC_NODE_PREPARE == iCurrentCommand.iCmd)
             {
@@ -4524,7 +4519,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPrepare()
     // reset the flag requiring config data processing by the component (even if it has been set previously) -
     // when we send config data (if a data format requires it) - we may set this flag to true
     iIsConfigDataProcessingCompletionNeeded = false;
-    iIsThereMoreConfigDataToBeSent = false;
+    iIsThereMoreConfigDataToBeSent = true;
     iConfigDataBuffersOutstanding = 0;
     iConfigDataBytesProcessed = 0;
 

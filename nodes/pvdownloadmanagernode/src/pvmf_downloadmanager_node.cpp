@@ -489,6 +489,15 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
                         iPlaybackMode = EPlayAsap;
                         break;
                 }
+
+                iContextDataByteSeek = data->iByteSeekMode;
+
+                /* During PPB, set the byte-seek mode from the context data inside the PE node. If App doesn't
+                   sets the byte-seek mode inside the context data, then it is set as 'BYTE_SEEK_NOTSET' inside PE node */
+                if (iPlaybackMode == EPlaybackOnly)
+                {
+                    (iProtocolEngineNode.ProtocolEngineExtension())->SetByteSeekMode(iContextDataByteSeek);
+                }
             }
             else
             {//invalid source data
@@ -1569,6 +1578,10 @@ PVMFStatus PVMFDownloadManagerNode::ScheduleSubNodeCommands()
             //Start or re-start parser node (unless download-only)
             if (iFormatParserNode.iNode)
                 Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::EStart);
+            // Start the PE node after it was paused for PPB, in case when byte-seek is enabled.
+            if (((iProtocolEngineNode.ProtocolEngineExtension())->GetByteSeekMode() == BYTE_SEEK_SUPPORTED)
+                    && (iProtocolEngineNode.iNode->GetState() == EPVMFNodePaused) && (iPlaybackMode == EPlaybackOnly) && (!iDownloadComplete))
+                Push(iProtocolEngineNode, PVMFDownloadManagerSubNodeContainerBase::EStart);
             break;
 
         case PVMF_GENERIC_NODE_STOP:
@@ -1597,6 +1610,10 @@ PVMFStatus PVMFDownloadManagerNode::ScheduleSubNodeCommands()
             //note: pause/resume download is not supported.
             if (iFormatParserNode.iNode)
                 Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::EPause);
+            // Pause the PE node when engine is Paused, in case of PPB when byte-seek is enabled.
+            if (((iProtocolEngineNode.ProtocolEngineExtension())->GetByteSeekMode() == BYTE_SEEK_SUPPORTED) &&
+                    (iPlaybackMode == EPlaybackOnly) && (!iDownloadComplete))
+                Push(iProtocolEngineNode, PVMFDownloadManagerSubNodeContainerBase::EPause);
             break;
 
         case PVMF_GENERIC_NODE_RESET:

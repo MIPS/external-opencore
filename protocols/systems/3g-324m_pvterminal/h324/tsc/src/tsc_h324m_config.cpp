@@ -547,6 +547,7 @@ class PVH324MessageSendUserInput: public CPVCmnInterfaceCmdMessage
             if (input)
             {
                 iUserInput = input;
+                iUserInput->addRef();
             }
         }
         CPVUserInput* iUserInput;
@@ -1085,43 +1086,41 @@ void H324MConfig::UserInputCapability(int formats)
     SendAsyncEvent(event);
 }
 
-void H324MConfig::VideoSpatialTemporalTradeoffCommandReceived(TPVChannelId id, uint8 tradeoff)
+void H324MConfig::VideoSpatialTemporalTradeoffCommandReceived(CPVVideoSpatialTemporalTradeoff* apVideoSpatial)
 {
-    PVMFAsyncEvent event(PVMFInfoEvent, PV_INDICATION_VIDEO_SPATIAL_TEMPORAL_TRADEOFF_COMMAND, NULL, NULL);
-    oscl_memset(event.GetLocalBuffer(), 0, PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE);
-    event.GetLocalBuffer()[0] = (uint8)((id >> 8) & 0xFF);
-    event.GetLocalBuffer()[1] = (uint8)(id & 0xFF);
-    event.GetLocalBuffer()[2] = (uint8) tradeoff;
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,
+                    "H324MConfig::VideoSpatialTemporalTradeoffCommandReceived\n"));
+    PVMFAsyncEvent event(PVMFInfoEvent, PV_INDICATION_VIDEO_SPATIAL_TEMPORAL_TRADEOFF_COMMAND,
+                         apVideoSpatial, NULL);
     SendAsyncEvent(event);
 }
 
-void H324MConfig::VideoSpatialTemporalTradeoffIndicationReceived(TPVChannelId id, uint8 tradeoff)
+void H324MConfig::VideoSpatialTemporalTradeoffIndicationReceived(CPVVideoSpatialTemporalTradeoff* apVideoSpatial)
 {
-    PVMFAsyncEvent event(PVMFInfoEvent, PV_INDICATION_VIDEO_SPATIAL_TEMPORAL_TRADEOFF_INDICATION, NULL, NULL);
-    oscl_memset(event.GetLocalBuffer(), 0, PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE);
-    event.GetLocalBuffer()[0] = (uint8)((id >> 8) & 0xFF);
-    event.GetLocalBuffer()[1] = (uint8)(id & 0xFF);
-    event.GetLocalBuffer()[2] = (uint8) tradeoff;
-    SendAsyncEvent(event);
-}
-
-
-void H324MConfig::LogicalChannelActiveIndicationReceived(TPVChannelId id)
-{
-    PVMFAsyncEvent event(PVMFInfoEvent, PV_INDICATION_LOGICAL_CHANNEL_ACTIVE, NULL, NULL);
-    oscl_memset(event.GetLocalBuffer(), 0, PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE);
-    event.GetLocalBuffer()[0] = (uint8)((id >> 8) & 0xFF);
-    event.GetLocalBuffer()[1] = (uint8)(id & 0xFF);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,
+                    "H324MConfig::VideoSpatialTemporalTradeoffIndicationReceived\n"));
+    PVMFAsyncEvent event(PVMFInfoEvent, PV_INDICATION_VIDEO_SPATIAL_TEMPORAL_TRADEOFF_INDICATION,
+                         apVideoSpatial, NULL);
     SendAsyncEvent(event);
 }
 
 
-void H324MConfig::LogicalChannelInactiveIndicationReceived(TPVChannelId id)
+void H324MConfig::LogicalChannelActiveIndicationReceived(CPVLogicalChannelIndication* apLCIndication)
 {
-    PVMFAsyncEvent event(PVMFInfoEvent, PV_INDICATION_LOGICAL_CHANNEL_INACTIVE, NULL, NULL);
-    oscl_memset(event.GetLocalBuffer(), 0, PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE);
-    event.GetLocalBuffer()[0] = (uint8)((id >> 8) & 0xFF);
-    event.GetLocalBuffer()[1] = (uint8)(id & 0xFF);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,
+                    "H324MConfig::LogicalChannelActiveIndicationReceived\n"));
+    PVMFAsyncEvent event(PVMFInfoEvent, PV_INDICATION_LOGICAL_CHANNEL_ACTIVE,
+                         apLCIndication, NULL);
+    SendAsyncEvent(event);
+}
+
+
+void H324MConfig::LogicalChannelInactiveIndicationReceived(CPVLogicalChannelIndication* apLCIndication)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,
+                    "H324MConfig::LogicalChannelInactiveIndicationReceived\n"));
+    PVMFAsyncEvent event(PVMFInfoEvent, PV_INDICATION_LOGICAL_CHANNEL_INACTIVE,
+                         apLCIndication, NULL);
     SendAsyncEvent(event);
 }
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ class AudioSampleEntry : public SampleEntry
 {
 
     public:
-        AudioSampleEntry(MP4_FF_FILE *fp, uint32 size, uint32 type);
+        AudioSampleEntry(MP4_FF_FILE *fp, uint32 size, uint32 type, bool mp3atom);
         virtual ~AudioSampleEntry();
 
         // Member gets and sets

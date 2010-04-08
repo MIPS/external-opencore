@@ -136,6 +136,9 @@ class OsclNativeFile : public HeapBase
 
         //native file object.
         FILE* iFile;
+#ifdef ANDROID
+        pthread_mutex_t* iAssethandle_mutex;
+#endif
 
         //These are used for accessing individual assets that are bundled together
         //into a single file, where each asset is treated as an independent file.

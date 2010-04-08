@@ -10,19 +10,24 @@ LOCAL_INCSRCDIR :=  $(abspath $(LOCAL_PATH)/$(INCSRCDIR))
 
 ifeq ($(strip $(DEFAULT_LIBMODE)),release)
   XCXXFLAGS+=$(OPT_CXXFLAG)
+  XCFLAGS+=$(OPT_CFLAG)
   XCXXFLAGS+=$(RELEASE_CXXFLAGS)
+  XCFLAGS+=$(RELEASE_CFLAGS)
   XCPPFLAGS+=$(RELEASE_CPPFLAGS)
   OBJSUBDIR:=rel
 else
   XCPPFLAGS+=$(DEBUG_CPPFLAGS)
   XCXXFLAGS+=$(DEBUG_CXXFLAGS)
+  XCFLAGS+=$(DEBUG_CFLAGS)
   OBJSUBDIR:=dbg
 endif
 
 ifneq ($(strip $(OPTIMIZE_FOR_PERFORMANCE_OVER_SIZE)),true)
   XCXXFLAGS += $(OPTIMIZE_FOR_SIZE)
+  XCFLAGS += $(OPTIMIZE_FOR_SIZE)
 else
   XCXXFLAGS += $(OPTIMIZE_FOR_PERFORMANCE)
+  XCFLAGS += $(OPTIMIZE_FOR_PERFORMANCE)
 endif
 
 OBJDIR := $(patsubst $(SRC_ROOT)/%,$(BUILD_ROOT)/%,$(abspath $(LOCAL_PATH)/$(OUTPUT_DIR_COMPONENT)/$(OBJSUBDIR)))
@@ -60,6 +65,7 @@ LOCAL_ASM_INCDIRS := $(if $(strip $(LOCAL_ASM_INCDIRS)), $(patsubst %, $(ASM_INC
 
 $(COMPILED_OBJS): XPFLAGS := $(XCPPFLAGS) $(patsubst %,-I%,$(LOCAL_TOTAL_INCDIRS)) $(LOCAL_ASM_INCDIRS)
 $(COMPILED_OBJS): XXFLAGS := $(XCXXFLAGS) $(call cond_flag_warnings_as_errors,$(LOCAL_DISABLE_COMPILE_WARNINGS_AS_ERRORS))
+$(COMPILED_OBJS): XFLAGS := $(XCFLAGS) $(call cond_flag_warnings_as_errors,$(LOCAL_DISABLE_COMPILE_WARNINGS_AS_ERRORS))
 
 # remove any leading / trailing whitespace
 TARGET := $(strip $(TARGET))
@@ -77,7 +83,7 @@ $(OBJDIR)/%.$(OBJ_EXT): $(LOCAL_SRCDIR)/%.cpp
 	$(call make-cpp-obj-and-depend,$<,$@,$(subst .$(OBJ_EXT),.d,$@),$(XPFLAGS),$(XXFLAGS))
 
 $(OBJDIR)/%.$(OBJ_EXT): $(LOCAL_SRCDIR)/%.c
-	$(call make-c-obj-and-depend,$<,$@,$(subst .$(OBJ_EXT),.d,$@),$(XPFLAGS),$(XXFLAGS))
+	$(call make-c-obj-and-depend,$<,$@,$(subst .$(OBJ_EXT),.d,$@),$(XPFLAGS),$(XFLAGS))
 
 
 LOCAL_LIBDIRS := $(abspath $(patsubst ../%,$(LOCAL_PATH)/../%,$(patsubst $(LIBCOMPFLAG)%,%,$(XLIBDIRS))))
@@ -115,11 +121,21 @@ TARGET_LIST := $(TARGET_LIST) $(TARGET)
 
 run_$(TARGET)_TEST_ARGS := $(TEST_ARGS)
 run_$(TARGET)_SOURCE_ARGS := $(SOURCE_ARGS)
-run_$(TARGET)_SOURCE_DIR := $(LOCAL_PATH)
 
-###incluede targest for test apps###########
+# If the path from where the executable should be invoked is not specified, use the default LOCAL_PATH
+ifeq ($(run_$(TARGET)_SOURCE_DIR), )
+run_$(TARGET)_SOURCE_DIR := $(LOCAL_PATH)
+endif
+
+ifneq ($(DISABLE_BUILDING_TARGET), 1)
 run_$(TARGET): $(REALTARGET)
-		$(call cd_and_run_test,$($@_SOURCE_DIR),$<,$($@_TEST_ARGS),$($@_SOURCE_ARGS))
+endif
+
+run_$(TARGET): REALTARGET := $(REALTARGET)
+
+run_$(TARGET):
+	$(call $@_pre_execution_steps,$($@_SOURCE_DIR))
+	$(call cd_and_run_test,$($@_SOURCE_DIR),$(REALTARGET),$($@_TEST_ARGS),$($@_SOURCE_ARGS))
 
 run_test: run_$(TARGET)
 build_$(TARGET): $(REALTARGET)

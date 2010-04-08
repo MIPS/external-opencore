@@ -30,6 +30,10 @@
 #include "pv_interface.h"
 #endif
 
+#ifndef PVT_COMMON_H_INCLUDED
+#include "pvt_common.h"
+#endif
+
 // MACROS
 /** The maximum number of supported formats for user input **/
 #define PV_2WAY_MAX_USER_INPUT_FORMATS 4
@@ -370,6 +374,58 @@ class CPVUserInputAlphanumeric : public CPVUserInput
          **/
         uint8* ipInput;  /* We own the memory*/
         uint16 iLength; /* length of the string */
+};
+
+class CPVLogicalChannelIndication : public HeapBase, public PVInterface
+{
+    public:
+        OSCL_IMPORT_REF CPVLogicalChannelIndication(TPVChannelId channelId);
+        OSCL_IMPORT_REF ~CPVLogicalChannelIndication();
+        OSCL_IMPORT_REF TPVChannelId GetChannelId();
+
+        // from PVInterface
+        OSCL_IMPORT_REF void addRef();
+
+        OSCL_IMPORT_REF void removeRef();
+
+    private:
+
+        virtual bool queryInterface(const PVUuid& arUuid, PVInterface*& aprInterface)
+        {
+            OSCL_UNUSED_ARG(arUuid);
+            OSCL_UNUSED_ARG(aprInterface);
+            return false;
+        }
+
+        uint32 iRefCounter;
+        TPVChannelId iChannelId;
+};
+
+class CPVVideoSpatialTemporalTradeoff : public HeapBase, public PVInterface
+{
+    public:
+        OSCL_IMPORT_REF CPVVideoSpatialTemporalTradeoff(TPVChannelId aChannelId, uint8 aTradeoff);
+        OSCL_IMPORT_REF ~CPVVideoSpatialTemporalTradeoff();
+        OSCL_IMPORT_REF TPVChannelId GetChannelId();
+        OSCL_IMPORT_REF uint8 GetTradeoff();
+
+        // from PVInterface
+        OSCL_IMPORT_REF void addRef();
+
+        OSCL_IMPORT_REF void removeRef();
+
+    private:
+
+        virtual bool queryInterface(const PVUuid& arUuid, PVInterface*& aprInterface)
+        {
+            OSCL_UNUSED_ARG(arUuid);
+            OSCL_UNUSED_ARG(aprInterface);
+            return false;
+        }
+
+        uint32 iRefCounter;
+        TPVChannelId iChannelId;
+        uint8 iTradeoff;
 };
 
 #endif

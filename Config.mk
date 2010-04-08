@@ -21,7 +21,7 @@ ifneq ($(strip $(EXTERNAL_OPENCORE_CONFIG_ONCE)),true)
     PV_CFLAGS += -Werror
   endif
   ifeq ($(TARGET_ARCH),arm)
-    ifeq (,armv4t)
+    ifeq ($(TARGET_ARCH_VERSION),armv4t)
       PV_CFLAGS += -DPV_ARM_GCC_V4
     else
       PV_CFLAGS += -DPV_ARM_GCC_V5
@@ -38,6 +38,7 @@ ifneq ($(strip $(EXTERNAL_OPENCORE_CONFIG_ONCE)),true)
   PV_INCLUDES := \
 	$(PV_TOP)/android \
 	$(PV_TOP)/../sqlite/dist \
+	$(PV_TOP)/../openssl/include \
 	$(PV_TOP)/../../frameworks/base/core/jni \
 	$(JNI_H_INCLUDE) \
 	$(PV_TOP)/extern_libs_v2/khronos/openmax/include \

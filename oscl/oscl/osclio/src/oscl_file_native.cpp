@@ -28,9 +28,23 @@
 #include "oscl_file_types.h"
 #include "oscl_file_handle.h"
 
+#ifdef ANDROID
+struct AssethandleElementStruct
+{
+    FILE* assethandle;
+    pthread_mutex_t* mutex;
+    uint32 count;
+};
 
+static Oscl_Vector<AssethandleElementStruct, OsclMemAllocator> iAssethandleVector;
+static pthread_mutex_t iConstruct_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 OsclNativeFile::OsclNativeFile()
+#ifdef ANDROID
+        :
+        iAssethandle_mutex(NULL)
+#endif
 {
     iOpenFileHandle = false;
     iMode = 0;
@@ -220,12 +234,62 @@ int32 OsclNativeFile::Open(const char *filename, uint32 mode
         if (sscanf(filename, format, &iFile, &iAssetOffset, &iAssetSize) == 3)
         {
             if (iFile == NULL) return -1; //Bad handle.
-#ifdef ANDROID
             iFileDescriptor = fileno(iFile);
-#endif
             //For this case, the file must already be open.
             iIsAsset = true;
             iIsAssetReadOnly = true;
+
+            pthread_mutex_lock(&iConstruct_mutex);
+
+            bool asset_found = false;
+            if (!iAssethandleVector.empty())
+            {
+                // Vector is not empty.  Search the list for the assethandle
+                Oscl_Vector<AssethandleElementStruct, OsclMemAllocator>::iterator it;
+                for (it = iAssethandleVector.begin(); it != iAssethandleVector.end(); it++)
+                {
+                    if (it->assethandle == iFile)
+                    {
+                        asset_found = true;
+                        // Assethandle found.  Increment the count
+                        it->count++;
+                        // Use the mutex associated with it.
+                        iAssethandle_mutex = it->mutex;
+                    }
+                }
+            }
+
+            // Element not found.  Add it.
+            if (asset_found == false)
+            {
+                // Didnt find the asset... create a new vector
+                AssethandleElementStruct aNewAssetHandle;
+                aNewAssetHandle.assethandle = iFile;
+                aNewAssetHandle.mutex = NULL;
+                aNewAssetHandle.mutex = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
+                if (aNewAssetHandle.mutex == NULL)
+                {
+                    pthread_mutex_unlock(&iConstruct_mutex);
+                    // Unable to allocate memory for mutex... return failure.
+                    return -1;
+                }
+                // Attempt to init the mutex
+                if (0 != pthread_mutex_init(aNewAssetHandle.mutex, NULL))
+                {
+                    free(aNewAssetHandle.mutex);
+                    pthread_mutex_unlock(&iConstruct_mutex);
+                    // Failed to initalize the mutex
+                    return -1;
+                }
+                // Init to 1
+                aNewAssetHandle.count = 1;
+                // Use the mutex in this object
+                iAssethandle_mutex = aNewAssetHandle.mutex;
+                // Add new element to the vector
+                iAssethandleVector.push_back(aNewAssetHandle);
+            }
+            pthread_mutex_unlock(&iConstruct_mutex);
+
             //Seek to logical 0 to apply the offset.
             if (0 != Seek(0, Oscl_File::SEEKSET))
             {
@@ -340,7 +404,44 @@ int32 OsclNativeFile::Close()
     int32 closeret = 0;
 
     //Do not close asset file's shared file handle - the owner must close it.
-    if (iIsAsset) return 0;
+    if (iIsAsset)
+    {
+#ifdef ANDROID
+        pthread_mutex_lock(&iConstruct_mutex);
+
+        // Assethandle vector should not be empty.
+        OSCL_ASSERT(!iAssethandleVector.empty());
+
+        if (!iAssethandleVector.empty())
+        {
+            // Vector is not empty.  Search the list for the assethandle
+            Oscl_Vector<AssethandleElementStruct, OsclMemAllocator>::iterator it;
+            for (it = iAssethandleVector.begin(); it != iAssethandleVector.end(); it++)
+            {
+                if (it->assethandle == iFile)
+                {
+                    // Assethandle found.  Dec the count
+                    it->count--;
+                    if (it->count == 0)
+                    {
+                        // Count is zero.  Destroy the mutex.  No longer needed
+                        pthread_mutex_destroy(it->mutex);
+                        free(it->mutex);
+                        iAssethandleVector.erase(it);
+                    }
+                    pthread_mutex_unlock(&iConstruct_mutex);
+                    return 0;
+                }
+            }
+        }
+        // Assethandle was not found on the list!
+        OSCL_ASSERT(0);
+        pthread_mutex_unlock(&iConstruct_mutex);
+        return -1;
+#else
+        return 0;
+#endif
+    }
 
     {
         if (iOpenFileHandle)
@@ -365,10 +466,17 @@ int32 OsclNativeFile::Close()
 
 uint32 OsclNativeFile::Read(OsclAny *buffer, uint32 size, uint32 numelements)
 {
+    uint32 read_ret = 0;
     if (iIsAsset)
     {
+#ifdef ANDROID
+        pthread_mutex_lock(iAssethandle_mutex);
+
+        lseek64(iFileDescriptor, (iAssetLogicalFilePos + iAssetOffset), SEEK_SET);
+#else
         //Asset file are opened multiple times by the source nodes, so always seek before reading.
         Seek(iAssetLogicalFilePos, Oscl_File::SEEKSET);
+#endif
 
         //If the file is an asset file, don't allow reading past the end.
         //Calculate the new logical file position.
@@ -381,32 +489,49 @@ uint32 OsclNativeFile::Read(OsclAny *buffer, uint32 size, uint32 numelements)
             //Calculate the number of bytes read past the end.
             uint32 over = OSCL_STATIC_CAST(uint32, (iAssetLogicalFilePos - iAssetSize));
             //Calculate the number of elements that can be read.
-            if (!size) return 0; //avoid divide-by-zero
-            if (bytes < over) return 0; //avoid negative count
+            if (!size)
+            {
+#ifdef ANDROID
+                pthread_mutex_unlock(iAssethandle_mutex);
+#endif
+                return 0; //avoid divide-by-zero
+            }
+            if (bytes < over)
+            {
+#ifdef ANDROID
+                pthread_mutex_unlock(iAssethandle_mutex);
+#endif
+                return 0; //avoid negative count
+            }
             numelements = (bytes - over) / size;
         }
     }
 
     if (iFile)
     {
-        int32 result = 0;
 #ifdef ANDROID
+        int32 bytesToBeRead = size * numelements;
+        int32 result = read(iFileDescriptor, buffer, bytesToBeRead);
+        if (result != -1)
         {
-            int32 bytesToBeRead = size * numelements;
-            result = read(iFileDescriptor, buffer, bytesToBeRead);
-            if (result != -1)
-            {
-                return (uint32)(result / size);
-            }
-            return -1;
+            read_ret = (uint32)(result / size);
         }
-#endif
+        else
         {
-            result = fread(buffer, OSCL_STATIC_CAST(int32, size), OSCL_STATIC_CAST(int32, numelements), iFile);
+            read_ret = -1;
         }
-        return result;
+#else // else OSCL_HAS_LARGE_FILE_SUPPORT and NOT ANDROID
+        read_ret = fread(buffer, OSCL_STATIC_CAST(int32, size), OSCL_STATIC_CAST(int32, numelements), iFile);
+#endif // endif ANDROID
     }
-    return 0;
+
+#ifdef ANDROID
+    if (iIsAsset)
+    {
+        pthread_mutex_unlock(iAssethandle_mutex);
+    }
+#endif
+    return read_ret;
 }
 
 bool OsclNativeFile::HasAsyncRead()
@@ -460,10 +585,14 @@ uint32 OsclNativeFile::Write(const OsclAny *buffer, uint32 size, uint32 numeleme
 
 int32 OsclNativeFile::Seek(TOsclFileOffset offset, Oscl_File::seek_type origin)
 {
+    int32 seek_ret = -1;
     //If the file represents an individual asset from a file,
     //normalize the offset.
     if (iIsAsset)
     {
+#ifdef ANDROID
+        pthread_mutex_lock(iAssethandle_mutex);
+#endif
         switch (origin)
         {
             case Oscl_File::SEEKCUR:
@@ -495,15 +624,24 @@ int32 OsclNativeFile::Seek(TOsclFileOffset offset, Oscl_File::seek_type origin)
 
 #ifdef ANDROID
             TOsclFileOffset seekResult = lseek64(iFileDescriptor, offset, seekmode);
+
+            if (iIsAsset)
+            {
+                pthread_mutex_unlock(iAssethandle_mutex);
+            }
+
             if (seekResult == -1)
-                return -1;
+                seek_ret = -1;
             else
-                return 0;
+                seek_ret = 0;
+
+            return seek_ret;
 #endif
-            return fseeko(iFile, offset, seekmode);
+            seek_ret = fseeko(iFile, offset, seekmode);
         }
     }
-    return -1;
+
+    return seek_ret;
 }
 
 int32 OsclNativeFile::SetSize(uint32 size)

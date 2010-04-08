@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,6 +132,12 @@ OSCL_EXPORT_REF AVCStatus AVCConfigureSequence(AVCHandle *avcHandle, AVCCommonOb
         {
             num_fs = MAX_FS;
         }
+
+        if (video->currSeqParams->num_ref_frames + 1 > num_fs)
+        {
+            num_fs = video->currSeqParams->num_ref_frames + 1;
+        }
+
 #ifdef PV_MEMORY_POOL
         if (padding)
         {

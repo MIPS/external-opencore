@@ -403,7 +403,12 @@ uint32 TSC_324m::MiscIndicationRecv(PS_ControlMsgHeader  pReceiveInf)
                             (0, "TSC_324m::MiscIndicationRecv LogicalChannelActive"));
             if (iTSC_324mObserver)
             {
-                iTSC_324mObserver->LogicalChannelActiveIndicationReceived(indication->logicalChannelNumber);
+                CPVLogicalChannelIndication* pLCIndication = OSCL_NEW(CPVLogicalChannelIndication,
+                        (indication->logicalChannelNumber));
+                OSCL_TRAPSTACK_PUSH(pLCIndication);
+                iTSC_324mObserver->LogicalChannelActiveIndicationReceived(pLCIndication);
+                OSCL_TRAPSTACK_POP(); // pLCIndication
+                pLCIndication->removeRef();
             }
             break;
         case 1:
@@ -411,7 +416,12 @@ uint32 TSC_324m::MiscIndicationRecv(PS_ControlMsgHeader  pReceiveInf)
                             (0, "TSC_324m::MiscIndicationRecv LogicalChannelInactive"));
             if (iTSC_324mObserver)
             {
-                iTSC_324mObserver->LogicalChannelInactiveIndicationReceived(indication->logicalChannelNumber);
+                CPVLogicalChannelIndication* pLCIndication = OSCL_NEW(CPVLogicalChannelIndication,
+                        (indication->logicalChannelNumber));
+                OSCL_TRAPSTACK_PUSH(pLCIndication);
+                iTSC_324mObserver->LogicalChannelInactiveIndicationReceived(pLCIndication);
+                OSCL_TRAPSTACK_POP(); // pLCIndication
+                pLCIndication->removeRef();
             }
             break;
         case 9:
@@ -420,8 +430,13 @@ uint32 TSC_324m::MiscIndicationRecv(PS_ControlMsgHeader  pReceiveInf)
                              indication->miType.videoTemporalSpatialTradeOff));
             if (iTSC_324mObserver)
             {
-                iTSC_324mObserver->VideoSpatialTemporalTradeoffIndicationReceived(indication->logicalChannelNumber,
-                        indication->miType.videoTemporalSpatialTradeOff);
+                CPVVideoSpatialTemporalTradeoff* pVideoSpatial = OSCL_NEW(CPVVideoSpatialTemporalTradeoff,
+                        (indication->logicalChannelNumber, indication->miType.videoTemporalSpatialTradeOff));
+                OSCL_TRAPSTACK_PUSH(pVideoSpatial);
+
+                iTSC_324mObserver->VideoSpatialTemporalTradeoffIndicationReceived(pVideoSpatial);
+                OSCL_TRAPSTACK_POP(); // pVideoSpatial
+                pVideoSpatial->removeRef();
             }
             break;
         default:

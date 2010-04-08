@@ -92,23 +92,26 @@
 00119 
 00120         <span class="comment">//native file object.</span>
 00121         FILE* iFile;
-00122 
-00123         <span class="comment">//These are used for accessing individual assets that are bundled together</span>
-00124         <span class="comment">//into a single file, where each asset is treated as an independent file.</span>
-00125         <span class="keywordtype">bool</span>            iIsAsset;
-00126         <span class="keywordtype">bool</span>            iIsAssetReadOnly;
-00127         <a class="code" href="osclconfig__io_8h.html#a67">TOsclFileOffset</a> iAssetOffset;
-00128         <a class="code" href="osclconfig__io_8h.html#a67">TOsclFileOffset</a> iAssetSize;
-00129         <a class="code" href="osclconfig__io_8h.html#a67">TOsclFileOffset</a> iAssetLogicalFilePos;
-00130 <span class="preprocessor">#ifdef ANDROID</span>
-00131 <span class="preprocessor"></span>        int32           iFileDescriptor;
-00132 <span class="preprocessor">#endif</span>
-00133 <span class="preprocessor"></span>};
-00134 
-00135 <span class="preprocessor">#endif // OSCL_FILE_NATIVE_H_INCLUDED</span>
-00136 <span class="preprocessor"></span>
+00122 <span class="preprocessor">#ifdef ANDROID</span>
+00123 <span class="preprocessor"></span>        pthread_mutex_t* iAssethandle_mutex;
+00124 <span class="preprocessor">#endif</span>
+00125 <span class="preprocessor"></span>
+00126         <span class="comment">//These are used for accessing individual assets that are bundled together</span>
+00127         <span class="comment">//into a single file, where each asset is treated as an independent file.</span>
+00128         <span class="keywordtype">bool</span>            iIsAsset;
+00129         <span class="keywordtype">bool</span>            iIsAssetReadOnly;
+00130         <a class="code" href="osclconfig__io_8h.html#a67">TOsclFileOffset</a> iAssetOffset;
+00131         <a class="code" href="osclconfig__io_8h.html#a67">TOsclFileOffset</a> iAssetSize;
+00132         <a class="code" href="osclconfig__io_8h.html#a67">TOsclFileOffset</a> iAssetLogicalFilePos;
+00133 <span class="preprocessor">#ifdef ANDROID</span>
+00134 <span class="preprocessor"></span>        int32           iFileDescriptor;
+00135 <span class="preprocessor">#endif</span>
+00136 <span class="preprocessor"></span>};
+00137 
+00138 <span class="preprocessor">#endif // OSCL_FILE_NATIVE_H_INCLUDED</span>
+00139 <span class="preprocessor"></span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.506.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.508.1.1 </small>
 </small></address>
 </body>
 </html>

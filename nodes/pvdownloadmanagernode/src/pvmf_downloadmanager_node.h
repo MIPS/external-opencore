@@ -635,6 +635,8 @@ class PVMFDownloadManagerNode
 
         bool iInitFailedLicenseRequired; //set when PVMFErrDrmLicenseNotFound failed
 
+        ByteSeekMode iContextDataByteSeek;
+
         void ContinueInitAfterTrackSelectDecision();
         void ContinueFromDownloadTrackSelectionPoint();
         void ContinueAfterMovieAtom();

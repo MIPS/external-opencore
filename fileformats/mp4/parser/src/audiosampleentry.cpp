@@ -32,7 +32,7 @@
 
 
 // Stream-in ctor
-AudioSampleEntry::AudioSampleEntry(MP4_FF_FILE *fp, uint32 size, uint32 type)
+AudioSampleEntry::AudioSampleEntry(MP4_FF_FILE *fp, uint32 size, uint32 type, bool mp3atom = false)
         : SampleEntry(fp, size, type)
 {
     _pes = NULL;
@@ -40,6 +40,7 @@ AudioSampleEntry::AudioSampleEntry(MP4_FF_FILE *fp, uint32 size, uint32 type)
 
     if (_success)
     {
+        TOsclFileOffset count_start = AtomUtils::getCurrentFilePosition(fp);
         // Read reserved values
         if (!AtomUtils::read32read32(fp, _reserved1[0], _reserved1[1]))
             _success = false;
@@ -50,40 +51,50 @@ AudioSampleEntry::AudioSampleEntry(MP4_FF_FILE *fp, uint32 size, uint32 type)
 
         if (!AtomUtils::read16read16(fp, _timeScale, _sampleRateLo)) //_timeScale and _sampleRateHi are same
             _success = false;
+        TOsclFileOffset count_end = AtomUtils::getCurrentFilePosition(fp);
+
+        TOsclFileOffset count = (count_end - count_start);
 
         _sampleRateHi = _timeScale;
-
-
-        if (_success)
+        if (mp3atom)
         {
-            uint32 atomType = UNKNOWN_ATOM;
-            uint32 atomSize = 0;
+            TOsclFileOffset bytesToSkip = (size - DEFAULT_ATOM_SIZE) - count; // ESD is not required for mp3
+            AtomUtils::seekFromCurrPos(fp, bytesToSkip);
+        }
+        else
+        {
 
-            AtomUtils::getNextAtomType(fp, atomSize, atomType);
-
-            if (atomType == ESD_ATOM)
+            if (_success)
             {
-                PV_MP4_FF_NEW(fp->auditCB, ESDAtom, (fp, atomSize, atomType), _pes);
+                uint32 atomType = UNKNOWN_ATOM;
+                uint32 atomSize = 0;
 
-                if (!_pes->MP4Success())
+                AtomUtils::getNextAtomType(fp, atomSize, atomType);
+
+                if (atomType == ESD_ATOM)
                 {
-                    _success = false;
-                    _mp4ErrorCode = _pes->GetMP4Error();
+                    PV_MP4_FF_NEW(fp->auditCB, ESDAtom, (fp, atomSize, atomType), _pes);
+
+                    if (!_pes->MP4Success())
+                    {
+                        _success = false;
+                        _mp4ErrorCode = _pes->GetMP4Error();
+                    }
+                    else
+                    {
+                        _pes->setParent(this);
+                    }
                 }
                 else
                 {
-                    _pes->setParent(this);
+                    _success = false;
+                    _mp4ErrorCode = READ_AUDIO_SAMPLE_ENTRY_FAILED;
                 }
             }
             else
             {
-                _success = false;
                 _mp4ErrorCode = READ_AUDIO_SAMPLE_ENTRY_FAILED;
             }
-        }
-        else
-        {
-            _mp4ErrorCode = READ_AUDIO_SAMPLE_ENTRY_FAILED;
         }
     }
     else

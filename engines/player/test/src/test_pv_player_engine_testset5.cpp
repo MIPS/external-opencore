@@ -3900,6 +3900,13 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
                 iState = STATE_GETMETADATAKEYLIST;
                 RunIfNotReady();
             }
+            else if ((iSeekBeforeStart) && (aResponse.GetCmdStatus() == PVMFFailure))
+            {
+                /* Do reset, in case when Seek was called before Start and Prepare's command
+                   completed with PVMFFailure */
+                iState = STATE_RESET;
+                RunIfNotReady();
+            }
             else
             {
                 // Prepare failed

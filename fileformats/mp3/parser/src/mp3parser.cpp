@@ -1342,11 +1342,11 @@ bool MP3Parser::GetMP3FileHeader(MP3ConfigInfoType * pMP3Config)
 
             if (iMP3HeaderInfo.frameVer == 3)   // MPEG Ver 1
             {
-                pMP3Config->BitRate = 1000 * brIndexTableV1[iMP3HeaderInfo.layerID][14];
+                pMP3Config->BitRate = 1000 * brIndexTableV1[iMP3HeaderInfo.layerID][iMP3HeaderInfo.brIndex];
             }
             else // MPEG Ver 2, 2.5
             {
-                pMP3Config->BitRate = 1000 * brIndexTableV2[iMP3HeaderInfo.layerID][14];
+                pMP3Config->BitRate = 1000 * brIndexTableV2[iMP3HeaderInfo.layerID][iMP3HeaderInfo.brIndex];
             }
 
             // Compressed Frame Size

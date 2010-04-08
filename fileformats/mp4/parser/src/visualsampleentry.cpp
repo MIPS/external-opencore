@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,8 @@ VisualSampleEntry::VisualSampleEntry(MP4_FF_FILE *fp, uint32 size, uint32 type)
 {
     _pes = NULL;
 
+    int32 count = _size - DEFAULT_ATOM_SIZE;
+
     if (_success)
     {
         _pparent = NULL;
@@ -51,16 +53,20 @@ VisualSampleEntry::VisualSampleEntry(MP4_FF_FILE *fp, uint32 size, uint32 type)
                 _success = false;
                 break;
             }
+            count -= 4;
         }
 
         if (_success)
         {
             if (!AtomUtils::read32read32(fp, _reserved2, _reserved3))
                 _success = false;
+            count -= 8;
             if (!AtomUtils::read32read32(fp, _reserved4, _reserved5))
                 _success = false;
+            count -= 8;
             if (!AtomUtils::read16(fp, _reserved6))
                 _success = false;
+            count -= 2;
 
             for (int32 i = 0; i < 32; i++)
             {
@@ -69,59 +75,69 @@ VisualSampleEntry::VisualSampleEntry(MP4_FF_FILE *fp, uint32 size, uint32 type)
                     _success = false;
                     break;
                 }
+                count -= 1;
             }
 
             if (!AtomUtils::read16read16(fp, _reserved8, _reserved9))
                 _success = false;
+            count -= 4;
         }
 
-        if (_success)
+        while (count > 0)
         {
-            uint32 atomType = UNKNOWN_ATOM;
-            uint32 atomSize = 0;
-
-            AtomUtils::getNextAtomType(fp, atomSize, atomType);
-
-            if (atomType == ESD_ATOM)
+            if (_success)
             {
+                uint32 atomType = UNKNOWN_ATOM;
+                uint32 atomSize = 0;
 
-                PV_MP4_FF_NEW(fp->auditCB, ESDAtom, (fp, atomSize, atomType), _pes);
-                if (!_pes->MP4Success())
+                AtomUtils::getNextAtomType(fp, atomSize, atomType);
+
+                if (PIXELASPECTRATIO_BOX == atomType)
                 {
-                    _mp4ErrorCode = _pes->GetMP4Error();
-                    _success = false;
+                    AtomUtils::seekFromCurrPos(fp, (atomSize - DEFAULT_ATOM_SIZE));
+
+
                 }
-                else
+                else if (atomType == ESD_ATOM)
                 {
-                    if (_pes->getObjectTypeIndication() == H263_VIDEO)
+
+                    PV_MP4_FF_NEW(fp->auditCB, ESDAtom, (fp, atomSize, atomType), _pes);
+                    if (!_pes->MP4Success())
                     {
-                        const ESDescriptor *_pdescriptor = _pes->getESDescriptorPtr();
-                        if (NULL != _pdescriptor)
+                        _mp4ErrorCode = _pes->GetMP4Error();
+                        _success = false;
+                    }
+                    else
+                    {
+                        if (_pes->getObjectTypeIndication() == H263_VIDEO)
                         {
-                            H263DecoderSpecificInfo *_pH263decSpecificInfo =
-                                (H263DecoderSpecificInfo *)(_pdescriptor->getDecoderSpecificInfo());
-                            if (NULL != _pH263decSpecificInfo)
+                            const ESDescriptor *_pdescriptor = _pes->getESDescriptorPtr();
+                            if (NULL != _pdescriptor)
                             {
-                                if (_pH263decSpecificInfo->_max_height <= 0)
-                                    _pH263decSpecificInfo->_max_height = (uint16)((_reserved2 << 16) >> 16);
-                                if (_pH263decSpecificInfo->_max_width <= 0)
-                                    _pH263decSpecificInfo->_max_width = (uint16)(_reserved2 >> 16);
+                                H263DecoderSpecificInfo *_pH263decSpecificInfo =
+                                    (H263DecoderSpecificInfo *)(_pdescriptor->getDecoderSpecificInfo());
+                                if (NULL != _pH263decSpecificInfo)
+                                {
+                                    if (_pH263decSpecificInfo->_max_height <= 0)
+                                        _pH263decSpecificInfo->_max_height = (uint16)((_reserved2 << 16) >> 16);
+                                    if (_pH263decSpecificInfo->_max_width <= 0)
+                                        _pH263decSpecificInfo->_max_width = (uint16)(_reserved2 >> 16);
+                                }
                             }
                         }
+                        _pes->setParent(this);
                     }
-                    _pes->setParent(this);
+
                 }
+                count -= atomSize;
             }
             else
             {
-                _success = false;
                 _mp4ErrorCode = READ_VISUAL_SAMPLE_ENTRY_FAILED;
             }
+
         }
-        else
-        {
-            _mp4ErrorCode = READ_VISUAL_SAMPLE_ENTRY_FAILED;
-        }
+
     }
     else
     {

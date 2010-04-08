@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,11 +173,11 @@ void idct_32(Int32 vec[], Int32 scratch_mem[])   /* scratch_mem size 32 */
 
     for (i = 5; i != 0; i--)
     {
-        tmp3  = fxp_mul32_Q31(*(pt_vec) << 1, *(pt_cos--));
+        tmp3  = fxp_mul32_Q31(*(pt_vec), *(pt_cos--)) << 1;
         tmp2 = *(pt_even--);
         *(pt_vecN_1++)  = tmp1 - tmp3;
         *(pt_vec--)     = tmp1 + tmp3;
-        tmp3  = fxp_mul32_Q31(*(pt_vec) << 1, *(pt_cos--));
+        tmp3  = fxp_mul32_Q31(*(pt_vec), *(pt_cos--)) << 1;
         tmp1 = *(pt_even--);
         *(pt_vecN_1++)  = tmp2 - tmp3;
         *(pt_vec--)     = tmp2 + tmp3;

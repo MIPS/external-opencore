@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,7 @@ SampleDescriptionAtom::SampleDescriptionAtom(MP4_FF_FILE *fp,
     _o3GPPH263 = false;
     _o3GPPWBAMR = false;
     _oAVC = false;
+    _oMP3 = false;
     _pProtectionSchemeInformationBox = NULL;
     _p3GPP2SpeechSampleEntry = NULL;
 
@@ -190,9 +191,18 @@ SampleDescriptionAtom::SampleDescriptionAtom(MP4_FF_FILE *fp,
                                 return;
                             }
                         }
-                        else if (atomType == AUDIO_SAMPLE_ENTRY)
+                        else if ((atomType == (AUDIO_SAMPLE_ENTRY) || (atomType == (MP3_SAMPLE_ENTRY))))
                         {
-                            PV_MP4_FF_NEW(fp->auditCB, AudioSampleEntry, (fp, atomSize, atomType), entry);
+                            if ((atomType == (MP3_SAMPLE_ENTRY)))
+                            {
+                                _oMP3 = true;
+                                PV_MP4_FF_NEW(fp->auditCB, AudioSampleEntry, (fp, atomSize, atomType, true), entry);
+                            }
+                            else
+                            {
+                                PV_MP4_FF_NEW(fp->auditCB, AudioSampleEntry, (fp, atomSize, atomType, false), entry);
+                            }
+
                             if (!entry->MP4Success())
                             {
                                 _success = false;
@@ -201,6 +211,7 @@ SampleDescriptionAtom::SampleDescriptionAtom(MP4_FF_FILE *fp,
                                 PV_MP4_FF_DELETE(NULL, AudioSampleEntry, ptr);
                                 return;
                             }
+
                         }
 
                         else if ((atomType == EVRC_SAMPLE_ENTRY) ||
@@ -235,6 +246,7 @@ SampleDescriptionAtom::SampleDescriptionAtom(MP4_FF_FILE *fp,
                                 return;
                             }
                         }
+
                         else
                         {
                             atomSize -= DEFAULT_ATOM_SIZE;
@@ -458,6 +470,7 @@ SampleDescriptionAtom::~SampleDescriptionAtom()
                 AudioSampleEntry *ptr = (AudioSampleEntry *)(*_psampleEntryVec)[i];
                 PV_MP4_FF_DELETE(NULL, AudioSampleEntry, ptr);
             }
+
             else if (pSampleEntryPtr->getType() == TEXT_SAMPLE_ENTRY)
             {
                 TextSampleEntry *ptr = (TextSampleEntry *)(*_psampleEntryVec)[i];
@@ -605,6 +618,9 @@ uint8  SampleDescriptionAtom::getObjectTypeIndication()
 
     if (_oAVC)
         return (AVC_VIDEO);
+    if (_oMP3)
+        return (MP3_AUDIO);
+
 
     // ok to continue if size()==0, will be
     // caught on MEDIA_TYPE_AUDIO and MEDIA_TYPE_VISUAL
@@ -720,6 +736,7 @@ int32 SampleDescriptionAtom::getHeight()
         return 0;
     return (uint32)entry->getHeight();
 }
+
 
 
 uint32
@@ -900,6 +917,11 @@ void SampleDescriptionAtom::getMIMEType(OSCL_String& aMimeType)
     {
         mimeType.set(PVMF_MIME_H264_VIDEO_MP4, oscl_strlen(PVMF_MIME_H264_VIDEO_MP4));
     }
+    else if (objectType == MP3_AUDIO)
+    {
+        mimeType.set(PVMF_MIME_MP3, oscl_strlen(PVMF_MIME_MP3));
+    }
+
     else if (_pMediaType == MEDIA_TYPE_TEXT)
     {
         mimeType.set(PVMF_MIME_3GPP_TIMEDTEXT, oscl_strlen(PVMF_MIME_3GPP_TIMEDTEXT));

@@ -164,6 +164,9 @@ SBR_ERROR  sbr_applied(SBRDECODER_DATA * self,
     {
         /* read frame data from bitstream */
 
+        eleChannels = (stream->sbrElement [LEFT].ElementID == SBR_ID_CPE) ? 2 : 1;
+
+
         err = sbr_read_data(self,
                             sbrDec,
                             stream);
@@ -281,7 +284,6 @@ SBR_ERROR  sbr_applied(SBRDECODER_DATA * self,
         }
 
         /* decoding */
-        eleChannels = (stream->sbrElement [LEFT].ElementID == SBR_ID_CPE) ? 2 : 1;
 
         if (SbrChannel[LEFT].syncState == SBR_ACTIVE)
         {

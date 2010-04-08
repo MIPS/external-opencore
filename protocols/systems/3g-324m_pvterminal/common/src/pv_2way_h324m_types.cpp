@@ -84,3 +84,64 @@ OSCL_EXPORT_REF uint16 CPVUserInputAlphanumeric::GetLength()
 {
     return iLength;
 }
+
+
+OSCL_EXPORT_REF CPVLogicalChannelIndication::CPVLogicalChannelIndication(TPVChannelId aChannelId) :
+        iRefCounter(1),
+        iChannelId(aChannelId)
+{}
+
+OSCL_EXPORT_REF CPVLogicalChannelIndication::~CPVLogicalChannelIndication()
+{}
+
+OSCL_EXPORT_REF TPVChannelId CPVLogicalChannelIndication::GetChannelId()
+{
+    return iChannelId;
+}
+
+OSCL_EXPORT_REF void CPVLogicalChannelIndication::addRef()
+{
+    iRefCounter++;
+}
+
+OSCL_EXPORT_REF void CPVLogicalChannelIndication::removeRef()
+{
+    --iRefCounter;
+    if (iRefCounter == 0)
+        OSCL_DELETE(this);
+}
+
+
+OSCL_EXPORT_REF CPVVideoSpatialTemporalTradeoff::CPVVideoSpatialTemporalTradeoff(TPVChannelId aChannelId,
+        uint8 aTradeoff) :
+        iRefCounter(1),
+        iChannelId(aChannelId),
+        iTradeoff(aTradeoff)
+{}
+
+OSCL_EXPORT_REF CPVVideoSpatialTemporalTradeoff::~CPVVideoSpatialTemporalTradeoff()
+{}
+
+OSCL_EXPORT_REF TPVChannelId CPVVideoSpatialTemporalTradeoff::GetChannelId()
+{
+    return iChannelId;
+}
+
+OSCL_EXPORT_REF uint8 CPVVideoSpatialTemporalTradeoff::GetTradeoff()
+{
+    return iTradeoff;
+}
+
+OSCL_EXPORT_REF void CPVVideoSpatialTemporalTradeoff::addRef()
+{
+    iRefCounter++;
+}
+
+OSCL_EXPORT_REF void CPVVideoSpatialTemporalTradeoff::removeRef()
+{
+    --iRefCounter;
+    if (iRefCounter == 0)
+        OSCL_DELETE(this);
+}
+
+

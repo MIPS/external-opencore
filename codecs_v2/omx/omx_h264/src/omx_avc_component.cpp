@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -927,73 +927,77 @@ void OpenmaxAvcAO::DecodeWithMarker()
         if (OMX_TRUE == iNewOutBufRequired)
         {
             //Check whether a new output buffer is available or not
+            if (iNumAvailableOutputBuffers > 0)
+            {
+                // Dequeue until getting a valid (available output buffer)
+                BufferCtrlStruct *pBCTRL = NULL;
+                do
+                {
+                    ipOutputBuffer = (OMX_BUFFERHEADERTYPE*) DeQueue(pOutputQueue);
+                    if (NULL == ipOutputBuffer)
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : DecodeWithMarker Error, output buffer dequeue returned NULL, OUT"));
+                        return;
+                    }
 
-            if (0 == iNumAvailableOutputBuffers)
+                    pBCTRL = (BufferCtrlStruct *)ipOutputBuffer->pOutputPortPrivate;
+                    if (pBCTRL->iRefCount == 0)
+                    {
+                        //buffer is available
+                        iNumAvailableOutputBuffers--;
+                        pBCTRL->iIsBufferInComponentQueue = OMX_FALSE;
+                        break; // found buffer, EXIT
+                    }
+                    else
+                    {
+                        // queue the buffer back
+                        Queue(pOutputQueue, (void*)ipOutputBuffer);
+                    }
+                }
+                while (1);
+
+
+
+                //Do not proceed if the output buffer can't fit the YUV data
+                if ((ipOutputBuffer->nAllocLen < (OMX_U32)(((CurrWidth + 15)&(~15)) *((CurrHeight + 15)&(~15)) * 3 / 2)) && (OMX_TRUE == ipAvcDec->iAvcActiveFlag))
+                {
+                    ipOutputBuffer->nFilledLen = 0;
+                    ReturnOutputBuffer(ipOutputBuffer, pOutPort);
+                    ipOutputBuffer = NULL;
+                    return;
+                }
+                ipOutputBuffer->nFilledLen = 0;
+                iNewOutBufRequired = OMX_FALSE;
+            }
+            else if (OMX_TRUE == ipAvcDec->iAvcActiveFlag)
             {
                 iNewInBufferRequired = OMX_FALSE;
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : DecodeWithMarker OUT output buffer unavailable"));
                 return;
             }
-
-            // Dequeue until getting a valid (available output buffer)
-            BufferCtrlStruct *pBCTRL = NULL;
-            do
-            {
-                ipOutputBuffer = (OMX_BUFFERHEADERTYPE*) DeQueue(pOutputQueue);
-                if (NULL == ipOutputBuffer)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAvcAO : DecodeWithMarker Error, output buffer dequeue returned NULL, OUT"));
-                    return;
-                }
-
-                pBCTRL = (BufferCtrlStruct *)ipOutputBuffer->pOutputPortPrivate;
-                if (pBCTRL->iRefCount == 0)
-                {
-                    //buffer is available
-                    iNumAvailableOutputBuffers--;
-                    pBCTRL->iIsBufferInComponentQueue = OMX_FALSE;
-                    break; // found buffer, EXIT
-                }
-                else
-                {
-                    // queue the buffer back
-                    Queue(pOutputQueue, (void*)ipOutputBuffer);
-                }
-            }
-            while (1);
-
-
-
-            //Do not proceed if the output buffer can't fit the YUV data
-            if ((ipOutputBuffer->nAllocLen < (OMX_U32)(((CurrWidth + 15)&(~15)) *((CurrHeight + 15)&(~15)) * 3 / 2)) && (OMX_TRUE == ipAvcDec->iAvcActiveFlag))
-            {
-                ipOutputBuffer->nFilledLen = 0;
-                ReturnOutputBuffer(ipOutputBuffer, pOutPort);
-                ipOutputBuffer = NULL;
-                return;
-            }
-            ipOutputBuffer->nFilledLen = 0;
-            iNewOutBufRequired = OMX_FALSE;
         }
 
-        /* Code for the marking buffer. Takes care of the OMX_CommandMarkBuffer
-         * command and hMarkTargetComponent as given by the specifications
-         */
-        if (NULL != ipMark)
+        if (NULL != ipOutputBuffer)
         {
-            ipOutputBuffer->hMarkTargetComponent = ipMark->hMarkTargetComponent;
-            ipOutputBuffer->pMarkData = ipMark->pMarkData;
-            ipMark = NULL;
-        }
+            /* Code for the marking buffer. Takes care of the OMX_CommandMarkBuffer
+             * command and hMarkTargetComponent as given by the specifications
+             */
+            if (NULL != ipMark)
+            {
+                ipOutputBuffer->hMarkTargetComponent = ipMark->hMarkTargetComponent;
+                ipOutputBuffer->pMarkData = ipMark->pMarkData;
+                ipMark = NULL;
+            }
 
-        if (NULL != ipTargetComponent)
-        {
-            ipOutputBuffer->hMarkTargetComponent = ipTargetComponent;
-            ipOutputBuffer->pMarkData = iTargetMarkData;
-            ipTargetComponent = NULL;
+            if (NULL != ipTargetComponent)
+            {
+                ipOutputBuffer->hMarkTargetComponent = ipTargetComponent;
+                ipOutputBuffer->pMarkData = iTargetMarkData;
+                ipTargetComponent = NULL;
 
+            }
+            //Mark buffer code ends here
         }
-        //Mark buffer code ends here
 
         if (iInputCurrLength > 0)
         {

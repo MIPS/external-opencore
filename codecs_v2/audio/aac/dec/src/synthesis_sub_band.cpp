@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,153 +109,16 @@ const Int32 CosTable_64[64] =
     Qfmt_25(0.68245012597642F),   Qfmt_25(0.73464482364786F),   Qfmt_25(0.69858665064723F),   Qfmt_25(0.71594645497057F),
 };
 #define MAX_16BITS_INT  0x7FFF
-#define MIN_16BITS_INT  (int16)0x8000
-
-#if defined(PV_ARM_V5)
-
-
-__inline Int16 saturate16(Int32 sample)
-{
-    Int32 a;
-    __asm
-    {
-        mov   a, sample, asl#15
-        qadd  a, a, a
-        mov   sample, a, asr#16
-    }
-    return (Int16)sample;
-}
-
-
-__inline Int16 negate16(Int16 sample)
-{
-    Int32 a, b;
-
-    __asm
-    {
-        mov   a, sample, asl#15
-        eor   b, a, a
-        qdsub  a, b, a
-        mov   sample, a, asr#16
-    }
-    return sample;
-}
-
-#elif defined(PV_ARM_V4)
-
-
-__inline Int16 saturate16(Int32 sample)
-{
-    Int32 a;
-    Int32 b = 31;
-    __asm
-    {
-        mov   a, sample, asr#15
-        teq   a, sample, asr b
-        eorne sample, MAX_16BITS_INT, sample, asr#31
-    }
-    return (Int16)sample;
-}
-
-
-__inline Int16 negate16(Int16 x)
-{
-
-    Int32 b = MAX_16BITS_INT;
-    __asm
-    {
-        cmn      x, #0x8000
-        rsbne    x, x, #0
-        moveq    x, b
-    }
-    return x;
-}
-
-
-#elif defined(PV_ARM_GCC_V5)
-
-static inline Int32 saturate16(Int32 sample)
-{
-    register Int32 ra = sample;
-
-    asm volatile(
-        "mov  %0, %0, asl #15\n\t"
-        "qadd %0, %0, %0\n\t"
-        "mov  %0, %0, asr #16"
-    : "+r"(ra));
-
-    return (ra);
-}
-
-
-static inline  Int16 negate16(Int16 sample)
-{
-    register Int32 ra = sample;
-    Int32 rb = 0;
-
-    asm volatile(
-        "mov   %0, %0, asl #15\n\t"
-        "qdsub %0, %1, %0\n\t"
-        "mov   %0, %0, asr#16"
-    : "+r"(ra), "+r"(rb));
-
-    return (ra);
-
-}
-
-#elif defined(PV_ARM_GCC_V4)
-
-
-static inline  Int16 saturate16(Int32 sample)
-{
-
-    if ((sample >> 15) ^(sample >> 31))
-    {
-        sample = MAX_16BITS_INT ^(sample >> 31);
-    }
-    return (Int16)sample;
-
-}
-
-
-static inline  Int16 negate16(Int16 x)
-{
-
-    register Int32 ra = x;
-    Int32 rb = MAX_16BITS_INT;
-
-    asm volatile(
-        "cmn      %0 ,#0x8000\n\t"
-        "rsbne    %0, %0, #0\n\t"
-        "moveq    %0, %1"
-    : "+r"(ra), "+r"(rb));
-
-    return (ra);
-}
-
-
-#else
-
-
-inline Int16 negate16(Int16 x)
-{
-    x = (x == MIN_16BITS_INT) ? MAX_16BITS_INT : -x;
-    return x;
-
-}
-
 
 inline Int16 saturate16(Int32 sample)
 {
-
     if ((sample >> 15) ^(sample >> 31))
     {
         sample = MAX_16BITS_INT ^(sample >> 31);
     }
-    return (Int16)sample;
-
+    return (Int16)(sample - (sample >> 15));
 }
-#endif
+
 
 
 /*----------------------------------------------------------------------------
@@ -413,11 +276,10 @@ void synthesis_sub_band_LC(Int32 Sr[], Int16 data[])
 
     for (i = 7; i != 0; i--)
     {
-
-        *(pt_data_2++) = negate16(tmp1);
-        *(pt_data_2++) = negate16(tmp2);
-        *(pt_data_2++) = negate16(tmp11);
-        *(pt_data_2++) = negate16(tmp22);
+        *(pt_data_2++) = -(tmp1);
+        *(pt_data_2++) = -(tmp2);
+        *(pt_data_2++) = -(tmp11);
+        *(pt_data_2++) = -(tmp22);
 
         tmp1  =  *(pt_data_1--);
         tmp2  =  *(pt_data_1--);
@@ -425,10 +287,9 @@ void synthesis_sub_band_LC(Int32 Sr[], Int16 data[])
         tmp22 =  *(pt_data_1--);
     }
 
-
-    *(pt_data_2++) = negate16(tmp1);
-    *(pt_data_2++) = negate16(tmp2);
-    *(pt_data_2++) = negate16(tmp11);
+    *(pt_data_2++) = -(tmp1);
+    *(pt_data_2++) = -(tmp2);
+    *(pt_data_2++) = -(tmp11);
 
     pt_data_2 = &data[0];
 

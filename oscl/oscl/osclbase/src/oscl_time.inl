@@ -451,12 +451,6 @@ OSCL_COND_EXPORT_REF OSCL_INLINE TimeValue::TimeValue(const ISO8601timeStrBuf ti
     ts.tv_sec = mktime(&timeStruct);
     ts.tv_usec = 0;
 
-    if (zulu)
-    {
-        // mktime sets the tv_sec to local time.
-        // Adjust the ts.tv_sec according to the GMT
-        ts.tv_sec += timeStruct.tm_gmtoff;
-    }
 }
 
 

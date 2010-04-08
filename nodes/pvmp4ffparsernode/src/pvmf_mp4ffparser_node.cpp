@@ -112,6 +112,7 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
     iAuthorizationDataKvp.key = NULL;
     oWaitingOnLicense  = false;
     iPoorlyInterleavedContentEventSent = false;
+    iIsByteSeekNotSupported = false;
 
 
     iParsingMode = PVMF_MP4FF_PARSER_NODE_ENABLE_PARSER_OPTIMIZATION;
@@ -193,6 +194,7 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
              iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_AMR_IETF));
              iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_AMRWB_IETF));
              iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_MPEG4_AUDIO));
+             iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_MP3)); /* support mp3 track */
              iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_M4V));
              iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_H2631998));
              iNodeCapability.iOutputFormatCapability.push_back(PVMFFormatType(PVMF_MIME_H2632000));
@@ -1621,6 +1623,10 @@ PVMFStatus PVMFMP4FFParserNode::DoRequestPort(PVMFPortInterface*& aPort)
     {
         trackportinfo.iFormatTypeInteger = PVMF_MP4_PARSER_NODE_MPEG4_AUDIO;
     }
+    else if (formattype == PVMF_MIME_MP3)
+    {
+        trackportinfo.iFormatTypeInteger = PVMF_MP4_PARSER_NODE_MP3_AUDIO;
+    }
     else if (formattype == PVMF_MIME_H264_VIDEO_MP4)
     {
         trackportinfo.iFormatTypeInteger = PVMF_MP4_PARSER_NODE_H264_MP4;
@@ -2625,6 +2631,28 @@ PVMFStatus PVMFMP4FFParserNode::SetPlaybackStartupTime(uint32& aTargetNPT,
         iDownloadComplete = false;
     }
 
+    /* Check for repositioning request support in case of PPB.
+       In PPB, Seek is not permitted in case when byte-seek is disabled. */
+    if ((aTargetNPT != 0) && (iDataStreamInterface != NULL))
+    {
+        if ((iDataStreamInterface->QueryBufferingCapacity() != 0)
+                && (iIsByteSeekNotSupported == true))
+        {
+            if (iInterfaceState == EPVMFNodePrepared)
+            {
+                /*This means engine is trying to start the playback session at a non-zero NPT.
+                In case of PPB, this is not possible if server does not support byte-seek. */
+                PVMF_BASE_NODE_ARRAY_DELETE(trackList);
+                return PVMFFailure;
+            }
+            else
+            {
+                PVMF_BASE_NODE_ARRAY_DELETE(trackList);
+                return PVMFErrNotSupported;
+            }
+        }
+    }
+
     // Validate the parameters
     if (aActualNPT == NULL || aActualMediaDataTS == NULL)
     {
@@ -2733,7 +2761,7 @@ PVMFStatus PVMFMP4FFParserNode::SetPlaybackStartupTime(uint32& aTargetNPT,
         mcc.set_clock(duration64, 0);
         duration = mcc.get_converted_ts(1000);
     }
-    if ((aTargetNPT >= duration) && (PVMF_DATA_SOURCE_DIRECTION_REVERSE != iPlayBackDirection))
+    if (duration && (aTargetNPT >= duration) && (PVMF_DATA_SOURCE_DIRECTION_REVERSE != iPlayBackDirection))
     {
         //report EOT for all streams.
         for (i = 0; i < iNodeTrackPortList.size(); i++)
@@ -2899,6 +2927,7 @@ PVMFStatus PVMFMP4FFParserNode::SetPlaybackStartupTime(uint32& aTargetNPT,
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "PVMFMP4FFParserNode::SetPlaybackStartupTime() Memory alloc for array to keep the timestamp of the samples failed"));
+        PVMF_BASE_NODE_ARRAY_DELETE(trackList);
         OSCL_FREE(trackTSAfterRepo);
         trackTSAfterRepo = NULL;
         OSCL_FREE(retValPerTrack);
@@ -8667,6 +8696,10 @@ bool PVMFMP4FFParserNode::setProtocolInfo(Oscl_Vector<PvmiKvp*, OsclMemAllocator
             {
                 mfra = *((PVMFMP4MfraInfoUpdate*)aInfoKvpVec[i]->value.key_specific_value);
             }
+            else if (oscl_strstr(aInfoKvpVec[i]->key, PROGRESSIVE_STREAMING_IS_BYTE_SEEK_NOT_SUPPORTED_STRING))
+            {
+                iIsByteSeekNotSupported = aInfoKvpVec[i]->value.bool_value;
+            }
         }
     }
 
@@ -8873,6 +8906,7 @@ PVMFStatus PVMFMP4FFParserNode::ConstructMP4FileParser(PVMFStatus* aStatus, int3
     if ((status == PVMFSuccess) && (!iFirstClipNonAudioOnly) && (iFirstValidClipIndex != -1) && (iClipInfoList.size() > 1))
     {
         bool matching = false;
+
         // should only have a track
         for (uint32 i = 0; i < iNodeTrackPortList.size(); i++)
         {

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,6 +74,7 @@ typedef enum
 #define PVMF_MP4_PARSER_NODE_H264_MP4           13
 #define PVMF_MP4_PARSER_NODE_H264               14
 #define PVMF_MP4_PARSER_NODE_3GPP_TIMED_TEXT    15
+#define PVMF_MP4_PARSER_NODE_MP3_AUDIO          16 /* mp3 audio*/
 
 #endif // PVMF_MP4FFPARSER_DEFS_H_INCLUDED
 

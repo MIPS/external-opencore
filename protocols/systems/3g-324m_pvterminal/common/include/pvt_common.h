@@ -63,10 +63,6 @@
 #include "pv_interface.h"
 #endif
 
-#ifndef PV_2WAY_H324M_TYPES_H_INCLUDED
-#include "pv_2way_h324m_types.h"
-#endif
-
 #ifndef PVMI_KVP_H_INCLUDED
 #include "pvmi_kvp.h"
 #endif

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -343,31 +343,6 @@ __inline Int16 sat(Int32 y)
 #define  limiter( y, x)   y = sat(x);
 
 
-
-#elif defined(PV_ARM_GCC_V5)
-
-
-__inline Int16 sat(Int32 y)
-{
-    register Int32 x;
-    register Int32 ra = (Int32)y;
-    register Int32 z = ROUNDING_SCALED;
-
-
-    asm volatile(
-        "mov %0, %1, lsl #5\n\t"    // (15-SCALING) assembler does not take symbols
-        "qdadd %0, %2, %0\n\t"
-        "mov %0, %0, lsr #16"
-    : "=&r*i"(x)
-                : "r"(ra),
-                "r"(z));
-
-    return ((Int16)x);
-}
-
-#define  limiter( y, x)   y = sat(x);
-
-
 #elif defined(PV_ARM_MSC_EVC_V5)
 
 
@@ -443,7 +418,7 @@ void trans4m_freq_2_time_fxp_1(
 
     Int  i;
     Int  wnd;
-#if !(defined( PV_ARM_GCC_V5)||(PV_ARM_V5))
+#if !(defined(PV_ARM_V5))
     Int32 z;
 #endif
 
@@ -1447,7 +1422,7 @@ void trans4m_freq_2_time_fxp_2(
 
     Int  i;
     Int  wnd;
-#if !(defined( PV_ARM_GCC_V5)||(PV_ARM_V5))
+#if !(defined(PV_ARM_V5))
     Int32 z;
 #endif
     Int16 *pFreqInfo;

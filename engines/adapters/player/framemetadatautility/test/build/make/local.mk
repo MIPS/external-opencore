@@ -141,6 +141,7 @@ LIBS :=  pvframemetadatautility \
         pvgendatastruct \
         pvwmdrm \
         csprng\
+	secure_data_format \
         pvcrypto \
         pventropysrc\
         pvlogger \

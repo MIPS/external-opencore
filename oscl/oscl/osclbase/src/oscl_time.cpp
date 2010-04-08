@@ -293,27 +293,22 @@ OSCL_EXPORT_REF int TimeValue::get_ISO8601_str_time(ISO8601timeStrBuf time_strbu
     struct tm *timeptr;
     struct tm buffer;
 
+    // Get the time
+    timeptr = localtime_r(&ts.tv_sec, &buffer);
+
+    char formatString[] = "%Y-%m-%d %H:%M:%S\0\0";
+
     if (zulu)
     {
-        // Get the zulu time (GMT)
-        timeptr = gmtime_r(&ts.tv_sec, &buffer);
-
-        // Form the string.
-        if ((num_chars = strftime(time_strbuf, sizeof(ISO8601timeStrBuf),
-                                  "%Y-%m-%d %H:%M:%SZ", timeptr)) == 0)
-        {
-            // Failed .. null the string and return.
-            time_strbuf[0] = NULL_TERM_CHAR;
-        }
+        formatString[sizeof("%Y-%m-%d %H:%M:%S")-1] = 'Z';
     }
-    else
-    {
-        // Get the local time.
-        timeptr = localtime_r(&ts.tv_sec, &buffer);
 
-        if ((num_chars = strftime(time_strbuf, sizeof(ISO8601timeStrBuf),
-                                  "%Y-%m-%d %H:%M:%S", timeptr)) == 0)
-            time_strbuf[0] = NULL_TERM_CHAR;
+    // Form the string.
+    if ((num_chars = strftime(time_strbuf, sizeof(ISO8601timeStrBuf),
+                              formatString, timeptr)) == 0)
+    {
+        // Failed .. null the string and return.
+        time_strbuf[0] = NULL_TERM_CHAR;
     }
 
     return num_chars;
