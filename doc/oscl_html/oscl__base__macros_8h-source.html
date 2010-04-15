@@ -103,9 +103,20 @@
 00126 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
 00127 <span class="preprocessor"></span>
 00128 
-00131 <span class="preprocessor">#endif  // OSCL_BASE_MACROS_H_INCLUDED</span>
+00129 <span class="comment">/* The following macros enumerate the possible values of the build flag PV_COMPILER */</span>
+00130 
+<a name="l00131"></a><a class="code" href="group__osclbase.html#a105">00131</a> <span class="preprocessor">#define EPV_ARM_GNUC  1 </span><span class="comment">/* for GNU compiler */</span>
+<a name="l00132"></a><a class="code" href="group__osclbase.html#a106">00132</a> <span class="preprocessor">#define EPV_ARM_RVCT  2 </span><span class="comment">/* for RVCT compiler from ARM */</span>
+<a name="l00133"></a><a class="code" href="group__osclbase.html#a107">00133</a> <span class="preprocessor">#define EPV_ARM_MSEVC 3 </span><span class="comment">/* for MS Embedded VC compiler */</span>
+00134 
+00135 <span class="comment">/* PV_COMPILER value must be set to build command.</span>
+00136 <span class="comment">   In addition, PV_CPU_ARCH_VERSION must be defined to take on an integer value that specifies the version of target</span>
+00137 <span class="comment">   ARM architecture. */</span>
+00138 
+00139 
+00142 <span class="preprocessor">#endif  // OSCL_BASE_MACROS_H_INCLUDED</span>
 </pre></div><hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.508.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.509.1.3 </small>
 </small></address>
 </body>
 </html>

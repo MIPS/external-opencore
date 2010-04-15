@@ -184,16 +184,19 @@
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a102">OSCL_TEMPLATED_DESTRUCTOR_CALL</a>(type, simple_type)&nbsp;&nbsp;&nbsp;type :: ~simple_type ()</td></tr>
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a103">OSCL_UNSIGNED_CONST</a>(x)&nbsp;&nbsp;&nbsp;x</td></tr>
 <tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a104">OSCL_PACKED_VAR</a>&nbsp;&nbsp;&nbsp;"error"</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a105">OSCL_DISABLE_WARNING_TRUNCATE_DEBUG_MESSAGE</a></td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a106">ALLOCATE</a>(n)&nbsp;&nbsp;&nbsp;allocate_fl(n,__FILE__,__LINE__)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a107">ALLOC_AND_CONSTRUCT</a>(n)&nbsp;&nbsp;&nbsp;alloc_and_construct_fl(n,__FILE__,__LINE__)</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a108">OSCL_DLL_ENTRY_POINT</a>()&nbsp;&nbsp;&nbsp;void oscl_dll_entry_point() {}</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a109">OSCL_DLL_ENTRY_POINT_DEFAULT</a>()</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a110">PVMEM_INST_LEVEL</a>&nbsp;&nbsp;&nbsp;1</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a111">OSCL_DISABLE_WARNING_RETURN_TYPE_NOT_UDT</a></td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a112">OSCL_TLS_BASE_SLOTS</a>&nbsp;&nbsp;&nbsp;<a class="el" href="group__osclbase.html#a25">OSCL_TLS_ID_BASE_LAST</a> +1</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a113">OSCL_TLS_EXTERNAL_SLOTS</a>&nbsp;&nbsp;&nbsp;0</td></tr>
-<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a114">OSCL_TLS_MAX_SLOTS</a>&nbsp;&nbsp;&nbsp;( OSCL_TLS_BASE_SLOTS + OSCL_TLS_EXTERNAL_SLOTS)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a105">EPV_ARM_GNUC</a>&nbsp;&nbsp;&nbsp;1</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a106">EPV_ARM_RVCT</a>&nbsp;&nbsp;&nbsp;2</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a107">EPV_ARM_MSEVC</a>&nbsp;&nbsp;&nbsp;3</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a108">OSCL_DISABLE_WARNING_TRUNCATE_DEBUG_MESSAGE</a></td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a109">ALLOCATE</a>(n)&nbsp;&nbsp;&nbsp;allocate_fl(n,__FILE__,__LINE__)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a110">ALLOC_AND_CONSTRUCT</a>(n)&nbsp;&nbsp;&nbsp;alloc_and_construct_fl(n,__FILE__,__LINE__)</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a111">OSCL_DLL_ENTRY_POINT</a>()&nbsp;&nbsp;&nbsp;void oscl_dll_entry_point() {}</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a112">OSCL_DLL_ENTRY_POINT_DEFAULT</a>()</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a113">PVMEM_INST_LEVEL</a>&nbsp;&nbsp;&nbsp;1</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a114">OSCL_DISABLE_WARNING_RETURN_TYPE_NOT_UDT</a></td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a115">OSCL_TLS_BASE_SLOTS</a>&nbsp;&nbsp;&nbsp;<a class="el" href="group__osclbase.html#a25">OSCL_TLS_ID_BASE_LAST</a> +1</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a116">OSCL_TLS_EXTERNAL_SLOTS</a>&nbsp;&nbsp;&nbsp;0</td></tr>
+<tr><td nowrap align=right valign=top>#define&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a117">OSCL_TLS_MAX_SLOTS</a>&nbsp;&nbsp;&nbsp;( OSCL_TLS_BASE_SLOTS + OSCL_TLS_EXTERNAL_SLOTS)</td></tr>
 <tr><td colspan=2><br><h2>Typedefs</h2></td></tr>
 <tr><td nowrap align=right valign=top>typedef char&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a3">CtimeStrBuf</a> [<a class="el" href="group__osclbase.html#a0">CTIME_BUFFER_SIZE</a>]</td></tr>
 <tr><td nowrap align=right valign=top>typedef char&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a4">PV8601timeStrBuf</a> [<a class="el" href="group__osclbase.html#a1">PV8601TIME_BUFFER_SIZE</a>]</td></tr>
@@ -217,11 +220,11 @@
 <tr><td nowrap align=right valign=top>typedef <a class="el" href="group__osclbase.html#a34">oscl_wchar</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a35">OSCL_TCHAR</a></td></tr>
 <tr><td>&nbsp;</td><td><font size=-1><em>define OSCL_TCHAR</em> <a href="#a35"></a><em></em></font><br><br></td></tr>
 <tr><td colspan=2><br><h2>Enumerations</h2></td></tr>
-<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a115">TimeUnits</a> { <a class="el" href="group__osclbase.html#a115a12">SECONDS</a> =  0, 
-<a class="el" href="group__osclbase.html#a115a13">MILLISECONDS</a> =  1, 
-<a class="el" href="group__osclbase.html#a115a14">MICROSECONDS</a> =  2
+<tr><td nowrap align=right valign=top>enum &nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a118">TimeUnits</a> { <a class="el" href="group__osclbase.html#a118a12">SECONDS</a> =  0, 
+<a class="el" href="group__osclbase.html#a118a13">MILLISECONDS</a> =  1, 
+<a class="el" href="group__osclbase.html#a118a14">MICROSECONDS</a> =  2
  }</td></tr>
-<tr><td>&nbsp;</td><td><font size=-1><em>The TimeUnits enum can be used when constructing a <a class="el" href="classTimeValue.html">TimeValue</a> class.</em> <a href="#a115">More...</a><em></em></font><br><br></td></tr>
+<tr><td>&nbsp;</td><td><font size=-1><em>The TimeUnits enum can be used when constructing a <a class="el" href="classTimeValue.html">TimeValue</a> class.</em> <a href="#a118">More...</a><em></em></font><br><br></td></tr>
 <tr><td colspan=2><br><h2>Functions</h2></td></tr>
 <tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF void&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a36">_OSCL_Abort</a> ()</td></tr>
 <tr><td>&nbsp;</td><td><font size=-1><em>This function terminates the current process abnormally.</em> <a href="#a36"></a><em></em></font><br><br></td></tr>
@@ -278,12 +281,12 @@
 <tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF <a class="el" href="classTimeValue.html">TimeValue</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a82">operator+</a> (const int32 aSeconds, const <a class="el" href="classTimeValue.html">TimeValue</a> &amp;b)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF <a class="el" href="classTimeValue.html">TimeValue</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a83">operator-</a> (const <a class="el" href="classTimeValue.html">TimeValue</a> &amp;a, const int32 bSeconds)</td></tr>
 <tr><td nowrap align=right valign=top>OSCL_COND_IMPORT_REF <a class="el" href="classTimeValue.html">TimeValue</a>&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a84">operator-</a> (const int32 aSeconds, const <a class="el" href="classTimeValue.html">TimeValue</a> &amp;b)</td></tr>
-<tr><td nowrap align=right valign=top>bool&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a116">operator==</a> (const <a class="el" href="classOsclSharedPtr.html">OsclSharedPtr</a> &amp;b) const</td></tr>
-<tr><td>&nbsp;</td><td><font size=-1><em>Test for equality to see if two PVHandles wrap the same object.</em> <a href="#a116"></a><em></em></font><br><br></td></tr>
-<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a117">Bind</a> (const <a class="el" href="classOsclSharedPtr.html">OsclSharedPtr</a> &amp;inHandle)</td></tr>
-<tr><td>&nbsp;</td><td><font size=-1><em>Use this function to bind an existing <a class="el" href="classOsclSharedPtr.html">OsclSharedPtr</a> to a already-wrapped object.</em> <a href="#a117"></a><em></em></font><br><br></td></tr>
-<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a118">Bind</a> (TheClass *ptr, <a class="el" href="classOsclRefCounter.html">OsclRefCounter</a> *in_refcnt)</td></tr>
-<tr><td>&nbsp;</td><td><font size=-1><em>Use this function to bind an existing <a class="el" href="classOsclSharedPtr.html">OsclSharedPtr</a> to a new (unwrapped) object.</em> <a href="#a118"></a><em></em></font><br><br></td></tr>
+<tr><td nowrap align=right valign=top>bool&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a119">operator==</a> (const <a class="el" href="classOsclSharedPtr.html">OsclSharedPtr</a> &amp;b) const</td></tr>
+<tr><td>&nbsp;</td><td><font size=-1><em>Test for equality to see if two PVHandles wrap the same object.</em> <a href="#a119"></a><em></em></font><br><br></td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a120">Bind</a> (const <a class="el" href="classOsclSharedPtr.html">OsclSharedPtr</a> &amp;inHandle)</td></tr>
+<tr><td>&nbsp;</td><td><font size=-1><em>Use this function to bind an existing <a class="el" href="classOsclSharedPtr.html">OsclSharedPtr</a> to a already-wrapped object.</em> <a href="#a120"></a><em></em></font><br><br></td></tr>
+<tr><td nowrap align=right valign=top>void&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a121">Bind</a> (TheClass *ptr, <a class="el" href="classOsclRefCounter.html">OsclRefCounter</a> *in_refcnt)</td></tr>
+<tr><td>&nbsp;</td><td><font size=-1><em>Use this function to bind an existing <a class="el" href="classOsclSharedPtr.html">OsclSharedPtr</a> to a new (unwrapped) object.</em> <a href="#a121"></a><em></em></font><br><br></td></tr>
 <tr><td colspan=2><br><h2>Variables</h2></td></tr>
 <tr><td nowrap align=right valign=top>const int&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a0">CTIME_BUFFER_SIZE</a> = 26</td></tr>
 <tr><td nowrap align=right valign=top>const int&nbsp;</td><td valign=bottom><a class="el" href="group__osclbase.html#a1">PV8601TIME_BUFFER_SIZE</a> = 21</td></tr>
@@ -311,7 +314,7 @@ Additional osclbase comment
 Additional osclbase comment
 <p>
 Additional osclbase comment <hr><h2>Define Documentation</h2>
-<a name="a107" doxytag="oscl_defalloc.h::ALLOC_AND_CONSTRUCT"></a><p>
+<a name="a110" doxytag="oscl_defalloc.h::ALLOC_AND_CONSTRUCT"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -338,7 +341,7 @@ Additional osclbase comment <hr><h2>Define Documentation</h2>
     </td>
   </tr>
 </table>
-<a name="a106" doxytag="oscl_defalloc.h::ALLOCATE"></a><p>
+<a name="a109" doxytag="oscl_defalloc.h::ALLOCATE"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -350,6 +353,72 @@ Additional osclbase comment <hr><h2>Define Documentation</h2>
           <td class="mdname1" valign="top" nowrap>&nbsp;          </td>
           <td class="md" valign="top">)&nbsp;</td>
           <td class="md" nowrap>&nbsp;&nbsp;&nbsp;allocate_fl(n,__FILE__,__LINE__)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="a105" doxytag="oscl_base_macros.h::EPV_ARM_GNUC"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define EPV_ARM_GNUC&nbsp;&nbsp;&nbsp;1
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="a107" doxytag="oscl_base_macros.h::EPV_ARM_MSEVC"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define EPV_ARM_MSEVC&nbsp;&nbsp;&nbsp;3
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+    </td>
+  </tr>
+</table>
+<a name="a106" doxytag="oscl_base_macros.h::EPV_ARM_RVCT"></a><p>
+<table width="100%" cellpadding="2" cellspacing="0" border="0">
+  <tr>
+    <td class="md">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define EPV_ARM_RVCT&nbsp;&nbsp;&nbsp;2
       </table>
     </td>
   </tr>
@@ -550,7 +619,7 @@ Expression to cast </td></tr>
 </dl>    </td>
   </tr>
 </table>
-<a name="a111" doxytag="oscl_shared_ptr.h::OSCL_DISABLE_WARNING_RETURN_TYPE_NOT_UDT"></a><p>
+<a name="a114" doxytag="oscl_shared_ptr.h::OSCL_DISABLE_WARNING_RETURN_TYPE_NOT_UDT"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -572,7 +641,7 @@ Expression to cast </td></tr>
     </td>
   </tr>
 </table>
-<a name="a105" doxytag="oscl_defalloc.h::OSCL_DISABLE_WARNING_TRUNCATE_DEBUG_MESSAGE"></a><p>
+<a name="a108" doxytag="oscl_defalloc.h::OSCL_DISABLE_WARNING_TRUNCATE_DEBUG_MESSAGE"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -594,7 +663,7 @@ Expression to cast </td></tr>
     </td>
   </tr>
 </table>
-<a name="a108" doxytag="oscl_dll.h::OSCL_DLL_ENTRY_POINT"></a><p>
+<a name="a111" doxytag="oscl_dll.h::OSCL_DLL_ENTRY_POINT"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -632,10 +701,10 @@ LocalDllEntry() { custom operations... }
 <p>
 LocalDllExit() { custom operations... }
 <p>
-<a class="el" href="group__osclbase.html#a108">OSCL_DLL_ENTRY_POINT()</a>     </td>
+<a class="el" href="group__osclbase.html#a111">OSCL_DLL_ENTRY_POINT()</a>     </td>
   </tr>
 </table>
-<a name="a109" doxytag="oscl_dll.h::OSCL_DLL_ENTRY_POINT_DEFAULT"></a><p>
+<a name="a112" doxytag="oscl_dll.h::OSCL_DLL_ENTRY_POINT_DEFAULT"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -665,7 +734,7 @@ The body of the DLL entry point is given. The macro only needs to be declared wi
 <p>
 Usage :
 <p>
-<a class="el" href="group__osclbase.html#a109">OSCL_DLL_ENTRY_POINT_DEFAULT()</a>     </td>
+<a class="el" href="group__osclbase.html#a112">OSCL_DLL_ENTRY_POINT_DEFAULT()</a>     </td>
   </tr>
 </table>
 <a name="a95" doxytag="oscl_base_macros.h::OSCL_DYNAMIC_CAST"></a><p>
@@ -914,7 +983,7 @@ Usage :
     </td>
   </tr>
 </table>
-<a name="a112" doxytag="oscl_tls.h::OSCL_TLS_BASE_SLOTS"></a><p>
+<a name="a115" doxytag="oscl_tls.h::OSCL_TLS_BASE_SLOTS"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -936,7 +1005,7 @@ Usage :
     </td>
   </tr>
 </table>
-<a name="a113" doxytag="oscl_tls.h::OSCL_TLS_EXTERNAL_SLOTS"></a><p>
+<a name="a116" doxytag="oscl_tls.h::OSCL_TLS_EXTERNAL_SLOTS"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -958,7 +1027,7 @@ Usage :
     </td>
   </tr>
 </table>
-<a name="a114" doxytag="oscl_tls.h::OSCL_TLS_MAX_SLOTS"></a><p>
+<a name="a117" doxytag="oscl_tls.h::OSCL_TLS_MAX_SLOTS"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1090,7 +1159,7 @@ The following two macros are used to avoid compiler warnings.
     </td>
   </tr>
 </table>
-<a name="a110" doxytag="oscl_mem_inst.h::PVMEM_INST_LEVEL"></a><p>
+<a name="a113" doxytag="oscl_mem_inst.h::PVMEM_INST_LEVEL"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1436,7 +1505,7 @@ The uint type is a convenient abbreviation for unsigned int.
   </tr>
 </table>
 <hr><h2>Enumeration Type Documentation</h2>
-<a name="a115" doxytag="oscl_time.h::TimeUnits"></a><p>
+<a name="a118" doxytag="oscl_time.h::TimeUnits"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1459,11 +1528,11 @@ The TimeUnits enum can be used when constructing a <a class="el" href="classTime
 <p>
 <dl compact><dt><b>Enumeration values: </b></dt><dd>
 <table border=0 cellspacing=2 cellpadding=0>
-<tr><td valign=top><em><a name="a115a12" doxytag="SECONDS"></a><em>SECONDS</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a118a12" doxytag="SECONDS"></a><em>SECONDS</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a115a13" doxytag="MILLISECONDS"></a><em>MILLISECONDS</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a118a13" doxytag="MILLISECONDS"></a><em>MILLISECONDS</em></em>&nbsp;</td><td>
 </td></tr>
-<tr><td valign=top><em><a name="a115a14" doxytag="MICROSECONDS"></a><em>MICROSECONDS</em></em>&nbsp;</td><td>
+<tr><td valign=top><em><a name="a118a14" doxytag="MICROSECONDS"></a><em>MICROSECONDS</em></em>&nbsp;</td><td>
 </td></tr>
 </table>
 </dl>
@@ -1548,7 +1617,7 @@ The number of bytes in the buffer. </td></tr>
 </dl>    </td>
   </tr>
 </table>
-<a name="a118" doxytag="OsclSharedPtr::Bind"></a><p>
+<a name="a121" doxytag="OsclSharedPtr::Bind"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1592,7 +1661,7 @@ Use this function to bind an existing OsclSharedPtr to a new (unwrapped) object.
     </td>
   </tr>
 </table>
-<a name="a117" doxytag="OsclSharedPtr::Bind"></a><p>
+<a name="a120" doxytag="OsclSharedPtr::Bind"></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -1996,7 +2065,7 @@ The number of bytes in the buffer. </td></tr>
     </td>
   </tr>
 </table>
-<a name="a116" doxytag="OsclSharedPtr::operator=="></a><p>
+<a name="a119" doxytag="OsclSharedPtr::operator=="></a><p>
 <table width="100%" cellpadding="2" cellspacing="0" border="0">
   <tr>
     <td class="md">
@@ -4136,7 +4205,7 @@ Initializes OsclBase functionality. OsclBase must be initialized before any Oscl
   </tr>
 </table>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_8.508.1.1 </small>
+<address style="align: left;"><small>Posting Version: CORE_8.509.1.3 </small>
 </small></address>
 </body>
 </html>
