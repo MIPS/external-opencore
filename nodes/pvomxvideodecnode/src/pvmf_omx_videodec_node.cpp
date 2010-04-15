@@ -186,6 +186,7 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
     // is this output port?
     if (iPortIndexForDynamicReconfig == iOutputPortIndex)
     {
+        uint32 iBeforeConfigNumOutputBuffers = iNumOutputBuffers;
 
         // read the alignment
         iOutputBufferAlignment = iParamPort.nBufferAlignment;
@@ -421,6 +422,28 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
 
         }
 
+
+        if (iNumOutputBuffers > iBeforeConfigNumOutputBuffers)
+        {
+            //Reallocate FillBufferDone THREADSAFE CALLBACK AOs in case of port reconfiguration
+            if (iThreadSafeHandlerFillBufferDone)
+            {
+                OSCL_DELETE(iThreadSafeHandlerFillBufferDone);
+                iThreadSafeHandlerFillBufferDone = NULL;
+            }
+            // use the new queue depth of iNumOutputBuffers to prevent deadlock
+            iThreadSafeHandlerFillBufferDone = OSCL_NEW(FillBufferDoneThreadSafeCallbackAO, (this, iNumOutputBuffers, "FillBufferDoneAO", Priority() + 1));
+
+            if (NULL == iThreadSafeHandlerFillBufferDone)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMFOMXVideoDecNode::HandlePortReEnable() Can't reallocate FillBufferDone threadsafe callback queue!"));
+                SetState(EPVMFNodeError);
+                ReportErrorEvent(PVMFErrNoMemory);
+                return false;
+            }
+        }
+
         // it is now safe to send command for port reenable
         // send command for port re-enabling (for this to happen, we must first recreate the buffers)
         Err = OMX_SendCommand(iOMXDecoder, OMX_CommandPortEnable, iPortIndexForDynamicReconfig, NULL);
@@ -474,6 +497,8 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
     }
     else
     {
+        uint32 iBeforeConfigNumInputBuffers = iNumInputBuffers;
+
         // read the alignment
         iInputBufferAlignment = iParamPort.nBufferAlignment;
 
@@ -503,6 +528,28 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
             ReportErrorEvent(PVMFErrNoMemory);
             return false;
         }
+
+        if (iNumInputBuffers > iBeforeConfigNumInputBuffers)
+        {
+            //Reallocate EmptyBufferDone THREADSAFE CALLBACK AOs in case of port reconfiguration
+            if (iThreadSafeHandlerEmptyBufferDone)
+            {
+                OSCL_DELETE(iThreadSafeHandlerEmptyBufferDone);
+                iThreadSafeHandlerEmptyBufferDone = NULL;
+            }
+            // use the new queue depth of iNumInputBuffers to prevent deadlock
+            iThreadSafeHandlerEmptyBufferDone = OSCL_NEW(EmptyBufferDoneThreadSafeCallbackAO, (this, iNumInputBuffers, "EmptyBufferDoneAO", Priority() + 1));
+
+            if (NULL == iThreadSafeHandlerEmptyBufferDone)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMFOMXVideoDecNode::HandlePortReEnable() Can't reallocate EmptyBufferDone threadsafe callback queue!"));
+                SetState(EPVMFNodeError);
+                ReportErrorEvent(PVMFErrNoMemory);
+                return false;
+            }
+        }
+
         // it is now safe to send command for port reenable
         // send command for port re-enabling (for this to happen, we must first recreate the buffers)
         Err = OMX_SendCommand(iOMXDecoder, OMX_CommandPortEnable, iPortIndexForDynamicReconfig, NULL);

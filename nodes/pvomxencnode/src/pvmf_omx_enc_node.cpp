@@ -1637,6 +1637,8 @@ PVMFStatus PVMFOMXEncNode::HandleProcessingState()
             // is this output port?
             if (iPortIndexForDynamicReconfig == iOutputPortIndex)
             {
+                uint32 iBeforeConfigNumOutputBuffers = iNumOutputBuffers;
+
                 // check the new buffer size
                 iOMXComponentOutputBufferSize = iParamPort.nBufferSize;
 
@@ -1671,6 +1673,27 @@ PVMFStatus PVMFOMXEncNode::HandleProcessingState()
                     SetState(EPVMFNodeError);
                     ReportErrorEvent(PVMFFailure);
                     return PVMFFailure;
+                }
+
+                if (iNumOutputBuffers > iBeforeConfigNumOutputBuffers)
+                {
+                    //Reallocate FillBufferDone THREADSAFE CALLBACK AOs in case of port reconfiguration
+                    if (iThreadSafeHandlerFillBufferDone)
+                    {
+                        OSCL_DELETE(iThreadSafeHandlerFillBufferDone);
+                        iThreadSafeHandlerFillBufferDone = NULL;
+                    }
+                    // use the new queue depth of iNumOutputBuffers to prevent deadlock
+                    iThreadSafeHandlerFillBufferDone = OSCL_NEW(FillBufferDoneThreadSafeCallbackAOEnc, (this, iNumOutputBuffers, "FillBufferDoneAO", Priority() + 1));
+
+                    if (NULL == iThreadSafeHandlerFillBufferDone)
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                        (0, "PVMFOMXEncNode-%s::HandleProcessingState() Port Reconfiguration ->Can't reallocate FillBufferDone threadsafe callback queue!", iNodeTypeId));
+                        SetState(EPVMFNodeError);
+                        ReportErrorEvent(PVMFErrNoMemory);
+                        return false;
+                    }
                 }
 
                 // send command for port re-enabling (for this to happen, we must first recreate the buffers)
@@ -1723,6 +1746,8 @@ PVMFStatus PVMFOMXEncNode::HandleProcessingState()
             {
 
                 // this is input port
+                uint32 iBeforeConfigNumInputBuffers = iNumInputBuffers;
+
                 // read the input port buffer alignment requirement
                 iInputBufferAlignment = iParamPort.nBufferAlignment;
                 iOMXComponentInputBufferSize = iParamPort.nBufferSize;
@@ -1757,6 +1782,27 @@ PVMFStatus PVMFOMXEncNode::HandleProcessingState()
                     SetState(EPVMFNodeError);
                     ReportErrorEvent(PVMFFailure);
                     return PVMFFailure;
+                }
+
+                if (iNumInputBuffers > iBeforeConfigNumInputBuffers)
+                {
+                    //Reallocate EmptyBufferDone THREADSAFE CALLBACK AOs in case of port reconfiguration
+                    if (iThreadSafeHandlerEmptyBufferDone)
+                    {
+                        OSCL_DELETE(iThreadSafeHandlerEmptyBufferDone);
+                        iThreadSafeHandlerEmptyBufferDone = NULL;
+                    }
+                    // use the new queue depth of iNumInputBuffers to prevent deadlock
+                    iThreadSafeHandlerEmptyBufferDone = OSCL_NEW(EmptyBufferDoneThreadSafeCallbackAOEnc, (this, iNumInputBuffers, "EmptyBufferDoneAO", Priority() + 1));
+
+                    if (NULL == iThreadSafeHandlerEmptyBufferDone)
+                    {
+                        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                        (0, "PVMFOMXEncNode-%s::HandleProcessingState() Port Reconfiguration -> Can't reallocate EmptyBufferDone threadsafe callback queue!", iNodeTypeId));
+                        SetState(EPVMFNodeError);
+                        ReportErrorEvent(PVMFErrNoMemory);
+                        return false;
+                    }
                 }
 
                 // send command for port re-enabling (for this to happen, we must first recreate the buffers)
