@@ -338,6 +338,15 @@ class pvplayer_async_test_playlist_playback : public pvplayer_async_test_base
                         iAlternateMimeType = PVMF_MIME_MPEG4FF;
                     }
                 }
+                else if (iFileType == PVMF_MIME_ASFFF)
+                {
+                    iSinkFileNameSubString += _STRLIT_WCHAR("wma");
+
+                    if (iInvalidMimeTypeTest)
+                    {
+                        iAlternateMimeType = PVMF_MIME_MP3FF;
+                    }
+                }
                 else //(iFileType == PVMF_MIME_MP4FF)
                 {
                     iSinkFileNameSubString += _STRLIT_WCHAR("mp4");
@@ -708,6 +717,10 @@ class pvplayer_async_test_playlist_seek_skip : public pvplayer_async_test_base
             if (iFileType == PVMF_MIME_MP3FF)
             {
                 iSinkFileNameSubString += _STRLIT_WCHAR("mp3");
+            }
+            else if (iFileType == PVMF_MIME_ASFFF)
+            {
+                iSinkFileNameSubString += _STRLIT_WCHAR("wma");
             }
             else //(iFileType == PVMF_MIME_MP4FF)
             {
@@ -1245,3 +1258,4 @@ class pvplayer_async_test_validate_gapless : public pvplayer_async_test_base
 
 
 #endif //TEST_PV_PLAYER_ENGINE_TESTSET_PLAYLIST_H_INCLUDED
+
