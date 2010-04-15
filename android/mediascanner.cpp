@@ -556,7 +556,7 @@ status_t MediaScanner::processFile(const char *path, const char* mimeType, Media
     status_t result = PVMFSuccess;
     int error = 0;
     InitializeForThread();
-	
+
     OSCL_TRY(error,
         client.setLocale(mLocale);
         client.beginFile();
@@ -624,6 +624,10 @@ status_t MediaScanner::doProcessDirectory(char *path, int pathRemaining, const c
         strcpy(fileSpot, ".nomedia");
         if (access(path, F_OK) == 0) {
             LOGD("found .nomedia, skipping directory\n");
+            // restore path
+            fileSpot[0] = 0;
+            // notify client
+            client.addNoMediaFolder(path);
             return OK;
         }
 
