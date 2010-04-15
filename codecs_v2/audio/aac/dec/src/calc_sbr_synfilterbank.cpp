@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,7 @@ Copyright (c) ISO/IEC 2002.
 #include    "fxp_mul32.h"
 #include    "aac_mem_funcs.h"
 
+
 /*----------------------------------------------------------------------------
 ; MACROS
 ; Define module specific macros here
@@ -93,53 +94,7 @@ Copyright (c) ISO/IEC 2002.
 ; Include all pre-processor statements here. Include conditional
 ; compile variables also.
 ----------------------------------------------------------------------------*/
-
-
-#if defined (PV_ARM_V5)
-
-
-__inline Int16 sat1(Int32 y)
-{
-    __asm
-    {
-        qdadd y, y, y
-        mov y, y, asr #16
-    }
-
-    return((Int16)y);
-}
-
-#define saturate2( a, b, c, d)      *c = sat1( a);   \
-                                    *d = sat1( b);   \
-                                    c += 2;         \
-                                    d -= 2;
-
-
-#elif defined (PV_ARM_V4)
-
-
-__inline Int16 sat(Int32 y)
-{
-    Int32 x;
-    Int32 z = 31; /* rvct compiler problem */
-    __asm
-    {
-        sub y, y, y, asr 2
-        mov y, y, asr N
-        mov x, y, asr #15
-        teq x, y, asr z
-        eorne  y, INT16_MAX, y, asr #31
-    }
-
-    return((Int16)y);
-}
-
-#define saturate2( a, b, c, d)      *c = sat( a);   \
-                                    *d = sat( b);   \
-                                    c += 2;         \
-                                    d -= 2;
-
-#elif defined(PV_ARM_GCC_V5)
+#if   ((PV_CPU_ARCH_VERSION >=5) && (PV_COMPILER == EPV_ARM_GNUC))
 
 __inline Int16 sat(Int32 y)
 {
@@ -162,15 +117,6 @@ __inline Int16 sat(Int32 y)
                                     c += 2;         \
                                     d -= 2;
 
-
-#elif defined(PV_ARM_MSC_EVC_V5)
-
-#include "armintr.h"
-
-#define saturate2( a, b, c, d)      *c = _DAddSatInt( a, a)>>16;   \
-                                    *d = _DAddSatInt( b, b)>>16;   \
-                                    c += 2;         \
-                                    d -= 2;
 
 #else
 

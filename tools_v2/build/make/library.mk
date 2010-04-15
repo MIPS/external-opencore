@@ -68,7 +68,7 @@ $(TARGET)_libmode ?= $(DEFAULT_LIBMODE)
 $(TARGET)_libtype ?= $(DEFAULT_LIBTYPE)
 
 $(TARGET)_asm_flags ?= $(DEFAULT_CPP_ASM_FLAGS)
-XCPPFLAGS += $($(TARGET)_asm_flags) 
+XCPPFLAGS += $($(TARGET)_asm_flags)
 
 # $(info target = $(TARGET), libtype = $($(TARGET)_libtype))
 
@@ -112,6 +112,23 @@ else
   XCXXFLAGS+=$(RELEASE_CXXFLAGS)
   XCFLAGS+=$(RELEASE_CFLAGS)
   XCPPFLAGS+=$(RELEASE_CPPFLAGS)
+endif
+
+#Checking the availability of CPU_ARCH_VESION at local.mk or toolset.mk
+ifeq ($(LIB_CPU_ARCH_VERSION),)
+  PV_CPU_ARCH_VERSION := $(GLOBAL_CPU_ARCH_VERSION)
+else
+  PV_CPU_ARCH_VERSION := $(LIB_CPU_ARCH_VERSION)
+endif
+XCPPFLAGS+= -D"PV_CPU_ARCH_VERSION=$(PV_CPU_ARCH_VERSION)"
+
+#Specify Target Architecture for Symbian Compiler 
+ifeq ($(PV_CPU_ARCH_VERSION),4) 
+  TARGET_ARMCC := OPTION ARMCC --cpu 5T
+else ifeq ($(PV_CPU_ARCH_VERSION),5) 
+  TARGET_ARMCC := OPTION ARMCC --cpu 5TE
+else ifeq ($(PV_CPU_ARCH_VERSION),6) 
+  TARGET_ARMCC := OPTION ARMCC --cpu 6
 endif
 
 ifneq ($(strip $(LOCAL_EXPORT_ALL_SYMBOLS)),true)

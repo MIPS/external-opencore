@@ -223,6 +223,9 @@ OMX_BOOL OmxAmrEncoder::AmrEncodeFrame(OMX_U8*    aOutputBuffer,
     StreamInput.iStopTime     = StreamInput.iStartTime + AMR_FRAME_LENGTH_IN_TIMESTAMP * InputFrameNum;
 //    iNextStartTime            = StreamInput.iStopTime; // for the next encoding, not necessary
 
+#if PROFILING_ON
+    OMX_U32 Start = OsclTickCount::TickCount();
+#endif
     // Do encoding at one time for multiple frame input
     if (ipGsmEncoder->Encode(StreamInput, StreamOutput) < 0 || StreamOutput.iNumSampleFrames != InputFrameNum)
     {

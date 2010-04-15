@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -341,34 +341,7 @@
  *  abs(x) ^ (1/3) is multiplied by the signed input value.
  */
 
-
-
-#if ( defined(_ARM) || defined(_ARM_V4))
-
-/*
- *  Absolute value for 16 bit-numbers
- */
-__inline Int32 abs2(Int32 x)
-{
-    Int32 z;
-    /*
-        z = x - (x<0);
-        x = z ^ sign(z)
-     */
-    __asm
-    {
-        sub  z, x, x, lsr #31
-        eor  x, z, z, asr #31
-    }
-    return (x);
-}
-
-
-#define pv_abs(x)   abs2(x)
-
-
-#elif (defined(PV_ARM_GCC_V5)||defined(PV_ARM_GCC_V4))
-
+#if   ((PV_CPU_ARCH_VERSION >=4) && (PV_COMPILER == EPV_ARM_GNUC))
 /*
  *  Absolute value for 16 bit-numbers
  */
@@ -421,38 +394,7 @@ void esc_iquant_scaling(
     Int32   mult_high;
 
 
-#if ( defined(_ARM) || defined(_ARM_V4))
-
-    {
-        Int32   *temp;
-        Int32   R12, R11, R10, R9;
-
-        deltaOneThird = sizeof(Int32) * sfbWidth;
-        temp = coef;
-
-        // from standard library call for __rt_memset
-        __asm
-        {
-            MOV     R12, #0x0
-            MOV     R11, #0x0
-            MOV     R10, #0x0
-            MOV     R9, #0x0
-            SUBS    deltaOneThird, deltaOneThird, #0x20
-loop:
-            STMCSIA temp!, {R12, R11, R10, R9}
-            STMCSIA temp!, {R12, R11, R10, R9}
-            SUBCSS  deltaOneThird, deltaOneThird, #0x20
-            BCS     loop
-
-            MOVS    deltaOneThird, deltaOneThird, LSL #28
-            STMCSIA temp!, {R12, R11, R10, R9}
-            STMMIIA temp!, {R12, R11}
-        }
-    }
-
-#else
     pv_memset(coef, 0, sizeof(Int32) * sfbWidth);
-#endif
 
     if (maxInput > 0)
     {

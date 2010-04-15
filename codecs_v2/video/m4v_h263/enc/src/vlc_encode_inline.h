@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,198 +18,9 @@
 #ifndef _VLC_ENCODE_INLINE_H_
 #define _VLC_ENCODE_INLINE_H_
 
-#if !defined(PV_ARM_GCC_V5)
+#include "oscl_base_macros.h"// has integer values of PV_COMPILER
 
-__inline  Int zero_run_search(UInt *bitmapzz, Short *dataBlock, RunLevelBlock *RLB, Int nc)
-{
-    Int idx, run, level, j;
-    UInt end, match;
-
-    idx = 0;
-    j   = 0;
-    run = 0;
-    match = 1 << 31;
-    if (nc > 32)
-        end = 1;
-    else
-        end = 1 << (32 - nc);
-
-    while (match >= end)
-    {
-        if ((match&bitmapzz[0]) == 0)
-        {
-            run++;
-            j++;
-            match >>= 1;
-        }
-        else
-        {
-            match >>= 1;
-            level = dataBlock[j];
-            dataBlock[j] = 0; /* reset output */
-            j++;
-            if (level < 0)
-            {
-                RLB->level[idx] = -level;
-                RLB->s[idx] = 1;
-                RLB->run[idx] = run;
-                run = 0;
-                idx++;
-            }
-            else
-            {
-                RLB->level[idx] = level;
-                RLB->s[idx] = 0;
-                RLB->run[idx] = run;
-                run = 0;
-                idx++;
-            }
-        }
-    }
-    nc -= 32;
-    if (nc > 0)
-    {
-        match = 1 << 31;
-        end = 1 << (32 - nc);
-        while (match >= end)
-        {
-            if ((match&bitmapzz[1]) == 0)
-            {
-                run++;
-                j++;
-                match >>= 1;
-            }
-            else
-            {
-                match >>= 1;
-                level = dataBlock[j];
-                dataBlock[j] = 0; /* reset output */
-                j++;
-                if (level < 0)
-                {
-                    RLB->level[idx] = -level;
-                    RLB->s[idx] = 1;
-                    RLB->run[idx] = run;
-                    run = 0;
-                    idx++;
-                }
-                else
-                {
-                    RLB->level[idx] = level;
-                    RLB->s[idx] = 0;
-                    RLB->run[idx] = run;
-                    run = 0;
-                    idx++;
-                }
-            }
-        }
-    }
-
-    return idx;
-}
-
-#elif defined(__CC_ARM)  /* only work with arm v5 */
-
-__inline  Int zero_run_search(UInt *bitmapzz, Short *dataBlock, RunLevelBlock *RLB, Int nc)
-{
-    OSCL_UNUSED_ARG(nc);
-    Int idx, run, level, j;
-    UInt end, match;
-    Int  zzorder;
-
-    idx = 0;
-    run = 0;
-    j   = -1;
-    __asm
-    {
-        ldr match, [bitmapzz]
-        clz run, match
-    }
-
-    zzorder = 0;
-
-    while (run < 32)
-    {
-        __asm
-        {
-            mov end, #0x80000000
-            mov end, end, lsr run   /* mask*/
-            bic match, match, end       /* remove it from bitmap */
-            mov run, run, lsl #1  /* 05/09/02 */
-            ldrsh level, [dataBlock, run] /*  load data */
-            strh zzorder, [dataBlock, run] /* reset output */
-            add j, j, #1
-            rsb run, j, run, lsr #1 /* delta run */
-            add j, j, run           /* current position */
-        }
-        if (level < 0)
-        {
-            RLB->level[idx] = -level;
-            RLB->s[idx] = 1;
-            RLB->run[idx] = run;
-            run = 0;
-            idx++;
-        }
-        else
-        {
-            RLB->level[idx] = level;
-            RLB->s[idx] = 0;
-            RLB->run[idx] = run;
-            run = 0;
-            idx++;
-        }
-        __asm
-        {
-            clz run, match
-        }
-    }
-    __asm
-    {
-        ldr match, [bitmapzz, #4]
-        clz run, match
-    }
-
-    while (run < 32)
-    {
-        __asm
-        {
-            mov end, #0x80000000
-            mov end, end, lsr run   /* mask*/
-            bic match, match, end       /* remove it from bitmap */
-            add run, run, #32       /* current position */
-            mov run, run, lsl #1    /* 09/02/05 */
-            ldrsh level, [dataBlock, run] /*  load data */
-            strh  zzorder, [dataBlock, run] /* reset output */
-            add j, j, #1
-            rsb run, j, run, lsr #1     /* delta run */
-            add j, j, run           /* current position */
-        }
-        if (level < 0)
-        {
-            RLB->level[idx] = -level;
-            RLB->s[idx] = 1;
-            RLB->run[idx] = run;
-            run = 0;
-            idx++;
-        }
-        else
-        {
-            RLB->level[idx] = level;
-            RLB->s[idx] = 0;
-            RLB->run[idx] = run;
-            run = 0;
-            idx++;
-        }
-        __asm
-        {
-            clz run, match
-        }
-    }
-
-    return idx;
-}
-
-#elif (defined(PV_ARM_GCC_V5) ) /* ARM GNU COMPILER  */
+#if   ((PV_CPU_ARCH_VERSION >=5) && (PV_COMPILER == EPV_ARM_GNUC))/* ARM GNU COMPILER  */
 
 __inline Int m4v_enc_clz(UInt temp)
 {
@@ -309,7 +120,98 @@ __inline  Int zero_run_search(UInt *bitmapzz, Short *dataBlock, RunLevelBlock *R
     return idx;
 }
 
-#endif
+#else/*#else for ((PV_CPU_ARCH_VERSION>=4) && (PV_COMPILER==EPV_ARM_RVCT))*/
+/*C Equivalent code*/
+__inline  Int zero_run_search(UInt *bitmapzz, Short *dataBlock, RunLevelBlock *RLB, Int nc)
+{
+    Int idx, run, level, j;
+    UInt end, match;
+
+    idx = 0;
+    j   = 0;
+    run = 0;
+    match = 1 << 31;
+    if (nc > 32)
+        end = 1;
+    else
+        end = 1 << (32 - nc);
+
+    while (match >= end)
+    {
+        if ((match&bitmapzz[0]) == 0)
+        {
+            run++;
+            j++;
+            match >>= 1;
+        }
+        else
+        {
+            match >>= 1;
+            level = dataBlock[j];
+            dataBlock[j] = 0; /* reset output */
+            j++;
+            if (level < 0)
+            {
+                RLB->level[idx] = -level;
+                RLB->s[idx] = 1;
+                RLB->run[idx] = run;
+                run = 0;
+                idx++;
+            }
+            else
+            {
+                RLB->level[idx] = level;
+                RLB->s[idx] = 0;
+                RLB->run[idx] = run;
+                run = 0;
+                idx++;
+            }
+        }
+    }
+    nc -= 32;
+    if (nc > 0)
+    {
+        match = 1 << 31;
+        end = 1 << (32 - nc);
+        while (match >= end)
+        {
+            if ((match&bitmapzz[1]) == 0)
+            {
+                run++;
+                j++;
+                match >>= 1;
+            }
+            else
+            {
+                match >>= 1;
+                level = dataBlock[j];
+                dataBlock[j] = 0; /* reset output */
+                j++;
+                if (level < 0)
+                {
+                    RLB->level[idx] = -level;
+                    RLB->s[idx] = 1;
+                    RLB->run[idx] = run;
+                    run = 0;
+                    idx++;
+                }
+                else
+                {
+                    RLB->level[idx] = level;
+                    RLB->s[idx] = 0;
+                    RLB->run[idx] = run;
+                    run = 0;
+                    idx++;
+                }
+            }
+        }
+    }
+
+    return idx;
+}
+
+
+#endif/*#endif for ((PV_CPU_ARCH_VERSION>=4) && (PV_COMPILER==EPV_ARM_RVCT))*/
 
 #endif // _VLC_ENCODE_INLINE_H_
 

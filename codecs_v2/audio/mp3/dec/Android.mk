@@ -33,18 +33,10 @@ LOCAL_SRC_FILES := \
  	src/pvmp3_dct_9.cpp \
  	src/pvmp3_dct_16.cpp
 
-ifeq ($(TARGET_ARCH),arm)
-LOCAL_SRC_FILES += \
-	src/asm/pvmp3_polyphase_filter_window_gcc.s \
- 	src/asm/pvmp3_mdct_18_gcc.s \
- 	src/asm/pvmp3_dct_9_gcc.s \
-	src/asm/pvmp3_dct_16_gcc.s
-endif
-
 
 LOCAL_MODULE := libpvmp3
 
-LOCAL_CFLAGS :=   $(PV_CFLAGS)
+LOCAL_CFLAGS := -DPV_CPU_ARCH_VERSION=0  $(PV_CFLAGS)
 LOCAL_ARM_MODE := arm
 
 LOCAL_STATIC_LIBRARIES := 

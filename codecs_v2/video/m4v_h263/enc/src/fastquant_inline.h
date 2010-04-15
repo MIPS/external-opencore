@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,405 +26,8 @@
 #include "mp4def.h"
 #include "oscl_base_macros.h"
 
-#if !defined(PV_ARM_GCC_V5) /* ARM GNU COMPILER  */
 
-__inline int32 aan_scale(int32 q_value, int32 coeff, int32 round, int32 QPdiv2)
-{
-    q_value = coeff * q_value + round;
-    coeff = q_value >> 16;
-    if (coeff < 0)  coeff += QPdiv2;
-    else            coeff -= QPdiv2;
-
-    return coeff;
-}
-
-
-__inline int32 coeff_quant(int32 coeff, int32 q_scale, int32 shift)
-{
-    int32 q_value;
-
-    q_value = coeff * q_scale;      //q_value = -((-(coeff + QPdiv2)*q_scale)>>LSL);
-    q_value >>= shift;                  //q_value = (((coeff - QPdiv2)*q_scale)>>LSL );
-    q_value += ((UInt)q_value >> 31); /* add one if negative */
-
-    return q_value;
-}
-
-__inline int32  coeff_clip(int32 q_value, int32 ac_clip)
-{
-    int32 coeff = q_value + ac_clip;
-
-    if ((UInt)coeff > (UInt)(ac_clip << 1))
-        q_value = ac_clip ^(q_value >> 31);
-
-    return q_value;
-}
-
-__inline int32 coeff_dequant(int32 q_value, int32 QPx2, int32 Addition, int32 tmp)
-{
-    int32 coeff;
-
-    OSCL_UNUSED_ARG(tmp);
-
-    if (q_value < 0)
-    {
-        coeff = q_value * QPx2 - Addition;
-        if (coeff < -2048)
-            coeff = -2048;
-    }
-    else
-    {
-        coeff = q_value * QPx2 + Addition;
-        if (coeff > 2047)
-            coeff = 2047;
-    }
-    return coeff;
-}
-
-__inline int32 smlabb(int32 q_value, int32 coeff, int32 round)
-{
-    q_value = coeff * q_value + round;
-
-    return q_value;
-}
-
-__inline int32 smulbb(int32 q_scale, int32 coeff)
-{
-    int32 q_value;
-
-    q_value = coeff * q_scale;
-
-    return q_value;
-}
-
-__inline int32 aan_dc_scale(int32 coeff, int32 QP)
-{
-
-    if (coeff < 0)  coeff += (QP >> 1);
-    else            coeff -= (QP >> 1);
-
-    return coeff;
-}
-
-__inline int32 clip_2047(int32 q_value, int32 tmp)
-{
-    OSCL_UNUSED_ARG(tmp);
-
-    if (q_value < -2048)
-    {
-        q_value = -2048;
-    }
-    else if (q_value > 2047)
-    {
-        q_value = 2047;
-    }
-
-    return q_value;
-}
-
-__inline int32 coeff_dequant_mpeg(int32 q_value, int32 stepsize, int32 QP, int32 tmp)
-{
-    int32 coeff;
-
-    OSCL_UNUSED_ARG(tmp);
-
-    coeff = q_value << 1;
-    stepsize *= QP;
-    if (coeff > 0)
-    {
-        q_value = (coeff + 1) * stepsize;
-        q_value >>= 4;
-        if (q_value > 2047) q_value = 2047;
-    }
-    else
-    {
-        q_value = (coeff - 1) * stepsize;
-        q_value += 15;
-        q_value >>= 4;
-        if (q_value < -2048)    q_value = -2048;
-    }
-
-    return q_value;
-}
-
-__inline int32 coeff_dequant_mpeg_intra(int32 q_value, int32 tmp)
-{
-    OSCL_UNUSED_ARG(tmp);
-
-    q_value <<= 1;
-    if (q_value > 0)
-    {
-        q_value >>= 4;
-        if (q_value > 2047) q_value = 2047;
-    }
-    else
-    {
-        q_value += 15;
-        q_value >>= 4;
-        if (q_value < -2048) q_value = -2048;
-    }
-
-    return q_value;
-}
-
-#elif defined(__CC_ARM)  /* only work with arm v5 */
-
-#if defined(__TARGET_ARCH_5TE)
-
-__inline int32 aan_scale(int32 q_value, int32 coeff,
-                         int32 round, int32 QPdiv2)
-{
-    __asm
-    {
-        smlabb q_value, coeff, q_value, round
-        movs       coeff, q_value, asr #16
-        addle   coeff, coeff, QPdiv2
-        subgt   coeff, coeff, QPdiv2
-    }
-
-    return coeff;
-}
-
-__inline int32 coeff_quant(int32 coeff, int32 q_scale, int32 shift)
-{
-    int32 q_value;
-
-    __asm
-    {
-        smulbb  q_value, q_scale, coeff    /*mov    coeff, coeff, lsl #14*/
-        mov     coeff, q_value, asr shift   /*smull tmp, coeff, q_scale, coeff*/
-        add q_value, coeff, coeff, lsr #31
-    }
-
-
-    return q_value;
-}
-
-__inline int32 coeff_dequant(int32 q_value, int32 QPx2, int32 Addition, int32 tmp)
-{
-    int32 coeff;
-
-    __asm
-    {
-        cmp     q_value, #0
-        smulbb  coeff, q_value, QPx2
-        sublt   coeff, coeff, Addition
-        addge   coeff, coeff, Addition
-        add     q_value, coeff, tmp
-        subs    q_value, q_value, #3840
-        subcss  q_value, q_value, #254
-        eorhi   coeff, tmp, coeff, asr #31
-    }
-
-    return coeff;
-}
-
-__inline int32 smlabb(int32 q_value, int32 coeff, int32 round)
-{
-    __asm
-    {
-        smlabb q_value, coeff, q_value, round
-    }
-
-    return q_value;
-}
-
-__inline int32 smulbb(int32 q_scale, int32 coeff)
-{
-    int32 q_value;
-
-    __asm
-    {
-        smulbb  q_value, q_scale, coeff
-    }
-
-    return q_value;
-}
-
-__inline int32 coeff_dequant_mpeg(int32 q_value, int32 stepsize, int32 QP, int32 tmp)
-{
-    /* tmp must have value of 2047 */
-    int32 coeff;
-    __asm
-    {
-        movs    coeff, q_value, lsl #1
-        smulbb  stepsize, stepsize, QP
-        addgt   coeff, coeff, #1
-        sublt   coeff, coeff, #1
-        smulbb  q_value, coeff, stepsize
-        addlt   q_value, q_value, #15
-        mov     q_value, q_value, asr #4
-        add     coeff, q_value, tmp
-        subs    coeff, coeff, #0xf00
-        subcss  coeff, coeff, #0xfe
-        eorhi   q_value, tmp, q_value, asr #31
-    }
-
-    return q_value;
-}
-
-
-#else // not ARMV5TE
-
-__inline int32 aan_scale(int32 q_value, int32 coeff,
-                         int32 round, int32 QPdiv2)
-{
-    __asm
-    {
-        mla q_value, coeff, q_value, round
-        movs       coeff, q_value, asr #16
-        addle   coeff, coeff, QPdiv2
-        subgt   coeff, coeff, QPdiv2
-    }
-
-    return coeff;
-}
-
-__inline int32 coeff_quant(int32 coeff, int32 q_scale, int32 shift)
-{
-    int32 q_value;
-
-    __asm
-    {
-        mul q_value, q_scale, coeff    /*mov    coeff, coeff, lsl #14*/
-        mov     coeff, q_value, asr shift   /*smull tmp, coeff, q_scale, coeff*/
-        add q_value, coeff, coeff, lsr #31
-    }
-
-
-    return q_value;
-}
-
-
-__inline int32 coeff_dequant(int32 q_value, int32 QPx2, int32 Addition, int32 tmp)
-{
-    int32 coeff;
-
-    __asm
-    {
-        cmp     q_value, #0
-        mul coeff, q_value, QPx2
-        sublt   coeff, coeff, Addition
-        addge   coeff, coeff, Addition
-        add     q_value, coeff, tmp
-        subs    q_value, q_value, #3840
-        subcss  q_value, q_value, #254
-        eorhi   coeff, tmp, coeff, asr #31
-    }
-
-    return coeff;
-}
-
-__inline int32 smlabb(int32 q_value, int32 coeff, int32 round)
-{
-    __asm
-    {
-        mla q_value, coeff, q_value, round
-    }
-
-    return q_value;
-}
-
-__inline int32 smulbb(int32 q_scale, int32 coeff)
-{
-    int32 q_value;
-
-    __asm
-    {
-        mul q_value, q_scale, coeff
-    }
-
-    return q_value;
-}
-
-
-__inline int32 coeff_dequant_mpeg(int32 q_value, int32 stepsize, int32 QP, int32 tmp)
-{
-    /* tmp must have value of 2047 */
-    int32 coeff;
-    __asm
-    {
-        movs    coeff, q_value, lsl #1
-        mul  stepsize, stepsize, QP
-        addgt   coeff, coeff, #1
-        sublt   coeff, coeff, #1
-        mul q_value, coeff, stepsize
-        addlt   q_value, q_value, #15
-        mov     q_value, q_value, asr #4
-        add     coeff, q_value, tmp
-        subs    coeff, coeff, #0xf00
-        subcss  coeff, coeff, #0xfe
-        eorhi   q_value, tmp, q_value, asr #31
-    }
-
-    return q_value;
-}
-
-
-#endif
-
-__inline int32  coeff_clip(int32 q_value, int32 ac_clip)
-{
-    int32 coeff;
-
-    __asm
-    {
-        add     coeff, q_value, ac_clip
-        subs    coeff, coeff, ac_clip, lsl #1
-        eorhi   q_value, ac_clip, q_value, asr #31
-    }
-
-    return q_value;
-}
-
-__inline int32 aan_dc_scale(int32 coeff, int32 QP)
-{
-
-    __asm
-    {
-        cmp   coeff, #0
-        addle   coeff, coeff, QP, asr #1
-        subgt   coeff, coeff, QP, asr #1
-    }
-
-    return coeff;
-}
-
-__inline int32 clip_2047(int32 q_value, int32 tmp)
-{
-    /* tmp must have value of 2047 */
-    int32 coeff;
-
-    __asm
-    {
-        add     coeff, q_value, tmp
-        subs    coeff, coeff, #0xf00
-        subcss  coeff, coeff, #0xfe
-        eorhi   q_value, tmp, q_value, asr #31
-    }
-
-    return q_value;
-}
-
-__inline int32 coeff_dequant_mpeg_intra(int32 q_value, int32 tmp)
-{
-    int32 coeff;
-
-    __asm
-    {
-        movs    q_value, q_value, lsl #1
-        addlt   q_value, q_value, #15
-        mov     q_value, q_value, asr #4
-        add     coeff, q_value, tmp
-        subs    coeff, coeff, #0xf00
-        subcss  coeff, coeff, #0xfe
-        eorhi   q_value, tmp, q_value, asr #31
-    }
-
-    return q_value;
-}
-
-#elif (defined(PV_ARM_GCC_V5)) /* ARM GNU COMPILER  */
+#if   ((PV_CPU_ARCH_VERSION >=5) && (PV_COMPILER == EPV_ARM_GNUC))/* ARM GNU COMPILER  */
 
 __inline int32 aan_scale(int32 q_value, int32 coeff,
                          int32 round, int32 QPdiv2)
@@ -617,10 +220,146 @@ __inline int32 coeff_dequant_mpeg_intra(int32 q_value, int32 tmp)
     return out;
 }
 
+#else/*#else for ((PV_CPU_ARCH_VERSION>=4) && (PV_COMPILER==EPV_ARM_RVCT)) */
+/*C Equivalent Code*/
+__inline int32 aan_scale(int32 q_value, int32 coeff, int32 round, int32 QPdiv2)
+{
+    q_value = coeff * q_value + round;
+    coeff = q_value >> 16;
+    if (coeff < 0)  coeff += QPdiv2;
+    else            coeff -= QPdiv2;
 
-#endif // Platform
+    return coeff;
+}
 
+
+__inline int32 coeff_quant(int32 coeff, int32 q_scale, int32 shift)
+{
+    int32 q_value;
+
+    q_value = coeff * q_scale;      //q_value = -((-(coeff + QPdiv2)*q_scale)>>LSL);
+    q_value >>= shift;                  //q_value = (((coeff - QPdiv2)*q_scale)>>LSL );
+    q_value += ((UInt)q_value >> 31); /* add one if negative */
+
+    return q_value;
+}
+
+__inline int32  coeff_clip(int32 q_value, int32 ac_clip)
+{
+    int32 coeff = q_value + ac_clip;
+
+    if ((UInt)coeff > (UInt)(ac_clip << 1))
+        q_value = ac_clip ^(q_value >> 31);
+
+    return q_value;
+}
+
+__inline int32 coeff_dequant(int32 q_value, int32 QPx2, int32 Addition, int32 tmp)
+{
+    int32 coeff;
+
+    OSCL_UNUSED_ARG(tmp);
+
+    if (q_value < 0)
+    {
+        coeff = q_value * QPx2 - Addition;
+        if (coeff < -2048)
+            coeff = -2048;
+    }
+    else
+    {
+        coeff = q_value * QPx2 + Addition;
+        if (coeff > 2047)
+            coeff = 2047;
+    }
+    return coeff;
+}
+
+__inline int32 smlabb(int32 q_value, int32 coeff, int32 round)
+{
+    q_value = coeff * q_value + round;
+
+    return q_value;
+}
+
+__inline int32 smulbb(int32 q_scale, int32 coeff)
+{
+    int32 q_value;
+
+    q_value = coeff * q_scale;
+
+    return q_value;
+}
+
+__inline int32 aan_dc_scale(int32 coeff, int32 QP)
+{
+
+    if (coeff < 0)  coeff += (QP >> 1);
+    else            coeff -= (QP >> 1);
+
+    return coeff;
+}
+
+__inline int32 clip_2047(int32 q_value, int32 tmp)
+{
+    OSCL_UNUSED_ARG(tmp);
+
+    if (q_value < -2048)
+    {
+        q_value = -2048;
+    }
+    else if (q_value > 2047)
+    {
+        q_value = 2047;
+    }
+
+    return q_value;
+}
+
+__inline int32 coeff_dequant_mpeg(int32 q_value, int32 stepsize, int32 QP, int32 tmp)
+{
+    int32 coeff;
+
+    OSCL_UNUSED_ARG(tmp);
+
+    coeff = q_value << 1;
+    stepsize *= QP;
+    if (coeff > 0)
+    {
+        q_value = (coeff + 1) * stepsize;
+        q_value >>= 4;
+        if (q_value > 2047) q_value = 2047;
+    }
+    else
+    {
+        q_value = (coeff - 1) * stepsize;
+        q_value += 15;
+        q_value >>= 4;
+        if (q_value < -2048)    q_value = -2048;
+    }
+
+    return q_value;
+}
+
+__inline int32 coeff_dequant_mpeg_intra(int32 q_value, int32 tmp)
+{
+    OSCL_UNUSED_ARG(tmp);
+
+    q_value <<= 1;
+    if (q_value > 0)
+    {
+        q_value >>= 4;
+        if (q_value > 2047) q_value = 2047;
+    }
+    else
+    {
+        q_value += 15;
+        q_value >>= 4;
+        if (q_value < -2048) q_value = -2048;
+    }
+
+    return q_value;
+}
+#endif /*#endif for((PV_CPU_ARCH_VERSION>=4) && (PV_COMPILER==EPV_ARM_RVCT))*/
 
 #endif //_FASTQUANT_INLINE_H_
-
-

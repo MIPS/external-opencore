@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 /** Class ColorConvert16, convert YUV to RGB16 in 5-6-5 format. */
 #include "colorconv_config.h"
 #include "cczoomrotation16.h"
+
 
 
 

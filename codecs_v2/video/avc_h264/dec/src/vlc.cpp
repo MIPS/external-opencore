@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,10 @@
  */
 #include "avcdec_lib.h"
 #include "avcdec_bitstream.h"
+#include "oscl_base_macros.h"// has integer values of PV_COMPILER
 
 //#define PV_ARM_V5
-#ifdef PV_ARM_V5
-#define PV_CLZ(A,B) __asm{CLZ (A),(B)}  \
-    A -= 16;
-#else
 #define PV_CLZ(A,B) while (((B) & 0x8000) == 0) {(B) <<=1; A++;}
-#endif
 
 
 #define PV_NO_CLZ

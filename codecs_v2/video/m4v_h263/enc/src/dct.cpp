@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,8 +116,8 @@ extern "C"
             /* MUL2C k2,k5,724,FDCT_SHIFT */
             /* k0, k1 become scratch */
             /* assume FAST MULTIPLY */
-            k1 = mla724(k12, k5, round);
-            k0 = mla724(k12, k2, round);
+            k1 = mla724(k5, k12, round);
+            k0 = mla724(k2, k12, round);
 
             k5 = k1 >> FDCT_SHIFT;
             k2 = k0 >> FDCT_SHIFT;
@@ -211,8 +211,8 @@ extern "C"
             /* MUL2C k2,k5,724,FDCT_SHIFT */
             /* k0, k1 become scratch */
             /* assume FAST MULTIPLY */
-            k1 = mla724(k12, k5, round);
-            k0 = mla724(k12, k2, round);
+            k1 = mla724(k5, k12, round);
+            k0 = mla724(k2, k12, round);
 
             k5 = k1 >> FDCT_SHIFT;
             k2 = k0 >> FDCT_SHIFT;
@@ -343,8 +343,8 @@ extern "C"
             /* MUL2C k2,k5,724,FDCT_SHIFT */
             /* k0, k1 become scratch */
             /* assume FAST MULTIPLY */
-            k1 = mla724(k12, k5, round);
-            k0 = mla724(k12, k2, round);
+            k1 = mla724(k5, k12, round);
+            k0 = mla724(k2, k12, round);
 
             k5 = k1 >> FDCT_SHIFT;
             k2 = k0 >> FDCT_SHIFT;
@@ -425,8 +425,8 @@ extern "C"
             /* MUL2C k2,k5,724,FDCT_SHIFT */
             /* k0, k1 become scratch */
             /* assume FAST MULTIPLY */
-            k1 = mla724(k12, k5, round);
-            k0 = mla724(k12, k2, round);
+            k1 = mla724(k5, k12, round);
+            k0 = mla724(k2, k12, round);
 
             k5 = k1 >> FDCT_SHIFT;
             k2 = k0 >> FDCT_SHIFT;
@@ -548,7 +548,7 @@ extern "C"
             /* MUL2C k2,k5,724,FDCT_SHIFT */
             /* k0, k1 become scratch */
             /* assume FAST MULTIPLY */
-            k1 = mla724(k12, k5, round);
+            k1 = mla724(k5, k12, round);
 
             k5 = k1 >> FDCT_SHIFT;
             /*****************/
@@ -616,7 +616,7 @@ extern "C"
             /* MUL2C k2,k5,724,FDCT_SHIFT */
             /* k0, k1 become scratch */
             /* assume FAST MULTIPLY */
-            k1 = mla724(k12, k5, round);
+            k1 = mla724(k5, k12, round);
 
             k5 = k1 >> FDCT_SHIFT;
             /*****************/
@@ -712,8 +712,8 @@ extern "C"
             /* MUL2C k2,k5,724,FDCT_SHIFT */
             /* k0, k1 become scratch */
             /* assume FAST MULTIPLY */
-            k1 = mla724(k12, k5, round);
-            k0 = mla724(k12, k2, round);
+            k1 = mla724(k5, k12, round);
+            k0 = mla724(k2, k12, round);
 
             k5 = k1 >> FDCT_SHIFT;
             k2 = k0 >> FDCT_SHIFT;
@@ -807,8 +807,8 @@ extern "C"
             /* MUL2C k2,k5,724,FDCT_SHIFT */
             /* k0, k1 become scratch */
             /* assume FAST MULTIPLY */
-            k1 = mla724(k12, k5, round);
-            k0 = mla724(k12, k2, round);
+            k1 = mla724(k5, k12, round);
+            k0 = mla724(k2, k12, round);
 
             k5 = k1 >> FDCT_SHIFT;
             k2 = k0 >> FDCT_SHIFT;
@@ -921,8 +921,8 @@ extern "C"
             /* MUL2C k2,k5,724,FDCT_SHIFT */
             /* k0, k1 become scratch */
             /* assume FAST MULTIPLY */
-            k1 = mla724(k12, k5, round);
-            k0 = mla724(k12, k2, round);
+            k1 = mla724(k5, k12, round);
+            k0 = mla724(k2, k12, round);
 
             k5 = k1 >> FDCT_SHIFT;
             k2 = k0 >> FDCT_SHIFT;
@@ -1003,8 +1003,8 @@ extern "C"
             /* MUL2C k2,k5,724,FDCT_SHIFT */
             /* k0, k1 become scratch */
             /* assume FAST MULTIPLY */
-            k1 = mla724(k12, k5, round);
-            k0 = mla724(k12, k2, round);
+            k1 = mla724(k5, k12, round);
+            k0 = mla724(k2, k12, round);
 
             k5 = k1 >> FDCT_SHIFT;
             k2 = k0 >> FDCT_SHIFT;
@@ -1108,7 +1108,7 @@ extern "C"
             /* MUL2C k2,k5,724,FDCT_SHIFT */
             /* k0, k1 become scratch */
             /* assume FAST MULTIPLY */
-            k1 = mla724(k12, k5, round);
+            k1 = mla724(k5, k12, round);
 
             k5 = k1 >> FDCT_SHIFT;
             /*****************/
@@ -1176,7 +1176,7 @@ extern "C"
             /* MUL2C k2,k5,724,FDCT_SHIFT */
             /* k0, k1 become scratch */
             /* assume FAST MULTIPLY */
-            k1 = mla724(k12, k5, round);
+            k1 = mla724(k5, k12, round);
 
             k5 = k1 >> FDCT_SHIFT;
             /*****************/

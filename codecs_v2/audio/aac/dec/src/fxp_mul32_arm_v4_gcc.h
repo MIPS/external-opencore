@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,10 +38,6 @@ extern "C"
 
 
 #include "pv_audio_type_defs.h"
-
-
-#if defined (PV_ARM_GCC_V4) /* ARM_V4 GNU COMPILER  */
-
 
 #define preload_cache( a)
 
@@ -612,7 +608,6 @@ extern "C"
         return (result64_hi);
     }
 
-#endif
 
 #ifdef __cplusplus
 }
