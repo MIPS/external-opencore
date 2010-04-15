@@ -955,7 +955,7 @@ OSCL_EXPORT_REF bool PVMFJitterBufferImpl::RequestEventCallBack(JB_NOTIFY_CALLBA
     {
         case JB_NOTIFY_WAIT_FOR_OOO_PACKET_COMPLETE :
         {
-            PVMFJBEventNotificationRequestInfo eventRequestInfo(CLOCK_NOTIFICATION_INTF_TYPE_ESTIMATEDSERVER, this, NULL);
+            PVMFJBEventNotificationRequestInfo eventRequestInfo(CLOCK_NOTIFICATION_INTF_TYPE_CLIENTPLAYBACK, this, NULL);
             retval = irJBEventNotifier.RequestCallBack(eventRequestInfo, aDelay, iWaitForOOOPacketCallBkId);
             if (retval)
             {
