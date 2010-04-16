@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,21 +48,7 @@
 ; DEFINES AND SIMPLE TYPEDEF'S
 ----------------------------------------------------------------------------*/
 
-#if defined(PV_ARM_V5)
-
-__inline Int pv_normalize(Int32 x)
-{
-    Int32 y;
-    __asm
-    {
-        clz y, x;
-        sub y, y, #1
-    }
-    return (y);
-}
-
-
-#elif defined(PV_ARM_GCC_V5)
+#if   ((PV_CPU_ARCH_VERSION >=5) && (PV_COMPILER == EPV_ARM_GNUC))
 
 __inline Int pv_normalize(Int32 x)
 {
@@ -85,15 +71,13 @@ __inline Int pv_normalize(Int32 x)
 extern "C"
 {
 #endif
-
+    /*C Equivalent code*/
     Int pv_normalize(Int32 x);
-
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-
 
 
 #endif  /* PV_NORMALIZE_H */

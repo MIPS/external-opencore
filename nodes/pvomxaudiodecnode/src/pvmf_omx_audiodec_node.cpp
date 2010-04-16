@@ -610,18 +610,6 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
         return PVMFErrResource;
     }
 
-    // send command for port re-enabling (for this to happen, we must first recreate the buffers)
-    Err = OMX_SendCommand(iOMXDecoder, OMX_CommandPortEnable, iPortIndexForDynamicReconfig, NULL);
-    if (Err != OMX_ErrorNone)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "PVMFOMXAudioDecNode::HandlePortReEnable() Port Reconfiguration -> problem sending Port Enable command at port %d", iPortIndexForDynamicReconfig));
-
-        SetState(EPVMFNodeError);
-        ReportErrorEvent(PVMFErrResource);
-        return PVMFErrResource;
-    }
-
 
     // get also input info (for frame duration if necessary)
     OMX_PTR CodecProfilePtr;
@@ -737,6 +725,8 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
     // is this output port?
     if (iPortIndexForDynamicReconfig == iOutputPortIndex)
     {
+
+        uint32 iBeforeConfigNumOutputBuffers = iNumOutputBuffers;
 
         // GET the output buffer params and sizes
         OMX_AUDIO_PARAM_PCMMODETYPE Audio_Pcm_Param;
@@ -986,6 +976,40 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
             ReportInfoEvent(PVMFPvmiBufferAllocatorNotAcquired);
         }
 
+
+        if (iNumOutputBuffers > iBeforeConfigNumOutputBuffers)
+        {
+            //Reallocate FillBufferDone THREADSAFE CALLBACK AOs in case of port reconfiguration
+            if (iThreadSafeHandlerFillBufferDone)
+            {
+                OSCL_DELETE(iThreadSafeHandlerFillBufferDone);
+                iThreadSafeHandlerFillBufferDone = NULL;
+            }
+            // use the new queue depth of iNumOutputBuffers to prevent deadlock
+            iThreadSafeHandlerFillBufferDone = OSCL_NEW(FillBufferDoneThreadSafeCallbackAO, (this, iNumOutputBuffers, "FillBufferDoneAO", Priority() + 1));
+
+            if (NULL == iThreadSafeHandlerFillBufferDone)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMFOMXAudioDecNode::HandlePortReEnable() Port Reconfiguration -> Can't reallocate FillBufferDone threadsafe callback queue!"));
+                SetState(EPVMFNodeError);
+                ReportErrorEvent(PVMFErrNoMemory);
+                return false;
+            }
+        }
+
+        // send command for port re-enabling (for this to happen, we must first recreate the buffers)
+        Err = OMX_SendCommand(iOMXDecoder, OMX_CommandPortEnable, iPortIndexForDynamicReconfig, NULL);
+        if (Err != OMX_ErrorNone)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFOMXAudioDecNode::HandlePortReEnable() Port Reconfiguration -> problem sending Port Enable command at port %d", iPortIndexForDynamicReconfig));
+
+            SetState(EPVMFNodeError);
+            ReportErrorEvent(PVMFErrResource);
+            return PVMFErrResource;
+        }
+
         /* Allocate output buffers */
         if (!CreateOutMemPool(iNumOutputBuffers))
         {
@@ -1029,6 +1053,7 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
     else
     {
         // this is input port
+        uint32 iBeforeConfigNumInputBuffers = iNumInputBuffers;
 
         // read the alignment again - just in case
         iInputBufferAlignment = iParamPort.nBufferAlignment;
@@ -1044,6 +1069,41 @@ PVMFStatus PVMFOMXAudioDecNode::HandlePortReEnable()
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "PVMFOMXAudioDecNode::HandlePortReEnable() new buffers %d, size %d", iNumInputBuffers, iOMXComponentInputBufferSize));
+
+        if (iNumInputBuffers > iBeforeConfigNumInputBuffers)
+        {
+            //Reallocate EmptyBufferDone THREADSAFE CALLBACK AOs in case of port reconfiguration
+            if (iThreadSafeHandlerEmptyBufferDone)
+            {
+                OSCL_DELETE(iThreadSafeHandlerEmptyBufferDone);
+                iThreadSafeHandlerEmptyBufferDone = NULL;
+            }
+            // use the new queue depth of iNumInputBuffers to prevent deadlock
+            iThreadSafeHandlerEmptyBufferDone = OSCL_NEW(EmptyBufferDoneThreadSafeCallbackAO, (this, iNumInputBuffers, "EmptyBufferDoneAO", Priority() + 1));
+
+            if (NULL == iThreadSafeHandlerEmptyBufferDone)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMFOMXAudioDecNode::HandlePortReEnable() Port Reconfiguration -> Can't reallocate EmptyBufferDone threadsafe callback queue!"));
+                SetState(EPVMFNodeError);
+                ReportErrorEvent(PVMFErrNoMemory);
+                return false;
+            }
+        }
+
+
+        // send command for port re-enabling (for this to happen, we must first recreate the buffers)
+        Err = OMX_SendCommand(iOMXDecoder, OMX_CommandPortEnable, iPortIndexForDynamicReconfig, NULL);
+        if (Err != OMX_ErrorNone)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFOMXAudioDecNode::HandlePortReEnable() Port Reconfiguration -> problem sending Port Enable command at port %d", iPortIndexForDynamicReconfig));
+
+            SetState(EPVMFNodeError);
+            ReportErrorEvent(PVMFErrResource);
+            return PVMFErrResource;
+        }
+
 
         /* Allocate input buffers */
         if (!CreateInputMemPool(iNumInputBuffers))

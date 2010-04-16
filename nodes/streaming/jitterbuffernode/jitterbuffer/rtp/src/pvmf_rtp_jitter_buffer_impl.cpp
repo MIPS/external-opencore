@@ -47,6 +47,7 @@ OSCL_DLL_ENTRY_POINT_DEFAULT()
 const uint16 RTPSEQNUM_ROLLOVER_WRAP_THRESHHOLD_16BIT = 0x8000;
 
 const int32 iEstimatedServerKeepAheadInMilliSeconds = 2000;
+const int32 OOO_DATAPATH_DELAY_FACTOR = 500;
 
 /* RTP HEADER CONSTANTS */
 #define SUPPORTED_RTP_HEADER_VERSION    2
@@ -1081,12 +1082,12 @@ bool PVMFRTPJitterBufferImpl::CanRetrievePacket()
                 overflowFlag = false;
                 irEstimatedServerClock.GetCurrentTime32(estimatedServClock, overflowFlag, PVMF_MEDIA_CLOCK_MSEC);
                 uint32 delta = 0;
-                if (!iEOSSignalled && (PVTimeComparisonUtils::IsEarlier(estimatedServClock, converted_ts + iEstimatedServerKeepAheadInMilliSeconds, delta) && (delta > 0)))
+                if (!iEOSSignalled && (PVTimeComparisonUtils::IsEarlier(clientClock + OOO_DATAPATH_DELAY_FACTOR, converted_ts, delta) && (delta > 0)))
                 {
                     //hold the available data packet, and wait for hole in the JB due to OOO packet to be filled
                     if (!IsCallbackPending(JB_NOTIFY_WAIT_FOR_OOO_PACKET_COMPLETE, NULL))
                     {
-                        PVMF_JB_LOGDATATRAFFIC_OUT((0, "PVMFJitterBufferNode::SendData Detected Hole in JB PeekTs[%d] clientClock[%d] , ClientClockState [%d], estimatedServClock[%d], EstimatedServClockState[%d], oSessionDurationExpired[%d] MimeStr[%s]", converted_ts, clientClock, irClientPlayBackClock.GetState(), estimatedServClock, irEstimatedServerClock.GetState(), iEOSSignalled, irMimeType.get_cstr()));
+                        PVMF_JB_LOGDATATRAFFIC_OUT((0, "PVMFJitterBufferNode::SendData Detected Hole in JB PeekTs[%d] clientClock[%d] , ClientClockState [%d], estimatedServClock[%d], EstimatedServClockState[%d], oSessionDurationExpired[%d] MimeStr[%s], delta[%d]", converted_ts, clientClock, irClientPlayBackClock.GetState(), estimatedServClock, irEstimatedServerClock.GetState(), iEOSSignalled, irMimeType.get_cstr(), delta));
                         RequestEventCallBack(JB_NOTIFY_WAIT_FOR_OOO_PACKET_COMPLETE , delta, NULL);
                     }
                     return false;
@@ -1171,13 +1172,13 @@ bool PVMFRTPJitterBufferImpl::CanRetrievePacket(PVMFSharedMediaMsgPtr& aMediaOut
                 overflowFlag = false;
                 irEstimatedServerClock.GetCurrentTime32(estimatedServClock, overflowFlag, PVMF_MEDIA_CLOCK_MSEC);
                 uint32 delta = 0;
-                if (!iEOSSignalled && (PVTimeComparisonUtils::IsEarlier(estimatedServClock, converted_ts + iEstimatedServerKeepAheadInMilliSeconds, delta) && (delta > 0)))
+                if (!iEOSSignalled && (PVTimeComparisonUtils::IsEarlier(clientClock + OOO_DATAPATH_DELAY_FACTOR, converted_ts, delta) && (delta > 0)))
                 {
                     //hold the available data packet, and wait for hole in the JB due to OOO packet to be filled
                     if (!IsCallbackPending(JB_NOTIFY_WAIT_FOR_OOO_PACKET_COMPLETE, NULL))
                     {
-                        PVMF_JB_LOGDATATRAFFIC_OUT_E((0, "PVMFJitterBufferNode::SendData Detected Hole in JB PeekTs[%d] clientClock[%d] , ClientClockState [%d], estimatedServClock[%d], EstimatedServClockState[%d], oSessionDurationExpired[%d] MimeStr[%s]", converted_ts, clientClock, irClientPlayBackClock.GetState(), estimatedServClock, irEstimatedServerClock.GetState(), iEOSSignalled, irMimeType.get_cstr()));
-                        PVMF_JB_LOGDATATRAFFIC_OUT((0, "PVMFJitterBufferNode::SendData Detected Hole in JB PeekTs[%d] clientClock[%d] , ClientClockState [%d], estimatedServClock[%d], EstimatedServClockState[%d], oSessionDurationExpired[%d] MimeStr[%s]", converted_ts, clientClock, irClientPlayBackClock.GetState(), estimatedServClock, irEstimatedServerClock.GetState(), iEOSSignalled, irMimeType.get_cstr()));
+                        PVMF_JB_LOGDATATRAFFIC_OUT_E((0, "PVMFJitterBufferNode::SendData Detected Hole in JB PeekTs[%d] clientClock[%d] , ClientClockState [%d], estimatedServClock[%d], EstimatedServClockState[%d], oSessionDurationExpired[%d] MimeStr[%s], delta[%d]", converted_ts, clientClock, irClientPlayBackClock.GetState(), estimatedServClock, irEstimatedServerClock.GetState(), iEOSSignalled, irMimeType.get_cstr(), delta));
+                        PVMF_JB_LOGDATATRAFFIC_OUT((0, "PVMFJitterBufferNode::SendData Detected Hole in JB PeekTs[%d] clientClock[%d] , ClientClockState [%d], estimatedServClock[%d], EstimatedServClockState[%d], oSessionDurationExpired[%d] MimeStr[%s], delta[%d]", converted_ts, clientClock, irClientPlayBackClock.GetState(), estimatedServClock, irEstimatedServerClock.GetState(), iEOSSignalled, irMimeType.get_cstr(), delta));
                         RequestEventCallBack(JB_NOTIFY_WAIT_FOR_OOO_PACKET_COMPLETE , delta, NULL);
                     }
                     return false;

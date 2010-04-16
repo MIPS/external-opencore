@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,6 +81,42 @@ uint32 EditAtom::getInitialTimeOffset()
     if (_pEditListVec->size() != 0)
     {
         return (*_pEditListVec)[0]->getInitialTimeOffset();
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+Oscl_Vector<int32, OsclMemAllocator> *EditAtom::getEditListTime()
+{
+    if (_pEditListVec == NULL)
+    {
+        return 0;
+    }
+
+    //only assume one edit list atom in edit atom, so get element 0
+    if (_pEditListVec->size() != 0)
+    {
+        return (*_pEditListVec)[0]->getEditListTime();
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+Oscl_Vector<uint32, OsclMemAllocator> *EditAtom::getEditListDuration()
+{
+    if (_pEditListVec == NULL)
+    {
+        return 0;
+    }
+
+    //only assume one edit list atom in edit atom, so get element 0
+    if (_pEditListVec->size() != 0)
+    {
+        return (*_pEditListVec)[0]->getEditListDuration();
     }
     else
     {

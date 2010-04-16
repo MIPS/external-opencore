@@ -470,7 +470,7 @@ class PVMFMP4FFParserNode
 
         // create parser objects for gapless
         PVMFStatus ConstructMP4FileParser(PVMFStatus* aStatus, int32 aClipIndex, PVMFCPMPluginAccessInterfaceFactory* aCPMFactory);
-        PVMFStatus ReleaseMP4FileParser(int32 aClipIndex);
+        PVMFStatus ReleaseMP4FileParser(int32 aClipIndex, bool cleanParserAtLastIndex = false);
         PVMFStatus InitNextValidClipInPlaylist(PVMFStatus* aStatus = NULL, int32 aSkipToTrack = -1, PVMFDataStreamFactory* aDataStreamFactory = NULL);
         IMpeg4File* GetParserObjAtIndex(int32 aClipIndex = -1);
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,6 +141,17 @@
 #ifndef OSCL_PACKED_VAR
 #define OSCL_PACKED_VAR     "error"
 #endif
+
+
+/* The following macros enumerate the possible values of the build flag PV_COMPILER */
+
+#define EPV_ARM_GNUC  1 /* for GNU compiler */
+#define EPV_ARM_RVCT  2 /* for RVCT compiler from ARM */
+#define EPV_ARM_MSEVC 3 /* for MS Embedded VC compiler */
+
+/* PV_COMPILER value must be set to build command.
+   In addition, PV_CPU_ARCH_VERSION must be defined to take on an integer value that specifies the version of target
+   ARM architecture. */
 
 
 /*! @} */

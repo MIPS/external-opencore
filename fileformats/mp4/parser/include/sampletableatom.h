@@ -93,6 +93,10 @@
 #include "avcsampledependency.h"
 #endif
 
+#ifndef MEDIA_CLOCK_CONVERTER_H_INCLUDED
+#include "media_clock_converter.h"
+#endif
+
 //Macro to give number of frames that one must go back
 //in order to retrieve sample number corresponding to requested timestamp
 #define BACK_TRAVERSE_FRAME_COUNT 10
@@ -163,6 +167,7 @@ class SampleTableAtom : public Atom
         void  resetPlayBack();
         void  resetTrackToEOT();
         uint64 resetPlayBackbyTime(uint64 time, bool oDependsOn);
+        uint64 resetTrackByTime(uint64 time, bool oDependsOn);
         uint64 queryRepositionTime(uint64 time, bool oDependsOn, bool bBeforeRequestedTime);
 
         MP4_ERROR_CODE IsResetNeeded(uint64 time);
@@ -395,10 +400,9 @@ class SampleTableAtom : public Atom
         // TS offset value for the start of the media track.  The STTS
         // Atom only holds TS deltas.  For a track that does not begin at 0s, we need to hold an
         // offset timestamp value.
-        void setTrackTSOffset(uint32 ts)
-        {
-            _trackStartTSOffset = ts;
-        }
+        void setEditListInfo(Oscl_Vector<int32, OsclMemAllocator> *aEditListTime,
+                             Oscl_Vector<uint32, OsclMemAllocator> *aEditListDuration,
+                             uint32 aMovieTimeScale, uint32 aTrackMediaTS);
 
         MP4_ERROR_CODE updateFileSize(TOsclFileOffset filesize);
 
@@ -406,6 +410,9 @@ class SampleTableAtom : public Atom
         {
             return _SDIndex;
         }
+
+        void handleEditList(uint64 &ts);
+        void getEditListEntryForTimeStamp(uint64 &ts);
 
         MP4_ERROR_CODE getNextBundledAccessUnits(uint32 *n, GAU    *pgau);
 
@@ -592,7 +599,14 @@ class SampleTableAtom : public Atom
         OSCL_wStackString<16> _defaultMimeType;
         uint32 _currChunkOffset;
         bool iOpenFileOncePerTrack;
-
+        Oscl_Vector<int32, OsclMemAllocator> *_pEditListTimeVec;
+        Oscl_Vector<uint32, OsclMemAllocator> *_pEditListDurationVec;
+        uint32 _movieTimeScale;
+        uint32 _trackMediaTimeScale;
+        uint32 _editIndex;
+        uint64 _prevEditDuration;
+        uint32 _tsDelta;
+        uint64 _editOffset;
 };
 
 #endif // SAMPLETABLEATOM_H_INCLUDED

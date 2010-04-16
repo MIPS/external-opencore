@@ -21,10 +21,33 @@ ifneq ($(strip $(EXTERNAL_OPENCORE_CONFIG_ONCE)),true)
     PV_CFLAGS += -Werror
   endif
   ifeq ($(TARGET_ARCH),arm)
-    ifeq ($(TARGET_ARCH_VERSION),armv4t)
-      PV_CFLAGS += -DPV_ARM_GCC_V4
+      PV_CFLAGS += -DPV_COMPILER=1
+    ifeq ($(TARGET_ARCH_VERSION),armv7)
+      GLOBAL_CPU_ARCH_VERSION :=7
+    else ifeq ($(TARGET_ARCH_VERSION),armv7-a)
+      GLOBAL_CPU_ARCH_VERSION :=7
+    else ifeq ($(TARGET_ARCH_VERSION),armv7-r)
+      GLOBAL_CPU_ARCH_VERSION :=7
+    else ifeq ($(TARGET_ARCH_VERSION),armv7-m)
+      GLOBAL_CPU_ARCH_VERSION :=7
+    else ifeq ($(TARGET_ARCH_VERSION),armv6)
+      GLOBAL_CPU_ARCH_VERSION :=6
+    else ifeq ($(TARGET_ARCH_VERSION),armv6j)
+      GLOBAL_CPU_ARCH_VERSION :=6
+    else ifeq ($(TARGET_ARCH_VERSION),armv6t2)
+      GLOBAL_CPU_ARCH_VERSION :=6
+    else ifeq ($(TARGET_ARCH_VERSION),armv6z)
+      GLOBAL_CPU_ARCH_VERSION :=6
+    else ifeq ($(TARGET_ARCH_VERSION),armv6zk)
+      GLOBAL_CPU_ARCH_VERSION :=6
+    else ifeq ($(TARGET_ARCH_VERSION),armv6-m)
+      GLOBAL_CPU_ARCH_VERSION :=6
+    else ifeq ($(TARGET_ARCH_VERSION),armv5e)
+      GLOBAL_CPU_ARCH_VERSION :=5
+    else ifeq ($(TARGET_ARCH_VERSION),armv5te)
+      GLOBAL_CPU_ARCH_VERSION :=5
     else
-      PV_CFLAGS += -DPV_ARM_GCC_V5
+      GLOBAL_CPU_ARCH_VERSION :=5
     endif
   endif
 

@@ -541,12 +541,13 @@ class MediaAtom : public Atom
         // TS offset value for the start of the media track.  The STTS
         // Atom only holds TS deltas.  For a track that does not begin at 0s, we need to hold an
         // offset timestamp value.
-        void setTrackTSOffset(uint32 ts)
+        void setEditListInfo(Oscl_Vector<int32, OsclMemAllocator> *aEditListTime,
+                             Oscl_Vector<uint32, OsclMemAllocator> *aEditListDuration,
+                             uint32 aMovieTimeScale, uint32 aTrackMediaTS)
         {
-            _trackStartOffset = ts;
             if (_pmediaInformation != NULL)
             {
-                _pmediaInformation->setTrackTSOffset(ts);
+                _pmediaInformation->setEditListInfo(aEditListTime, aEditListDuration, aMovieTimeScale, aTrackMediaTS);
             }
         }
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,44 +24,22 @@
 
 ------------------------------------------------------------------------------
 */
-
 #ifndef FXP_MUL32
 #define FXP_MUL32
 
-#if   defined(PV_ARM_V5)
+#include "oscl_base_macros.h"// has integer values of PV_COMPILER
 
-#include "fxp_mul32_arm_v5.h"
-
-#elif defined(PV_ARM_V4)
-
-#include "fxp_mul32_arm_v4.h"
-
-#elif defined(PV_ARM_MSC_EVC_V4)
-
-#include "fxp_mul32_c_msc_evc.h"
-
-#elif defined(PV_ARM_MSC_EVC_V5)
-
-#include "fxp_mul32_c_msc_evc_armv5.h"
-
-#elif defined(PV_ARM_GCC_V5)
-
+#if   ((PV_COMPILER == EPV_ARM_GNUC) && (PV_CPU_ARCH_VERSION >=5))
 #include "fxp_mul32_arm_gcc.h"
 
-#elif defined(PV_ARM_GCC_V4)
-
-#include "fxp_mul32_arm_v4_gcc.h"
-
-#else
+#else/*#else for PV__PROCESSOR__PENTIUM*/
 
 #ifndef C_EQUIVALENT
 #define C_EQUIVALENT
-#endif
+#endif/*#endif for C_EQUIVALENT*/
 
 #include "fxp_mul32_c_equivalent.h"
 
-#endif
-
+#endif/*#endif for PV__PROCESSOR__PENTIUM*/
 
 #endif   /*  FXP_MUL32  */
-

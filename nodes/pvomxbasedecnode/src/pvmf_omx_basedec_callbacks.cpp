@@ -225,7 +225,7 @@ OsclReturnCode EventHandlerThreadSafeCallbackAO::ReceiveEvent(OMX_OUT OMX_HANDLE
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////
-EmptyBufferDoneThreadSafeCallbackAO::EmptyBufferDoneThreadSafeCallbackAO(void* aObserver,
+OSCL_EXPORT_REF EmptyBufferDoneThreadSafeCallbackAO::EmptyBufferDoneThreadSafeCallbackAO(void* aObserver,
         uint32 aDepth,
         const char* aAOname,
         int32 aPriority)
@@ -248,7 +248,7 @@ EmptyBufferDoneThreadSafeCallbackAO::EmptyBufferDoneThreadSafeCallbackAO(void* a
     iMemoryPool->deallocate(dummy);
 }
 
-EmptyBufferDoneThreadSafeCallbackAO::~EmptyBufferDoneThreadSafeCallbackAO()
+OSCL_EXPORT_REF EmptyBufferDoneThreadSafeCallbackAO::~EmptyBufferDoneThreadSafeCallbackAO()
 {
     if (iMemoryPool)
     {
@@ -423,7 +423,7 @@ OsclReturnCode EmptyBufferDoneThreadSafeCallbackAO::ReceiveEvent(OMX_OUT OMX_HAN
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////
-FillBufferDoneThreadSafeCallbackAO::FillBufferDoneThreadSafeCallbackAO(void* aObserver,
+OSCL_EXPORT_REF FillBufferDoneThreadSafeCallbackAO::FillBufferDoneThreadSafeCallbackAO(void* aObserver,
         uint32 aDepth,
         const char* aAOname,
         int32 aPriority)
@@ -445,7 +445,7 @@ FillBufferDoneThreadSafeCallbackAO::FillBufferDoneThreadSafeCallbackAO(void* aOb
     iMemoryPool->deallocate(dummy);
 }
 
-FillBufferDoneThreadSafeCallbackAO::~FillBufferDoneThreadSafeCallbackAO()
+OSCL_EXPORT_REF FillBufferDoneThreadSafeCallbackAO::~FillBufferDoneThreadSafeCallbackAO()
 {
     if (iMemoryPool)
     {

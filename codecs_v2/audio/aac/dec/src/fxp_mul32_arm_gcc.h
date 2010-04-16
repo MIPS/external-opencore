@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@
 #ifndef FXP_MUL32_ARM_GCC
 #define FXP_MUL32_ARM_GCC
 
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -36,9 +35,6 @@ extern "C"
 
 
 #include "pv_audio_type_defs.h"
-
-
-#if (defined (PV_ARM_GCC_V4) || defined(PV_ARM_GCC_V5)) /* ARM GNU COMPILER  */
 
 
 
@@ -529,8 +525,6 @@ extern "C"
 
         return (result64_hi);
     }
-
-#endif
 
 
 #ifdef __cplusplus

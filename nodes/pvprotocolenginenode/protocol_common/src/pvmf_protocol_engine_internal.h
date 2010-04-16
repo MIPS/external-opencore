@@ -96,7 +96,7 @@ enum ProcessingStateReturnCodes
     PROCESS_SERVER_RESPONSE_ERROR            = 10,  // status code of the first http response line >= 300
 
     // errors
-    PROCESS_ERROR_FIRST                      = -100,
+    PROCESS_ERROR_FIRST                      = -200,
     PROCESS_GENERAL_ERROR                    = PROCESS_ERROR_FIRST - 1,
     PROCESS_INPUT_OUTPUT_NOT_READY           = PROCESS_ERROR_FIRST - 2,     // input(uri) or output(port or data stream) for the http parcom object is not ready
     PROCESS_BAD_URL                          = PROCESS_ERROR_FIRST - 3,

@@ -1602,6 +1602,9 @@ class PVPlayerEngine
         uint32 iCurrentPlaybackClipId;
         uint32 iNumClipsQueued;
 
+        // A variable to track whether Start Command has been Issued to and Processed by Engine
+        bool iStartIssuedOnEngine;
+
         //CPM related - As of today we use this instance of CPM in QueryInterface calls only
         //outside of this engine has no interactions with CPM.
         PVMFCPM* iCPM;

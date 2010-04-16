@@ -93,6 +93,7 @@ LOCAL_LIBDIRS := $(patsubst %,$(LIBCOMPFLAG)%,$(LOCAL_LIBDIRS)) $(LIB_DIRS)
 
 REALTARGET := $(TARGET:%=$(BUILD_ROOT)/bin/$(OUTPUT_DIR_COMPONENT)/%$(TARGET_EXT))
 
+
 TMPDEPS := $(patsubst %,$$(%_fullname),$(LIBS))
 
 $(eval $(TARGET)_LIBDEPS := $(TMPDEPS))
@@ -140,3 +141,8 @@ run_$(TARGET):
 run_test: run_$(TARGET)
 build_$(TARGET): $(REALTARGET)
 build_test: build_$(TARGET)
+
+SHOW_TARGETS: SHOW_$(TARGET)
+SHOW_$(TARGET): MESSAGE:=run_$(TARGET) $(subst $(SRC_ROOT),,$(LOCAL_PATH))
+SHOW_$(TARGET):
+	@echo $(MESSAGE)

@@ -313,7 +313,6 @@ OUT          ==============================================================
 
 #include "fxp_mul32.h"
 
-
 /*----------------------------------------------------------------------------
 ; MACROS
 ; limit(x) saturates any number that exceeds a 16-bit representation into a
@@ -323,34 +322,6 @@ OUT          ==============================================================
 #define  ROUNDING_SCALED     (ROUNDING<<(16 - SCALING))
 
 
-#if defined(PV_ARM_V5)
-
-
-__inline Int16 sat(Int32 y)
-{
-    Int32 x;
-    Int32 z;
-    __asm
-    {
-        mov x, ROUNDING_SCALED
-        mov y, y, lsl #(15-SCALING)
-        qdadd z, x, y
-        mov y, z, lsr #16
-    }
-    return((Int16)y);
-}
-
-#define  limiter( y, x)   y = sat(x);
-
-
-#elif defined(PV_ARM_MSC_EVC_V5)
-
-
-#define  limiter( y, x)       z = x<< (15-SCALING); \
-                              y = _DAddSatInt( ROUNDING_SCALED, z)>>16;
-
-
-#else
 
 #define  limiter( y, x)   z = ((x + ROUNDING )>>SCALING); \
                           if ((z>>15) != (z>>31))         \
@@ -359,7 +330,6 @@ __inline Int16 sat(Int32 y)
                           } \
                           y = (Int16)(z);
 
-#endif
 
 
 /*----------------------------------------------------------------------------
@@ -418,7 +388,7 @@ void trans4m_freq_2_time_fxp_1(
 
     Int  i;
     Int  wnd;
-#if !(defined(PV_ARM_V5))
+#if !((PV_CPU_ARCH_VERSION >=5) && (PV_COMPILER == EPV_ARM_RVCT))
     Int32 z;
 #endif
 
@@ -1422,7 +1392,7 @@ void trans4m_freq_2_time_fxp_2(
 
     Int  i;
     Int  wnd;
-#if !(defined(PV_ARM_V5))
+#if !((PV_CPU_ARCH_VERSION >=5) && (PV_COMPILER == EPV_ARM_RVCT))
     Int32 z;
 #endif
     Int16 *pFreqInfo;

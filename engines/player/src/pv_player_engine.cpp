@@ -173,6 +173,8 @@ PVPlayerEngine::~PVPlayerEngine()
 
     iCommandIdMut.Close();
     iOOTSyncCommandSem.Close();
+
+    iStartIssuedOnEngine = false;
 }
 
 
@@ -1166,7 +1168,8 @@ PVPlayerEngine::PVPlayerEngine() :
         iClipsCompleted(0),
         iClipsCorrupted(0),
         iCurrentPlaybackClipId(0xFFFFFFFF),
-        iNumClipsQueued(0)
+        iNumClipsQueued(0),
+        iStartIssuedOnEngine(false)
 {
     iCurrentBeginPosition.iIndeterminate = true;
     iCurrentEndPosition.iIndeterminate = true;
@@ -3216,11 +3219,24 @@ PVPlayerState PVPlayerEngine::GetPVPlayerState(void)
 
         case PVP_ENGINE_STATE_STARTED:
         case PVP_ENGINE_STATE_AUTO_PAUSING:
-        case PVP_ENGINE_STATE_AUTO_PAUSED:
         case PVP_ENGINE_STATE_AUTO_RESUMING:
         case PVP_ENGINE_STATE_PAUSING:
         case PVP_ENGINE_STATE_STOPPING:
             return PVP_STATE_STARTED;
+
+        case PVP_ENGINE_STATE_AUTO_PAUSED:
+        {
+            if (iStartIssuedOnEngine)
+            {
+                return PVP_STATE_STARTED;
+            }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "PVPlayerEngine::GetPVPlayerState return PVP_STATE_PREPARED in Engine Auto_Paused state, since Engine is still waiting for Start command"));
+                return PVP_STATE_PREPARED;
+            }
+        }
 
         case PVP_ENGINE_STATE_PAUSED:
         case PVP_ENGINE_STATE_RESUMING:
@@ -3908,6 +3924,10 @@ void PVPlayerEngine::DoCancelAllCommands(PVPlayerEngineCommand& aCmd)
     // set engine state to Resetting, as cancel command completion will take Engine to Idle state, after internal reset.
     SetEngineState(PVP_ENGINE_STATE_RESETTING);
     iRollOverState = RollOverStateIdle; //reset roll over state to Idle, as engine is resetting itself
+
+    //Reset the variable iStartIssuedOnEngine
+    iStartIssuedOnEngine = false;
+
     // Stop the playback clock
     iPlaybackClock.Stop();
     // Cancel the current command first
@@ -3979,6 +3999,7 @@ void PVPlayerEngine::DoCancelAllCommands(PVPlayerEngineCommand& aCmd)
                                      OSCL_ASSERT(false););
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoCancelAllCommands() Out"));
+
                 return;
             }
         }
@@ -8820,17 +8841,20 @@ PVMFStatus PVPlayerEngine::DoStart(PVPlayerEngineCommand& aCmd)
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoStart() In, State=%d", iState));
 
+    if (iState == PVP_ENGINE_STATE_AUTO_PAUSED)
+    {
+        // Engine in AUTO-PAUSED state since it recieved an Underflow event
+        // during Prepare. Set the engine state to STARTED and return success
+        // Wait for DataReady event for the playback to start.
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVPlayerEngine::DoStart() Engine in auto-paused state, set it to started"));
+        SetEngineState(PVP_ENGINE_STATE_STARTED);
+        iStartIssuedOnEngine = true;
+    }
+
+
     if (GetPVPlayerState() == PVP_STATE_STARTED)
     {
-        if (iState == PVP_ENGINE_STATE_AUTO_PAUSED)
-        {
-            // Engine in AUTO-PAUSED state since it recieved an Underflow event
-            // during Prepare. Set the engine state to STARTED and return success
-            // Wait for DataReady event for the playback to start.
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVPlayerEngine::DoStart() Engine in auto-paused state, set it to started"));
-            SetEngineState(PVP_ENGINE_STATE_STARTED);
-        }
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoStart() Engine already in Started State"));
         EngineCommandCompleted(aCmd.GetCmdId(), aCmd.GetContext(), PVMFSuccess);
         return PVMFSuccess;
@@ -8872,6 +8896,8 @@ PVMFStatus PVPlayerEngine::DoStart(PVPlayerEngineCommand& aCmd)
     }
 
     SetEngineState(PVP_ENGINE_STATE_STARTED);
+    iStartIssuedOnEngine = true;
+
     EngineCommandCompleted(aCmd.GetCmdId(), aCmd.GetContext(), PVMFSuccess);
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoStart() Out"));
@@ -9215,6 +9241,9 @@ PVMFStatus PVPlayerEngine::DoStop(PVPlayerEngineCommand& aCmd)
     iPlaybackPausedDueToEndOfTimeReached = false;
     iClipsCompleted = 0;
 
+    //Reset the variable iStartIssuedOnEngine
+    iStartIssuedOnEngine = false;
+
     // Stop the end time check
     if (iEndTimeCheckEnabled)
     {
@@ -9427,6 +9456,7 @@ PVMFStatus PVPlayerEngine::DoReset(PVPlayerEngineCommand& aCmd)
 
     // set engine state to Resetting
     SetEngineState(PVP_ENGINE_STATE_RESETTING);
+    iStartIssuedOnEngine = false;
     iRollOverState = RollOverStateIdle; //reset roll over state to Idle, as engine is resetting itself
 
     // reset all repos related variables
@@ -16397,6 +16427,9 @@ PVMFStatus PVPlayerEngine::DoErrorHandling()
     // just send the error handling complete event
     SendInformationalEvent(PVMFInfoErrorHandlingComplete, NULL);
 
+    //Reset the variable iStartIssuedOnEngine
+    iStartIssuedOnEngine = false;
+
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoErrorHandling() Out"));
 
     return PVMFSuccess;
@@ -16550,43 +16583,27 @@ PVMFStatus PVPlayerEngine::DoCancelGetLicense(PVMFCommandId aCmdId, PVPlayerEngi
 
 void PVPlayerEngine::IssueSourceNodeAudioSinkEvent(const PVMFAsyncEvent& aEvent)
 {
-    bool retVal = false;
-    int32 datapathIndex = -1;
-    // Make sure there are no video tracks
-    retVal = FindDatapathForTrackUsingMimeString(true, false, false, datapathIndex);
-    if (retVal == false)
+    uint32 *data = (uint32*) aEvent.GetEventData();
+    uint32 clipId = *(data + 1);
+    uint8 localbuffer[8];
+    oscl_memcpy(localbuffer, &clipId, sizeof(uint32));
+
+    int32 eventType = aEvent.GetEventType();
+
+    if (eventType == PVMFInfoStartOfData)
     {
-        // Make sure there are no text tracks
-        retVal = FindDatapathForTrackUsingMimeString(false, false, true, datapathIndex);
-        if (retVal == false)
+        if (iNumPVMFInfoStartOfDataPending == 0)
         {
-            retVal = FindDatapathForTrackUsingMimeString(false, true, false, datapathIndex);
-            if (retVal)
-            {
-                uint32 *data = (uint32*) aEvent.GetEventData();
-                uint32 clipId = *(data + 1);
-                uint8 localbuffer[8];
-                oscl_memcpy(localbuffer, &clipId, sizeof(uint32));
-
-                int32 eventType = aEvent.GetEventType();
-
-                if (eventType == PVMFInfoStartOfData)
-                {
-                    if (iNumPVMFInfoStartOfDataPending == 0)
-                    {
-                        SendInformationalEvent(PVPlayerInfoClipPlaybackStarted, NULL, aEvent.GetEventData(), localbuffer, 8);
-                    }
-                }
-                else // aEvent == PVMFInfoEndOfData
-                {
-                    SendInformationalEvent(PVPlayerInfoClipPlaybackEnded, NULL, aEvent.GetEventData(), localbuffer, 8);
-                }
-                if (clipId + 1 <= iDataSource->GetNumClips())
-                {
-                    iSourceNodeInitIF->AudioSinkEvent(eventType, clipId);
-                }
-            }
+            SendInformationalEvent(PVPlayerInfoClipPlaybackStarted, NULL, aEvent.GetEventData(), localbuffer, 8);
         }
+    }
+    else // aEvent == PVMFInfoEndOfData
+    {
+        SendInformationalEvent(PVPlayerInfoClipPlaybackEnded, NULL, aEvent.GetEventData(), localbuffer, 8);
+    }
+    if (clipId + 1 <= iDataSource->GetNumClips())
+    {
+        iSourceNodeInitIF->AudioSinkEvent(eventType, clipId);
     }
 }
 

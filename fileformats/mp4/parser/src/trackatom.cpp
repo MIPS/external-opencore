@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -261,7 +261,9 @@ int32 TrackAtom::NEWsetTrackTSOffset(uint32 ts)
             float fTS = (float)_pmediaAtom->getMediaTimescale();
             fTS *= (float)initTimeOffset;
             fTS /= (float)ts;
-            _pmediaAtom->setTrackTSOffset((uint32)(fTS));
+            _pmediaAtom->setEditListInfo(_pEditAtom->getEditListTime(),
+                                         _pEditAtom->getEditListDuration(),
+                                         ts, _pmediaAtom->getMediaTimescale());
         }
     }
     return EVERYTHING_FINE;
