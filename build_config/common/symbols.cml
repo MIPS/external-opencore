@@ -19,6 +19,7 @@ mtp_db_support      'Enable MTP/DB Support'
 PV_HAS_SHOUTCAST_SUPPORT_ENABLED	'Enable Shoutcast Support'
 pvdb_config_support	'Enable pvdb Config Class Support'
 mtp_config_support	'Enable MTP Config Class Support'
+mtp_drmmanagerplugin_support	'Enable MTP drmmanager plugin Support'
 usb_transport_support  'Enable USB transport support'
 dtcp_support  'Enable support for DTCP Streaming'
 pv_so			'Module for libpv' text

@@ -33,6 +33,7 @@ divxdrm_support=n
 mtp_db_support=n
 pvdb_config_support=n
 mtp_config_support=n
+mtp_drmmanagerplugin_support=n
 usb_transport_support=n
 dtcp_support=n
 
