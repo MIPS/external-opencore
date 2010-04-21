@@ -139,7 +139,7 @@ LIBS :=  pvframemetadatautility \
         realaudio_deinterleaver \
         pvid3parcom \
         pvgendatastruct \
-        pvwmdrm \
+        pvwmdrmlib \
         csprng\
 	secure_data_format \
         pvcrypto \
