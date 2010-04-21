@@ -833,13 +833,11 @@ void PVMediaInputAuthorEngineTest::test()
             iCurrentTest->StartTest();
 
             int32 err;
-            OSCL_TRY(err,
 #if(USE_NATIVE_SCHEDULER)
-                     sched->StartNativeScheduler();
+            OSCL_TRY(err, sched->StartNativeScheduler(););
 #else
-                     sched->StartScheduler();
+            OSCL_TRY(err, sched->StartScheduler(););
 #endif
-                    );
 
             fprintf(iFile, "  Time taken by the test:  %d\n", OsclTickCount::TicksToMsec(OsclTickCount::TickCount()) - m_starttime);
         }
