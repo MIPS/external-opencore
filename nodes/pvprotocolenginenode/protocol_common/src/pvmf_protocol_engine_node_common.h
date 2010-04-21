@@ -230,11 +230,11 @@ class ProtocolContainerObserver
 // This class handles protocol initialization for multiple http based protocols,
 // and it serves as a friend class of PVMFProtocolEngineNode, and thus helps do
 // protocol initialization.
-class ProtocolContainer
+class OSCL_IMPORT_REF ProtocolContainer
 {
     public:
         // constructor
-        OSCL_IMPORT_REF ProtocolContainer(PVMFProtocolEngineNode *aNode = NULL);
+        ProtocolContainer(PVMFProtocolEngineNode *aNode = NULL);
         virtual ~ProtocolContainer()
         {
             iDataPathLogger = NULL;
@@ -245,15 +245,15 @@ class ProtocolContainer
         {
             iObserver = aObserver;
         }
-        OSCL_IMPORT_REF virtual bool createProtocolObjects();
-        OSCL_IMPORT_REF virtual void deleteProtocolObjects();
-        OSCL_IMPORT_REF virtual bool isObjectsReady(); // centralize the info-checking
-        OSCL_IMPORT_REF virtual void setSupportObject(OsclAny* aSupportObject, const uint32 aType);
+        virtual bool createProtocolObjects();
+        virtual void deleteProtocolObjects();
+        virtual bool isObjectsReady(); // centralize the info-checking
+        virtual void setSupportObject(OsclAny* aSupportObject, const uint32 aType);
         virtual PVMFStatus doInit()
         {
             return PVMFSuccess;    // used in PVMFProtocolEngineNode::doInit
         }
-        OSCL_IMPORT_REF virtual PVMFStatus doPrepare();                         // used in PVMFProtocolEngineNode::doPrepare, the default implementation is for both 3gpp and fasttrack download
+        virtual PVMFStatus doPrepare();                         // used in PVMFProtocolEngineNode::doPrepare, the default implementation is for both 3gpp and fasttrack download
         virtual bool doProPrepare()
         {
             return true;    // used only for fasttrack, invoke the call to generate SDP info.
@@ -266,8 +266,8 @@ class ProtocolContainer
         {
             return true;
         }
-        OSCL_IMPORT_REF virtual PVMFStatus doStop();
-        OSCL_IMPORT_REF virtual bool doEOS(const bool isTrueEOS = true);
+        virtual PVMFStatus doStop();
+        virtual bool doEOS(const bool isTrueEOS = true);
         virtual bool doInfoUpdate(const uint32 downloadStatus)
         {
             OSCL_UNUSED_ARG(downloadStatus);    // for now, used for download only, report event and update download control
@@ -283,16 +283,16 @@ class ProtocolContainer
             OSCL_UNUSED_ARG(aCmd);
             return PVMFSuccess;
         }
-        OSCL_IMPORT_REF virtual bool reconnectSocket(const bool aForceSocketReconnect = true);  // used for progressive download and http streaming
+        virtual bool reconnectSocket(const bool aForceSocketReconnect = true);  // used for progressive download and http streaming
         virtual bool needSocketReconnect()
         {
             return true;
         }
-        OSCL_IMPORT_REF virtual void startDataFlowByCommand(const bool needDoSocketReconnect = true);
+        virtual void startDataFlowByCommand(const bool needDoSocketReconnect = true);
 
-        OSCL_IMPORT_REF virtual void doClear(const bool aNeedDelete = false);
-        OSCL_IMPORT_REF virtual void doStopClear();
-        OSCL_IMPORT_REF virtual void doCancelClear();
+        virtual void doClear(const bool aNeedDelete = false);
+        virtual void doStopClear();
+        virtual void doCancelClear();
         virtual bool addSourceData(OsclAny* aSourceData)
         {
             OSCL_UNUSED_ARG(aSourceData);
@@ -329,8 +329,8 @@ class ProtocolContainer
             OSCL_UNUSED_ARG(aPurgeOnRedirect);
         }
 
-        OSCL_IMPORT_REF virtual void handleTimeout(const int32 timerID);
-        OSCL_IMPORT_REF virtual bool handleProtocolStateComplete(PVProtocolEngineNodeInternalEvent &aEvent, PVProtocolEngineNodeInternalEventHandler *aEventHandler);
+        virtual void handleTimeout(const int32 timerID);
+        virtual bool handleProtocolStateComplete(PVProtocolEngineNodeInternalEvent &aEvent, PVProtocolEngineNodeInternalEventHandler *aEventHandler);
 
         // for fasttrack only
         virtual PVMFStatus getMediaPresentationInfo(PVMFMediaPresentationInfo& aInfo)
@@ -400,7 +400,7 @@ class ProtocolContainer
             OSCL_UNUSED_ARG(aEnabled);
         }
 
-        OSCL_IMPORT_REF virtual OsclAny* getObject(const NodeObjectType aObjectType);
+        virtual OsclAny* getObject(const NodeObjectType aObjectType);
 
         virtual bool handleMetaData(OsclAny *aMetaDataInfo)
         {
@@ -408,7 +408,7 @@ class ProtocolContainer
             return true;
         }
 
-        OSCL_IMPORT_REF virtual void setClipDuration(const uint32 aClipDurationMsec);
+        virtual void setClipDuration(const uint32 aClipDurationMsec);
 
         virtual void SetSharedLibraryPtr(OsclSharedLibrary* aPtr)
         {
@@ -429,25 +429,25 @@ class ProtocolContainer
             OSCL_UNUSED_ARG(aForceSocketReconnect);
         }
 
-        OSCL_IMPORT_REF virtual bool getBufferForRequest(PVMFSharedMediaDataPtr &aMediaData);
-        OSCL_IMPORT_REF virtual void protocolRequestAvailable(uint32 aRequestType);
+        virtual bool getBufferForRequest(PVMFSharedMediaDataPtr &aMediaData);
+        virtual void protocolRequestAvailable(uint32 aRequestType);
         virtual uint32 getMaxTotalClipBitrate()
         {
             return 0;
         }
 
-        OSCL_IMPORT_REF virtual bool handleFirstPacketAvailable(PVProtocolEngineNodeInternalEvent &aEvent, PVProtocolEngineNodeInternalEventHandler *aEventHandler);
+        virtual bool handleFirstPacketAvailable(PVProtocolEngineNodeInternalEvent &aEvent, PVProtocolEngineNodeInternalEventHandler *aEventHandler);
 
     protected:
-        OSCL_IMPORT_REF virtual PVMFStatus initImpl();
+        virtual PVMFStatus initImpl();
         virtual int32 initNodeOutput() = 0;
-        OSCL_IMPORT_REF bool initProtocol();
+        bool initProtocol();
         virtual bool initProtocol_SetConfigInfo() = 0;
         virtual void initDownloadControl()
         {
             ;
         }
-        OSCL_IMPORT_REF uint32 getBitMaskForHTTPMethod(const HttpMethod aMethod = HTTP_GET);
+        uint32 getBitMaskForHTTPMethod(const HttpMethod aMethod = HTTP_GET);
         // called by handleTimeout()
         virtual bool handleTimeoutInPause(const int32 timerID)
         {
@@ -460,10 +460,10 @@ class ProtocolContainer
             return false;
         }
         // called by doStop()
-        OSCL_IMPORT_REF virtual void sendSocketDisconnectCmd();
+        virtual void sendSocketDisconnectCmd();
         // called by handleTimeout()
-        OSCL_IMPORT_REF virtual bool ignoreThisTimeout(const int32 timerID);
-        OSCL_IMPORT_REF virtual void clear();
+        virtual bool ignoreThisTimeout(const int32 timerID);
+        virtual void clear();
 
     private:
         //called by createProtocolObjects()
@@ -1183,13 +1183,13 @@ class EventReporterObserver
         virtual uint32 GetObserverState() = 0;
 };
 
-class EventReporter
+class OSCL_IMPORT_REF EventReporter
 {
     public:
         virtual ~EventReporter() {}
 
         // constructor
-        OSCL_IMPORT_REF EventReporter(EventReporterObserver *aObserver);
+        EventReporter(EventReporterObserver *aObserver);
 
         virtual void setSupportObject(OsclAny *aSupportObject, EventReporterSupportObjectType aType)
         {
@@ -1224,10 +1224,10 @@ class EventReporter
             ;
         }
 
-        OSCL_IMPORT_REF virtual void clear();
+        virtual void clear();
 
         // node is running in start state to kick off the normal downloading and streaming
-        OSCL_IMPORT_REF void startRealDataflow();
+        void startRealDataflow();
 
     protected:
         bool iStarted;

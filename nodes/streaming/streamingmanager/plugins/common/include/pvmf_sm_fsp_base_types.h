@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ enum PVMFSMFSPChildNodeCmdState
 };
 
 typedef PVMFGenericNodeCommand <OsclMemAllocator> PVMFSMFSPBaseNodeCommandBase;
-class PVMFSMFSPBaseNodeCommand : public PVMFSMFSPBaseNodeCommandBase
+class OSCL_IMPORT_REF PVMFSMFSPBaseNodeCommand : public PVMFSMFSPBaseNodeCommandBase
 {
     public:
         void Construct(PVMFSessionId s,
@@ -276,10 +276,10 @@ class PVMFSMFSPBaseNodeCommand : public PVMFSMFSPBaseNodeCommandBase
                     || (PVMF_GENERIC_NODE_CANCELCOMMAND == iCmd));
         }
         /* need to overlaod the base Copy routine to copy metadata key */
-        OSCL_IMPORT_REF void Copy(const PVMFGenericNodeCommand<OsclMemAllocator>& aCmd);
+        void Copy(const PVMFGenericNodeCommand<OsclMemAllocator>& aCmd);
 
         /* need to overlaod the base Destroy routine to cleanup metadata key */
-        OSCL_IMPORT_REF void Destroy();
+        void Destroy();
 };
 
 class PVMFSMFSPChildNodeContainer

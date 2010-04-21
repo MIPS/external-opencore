@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,17 +89,7 @@ class OsclMemPoolFixedChunkAllocator : public Oscl_DefAlloc
 
         /** The destructor for the memory pool
           */
-        virtual ~OsclMemPoolFixedChunkAllocator()
-        {
-            // Decrement the ref count
-            --iRefCount;
-
-            // If ref count reaches 0 then destroy this object
-            if (iRefCount <= 0)
-            {
-                destroymempool();
-            }
-        }
+        OSCL_IMPORT_REF virtual ~OsclMemPoolFixedChunkAllocator();
 
         /** This API throws an exception when n is greater than the fixed chunk size or there are no free chunk available in the pool,
           * if "enablenullpointerreturn" has not been called.
