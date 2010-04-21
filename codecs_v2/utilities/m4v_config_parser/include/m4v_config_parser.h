@@ -48,6 +48,9 @@
 #define SHORT_VIDEO_START_MARKER        0x20
 #define SHORT_VIDEO_START_MARKER_LENGTH  22
 
+#define H263_DEFAULT_WIDTH  352
+#define H263_DEFAULT_HEIGHT 288
+
 /** Targeted profile and level to encode. */
 enum M4VProfileLevel
 {
