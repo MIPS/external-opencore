@@ -60,7 +60,7 @@ class ProtectionSystemSpecificHeaderBox: public ExtendedFullAtom
             return iDataSize;
         }
 
-        const uint8*const GetData() const
+        const uint8* GetData() const
         {
             return ipData;
         }
