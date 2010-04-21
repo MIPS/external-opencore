@@ -5640,10 +5640,19 @@ void PVMFMP4FFParserNode::CleanupFileSource()
         iClipInfoList.pop_back();
     }
 
+    // Reset the playlist related parameters.
     iPlaybackParserObj = NULL;
     iMetadataParserObj = NULL;
     iPlaylistExhausted = false;
     iInitNextClip = false;
+    iNumClipsInPlayList = 0;
+    iPlaybackClipIndex = -1;
+    iLastPlayingClipIndex = -1;
+    iClipIndexForMetadata = -1;
+    iPlaylistRepositioning = false;
+    iNextInitializedClipIndex = -1;
+    iFirstClipNonAudioOnly = false;
+    iFirstValidClipIndex = -1;
 
     if (iDataStreamInterface != NULL)
 

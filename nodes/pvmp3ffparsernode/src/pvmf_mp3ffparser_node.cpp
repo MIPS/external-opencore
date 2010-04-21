@@ -1832,12 +1832,18 @@ void PVMFMP3FFParserNode::CleanupFileSource()
         }
         // clear the vector element
         iClipInfoList.pop_back();
-        iPlaybackClipIndex = -1;
     }
 
     iPlaybackParserObj = NULL;
     iMetadataParserObj = NULL;
     iPlaylistExhausted = false;
+
+    iNumClipsInPlayList = 0;
+    iPlaybackClipIndex = -1;
+    iClipIndexForMetadata = -1;
+    iPlaylistRepositioning = false;
+    iNextInitializedClipIndex = -1;
+    iInitNextClip = false;
 
     if (iDataStreamInterface != NULL)
     {
@@ -1880,8 +1886,6 @@ void PVMFMP3FFParserNode::CleanupFileSource()
     oWaitingOnLicense = false;
     iDownloadComplete = false;
     iUseCPMPluginRegistry = false;
-
-    iInitNextClip = false;
 }
 
 /**
