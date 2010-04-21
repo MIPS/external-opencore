@@ -360,7 +360,36 @@ int32 AACBitstreamObject::isAACFile(PVFile* aFilePtr)
         {
             return reset_ret;
         }
+        /*
+         *  If there was an ID3v2 tag, feed only the aac raw bitstream,
+         *  no need wasting time parsing through ID3v2 tag again
+         */
+
+        // If there was an ID3v2 tag, then acquire more data so we have a full buffer to work with
+        if (tagSize)
+        {
+            // jumpt to where the Audio stream starts
+            if (AACUtils::SeektoOffset(fpUsed, tagSize, Oscl_File::SEEKSET) != AAC_SUCCESS)
+            {
+                return AACBitstreamObject::INSUFFICIENT_DATA;
+            }
+            else
+            {
+                iPos = iActual_size;    // force new read
+
+                if (refill())           // read data from new offset tagSize
+                {
+                    return AACBitstreamObject::INSUFFICIENT_DATA;
+                }
+                // update remainingBytes accordingly
+                fpUsed->GetRemainingBytes(remBytes);
+                remainingBytes = (uint32)remBytes;
+            }
+        }
+
+
         uint8 *pBuffer = &iBuffer[iPos];
+
 
         //check for ADIF first since we only need 4 bytes to know for sure
         if (remainingBytes >= AAC_ADIF_IDENTIFIER_LEN)
@@ -2620,12 +2649,18 @@ uint32 AACBitstreamObject::GetAvgFrameSize()
 int32 AACBitstreamObject::GetADTSFrameLength(uint8* aBuffer)
 {
     int32 frameLen = 0;
-    // lowest 2 bits in the 4th byte of the header
-    frameLen = (uint32)((aBuffer[0] & 0x03) << 11);
-    // whole 5th byte(8 bits) of the header
-    frameLen |= (uint32)(aBuffer[1] << 3);
-    // highest 3 bits in the 6th byte of the header
-    frameLen |= (uint32)((aBuffer[2] & 0xe0) >> 5);
+    // check layer type (2 bits) ( to avoid adts false sync with mp3 content)
+    uint32 layer = (uint32)((aBuffer[0] & 0x06) >> 1);
+
+    if (layer == 0)  //  layer 0 is reserved for adts, 1,2,3 for mp3
+    {
+        // lowest 2 bits in the 4th byte of the header
+        frameLen = (uint32)((aBuffer[0] & 0x03) << 11);
+        // whole 5th byte(8 bits) of the header
+        frameLen |= (uint32)(aBuffer[1] << 3);
+        // highest 3 bits in the 6th byte of the header
+        frameLen |= (uint32)((aBuffer[2] & 0xe0) >> 5);
+    }
 
     return frameLen;
 }
