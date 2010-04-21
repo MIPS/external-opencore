@@ -111,17 +111,20 @@ bool INetURI::parseURL(OSCL_String &aUrl8, OSCL_String &aSerAdd, uint32 &aSerPor
     server_ip_ptr += 2;
 
     /* Locate the IP address. */
+    mbchar *clip_name = OSCL_CONST_CAST(mbchar*, oscl_strstr(server_ip_ptr, "/"));
+    if (clip_name != NULL) *clip_name = '\0';
+
     mbchar *server_port_ptr = OSCL_CONST_CAST(mbchar*, oscl_strstr(server_ip_ptr, ":"));
-    mbchar *tmp_ptr = server_port_ptr;
-    if (tmp_ptr == NULL) tmp_ptr = server_ip_ptr;
-    mbchar *clip_name = OSCL_CONST_CAST(mbchar*, oscl_strstr(tmp_ptr, "/"));
-    if (clip_name != NULL) *clip_name++ = '\0';
+    if (server_port_ptr != NULL)
+    {
+        // find the port number
+        *server_port_ptr++ = '\0';
+    }
 
     /* Locate the port number if provided. */
     aSerPort = DEFAULT_HTTP_PORT_NUMBER;
-    if ((server_port_ptr != NULL)  && (*(server_port_ptr + 1) != '/'))
+    if (server_port_ptr != NULL)
     {
-        *(server_port_ptr++) = '\0';
         uint32 atoi_tmp;
         if (PV_atoi(server_port_ptr, 'd', atoi_tmp)) aSerPort = atoi_tmp;
         else return false;
