@@ -233,7 +233,6 @@ derive SOLIBS_opencore_common from (LIBS_oscl_shared.
                        omx_aacenc_component_imp_m_lib.
                        omx_m4venc_component_imp_m_lib.
                        omx_avcenc_component_imp_m_lib.
-                       pv_avc_common_lib_m_lib.pv_amr_nb_common_lib_m_lib.
                        pvgsmamrparser_m_lib.
                        getactualaacconfig_m_lib.
                        m4v_config_m_lib.pv_config_parser_m_lib.
@@ -257,7 +256,7 @@ derive AGGREGATE_LIBDIRS_opencore_common from (LIBDIR_oscl_shared.
                        omx_aacenc_component_imp_m_mk.
                        omx_m4venc_component_imp_m_mk.
                        omx_avcenc_component_imp_m_mk.
-                       gsm_amr_headers_m_mk.pv_avc_common_lib_m_mk.pv_amr_nb_common_lib_m_mk.
+                       gsm_amr_headers_m_mk.
                        pvgsmamrparser_m_mk.
                        getactualaacconfig_m_mk.
                        m4v_config_m_mk.pv_config_parser_m_mk.
@@ -611,8 +610,8 @@ derive MODS_pvasflocalpbreg from "-lopencore_common -lpvasfcommon"
 derive omx_sharedlibrary_so_name from omx_mastercore_lib!=n ? "omx_sharedlibrary" : ""
 derive omx_sharedlibrary_aggregate_libtype from omx_mastercore_lib==m ? "shared":"static"
 derive omx_sharedlibrary_link_type from "loaded"
-derive SOLIBS_omx_sharedlibrary from omx_common_m_lib.omx_queue_m_lib.pvomx_proxy_m_lib.omx_baseclass_m_lib.pv_omx_interface_m_lib 
-derive AGGREGATE_LIBDIRS_omx_sharedlibrary from omx_common_m_mk.omx_queue_m_mk.pvomx_proxy_m_mk.omx_baseclass_m_mk.pv_omx_interface_m_mk 
+derive SOLIBS_omx_sharedlibrary from omx_common_m_lib.omx_queue_m_lib.pvomx_proxy_m_lib.omx_baseclass_m_lib.pv_omx_interface_m_lib.pv_avc_common_lib_m_lib.pv_amr_nb_common_lib_m_lib
+derive AGGREGATE_LIBDIRS_omx_sharedlibrary from omx_common_m_mk.omx_queue_m_mk.pvomx_proxy_m_mk.omx_baseclass_m_mk.pv_omx_interface_m_mk.pv_avc_common_lib_m_mk.pv_amr_nb_common_lib_m_mk 
 derive MODS_omx_sharedlibrary from "-lopencore_common"
 
 #omx video dec libraries contain the omx component and the corresponding decoder 

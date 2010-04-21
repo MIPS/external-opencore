@@ -16,8 +16,6 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
  	libpvlogger \
  	liboscllib \
  	libomx_mastercore_lib \
- 	libpv_avc_common_lib \
- 	libpv_amr_nb_common_lib \
  	libpvgsmamrparser \
  	libgetactualaacconfig \
  	libm4v_config \
@@ -64,8 +62,6 @@ include   $(PV_TOP)/oscl/pvlogger/Android.mk
 include   $(PV_TOP)/oscl/oscl/oscllib/Android.mk
 include   $(PV_TOP)/codecs_v2/omx/omx_mastercore/Android.mk
 include   $(PV_TOP)/codecs_v2/audio/gsm_amr/common/dec/Android.mk
-include   $(PV_TOP)/codecs_v2/video/avc_h264/common/Android.mk
-include   $(PV_TOP)/codecs_v2/audio/gsm_amr/amr_nb/common/Android.mk
 include   $(PV_TOP)/fileformats/rawgsmamr/parser/Android.mk
 include   $(PV_TOP)/codecs_v2/audio/aac/dec/util/getactualaacconfig/Android.mk
 include   $(PV_TOP)/codecs_v2/utilities/m4v_config_parser/Android.mk
