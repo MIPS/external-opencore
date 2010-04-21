@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,8 +63,11 @@
 #include "oscl_mem_basic_functions.h"
 #endif
 
+#ifndef ATOMDEFS_H_INCLUDED
+#include "atomdefs.h"
+#endif
+
 class MP4_FF_FILE;
-//using namespace std;
 
 //add atom size, so there will be no dead loop when skip sth in atom field
 #define DEFAULT_ATOM_SIZE 8 //need to change when they use various size field
@@ -99,6 +102,27 @@ class Atom : public Parentable, public Renderable, public ISucceedFail
 
 };
 
+class ExtendedAtom: public Atom
+{
+    public:
+        ExtendedAtom(MP4_FF_FILE* const& aFilePtr, uint32 aSize, uint32 aType, const uint8* const& aUserTypeUUID);
+
+        virtual ~ExtendedAtom() {}
+
+        virtual const uint8* GetUserTypeUUID() const
+        {
+            return iUserTypeUUID;
+        }
+
+        virtual uint32 getDefaultSize() const
+        {
+            return (Atom::getDefaultSize() + UUID_SIZE);
+        }
+
+
+    private:
+        uint8 iUserTypeUUID[UUID_SIZE];
+};
 
 #endif // ATOM_H_INCLUDED
 

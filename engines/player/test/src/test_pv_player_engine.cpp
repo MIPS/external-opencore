@@ -3960,6 +3960,10 @@ void pvplayer_engine_test::test()
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 
+            case DLA_OpenPlayUntilEOS_PlayReadyCPMTest_v4_AAC_PIFF:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
             case DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMV:
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;

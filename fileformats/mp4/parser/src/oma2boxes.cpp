@@ -80,6 +80,7 @@ SchemeInformationBox:: SchemeInformationBox(MP4_FF_FILE *fp,
         uint32 size,
         uint32 type)
         :   Atom(fp, size, type)
+        , ipTrackEncryptionBox(NULL)
 {
     _pOMADRMKMSBox = NULL;
 
@@ -119,6 +120,31 @@ SchemeInformationBox:: SchemeInformationBox(MP4_FF_FILE *fp,
                 break;
             }
         }
+        else if (atomType == UUID_ATOM)
+        {
+            //if Atom is typeof track encryption box UUID atom
+            uint8 atomUUID[UUID_SIZE] = {0};
+            AtomUtils::readByteData(fp, UUID_SIZE, atomUUID);
+            if (AtomUtils::IsHexUInt8StrEqual(TRACK_ENCRYPTION_BOX_UUID, atomUUID, UUID_SIZE))
+            {
+                //Got track Encryption Box to parse
+                PV_MP4_FF_NEW(fp->auditCB, TrackEncryptionBox, (fp, atomSize, atomType, atomUUID), ipTrackEncryptionBox);
+                if (!ipTrackEncryptionBox || (!ipTrackEncryptionBox->MP4Success()))
+                {
+                    _success = false;
+                    _mp4ErrorCode = ipTrackEncryptionBox->GetMP4Error();
+                    break;
+                }
+                else
+                {
+                    ipTrackEncryptionBox->setParent(this);
+                }
+            }
+            else
+            {
+                AtomUtils::seekFromCurrPos(fp, (atomSize - (DEFAULT_ATOM_SIZE + UUID_SIZE)));
+            }
+        }
         else
         {
             //skip over
@@ -135,6 +161,10 @@ SchemeInformationBox::~SchemeInformationBox()
     if (_pOMADRMKMSBox != NULL)
     {
         PV_MP4_FF_DELETE(NULL, OMADRMKMSBox, _pOMADRMKMSBox);
+    }
+    if (ipTrackEncryptionBox != NULL)
+    {
+        PV_MP4_FF_DELETE(NULL, TrackEncryptionBox, ipTrackEncryptionBox);
     }
 }
 
@@ -1283,12 +1313,3 @@ OSCL_EXPORT_REF FontRecord* EnctBox::getFontRecordAt(uint16 index)
         return NULL;
     }
 }
-
-
-
-
-
-
-
-
-

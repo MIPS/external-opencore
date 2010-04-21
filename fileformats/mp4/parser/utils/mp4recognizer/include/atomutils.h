@@ -211,6 +211,10 @@ class AtomUtils
         OSCL_IMPORT_REF static void getCurrentByteRange(MP4_FF_FILE *fp, TOsclFileOffset& aCurrentFirstByteOffset, TOsclFileOffset& aCurrentLastByteOffset);
 
 
+        //For extended atoms
+        //Assumes filepointer is pointing at offset 8 within the extended atom (sizeof(DefaultAtom) = 8 , sizeof(type) + sizeof(size) )
+        OSCL_IMPORT_REF static bool GetUUIDFromFile(MP4_FF_FILE* const& aFilePtr, uint32 aSize, uint32& aAvailableBytesToRead, uint8* const& aAtomUUID);
+        OSCL_IMPORT_REF static bool IsHexUInt8StrEqual(const uint8* aUint8Base, const uint8* aUint8ToComp, uint8 aSize);
 };
 
 #endif // ATOMUTILS_H_INCLUDED

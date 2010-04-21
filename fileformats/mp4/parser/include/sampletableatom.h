@@ -359,6 +359,13 @@ class SampleTableAtom : public Atom
             return _psyncSampleAtom;
         }
 
+        TrackEncryptionBox* GetTrackEncryptionBox() const
+        {
+            if (_psampleDescriptionAtom)
+                return _psampleDescriptionAtom->GetTrackEncryptionBox();
+            return NULL;
+        }
+
         // Returns next video frame
         MP4_ERROR_CODE getNextSample(uint8 *buf, uint32 &size, uint32 &index, TOsclFileOffset &SampleOffset);
 

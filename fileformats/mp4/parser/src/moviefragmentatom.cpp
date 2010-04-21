@@ -31,6 +31,10 @@
 #include "atomdefs.h"
 #include "atomutils.h"
 
+#include "piffboxes.h"
+
+class TrackExtendsAtom;
+
 typedef Oscl_Vector<TrackFragmentAtom*, OsclMemAllocator> trackFragmentAtomVecType;
 // Constructor
 MovieFragmentAtom::MovieFragmentAtom(MP4_FF_FILE *fp,
@@ -40,9 +44,10 @@ MovieFragmentAtom::MovieFragmentAtom(MP4_FF_FILE *fp,
                                      Oscl_Vector<TrackExtendsAtom*, OsclMemAllocator> *trackExtendAtomVec,
                                      bool &parseMoofCompletely,
                                      bool &moofParsingCompleted,
-                                     uint32 &countOfTrunsParsed)
-
+                                     uint32 &countOfTrunsParsed,
+                                     const TrackEncryptionBoxContainer* apTrackEncryptionBoxCntr)
         : Atom(fp, size, type)
+        , ipTrackEncryptionBxCntr(apTrackEncryptionBoxCntr)
 {
     _pMovieFragmentHeaderAtom       = NULL;
     _pTrackFragmentAtom             = NULL;
@@ -111,7 +116,7 @@ MovieFragmentAtom::MovieFragmentAtom(MP4_FF_FILE *fp,
                               trackExtendAtomVec,
                               parseTrafCompletely,
                               trafParsingCompleted,
-                              countOfTrunsParsed),
+                              countOfTrunsParsed, ipTrackEncryptionBxCntr),
                               _pTrackFragmentAtom);
                 if (trafParsingCompleted)
                 {
@@ -243,7 +248,7 @@ void MovieFragmentAtom::ParseMoofAtom(MP4_FF_FILE *fp,
                                   trackExtendAtomVec,
                                   parseTrafCompletely,
                                   trafParsingCompleted,
-                                  countOfTrunsParsed),
+                                  countOfTrunsParsed, ipTrackEncryptionBxCntr),
                                   _pTrackFragmentAtom);
 
                     if (trafParsingCompleted)
@@ -304,7 +309,8 @@ void MovieFragmentAtom::ParseMoofAtom(MP4_FF_FILE *fp,
 int32
 MovieFragmentAtom::getNextBundledAccessUnits(uint32 id,
         uint32 *n, uint32 totalSampleRead,
-        GAU    *pgau)
+        GAU    *pgau,
+        Oscl_Vector<PVPIFFProtectedSampleDecryptionInfo, OsclMemAllocator>*  apSampleDecryptionInfoVect)
 {
     int32 nReturn = -1;
 
@@ -312,7 +318,7 @@ MovieFragmentAtom::getNextBundledAccessUnits(uint32 id,
 
     if (trackfragment != NULL)
     {
-        nReturn =  trackfragment->getNextBundledAccessUnits(n, totalSampleRead, pgau);
+        nReturn =  trackfragment->getNextBundledAccessUnits(n, totalSampleRead, pgau, apSampleDecryptionInfoVect);
     }
     return (nReturn);
 }

@@ -43,6 +43,9 @@
 #define PVMF_MP4_MIME_FORMAT_VIDEO_UNKNOWN  "x-pvmf/video/unknown"
 #define PVMF_MP4_MIME_FORMAT_UNKNOWN        "x-pvmf/unknown-media/unknown"
 
+static const char PVMF_PIFF_AUTH_DATA_PLAYREADY_OBJECT[] = "PlayReady object";
+static const uint8 CPM_SUPPORTED_IV_SZ = 8;
+
 // Read Each Track Individually
 #define TRACK_NO_PER_RESET_PLAYBACK_CALL 1
 #define MAX_TRACK_NO 256
@@ -56,21 +59,22 @@
 static const uint32 MAX32BITUINT = 0xFFFFFFFF;
 
 PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
-        PVMFNodeInterfaceImpl(aPriority, "PVMFMP4FFParserNode"),
-        iPortIter(NULL),
-        iLogger(NULL),
-        iGaplessLogger(NULL),
-        iBackwardReposFlag(false), /* To avoid backwardlooping :: A flag to remember backward repositioning */
-        iForwardReposFlag(false),
-        iPlayBackDirection(PVMF_DATA_SOURCE_DIRECTION_FORWARD),
-        iParseAudioDuringFF(false),
-        iParseAudioDuringREW(false),
-        iParseVideoOnly(false),
-        iOpenFileOncePerTrack(true),
-        iIFrameOnlyFwdPlayback(false),
-        iDataRate(NORMAL_PLAYRATE),
-        minFileOffsetTrackID(0),
-        iTotalMoofFrags(0)
+        PVMFNodeInterfaceImpl(aPriority, "PVMFMP4FFParserNode")
+        , iPortIter(NULL)
+        , iLogger(NULL)
+        , iGaplessLogger(NULL)
+        , iBackwardReposFlag(false) /* To avoid backwardlooping :: A flag to remember backward repositioning */
+        , iForwardReposFlag(false)
+        , iPlayBackDirection(PVMF_DATA_SOURCE_DIRECTION_FORWARD)
+        , iParseAudioDuringFF(false)
+        , iParseAudioDuringREW(false)
+        , iParseVideoOnly(false)
+        , iOpenFileOncePerTrack(true)
+        , iIFrameOnlyFwdPlayback(false)
+        , iDataRate(NORMAL_PLAYRATE)
+        , minFileOffsetTrackID(0)
+        , iTotalMoofFrags(0)
+        , iCPMDecryptionDoneInplace(false)
 {
     iNumClipsInPlayList = 0;
     iPlaybackClipIndex = -1;
@@ -1937,6 +1941,110 @@ PVMFStatus PVMFMP4FFParserNode::DoReleasePort()
     return PVMFFailure;
 }
 
+bool PVMFMP4FFParserNode::PopulatePIFFDRMInfo()
+{
+    if (iPlaybackParserObj == NULL)
+    {
+        PVMF_MP4FFPARSERNODE_LOGERROR((0, "PVMFMP4FFParserNode::PopulatePIFFDRMInfo - Invalid iPlaybackParserObj"));
+        return false;
+    }
+
+    if ((iCPMContentType == PVMF_CPM_FORMAT_ACCESS_BEFORE_AUTHORIZE) && (iPlaybackParserObj->GetPIFFProtectionSystem() == PIFF_PROTECTION_SYSTEM_PLAYREADY))
+    {
+        //Cleanup any old key.
+        if (iRequestedUsage.key)
+        {
+            PVMF_BASE_NODE_ARRAY_DELETE(iRequestedUsage.key);
+            iRequestedUsage.key = NULL;
+        }
+
+        if (iApprovedUsage.key)
+        {
+            PVMF_BASE_NODE_ARRAY_DELETE(iApprovedUsage.key);
+            iApprovedUsage.key = NULL;
+        }
+
+        if (iAuthorizationDataKvp.key)
+        {
+            PVMF_BASE_NODE_ARRAY_DELETE(iAuthorizationDataKvp.key);
+            iAuthorizationDataKvp.key = NULL;
+        }
+
+        int32 UseKeyLen = oscl_strlen(_STRLIT_CHAR(PVMF_CPM_REQUEST_USE_KEY_STRING)) + oscl_strlen(_STRLIT_CHAR(";track_id=0"));
+        int32 AuthKeyLen = oscl_strlen(_STRLIT_CHAR(PVMF_CPM_AUTHORIZATION_DATA_KEY_STRING)) + oscl_strlen(_STRLIT_CHAR(";track_id=0"));
+        int32 leavecode = 0;
+
+        OSCL_TRY(leavecode,
+                 iRequestedUsage.key = OSCL_ARRAY_NEW(char, UseKeyLen + 1);
+                 iApprovedUsage.key = OSCL_ARRAY_NEW(char, UseKeyLen + 1);
+                 iAuthorizationDataKvp.key = OSCL_ARRAY_NEW(char, AuthKeyLen + 1);
+                );
+        if (leavecode || !iRequestedUsage.key || !iApprovedUsage.key || !iAuthorizationDataKvp.key)
+        {
+            if (iRequestedUsage.key)
+            {
+                OSCL_ARRAY_DELETE(iRequestedUsage.key);
+                iRequestedUsage.key = NULL;
+            }
+            if (iApprovedUsage.key)
+            {
+                OSCL_ARRAY_DELETE(iApprovedUsage.key);
+                iApprovedUsage.key = NULL;
+            }
+            if (iAuthorizationDataKvp.key)
+            {
+                OSCL_ARRAY_DELETE(iAuthorizationDataKvp.key);
+                iAuthorizationDataKvp.key = NULL;
+            }
+            return false;
+        }
+
+        OSCL_StackString<256> requestUsageKey;
+        requestUsageKey += _STRLIT_CHAR(PVMF_CPM_REQUEST_USE_KEY_STRING);
+        requestUsageKey += _STRLIT_CHAR(";track_id=0");
+
+        oscl_strncpy(iRequestedUsage.key,
+                     requestUsageKey.get_cstr(),
+                     UseKeyLen);
+        iRequestedUsage.key[UseKeyLen] = 0;
+        iRequestedUsage.length = 0;
+        iRequestedUsage.capacity = 0;
+        iRequestedUsage.value.uint32_value =
+            (BITMASK_PVMF_CPM_DRM_INTENT_PLAY |
+             BITMASK_PVMF_CPM_DRM_INTENT_PAUSE |
+             BITMASK_PVMF_CPM_DRM_INTENT_SEEK_FORWARD |
+             BITMASK_PVMF_CPM_DRM_INTENT_SEEK_BACK);
+
+        oscl_strncpy(iApprovedUsage.key,
+                     requestUsageKey.get_cstr(),
+                     UseKeyLen);
+
+        iApprovedUsage.key[UseKeyLen] = 0;
+        iApprovedUsage.length = 0;
+        iApprovedUsage.capacity = 0;
+        iApprovedUsage.value.uint32_value = 0;
+
+        OSCL_StackString<512> authorizationKey;
+        authorizationKey += _STRLIT_CHAR(PVMF_PIFF_AUTH_DATA_PLAYREADY_OBJECT);
+        oscl_strncpy(iAuthorizationDataKvp.key,
+                     authorizationKey.get_cstr(),
+                     AuthKeyLen);
+        iAuthorizationDataKvp.key[AuthKeyLen] = 0;
+
+        uint32 playReadyObjectSize = 0;
+        const uint8* playReadyObject = NULL;
+        iPlaybackParserObj->GetPIFFProtectionSystemSpecificData(playReadyObject, playReadyObjectSize);
+        iAuthorizationDataKvp.length             = playReadyObjectSize;
+        iAuthorizationDataKvp.capacity           = playReadyObjectSize;
+        iAuthorizationDataKvp.value.pUint8_value = (uint8*)playReadyObject;
+        return true;
+    }
+    else
+    {
+        iProtectedFile = false;
+        return false;
+    }
+}
 
 PVMFStatus PVMFMP4FFParserNode::InitOMA2DRMInfo(uint32 aParserIndex)
 {
@@ -2049,16 +2157,27 @@ PVMFStatus PVMFMP4FFParserNode::DoInit()
         else
         {
             if ((iCPMContentType == PVMF_CPM_FORMAT_OMA1) ||
-                    (iCPMContentType == PVMF_CPM_FORMAT_AUTHORIZE_BEFORE_ACCESS))
+                    (iCPMContentType == PVMF_CPM_FORMAT_AUTHORIZE_BEFORE_ACCESS) ||
+                    (iCPMContentType == PVMF_CPM_FORMAT_ACCESS_BEFORE_AUTHORIZE))
             {
-                RequestUsage(NULL);
+                PVMFStatus status = RequestUsage(NULL);
+                if (status != PVMFPending)
+                {
+                    status = CompleteInit(iCurrentCommand, status);
+                }
+                return status;
             }
             else if (iCPMContentType == PVMF_CPM_FORMAT_OMA2)
             {
                 PVMP4FFNodeTrackOMA2DRMInfo* oma2trackInfo = NULL;
                 if (CheckForOMA2AuthorizationComplete(oma2trackInfo) == PVMFPending)
                 {
-                    RequestUsage(oma2trackInfo);
+                    PVMFStatus status = RequestUsage(oma2trackInfo);
+                    if (status != PVMFPending)
+                    {
+                        status = CompleteInit(iCurrentCommand, status);
+                    }
+                    return status;
                 }
             }
         }
@@ -2077,10 +2196,14 @@ PVMFStatus PVMFMP4FFParserNode::DoInit()
 }
 
 
-PVMFStatus PVMFMP4FFParserNode::CompleteInit(PVMFNodeCommand& aCmd)
+PVMFStatus PVMFMP4FFParserNode::CompleteInit(PVMFNodeCommand& aCmd, PVMFStatus aStatus)
 {
     PVMFStatus Status = PVMFSuccess;
-
+    if (aStatus != PVMFSuccess)
+    {
+        CommandComplete(aCmd, aStatus);
+        return aStatus;
+    }
     if (iCPM)
     {
         if ((iCPMContentType == PVMF_CPM_FORMAT_OMA1) ||
@@ -2131,10 +2254,44 @@ PVMFStatus PVMFMP4FFParserNode::CompleteInit(PVMFNodeCommand& aCmd)
                     if (iDecryptionInterface != NULL)
                     {
                         iDecryptionInterface->Init();
+                        iCPMDecryptionDoneInplace = iDecryptionInterface->CanDecryptInPlace();
                         Status = PVMFSuccess;
                     }
                 }
                 Status = PVMFErrAccessDenied;
+            }
+            CommandComplete(aCmd, Status);
+            return PVMFCmdCompleted;
+        }
+        else if (iCPMContentType == PVMF_CPM_FORMAT_ACCESS_BEFORE_AUTHORIZE)
+        {
+            if (iProtectedFile == false)
+            {
+                CommandComplete(aCmd, Status);
+                return PVMFCmdCompleted;
+            }
+            if (GetCPMSourceDataIntentAt(0) == BITMASK_PVMF_SOURCE_INTENT_GETMETADATA)
+            {
+                Status = PVMFSuccess;
+            }
+            else
+            {
+                PVUuid uuid = PVMFCPMPluginDecryptionInterfaceUuid;
+                PVInterface* intf =
+                    iCPMContentAccessFactory->CreatePVMFCPMPluginAccessInterface(uuid);
+                PVMFCPMPluginAccessInterface* interimPtr =
+                    OSCL_STATIC_CAST(PVMFCPMPluginAccessInterface*, intf);
+                iDecryptionInterface = OSCL_STATIC_CAST(PVMFCPMPluginAccessUnitDecryptionInterface*, interimPtr);
+                if (iDecryptionInterface != NULL)
+                {
+                    iDecryptionInterface->Init();
+                    iCPMDecryptionDoneInplace = iDecryptionInterface->CanDecryptInPlace();
+                    Status = PVMFSuccess;
+                }
+                else
+                {
+                    Status = PVMFErrAccessDenied;
+                }
             }
             CommandComplete(aCmd, Status);
             return PVMFCmdCompleted;
@@ -4007,7 +4164,6 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
         {
             errcode = OsclErrNone;
         }
-
         else
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::RetrieveTrackData() Allocating from media data group alloc failed"));
@@ -4044,7 +4200,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
     iGau.buf.buf_states[0] = NULL;
     iGau.frameNum = 0;
 
-    if (iCPMContentType == PVMF_CPM_FORMAT_OMA2)
+    if ((iCPMContentType == PVMF_CPM_FORMAT_OMA2) || ((iCPMContentType == PVMF_CPM_FORMAT_ACCESS_BEFORE_AUTHORIZE) && iProtectedFile && !iCPMDecryptionDoneInplace))
     {
         iGau.buf.fragments[0].ptr = iOMA2DecryptionBuffer;
         iGau.buf.fragments[0].len = PVMP4FF_OMA2_DECRYPTION_BUFFER_SIZE;
@@ -4067,6 +4223,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
     uint32 currticks = OsclTickCount::TickCount();
     uint32 StartTime = OsclTickCount::TicksToMsec(currticks);
 
+    Oscl_Vector<PVPIFFProtectedSampleDecryptionInfo, OsclMemAllocator> protectedSampleDecryptionInfoVect;
     // Retrieve the data from the parser
     int32 retval = PVMFFailure;
     if (iThumbNailMode)
@@ -4082,7 +4239,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
             }
             if (status == PVMFSuccess)
             {
-                retval = iPlaybackParserObj->getKeyMediaSampleNumAt(trackid, keySampleNum, &iGau);
+                retval = iPlaybackParserObj->getKeyMediaSampleNumAt(trackid, keySampleNum, &iGau, &protectedSampleDecryptionInfoVect);
             }
             else
             {
@@ -4098,7 +4255,8 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
                     PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC(
                         (0, "PVMFMP4FFParserNode:RetrieveTrackData - FindBestThumbnailKeyFrame failed, best possible solution fetch the first video sample"));
                     numsamples = 1;
-                    retval = iPlaybackParserObj->getNextBundledAccessUnits(trackid, &numsamples, &iGau);
+                    protectedSampleDecryptionInfoVect.reserve(numsamples);
+                    retval = iPlaybackParserObj->getNextBundledAccessUnits(trackid, &numsamples, &iGau, &protectedSampleDecryptionInfoVect);
 
                 }
                 else
@@ -4133,7 +4291,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
         {
             iPrevSampleTS = iPlaybackParserObj->getMediaTimestampForCurrentSample(trackid);
             retval = iPlaybackParserObj->getPrevKeyMediaSample(iPrevSampleTS, keySampleNumber, trackid,
-                     &numSamples, &iGau);
+                     &numSamples, &iGau, &protectedSampleDecryptionInfoVect);
             iStartForNextTSSearch = iPlaybackParserObj->getMediaTimestampForCurrentSample(trackid) - 2 * iGau.info[0].ts_delta;
         }
         else
@@ -4145,7 +4303,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
             else
             {
                 retval = iPlaybackParserObj->getPrevKeyMediaSample(iStartForNextTSSearch, keySampleNumber, trackid,
-                         &numSamples, &iGau);
+                         &numSamples, &iGau, &protectedSampleDecryptionInfoVect);
                 iStartForNextTSSearch = iPlaybackParserObj->getMediaTimestampForCurrentSample(trackid) - 2 * iGau.info[0].ts_delta;
             }
         }
@@ -4165,7 +4323,8 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
     }
     else
     {
-        retval = iPlaybackParserObj->getNextBundledAccessUnits(trackid, &numsamples, &iGau);
+        protectedSampleDecryptionInfoVect.reserve(numsamples);
+        retval = iPlaybackParserObj->getNextBundledAccessUnits(trackid, &numsamples, &iGau, &protectedSampleDecryptionInfoVect);
 
         for (uint32 index = 0; index < numsamples; index++)
         {
@@ -4315,7 +4474,118 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
             return false;
         }
 
-        if (iCPMContentType == PVMF_CPM_FORMAT_OMA2)
+        if ((iCPMContentType == PVMF_CPM_FORMAT_ACCESS_BEFORE_AUTHORIZE) && (iProtectedFile == true))
+        {
+            if (iDecryptionInterface != NULL)
+            {
+                if (iCPMDecryptionDoneInplace)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "MP4FF PIFF Decryption  numsamples[%u] actualdatasize[%u]", numsamples, actualdatasize));
+                    uint32 sampleOffset = 0;
+                    for (uint32 ii = 0; ii < numsamples; ii++)
+                    {
+                        PVPIFFProtectedSampleDecryptionInfo* protectedSampleDecryptionInfo = &protectedSampleDecryptionInfoVect[ii];
+                        const uint32 payloadSize = iGau.getInfo(ii)->len;
+                        uint8* srcPtr = OSCL_STATIC_CAST(uint8*, iGau.buf.fragments[0].ptr) + sampleOffset;
+                        sampleOffset += payloadSize;
+                        const uint8* initializationVector = NULL;
+                        uint8 initializationVectorSz =  protectedSampleDecryptionInfo->GetInitializationVector(initializationVector);
+
+                        if (initializationVectorSz == CPM_SUPPORTED_IV_SZ)
+                        {
+                            PVMFCPMPluginWMDRMDecryptContext decrpytContext(protectedSampleDecryptionInfo->GetKeyUsedForEncryption(), initializationVector, CPM_SUPPORTED_IV_SZ);
+
+                            //Inplace decryption, maybe we can skip the createion of unnecessary out buffers created
+                            //payload may have mix of clear/encrypted content. Therefore, lets make call only for the
+                            //encrypted bytes.
+                            uint32 sampleEntriesCnt = 0;
+                            bool sampleEntriesAvl = protectedSampleDecryptionInfo->GetSampleEntriesCnt(sampleEntriesCnt);
+                            bool oDecryptRet  = false;
+                            if (!sampleEntriesAvl)
+                            {
+                                oDecryptRet =
+                                    iDecryptionInterface->DecryptAccessUnit(srcPtr,
+                                                                            payloadSize,
+                                                                            aTrackPortInfo.iTrackId,
+                                                                            0,
+                                                                            &decrpytContext);
+                            }
+                            else
+                            {
+                                uint32 subSampleOffset = 0; //offset into sample buffer i.e. srcPtr
+                                if (sampleEntriesCnt > 0)
+                                {
+                                    uint32 encryptedDataLen = 0; //offset into buffer
+                                    //It would have saved mem if we could have allocated buffer for encrypted data only.
+                                    //So as to create buffer while initializing encryptedDataOffset let us bear some extra mem overhead. May optimize later...
+                                    uint8* buffer = OSCL_ARRAY_NEW(uint8, payloadSize);
+                                    //initialize encryptedDataOffset and create buffer with encrypted data
+                                    for (uint32 ii = 0; ii < sampleEntriesCnt; ii++)
+                                    {
+                                        EntryInfo* entryInfo = NULL;
+                                        protectedSampleDecryptionInfo->GetEntryInfo(ii, entryInfo);
+                                        uint16 bytesToSkip = entryInfo->GetClearBytesCount();
+                                        uint16 encryptedSubSamplePayloadSz = entryInfo->GetEncryptedBytesCount();
+                                        subSampleOffset += bytesToSkip;
+                                        uint8* payloadToDecryptPtr = srcPtr + subSampleOffset;
+                                        uint8* destBufferPtr = buffer + encryptedDataLen;
+                                        oscl_memcpy(destBufferPtr, payloadToDecryptPtr, encryptedSubSamplePayloadSz);
+                                        encryptedDataLen += encryptedSubSamplePayloadSz; //inplace decryption so output sz same as input sz
+                                        subSampleOffset += encryptedSubSamplePayloadSz;
+                                    }
+                                    oDecryptRet = iDecryptionInterface->DecryptAccessUnit(buffer,
+                                                  encryptedDataLen,
+                                                  aTrackPortInfo.iTrackId,
+                                                  0,
+                                                  &decrpytContext);
+                                    //Reassemble the decrypted payload in src buffer
+                                    uint8* pSrcBuffOffset = srcPtr;
+                                    uint8* pIntermediateBufferOffset = buffer;
+                                    for (uint32 jj = 0; jj < sampleEntriesCnt; jj++)
+                                    {
+                                        EntryInfo* entryInfo = NULL;
+                                        protectedSampleDecryptionInfo->GetEntryInfo(jj, entryInfo);
+                                        uint16 bytesToSkip = entryInfo->GetClearBytesCount();
+                                        uint16 encryptedSubSamplePayloadSz = entryInfo->GetEncryptedBytesCount();
+                                        pSrcBuffOffset += bytesToSkip;
+                                        oscl_memcpy(pSrcBuffOffset, pIntermediateBufferOffset, encryptedSubSamplePayloadSz);
+                                        pSrcBuffOffset += encryptedSubSamplePayloadSz;
+                                        pIntermediateBufferOffset += encryptedSubSamplePayloadSz;
+                                    }
+                                    OSCL_ARRAY_DELETE(buffer);
+                                    buffer = NULL;
+                                }
+                            }
+
+                            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_DEBUG, (0, "MP4FF Before PIFF Decryption payloadSize[%u] After decryption payloadsize [%u] oDecryptRet[%d]", iGau.getInfo(ii)->len, payloadSize, oDecryptRet));
+                            if (oDecryptRet != true)
+                            {
+                                return PVMFFailure;
+                            }
+                        }
+                        else
+                        {
+                            //Todo: Return err to the up
+                            OSCL_LEAVE(PVMFErrNotSupported);
+                        }
+                    }
+                }
+                else
+                {
+                    /*We support only Playready among the MS protected DRM*/
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "MP4FF support only Playready among the MS protected DRM"));
+                    OSCL_ASSERT(false);
+                }
+            }
+            else
+            {
+                aTrackPortInfo.iState = PVMP4FFNodeTrackPortInfo::TRACKSTATE_ERROR;
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP4FFParserNode::RetrieveTrackData Text sample is less than 2 bytes (size=%d). ReportMP4FFParserErrorEvent(PVMFErrCorrupt)", actualdatasize));
+                ReportMP4FFParserErrorEvent(PVMFErrInvalidState);
+                return false;
+            }
+        }
+        else if (iCPMContentType == PVMF_CPM_FORMAT_OMA2)
         {
             if (iDecryptionInterface != NULL)
             {
@@ -4338,8 +4608,7 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
                 {
                     uint8* memfrag = (uint8*)(refCtrMemFragOut.getMemFrag().ptr);
 
-                    iDecryptionInterface->DecryptAccessUnit(iOMA2DecryptionBuffer,
-                                                            inSize,
+                    iDecryptionInterface->DecryptAccessUnit(iOMA2DecryptionBuffer,                                                            inSize,
                                                             memfrag,
                                                             outSize, trackid);
                 }
@@ -5908,7 +6177,7 @@ void PVMFMP4FFParserNode::playResumeNotification(bool aDownloadComplete)
                  * file to be downloaded before we can parse the movie atom.
                  * - OMA1 DRM clip - CPM seq complete, and
                  * we were waiting on more data.
-                 * - OMA2 PDCF DRM clip - were waiting on more data to parse the movie atom,
+                 * - OMA2 PDCF DRM clip, PIFF DRM Clip - were waiting on more data to parse the movie atom,
                  * CPM seq not complete since we need contents of movie atom to authorize
                  * with CPM
                  * - PDL, Non-DRM clip - we were waiting on more data and
@@ -5916,7 +6185,7 @@ void PVMFMP4FFParserNode::playResumeNotification(bool aDownloadComplete)
                  */
                 if (iCPM)
                 {
-                    if (iCPMContentType == PVMF_CPM_FORMAT_OMA2)
+                    if ((iCPMContentType == PVMF_CPM_FORMAT_OMA2) || (iCPMContentType == PVMF_CPM_FORMAT_ACCESS_BEFORE_AUTHORIZE))
                     {
                         PVMP4FFNodeTrackOMA2DRMInfo* oma2trackInfo = NULL;
 
@@ -5928,9 +6197,22 @@ void PVMFMP4FFParserNode::playResumeNotification(bool aDownloadComplete)
                         PVMFStatus status = InitNextValidClipInPlaylist(NULL, 0, dsFactory);
                         if (status == PVMFSuccess)
                         {
-                            if (CheckForOMA2AuthorizationComplete(oma2trackInfo) == PVMFPending)
+                            if ((iCPMContentType == PVMF_CPM_FORMAT_OMA2) && (CheckForOMA2AuthorizationComplete(oma2trackInfo) == PVMFPending))
                             {
-                                RequestUsage(oma2trackInfo);
+                                PVMFStatus status = RequestUsage(oma2trackInfo);
+                                if (status != PVMFPending)
+                                {
+                                    CompleteInit(iCurrentCommand, status);
+                                }
+                                return;
+                            }
+                            else if (iCPMContentType == PVMF_CPM_FORMAT_ACCESS_BEFORE_AUTHORIZE)
+                            {
+                                PVMFStatus status = RequestUsage(NULL);
+                                if (status != PVMFPending)
+                                {
+                                    CompleteInit(iCurrentCommand, status);
+                                }
                                 return;
                             }
                         }
@@ -6607,7 +6889,7 @@ void PVMFMP4FFParserNode::ResetOMA2Flags()
     PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::ResetOMA2Flags - Complete"));
 }
 
-void PVMFMP4FFParserNode::RequestUsage(PVMP4FFNodeTrackOMA2DRMInfo* aInfo)
+PVMFStatus  PVMFMP4FFParserNode::RequestUsage(PVMP4FFNodeTrackOMA2DRMInfo* aInfo)
 {
     if (iCPMContentType == PVMF_CPM_FORMAT_OMA2)
     {
@@ -6620,11 +6902,22 @@ void PVMFMP4FFParserNode::RequestUsage(PVMP4FFNodeTrackOMA2DRMInfo* aInfo)
     {
         PopulateOMA1DRMInfo();
     }
+    else if (iCPMContentType == PVMF_CPM_FORMAT_ACCESS_BEFORE_AUTHORIZE)
+    {
+        if (!PopulatePIFFDRMInfo())
+        {
+            if (iProtectedFile == false)
+                return PVMFSuccess; //not a protected content
+            else
+                return PVMFFailure;
+        }
+    }
     else
     {
         /* Error */
         PVMF_MP4FFPARSERNODE_LOGERROR((0, "PVMFMP4FFParserNode::RequestUsage - Invalid CPM Type"));
         OSCL_LEAVE(PVMFErrNotSupported);
+        return PVMFFailure;
     }
 
     iCPM->GetContentAccessFactory(iCPMSessionID, iCPMContentAccessFactory);
@@ -6647,6 +6940,7 @@ void PVMFMP4FFParserNode::RequestUsage(PVMP4FFNodeTrackOMA2DRMInfo* aInfo)
                                             iAuthorizationDataKvp,
                                             iUsageID);
     oWaitingOnLicense = true;
+    return PVMFPending;
 }
 
 void PVMFMP4FFParserNode::PopulateOMA2DRMInfo(PVMP4FFNodeTrackOMA2DRMInfo* aInfo)
@@ -7013,9 +7307,13 @@ void PVMFMP4FFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
                 iProtectedFile = true;
                 GetCPMMetaDataExtensionInterface();
                 PVMF_MP4FFPARSERNODE_LOGINFO((0, "PVMFMP4FFParserNode::CPMCommandCompleted - OMA1 - Register content complete"));
-                RequestUsage(NULL);
+                PVMFStatus requestUsageStatus = RequestUsage(NULL);
+                if (requestUsageStatus != PVMFPending)
+                {
+                    CompleteInit(iCurrentCommand, requestUsageStatus);
+                }
             }
-            else if (iCPMContentType == PVMF_CPM_FORMAT_OMA2)
+            else if ((iCPMContentType == PVMF_CPM_FORMAT_OMA2) || (iCPMContentType == PVMF_CPM_FORMAT_ACCESS_BEFORE_AUTHORIZE))
             {
                 iProtectedFile = true;
                 GetCPMMetaDataExtensionInterface();
@@ -7031,10 +7329,24 @@ void PVMFMP4FFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
                     PVMFStatus status = InitNextValidClipInPlaylist(NULL, 0, dsFactory);
                     if (status == PVMFSuccess)
                     {
-                        if (CheckForOMA2AuthorizationComplete(oma2trackInfo) == PVMFPending)
+                        if ((iCPMContentType == PVMF_CPM_FORMAT_OMA2) && (CheckForOMA2AuthorizationComplete(oma2trackInfo) == PVMFPending))
                         {
-                            RequestUsage(oma2trackInfo);
+                            PVMFStatus status = RequestUsage(oma2trackInfo);
+                            if (status != PVMFPending)
+                            {
+                                CompleteInit(iCurrentCommand, status);
+                            }
                         }
+                        else if (iCPMContentType == PVMF_CPM_FORMAT_ACCESS_BEFORE_AUTHORIZE)
+                        {
+                            //We will fetch the info about PIFF in the call to RequestUsage itself
+                            PVMFStatus status = RequestUsage(NULL);
+                            if (status != PVMFPending)
+                            {
+                                CompleteInit(iCurrentCommand, status);
+                            }
+                        }
+
                     }
                 }
             }
@@ -7062,7 +7374,11 @@ void PVMFMP4FFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
                 PVMFStatus status = CheckForOMA2AuthorizationComplete(oma2trackInfo);
                 if (status == PVMFPending)
                 {
-                    RequestUsage(oma2trackInfo);
+                    PVMFStatus requestUsageStatus = RequestUsage(oma2trackInfo);
+                    if (requestUsageStatus != PVMFPending)
+                    {
+                        CompleteInit(iCurrentCommand, requestUsageStatus);
+                    }
                 }
                 else if (status == PVMFSuccess)
                 {
@@ -7074,6 +7390,10 @@ void PVMFMP4FFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
                     PVMF_MP4FFPARSERNODE_LOGINFO((0, "PVMFMP4FFParserNode::CPMCommandCompleted - CheckForOMA2AuthorizationComplete Failed"));
                     OSCL_ASSERT(false);
                 }
+            }
+            else if (iCPMContentType == PVMF_CPM_FORMAT_ACCESS_BEFORE_AUTHORIZE)
+            {
+                CompleteInit(iCurrentCommand);
             }
             else
             {
@@ -7338,7 +7658,7 @@ void PVMFMP4FFParserNode::DataStreamCommandCompleted(const PVMFCmdResp& aRespons
              */
             if (iCPM)
             {
-                if (iCPMContentType == PVMF_CPM_FORMAT_OMA2)
+                if ((iCPMContentType == PVMF_CPM_FORMAT_OMA2) || (iCPMContentType == PVMF_CPM_FORMAT_ACCESS_BEFORE_AUTHORIZE))
                 {
                     PVMP4FFNodeTrackOMA2DRMInfo* oma2trackInfo = NULL;
 
@@ -7350,10 +7670,18 @@ void PVMFMP4FFParserNode::DataStreamCommandCompleted(const PVMFCmdResp& aRespons
                     PVMFStatus status = InitNextValidClipInPlaylist(NULL, 0, dsFactory);
                     if (status == PVMFSuccess)
                     {
-                        if (CheckForOMA2AuthorizationComplete(oma2trackInfo) == PVMFPending)
+                        if ((iCPMContentType == PVMF_CPM_FORMAT_OMA2) && (CheckForOMA2AuthorizationComplete(oma2trackInfo) == PVMFPending))
                         {
                             RequestUsage(oma2trackInfo);
                             return;
+                        }
+                        else if (iCPMContentType == PVMF_CPM_FORMAT_ACCESS_BEFORE_AUTHORIZE)
+                        {
+                            if (RequestUsage(NULL) != PVMFPending)
+                            {
+                                CompleteInit(iCurrentCommand);
+                                return;
+                            }
                         }
                     }
                 }

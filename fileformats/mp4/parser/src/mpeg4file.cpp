@@ -89,6 +89,8 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
     isResetPlayBackCalled = false;
     _moofFragmentIdx = NULL;
 
+    PV_MP4_FF_NEW(fp->auditCB, TrackEncryptionBoxContainer, (), ipTrckEncryptnBxCntr);
+
     parseMoofCompletely = true;
     moofParsingCompleted = true;
     moofSize = 0;
@@ -362,6 +364,7 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                                filename,
                                atomSize,
                                atomType,
+                               ipTrckEncryptnBxCntr,
                                _oPVContent,
                                _oPVContentDownloadable,
                                parsingMode,
@@ -473,8 +476,9 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
             else
             {
 
+
                 MovieFragmentAtom *pMovieFragmentAtom = NULL;
-                PV_MP4_FF_NEW(fp->auditCB, MovieFragmentAtom, (fp, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed), pMovieFragmentAtom);
+                PV_MP4_FF_NEW(fp->auditCB, MovieFragmentAtom, (fp, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed, ipTrckEncryptnBxCntr), pMovieFragmentAtom);
 
                 if (!pMovieFragmentAtom->MP4Success())
                 {
@@ -488,6 +492,13 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                 _pMovieFragmentAtomVec->push_back(pMovieFragmentAtom);
             }
         }
+
+
+
+
+
+
+
         else if (atomType == MOVIE_FRAGMENT_RANDOM_ACCESS_ATOM)
         {
             if (_pmovieAtom == NULL)
@@ -1432,7 +1443,9 @@ const OSCL_wString& Mpeg4File::getCreationDate(MP4FFParserOriginalCharEnc &charT
 // Destructor
 Mpeg4File::~Mpeg4File()
 {
+
     uint32 i = 0;
+    PV_MP4_FF_DELETE(NULL, TrackEncryptionBoxContainer, ipTrckEncryptnBxCntr);
     // Clean up atoms
     if (_pmovieAtom != NULL)
     {
@@ -2262,6 +2275,29 @@ uint8* Mpeg4File::getTrackLevelOMA2DRMInfo(uint32 trackID)
     }
 }
 
+PIFF_PROTECTION_SYSTEM Mpeg4File::GetPIFFProtectionSystem()
+{
+    if (_pmovieAtom != NULL)
+    {
+        return _pmovieAtom->GetPIFFProtectionSystem();
+    }
+    else
+    {
+        return PIFF_PROTECTION_SYSTEM_UNKNOWN;
+    }
+}
+
+MP4_ERROR_CODE Mpeg4File::GetPIFFProtectionSystemSpecificData(const uint8*& aOpaqueData, uint32& aDataSize)
+{
+    if (_pmovieAtom != NULL)
+    {
+        return _pmovieAtom->GetPIFFProtectionSystemSpecificData(aOpaqueData, aDataSize);
+    }
+    else
+    {
+        return READ_FAILED;
+    }
+}
 
 MP4_ERROR_CODE
 Mpeg4File::RequestReadCapacityNotification(PvmiDataStreamObserver& aObserver,
@@ -2318,7 +2354,8 @@ Mpeg4File::GetCurrentFileSize(TOsclFileOffset& aFileSize)
 
 int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
         uint32 *n,
-        GAU    *pgau)
+        GAU    *pgau,
+        Oscl_Vector<PVPIFFProtectedSampleDecryptionInfo, OsclMemAllocator>*  apSampleDecryptionInfoVect)
 {
     uint32 samplesTobeRead;
     samplesTobeRead = *n;
@@ -2365,7 +2402,7 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                             {
                                 if (trackfragment->getTrackId() == trackID)
                                 {
-                                    return1 = pMovieFragmentAtom->getNextBundledAccessUnits(trackID, n, totalSampleRead, pgau);
+                                    return1 = pMovieFragmentAtom->getNextBundledAccessUnits(trackID, n, totalSampleRead, pgau, apSampleDecryptionInfoVect);
                                     totalSampleRead += *n;
                                     if (return1 != END_OF_TRACK)
                                     {
@@ -2554,7 +2591,7 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                     moofCount = count;
                                     _ptrMoofEnds = moofStartOffset + atomSize;
 
-                                    PV_MP4_FF_NEW(_movieFragmentFilePtr->auditCB, MovieFragmentAtom, (_movieFragmentFilePtr, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed), _pMovieFragmentAtom);
+                                    PV_MP4_FF_NEW(_movieFragmentFilePtr->auditCB, MovieFragmentAtom, (_movieFragmentFilePtr, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed, ipTrckEncryptnBxCntr), _pMovieFragmentAtom);
                                     moofSize = atomSize;
                                     moofPtrPos = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
 
@@ -2720,7 +2757,7 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                             {
                                 if (trackfragment->getTrackId() == trackID)
                                 {
-                                    return1 = pMovieFragmentAtom->getNextBundledAccessUnits(trackID, n, totalSampleRead, pgau);
+                                    return1 = pMovieFragmentAtom->getNextBundledAccessUnits(trackID, n, totalSampleRead, pgau, apSampleDecryptionInfoVect);
                                     totalSampleRead += *n;
                                     if (return1 != END_OF_TRACK)
                                     {
@@ -3022,7 +3059,7 @@ uint32 Mpeg4File::getContentType()
 
 MP4_ERROR_CODE Mpeg4File::getKeyMediaSampleNumAt(uint32 aTrackId,
         uint32 aKeySampleNum,
-        GAU    *pgau)
+        GAU    *pgau, Oscl_Vector<PVPIFFProtectedSampleDecryptionInfo, OsclMemAllocator>* aSampleDecryptionInfoVect)
 {
     if (_pmovieAtom == NULL)
     {
@@ -3051,7 +3088,7 @@ MP4_ERROR_CODE Mpeg4File::getKeyMediaSampleNumAt(uint32 aTrackId,
                     {
                         if (trackfragment->getTrackId() == aTrackId)
                         {
-                            return (MP4_ERROR_CODE)pMovieFragmentAtom->getNextBundledAccessUnits(aTrackId, &n, totalSampleRead, pgau);
+                            return (MP4_ERROR_CODE)pMovieFragmentAtom->getNextBundledAccessUnits(aTrackId, &n, totalSampleRead, pgau, aSampleDecryptionInfoVect);
                         }
                     }
                 }
@@ -3217,7 +3254,7 @@ int32 Mpeg4File::getOffsetByTime(uint32 id, uint64 ts, TOsclFileOffset* sampleFi
                             _pMoofOffsetVec->push_back(moofStartOffset);
                             parseMoofCompletely = true;
 
-                            PV_MP4_FF_NEW(_movieFragmentFilePtr->auditCB, MovieFragmentAtom, (_movieFragmentFilePtr, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed), _pMovieFragmentAtom);
+                            PV_MP4_FF_NEW(_movieFragmentFilePtr->auditCB, MovieFragmentAtom, (_movieFragmentFilePtr, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed, ipTrckEncryptnBxCntr), _pMovieFragmentAtom);
 
                             if (!_pMovieFragmentAtom->MP4Success())
                             {
@@ -3596,7 +3633,7 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                                             moofPtrPos = 0;
                                         }
 
-                                        PV_MP4_FF_NEW(_movieFragmentFilePtr->auditCB, MovieFragmentAtom, (_movieFragmentFilePtr, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed), _pMovieFragmentAtom);
+                                        PV_MP4_FF_NEW(_movieFragmentFilePtr->auditCB, MovieFragmentAtom, (_movieFragmentFilePtr, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed, ipTrckEncryptnBxCntr), _pMovieFragmentAtom);
 
                                         if (!_pMovieFragmentAtom->MP4Success())
                                         {
@@ -3882,7 +3919,7 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                                     moofPtrPos = 0;
                                 }
 
-                                PV_MP4_FF_NEW(_movieFragmentFilePtr->auditCB, MovieFragmentAtom, (_movieFragmentFilePtr, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed), _pMovieFragmentAtom);
+                                PV_MP4_FF_NEW(_movieFragmentFilePtr->auditCB, MovieFragmentAtom, (_movieFragmentFilePtr, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed, ipTrckEncryptnBxCntr), _pMovieFragmentAtom);
 
                                 if (!_pMovieFragmentAtom->MP4Success())
                                 {
@@ -4482,7 +4519,7 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
 
                                 parseMoofCompletely = true;
 
-                                PV_MP4_FF_NEW(_movieFragmentFilePtr->auditCB, MovieFragmentAtom, (_movieFragmentFilePtr, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed), _pMovieFragmentAtom);
+                                PV_MP4_FF_NEW(_movieFragmentFilePtr->auditCB, MovieFragmentAtom, (_movieFragmentFilePtr, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed, ipTrckEncryptnBxCntr), _pMovieFragmentAtom);
 
                                 if (!_pMovieFragmentAtom->MP4Success())
                                 {

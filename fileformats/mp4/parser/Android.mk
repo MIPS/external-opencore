@@ -93,7 +93,8 @@ LOCAL_SRC_FILES := \
  	src/userdataatom.cpp \
  	src/videomediaheaderatom.cpp \
  	src/visualsampleentry.cpp \
- 	src/paspatom.cpp
+ 	src/paspatom.cpp \
+ 	src/piffboxes.cpp
 
 
 LOCAL_MODULE := libpvmp4ff

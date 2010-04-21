@@ -130,4 +130,18 @@ Atom::getDefaultSize() const
     return DEFAULT_ATOM_SIZE;
 }
 
-
+ExtendedAtom::ExtendedAtom(MP4_FF_FILE* const& aFilePtr, uint32 aSize, uint32 aType, const uint8* const& aUserTypeUUID)
+        : Atom(aFilePtr, aSize, aType)
+{
+    //validate it
+    if (UUID_ATOM == getType())
+    {
+        oscl_memcpy(iUserTypeUUID, aUserTypeUUID, UUID_SIZE);
+        _success = true;
+        _mp4ErrorCode = EVERYTHING_FINE;
+    }
+    else
+    {
+        OSCL_LEAVE(READ_FAILED);
+    }
+}

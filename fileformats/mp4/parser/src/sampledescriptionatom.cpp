@@ -524,6 +524,13 @@ SampleDescriptionAtom::~SampleDescriptionAtom()
     }
 }
 
+TrackEncryptionBox* SampleDescriptionAtom::GetTrackEncryptionBox() const
+{
+    if (_pProtectionSchemeInformationBox)
+        return _pProtectionSchemeInformationBox->GetTrackEncryptionBox();
+    return NULL;
+}
+
 // Returns the ESID of the first ESdescriptor of the track - which is the ONLY
 // ESID for that track.  Each track has a single unique ESID.
 uint32

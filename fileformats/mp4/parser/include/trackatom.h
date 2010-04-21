@@ -768,6 +768,13 @@ class TrackAtom : public Atom
             return 0;
         }
 
+        TrackEncryptionBox* GetTrackEncryptionBox() const
+        {
+            if (_pmediaAtom)
+                return _pmediaAtom->GetTrackEncryptionBox();
+            return NULL;
+        }
+
     private:
         UserDataAtom         *_puserdataatom;
         EditAtom             *_pEditAtom;
