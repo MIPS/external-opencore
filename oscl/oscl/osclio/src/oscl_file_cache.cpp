@@ -327,6 +327,14 @@ uint32 OsclFileCache::Read(void* outputBuffer, uint32 size, uint32 numelements)
 
     uint32 bytesToRead = numelements * size;
 
+    // If file is smaller than requested data amount, reduce bytesToRead to the lowest multiple
+    // of size that we can read
+    uint32 bytesLeftInFile = (uint32)(FileSize() - Tell());
+    if (bytesToRead > bytesLeftInFile)
+    {
+        numelements = bytesLeftInFile / size;
+        bytesToRead = numelements * size;
+    }
 
     if (bytesToRead)
     {
@@ -345,12 +353,6 @@ uint32 OsclFileCache::Read(void* outputBuffer, uint32 size, uint32 numelements)
 
     while (bytesToRead > 0)
     {
-        //Break out of the loop if there isn't enough data left
-        //in the file to read a whole element.  We don't want to read
-        //a partial element.
-        if ((uint32)(FileSize() - Tell()) < size)
-            break;
-
         OSCL_ASSERT(_curCache->endPos >= _curCache->currentPos);
         uint32 bytesInCache = (uint32)(_curCache->endPos - _curCache->currentPos);
 
