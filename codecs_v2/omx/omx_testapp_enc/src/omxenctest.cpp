@@ -225,8 +225,8 @@ OMX_ERRORTYPE OmxComponentEncTest::GetInputVideoFrame()
             }
 
             ReadCount = fread(ipInBuffer[Index]->pBuffer, 1, Size, ipInputFile);
-            if ((0 == oscl_strcmp(iFormat, "AVC")) || (0 == oscl_strcmp(iFormat, "M4V")))
-                ipInBuffer[Index]->nTimeStamp = ((iFrameNum * 1000) / iFrameRate);
+            if ((0 == oscl_strcmp(iFormat, "H264")) || (0 == oscl_strcmp(iFormat, "M4V")))
+                ipInBuffer[Index]->nTimeStamp = ((iFrameNum * 1000) / iFrameRate) * 1000;
 
             if (0 == ReadCount)
             {
@@ -1097,6 +1097,15 @@ void OmxComponentEncTest::Run()
 
             OMX_ERRORTYPE Err = OMX_ErrorNone;
 
+            /*Send an output buffer before dynamic reconfig */
+            Err = OMX_FillThisBuffer(ipAppPriv->Handle, ipOutBuffer[0]);
+            CHECK_ERROR(Err, "FillThisBuffer");
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                            (0, "OmxComponentEncTest::Run() - FillThisBuffer command called for initiating dynamic port reconfiguration"));
+
+            ipOutReleased[0] = OMX_FALSE;
+
             Err = OMX_SendCommand(ipAppPriv->Handle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
             CHECK_ERROR(Err, "SendCommand Idle->Executing");
 
@@ -1105,6 +1114,51 @@ void OmxComponentEncTest::Run()
 
             iPendingCommands = 1;
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentEncTest::RunL() - StateIdle OUT"));
+        }
+        break;
+
+        case StateDisablePort:
+        {
+            OMX_BOOL Status = OMX_TRUE;
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentEncTest::Run() - StateDisablePort IN"));
+
+            if (!iDisableRun)
+            {
+                Status = HandlePortDisable();
+                if (OMX_FALSE == Status)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                    (0, "OmxComponentEncTest::Run() - Error occured in this state, StateDisablePort OUT"));
+                    iState = StateError;
+                    RunIfNotReady();
+                    break;
+                }
+
+                RunIfNotReady();
+            }
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentEncTest::Run() - StateDisablePort OUT"));
+        }
+        break;
+
+        case StateDynamicReconfig:
+        {
+            OMX_BOOL Status = OMX_TRUE;
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentEncTest::Run() - StateDynamicReconfig IN"));
+
+            Status = HandlePortReEnable();
+            if (OMX_FALSE == Status)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "OmxComponentEncTest::Run() - Error occured in this state, StateDynamicReconfig OUT"));
+                iState = StateError;
+                RunIfNotReady();
+                break;
+            }
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentEncTest::Run() - StateDynamicReconfig OUT"));
         }
         break;
 
@@ -1412,6 +1466,8 @@ void OmxComponentEncTest::Run()
                                 (0, "OmxEncTestEosMissing::Run() - %s: Fail", TestName));
 #ifdef PRINT_RESULT
                 printf("%s: Fail \n", TestName);
+                OMX_ENC_TEST(false);
+                iTestCase->TestCompleted();
 #endif
 
             }
@@ -1505,6 +1561,203 @@ void OmxComponentEncTest::Run()
     return;
 }
 
+
+OMX_BOOL OmxComponentEncTest::HandlePortDisable()
+{
+    OMX_ERRORTYPE Err = OMX_ErrorNone;
+    OMX_S32 ii;
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentEncTest::HandlePortDisable() IN"));
+
+    if (!iFlagDisablePort)
+    {
+        Err = OMX_SendCommand(ipAppPriv->Handle, OMX_CommandPortDisable, iOutputPortIndex, NULL);
+        if (OMX_ErrorNone != Err)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "OmxComponentEncTest::HandlePortDisable() Error while sending Port Disable command"));
+            return OMX_FALSE;
+        }
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                        (0, "OmxComponentEncTest::HandlePortDisable() - Sent Command for OMX_CommandPortDisable on port %d as a part of dynamic port reconfiguration", iOutputPortIndex));
+
+        iPendingCommands = 1;
+        iFlagDisablePort = OMX_TRUE;
+        return OMX_TRUE;
+    }
+    else
+    {
+        //Wait for all the buffers to be returned on output port before freeing them
+        //This wait is required because of the queueing delay in all the Callbacks
+        for (ii = 0; ii < iOutBufferCount; ii++)
+        {
+            if (OMX_FALSE == ipOutReleased[ii])
+            {
+                break;
+            }
+        }
+
+        if (ii != iOutBufferCount)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                            (0, "OmxComponentEncTest::HandlePortDisable() - Not all the output buffers returned by component yet, wait for it"));
+            return OMX_TRUE;
+        }
+
+        for (ii = 0; ii < iOutBufferCount; ii++)
+        {
+            if (ipOutBuffer[ii])
+            {
+                Err = OMX_FreeBuffer(ipAppPriv->Handle, iOutputPortIndex, ipOutBuffer[ii]);
+                if (OMX_ErrorNone != Err)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                    (0, "OmxComponentEncTest::HandlePortDisable() Error while freeing buffers after port disable"));
+                    return OMX_FALSE;
+                }
+
+                ipOutBuffer[ii] = NULL;
+
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                (0, "OmxComponentEncTest::HandlePortDisable() - Called FreeBuffer for buffer index %d on port %d", ii, iOutputPortIndex));
+            }
+        }
+
+        if (ipOutBuffer)
+        {
+            oscl_free(ipOutBuffer);
+            ipOutBuffer = NULL;
+        }
+
+        if (ipOutReleased)
+        {
+            oscl_free(ipOutReleased);
+            ipOutReleased = NULL;
+        }
+
+        iDisableRun = OMX_TRUE;
+    }
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentEncTest::HandlePortDisable() OUT"));
+
+    return OMX_TRUE;
+}
+
+
+
+OMX_BOOL OmxComponentEncTest::HandlePortReEnable()
+{
+    OMX_ERRORTYPE Err = OMX_ErrorNone;
+    OMX_S32 ii;
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentEncTest::HandlePortReEnable() IN"));
+
+    INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
+    iParamPort.nPortIndex = iOutputPortIndex;
+
+    Err = OMX_GetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "OmxComponentEncTest::HandlePortReEnable() Error while getting parameters for index OMX_IndexParamPortDefinition"));
+        return OMX_FALSE;
+    }
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "OmxComponentEncTest::HandlePortReEnable() - GetParameter called for OMX_IndexParamPortDefinition on port %d", iParamPort.nPortIndex));
+
+    //For all the components, at the time of port reconfiguration take the size from the component
+    iOutBufferSize = iParamPort.nBufferSize;
+
+    //Check the number of output buffers after port reconfiguration
+    iOutBufferCount = iParamPort.nBufferCountActual;
+
+    // do we need to increase the number of buffers?
+    if (iOutBufferCount < (OMX_S32) iParamPort.nBufferCountMin)
+    {
+        iOutBufferCount = iParamPort.nBufferCountMin;
+    }
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "OmxComponentEncTest::HandlePortReEnable() new output buffers %d, size %d", iOutBufferCount, iOutBufferSize));
+
+    // make sure to set the actual number of buffers (in case the number has changed)
+    INIT_GETPARAMETER_STRUCT(OMX_PARAM_PORTDEFINITIONTYPE, iParamPort);
+    iParamPort.nPortIndex = iOutputPortIndex;
+    iParamPort.nBufferCountActual = iOutBufferCount;
+
+    Err = OMX_SetParameter(ipAppPriv->Handle, OMX_IndexParamPortDefinition, &iParamPort);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "OmxComponentEncTest::HandlePortReEnable() Error while setting parameters for index OMX_IndexParamPortDefinition"));
+        return OMX_FALSE;
+    }
+
+    Err = OMX_SendCommand(ipAppPriv->Handle, OMX_CommandPortEnable, iOutputPortIndex, NULL);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "OmxComponentEncTest::HandlePortReEnable() Error while sendind OMX_CommandPortEnable command"));
+        return OMX_FALSE;
+    }
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                    (0, "OmxComponentEncTest::HandlePortReEnable() - Sent Command for OMX_CommandPortEnable on port %d as a part of dynamic port reconfiguration", iOutputPortIndex));
+
+    iPendingCommands = 1;
+
+    //allocate memory for output buffer
+    ipOutBuffer = (OMX_BUFFERHEADERTYPE**) oscl_malloc(sizeof(OMX_BUFFERHEADERTYPE*) * iOutBufferCount);
+    if (NULL == ipOutBuffer)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "OmxComponentEncTest::HandlePortReEnable() Error allocating memory for output buffer while dynamic port reconfiguration"));
+        return OMX_FALSE;
+    }
+
+    ipOutReleased = (OMX_BOOL*) oscl_malloc(sizeof(OMX_BOOL) * iOutBufferCount);
+    if (NULL == ipOutBuffer)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "OmxComponentEncTest::HandlePortReEnable() Error allocating memory for output buffer flag while dynamic port reconfiguration"));
+        return OMX_FALSE;
+    }
+
+    /* Initialize all the buffers to NULL */
+    for (ii = 0; ii < iOutBufferCount; ii++)
+    {
+        ipOutBuffer[ii] = NULL;
+    }
+
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                    (0, "OmxComponentEncTest::HandlePortReEnable() - Allocating buffer again after port reconfigutauion has been complete"));
+
+    for (ii = 0; ii < iOutBufferCount; ii++)
+    {
+        Err = OMX_AllocateBuffer(ipAppPriv->Handle, &ipOutBuffer[ii], iOutputPortIndex, NULL, iOutBufferSize);
+        if (Err != OMX_ErrorNone)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "OmxComponentEncTest::HandlePortReEnable() Error allocating output buffer %d using OMX_AllocateBuffer", ii));
+            return OMX_FALSE;
+        }
+
+        ipOutReleased[ii] = OMX_TRUE;
+        ipOutBuffer[ii]->nOutputPortIndex = iOutputPortIndex;
+        ipOutBuffer[ii]->nInputPortIndex = 0;
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                        (0, "OmxComponentEncTest::HandlePortReEnable() - AllocateBuffer called for buffer index %d on port %d", ii, iOutputPortIndex));
+    }
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentEncTest::HandlePortReEnable() OUT"));
+
+    return OMX_TRUE;
+}
+
+
 OMX_BOOL OmxComponentEncTest::Parse(char aConfigFileName[], OSCL_HeapString<OsclMemAllocator> &role, OSCL_HeapString<OsclMemAllocator> &Component)
 {
     OMX_BOOL Status = OMX_TRUE;
@@ -1520,7 +1773,7 @@ OMX_BOOL OmxComponentEncTest::Parse(char aConfigFileName[], OSCL_HeapString<Oscl
     oscl_strncpy(iRole, role.get_cstr(), role.get_size());
     //verify that the string is null terminated
     iRole[(role.get_size() < ROLE_SIZE) ? role.get_size() : ROLE_SIZE] = '\0';
-    oscl_strncpy(iFormat, Component.get_cstr(), Component.get_size());
+    oscl_strncpy(iFormat, Component.get_cstr(), Component.get_size() + 1);
 
     if (ConfigBuffer)
     {
@@ -2731,7 +2984,9 @@ bool isConfigFilePresent(FILE* filehandle, cmd_line *command_line, char *aArgume
         }
         else
         {
-            command_line->get_arg(configSearch, aArgument);
+            char* cmd = NULL;
+            command_line->get_arg(configSearch, cmd);
+            oscl_strncpy(aArgument, cmd, oscl_strlen(cmd) + 1);
         }
         return true;
     }
@@ -2911,10 +3166,6 @@ int local_main(FILE* filehandle, cmd_line *command_line)
             PVLoggerCfgFileParser::SetupLogAppender(PVLoggerCfgFileParser::ePVLOG_APPENDER_FILE,
                                                     logfilename.get_str(), _STRLIT_CHAR(""), PVLOGMSG_VERBOSE);
         }
-        else
-        {
-            PVLoggerCfgFileParser::SetupLogAppender(PVLoggerCfgFileParser::ePVLOG_APPENDER_STDERR);
-        }
 
         //create a test suite
         OmxEncTestSuite *pTestSuite = OSCL_NEW(OmxEncTestSuite, (filehandle, FirstTest, LastTest, ConfigFileName, Role, ComponentFormat));
@@ -3080,6 +3331,9 @@ void OmxEncTest_wrapper::test()
             iTestApp->StartTestApp();
             OSCL_DELETE(iTestApp);
             iTestApp = NULL;
+
+            // Go to next test
+            ++iCurrentTestNumber;
         }
         else
         {
@@ -3098,9 +3352,6 @@ void OmxEncTest_wrapper::TestCompleted()
     iTotalSuccess = the_result.success_count();
     iTotalFail = the_result.failures().size();
     iTotalError = the_result.errors().size();
-
-    // Go to next test
-    ++iCurrentTestNumber;
 }
 
 void OmxComponentEncTest::StopOnError()

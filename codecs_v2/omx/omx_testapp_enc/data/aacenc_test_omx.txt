@@ -1,5 +1,5 @@
-test_adts_x.pcm		//Aac Input File Name
-test_adts.aac		//Aac Output File Name
+../../data/test_adts_x.pcm		//Aac Input File Name
+../../data/test_adts.aac		//Aac Output File Name
 2			//Input number of channels
 2			//Output number of channels
 44100			//Sampling rate

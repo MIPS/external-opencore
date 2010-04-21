@@ -1,5 +1,5 @@
-t00.inp				//Amr Input File Name
-t00.amr				//Amr Output File Name
+../../data/t00.inp				//Amr Input File Name
+../../data/t00.amr				//Amr Output File Name
 16				//Input bits per sample
 8000				//Input Sampling Frequency
 1				//Number of channels

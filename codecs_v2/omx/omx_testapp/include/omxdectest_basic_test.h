@@ -35,11 +35,11 @@ class OmxDecTestCompRole : public OmxComponentDecTest
 
         OmxDecTestCompRole(FILE* aConsOutFile, FILE* aInputFile, FILE* aOutputFile, char aOutFileName[],
                            char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
-                           char aFormat[], OMX_U32 aChannels) :
+                           char aFormat[], OMX_U32 aChannels, OmxDecTest_wrapper *aTestCase) :
 
                 OmxComponentDecTest(aConsOutFile, aInputFile, aOutputFile, aOutFileName,
                                     aRefFileName, aName, aRole, aFormat,
-                                    aChannels)
+                                    aChannels, aTestCase)
         { };
 
     private:
@@ -54,11 +54,11 @@ class OmxDecTestBufferNegotiation : public OmxComponentDecTest
 
         OmxDecTestBufferNegotiation(FILE* aConsOutFile, FILE* aInputFile, FILE* aOutputFile, char aOutFileName[],
                                     char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
-                                    char aFormat[], OMX_U32 aChannels) :
+                                    char aFormat[], OMX_U32 aChannels, OmxDecTest_wrapper *aTestCase) :
 
                 OmxComponentDecTest(aConsOutFile, aInputFile, aOutputFile,
                                     aOutFileName, aRefFileName, aName,
-                                    aRole, aFormat, aChannels)
+                                    aRole, aFormat, aChannels, aTestCase)
         {
             iNumInputBuffers = 0;
             iNumOutputBuffers = 0;
@@ -83,11 +83,11 @@ class OmxDecTestPortReconfig : public OmxComponentDecTest
 
         OmxDecTestPortReconfig(FILE* aConsOutFile, FILE* aInputFile, FILE* aOutputFile, char aOutFileName[],
                                char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
-                               char aFormat[], OMX_U32 aChannels) :
+                               char aFormat[], OMX_U32 aChannels, OmxDecTest_wrapper *aTestCase) :
 
                 OmxComponentDecTest(aConsOutFile, aInputFile, aOutputFile, aOutFileName,
                                     aRefFileName, aName, aRole, aFormat,
-                                    aChannels)
+                                    aChannels, aTestCase)
         {
             iTestCompleteFlag = OMX_FALSE;
             iIsVideoFormat = OMX_FALSE;
@@ -109,11 +109,11 @@ class OmxDecTestPortReconfigTransitionTest : public OmxComponentDecTest
 
         OmxDecTestPortReconfigTransitionTest(FILE* aConsOutFile, FILE* aInputFile, FILE* aOutputFile, char aOutFileName[],
                                              char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
-                                             char aFormat[], OMX_U32 aChannels) :
+                                             char aFormat[], OMX_U32 aChannels, OmxDecTest_wrapper *aTestCase) :
 
                 OmxComponentDecTest(aConsOutFile, aInputFile, aOutputFile, aOutFileName,
                                     aRefFileName, aName, aRole, aFormat,
-                                    aChannels)
+                                    aChannels, aTestCase)
         { };
 
     private:
@@ -136,11 +136,11 @@ class OmxDecTestPortReconfigTransitionTest_2 : public OmxComponentDecTest
 
         OmxDecTestPortReconfigTransitionTest_2(FILE* aConsOutFile, FILE* aInputFile, FILE* aOutputFile, char aOutFileName[],
                                                char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
-                                               char aFormat[], OMX_U32 aChannels) :
+                                               char aFormat[], OMX_U32 aChannels, OmxDecTest_wrapper *aTestCase) :
 
                 OmxComponentDecTest(aConsOutFile, aInputFile, aOutputFile, aOutFileName,
                                     aRefFileName, aName, aRole, aFormat,
-                                    aChannels)
+                                    aChannels, aTestCase)
         { };
 
     private:
@@ -163,11 +163,11 @@ class OmxDecTestPortReconfigTransitionTest_3 : public OmxComponentDecTest
 
         OmxDecTestPortReconfigTransitionTest_3(FILE* aConsOutFile, FILE* aInputFile, FILE* aOutputFile, char aOutFileName[],
                                                char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
-                                               char aFormat[], OMX_U32 aChannels) :
+                                               char aFormat[], OMX_U32 aChannels, OmxDecTest_wrapper *aTestCase) :
 
                 OmxComponentDecTest(aConsOutFile, aInputFile, aOutputFile, aOutFileName,
                                     aRefFileName, aName, aRole, aFormat,
-                                    aChannels)
+                                    aChannels, aTestCase)
         { };
 
     private:
@@ -190,11 +190,11 @@ class OmxDecTestFlushPort : public OmxComponentDecTest
 
         OmxDecTestFlushPort(FILE* aConsOutFile, FILE* aInputFile, FILE* aOutputFile, char aOutFileName[],
                             char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
-                            char aFormat[], OMX_U32 aChannels) :
+                            char aFormat[], OMX_U32 aChannels, OmxDecTest_wrapper *aTestCase) :
 
                 OmxComponentDecTest(aConsOutFile, aInputFile, aOutputFile, aOutFileName,
                                     aRefFileName, aName, aRole, aFormat,
-                                    aChannels)
+                                    aChannels, aTestCase)
         {
             iFrameCount = 0;
             iFlushCommandSent = OMX_FALSE;
@@ -218,11 +218,11 @@ class OmxDecTestEosAfterFlushPort : public OmxComponentDecTest
 
         OmxDecTestEosAfterFlushPort(FILE* aConsOutFile, FILE* aInputFile, FILE* aOutputFile, char aOutFileName[],
                                     char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
-                                    char aFormat[], OMX_U32 aChannels) :
+                                    char aFormat[], OMX_U32 aChannels, OmxDecTest_wrapper *aTestCase) :
 
                 OmxComponentDecTest(aConsOutFile, aInputFile, aOutputFile, aOutFileName,
                                     aRefFileName, aName, aRole, aFormat,
-                                    aChannels)
+                                    aChannels, aTestCase)
         {
             iFrameCount = 0;
             iFlushCommandSent = OMX_FALSE;
@@ -246,11 +246,11 @@ class OmxDecTestMultipleInstance : public OmxComponentDecTest
 
         OmxDecTestMultipleInstance(FILE* aConsOutFile, FILE* aInputFile, FILE* aOutputFile, char aOutFileName[],
                                    char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
-                                   char aFormat[], OMX_U32 aChannels) :
+                                   char aFormat[], OMX_U32 aChannels, OmxDecTest_wrapper *aTestCase) :
 
                 OmxComponentDecTest(aConsOutFile, aInputFile, aOutputFile, aOutFileName,
                                     aRefFileName, aName, aRole, aFormat,
-                                    aChannels)
+                                    aChannels, aTestCase)
         { };
 
     private:

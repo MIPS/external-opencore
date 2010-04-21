@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -295,6 +295,10 @@ class OmxComponentEncTest : public OmxEncTestBase
         OMX_ERRORTYPE GetInputVideoFrame();
         OMX_ERRORTYPE GetInputAudioFrame();
 
+        OMX_BOOL HandlePortDisable();
+        OMX_BOOL HandlePortReEnable();
+
+
         OMX_STRING  iRole;
         char        iInputFileName[200];
         char        iOutputFileName[200];
@@ -388,6 +392,8 @@ class OmxEncTestUseBuffer : public OmxComponentEncTest
         OmxEncTestUseBuffer(OmxEncTest_wrapper *aTestCase):
                 OmxComponentEncTest(aTestCase) { };
     private:
+        OMX_BOOL HandlePortDisable();
+        OMX_BOOL HandlePortReEnable();
         void Run();
 };
 

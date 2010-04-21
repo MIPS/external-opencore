@@ -77,6 +77,8 @@ typedef enum STATE_TYPE
     StateIdle,        /**< component initialization has been completed
                                 successfully and the component is ready to
                                 to start. */
+    StateDisablePort,
+    StateDynamicReconfig,
     StateExecuting,   /**< component has accepted the start command and
                                 is processing data (if data is available) */
     StatePause,       /**< component has received pause command */
@@ -395,6 +397,9 @@ class OmxEncTestBase : public OsclActiveObject
         OMX_S32 iCount3;
         //Object of memory allocator class
         OsclMemAllocator iAllocator;
+
+        OMX_BOOL  iDisableRun;
+        OMX_BOOL  iFlagDisablePort;
 
         // Loggger variable for logging data
         PVLogger* iLogger;

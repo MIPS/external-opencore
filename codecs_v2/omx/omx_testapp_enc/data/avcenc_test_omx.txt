@@ -1,5 +1,5 @@
-foreman_176x144_24bit_5sec.rgb 	// input file name
-test.264 	// output file name
+../../data/foreman_176x144_24bit_5sec.rgb 	// input file name
+../../data/test.264 	// output file name
 176		// input width
 144 		// input height
 30		// input source frame rate

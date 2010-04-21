@@ -340,6 +340,8 @@ void OmxDecTestMultipleInstance::Run()
                                 (0, "OmxDecTestMultipleInstance::Run() - %s: Fail", TestName));
 #ifdef PRINT_RESULT
                 fprintf(iConsOutFile, "%s: Fail \n", TestName);
+                OMX_DEC_TEST(false);
+                iTestCase->TestCompleted();
 #endif
 
             }
@@ -349,6 +351,8 @@ void OmxDecTestMultipleInstance::Run()
                                 (0, "OmxDecTestMultipleInstance::Run() - %s: Success", TestName));
 #ifdef PRINT_RESULT
                 fprintf(iConsOutFile, "%s: Success \n", TestName);
+                OMX_DEC_TEST(true);
+                iTestCase->TestCompleted();
 #endif
             }
 

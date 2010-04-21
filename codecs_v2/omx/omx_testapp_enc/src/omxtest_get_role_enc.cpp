@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -225,8 +225,9 @@ void OmxEncTestCompRole::Run()
             {
 #ifdef PRINT_RESULT
                 printf("%s: Fail \n", TestName);
+                OMX_ENC_TEST(false);
+                iTestCase->TestCompleted();
 #endif
-
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                                 (0, "OmxComponentEncTest::VerifyOutput() - %s : Fail", TestName));
             }
