@@ -613,8 +613,7 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
 #ifdef AAC_PLUS
     if ((pVars->bno <= 1) && (empty_frame == FALSE))
     {
-        if ((pVars->mc_info.ExtendedAudioObjectType == MP4AUDIO_AAC_LC) &&
-                (!sbrBitStream->NrElements))
+        if (!sbrBitStream->NrElements)
         {
             PVMP4AudioDecoderDisableAacPlus(pExt, pMem);
         }
@@ -642,34 +641,33 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
     }
 
 #ifdef AAC_PLUS
-
     if (sbrBitStream->NrElements)
     {
-        /* for every core SCE or CPE there must be an SBR element, otherwise sths. wrong */
-        if (sbrBitStream->NrElements != sbrBitStream->NrElementsCore)
+        if (pExt->aacPlusEnabled == true)
         {
-            if ((pVars->bno <= 1) && (pExt->aacPlusEnabled == true))
+            /* for every core SCE or CPE there must be an SBR element, otherwise sths. wrong */
+            if (sbrBitStream->NrElements != sbrBitStream->NrElementsCore)
             {
-                /*
-                 *  Mismatch information indicate a problem on stream
-                 *  then default back to AAC
-                 */
-                pVars->mc_info.audioObjectType = MP4AUDIO_AAC_LC;
-                pVars->mc_info.ExtendedAudioObjectType = MP4AUDIO_AAC_LC;
+                if (pVars->bno <= 1)
+                {
+                    /*
+                     *  Mismatch information indicate a problem on stream
+                     *  then default back to AAC
+                     */
+                    pVars->mc_info.audioObjectType = MP4AUDIO_AAC_LC;
+                    pVars->mc_info.ExtendedAudioObjectType = MP4AUDIO_AAC_LC;
 
-                PVMP4AudioDecoderDisableAacPlus(pExt, pMem);
-            }
-            else
-            {
-                status = MP4AUDEC_INVALID_FRAME;
-            }
+                    PVMP4AudioDecoderDisableAacPlus(pExt, pMem);
 
+                    sbrBitStream->NrElements = 0;   /* disable aac processing  */
+                }
+                else
+                {
+                    status = MP4AUDEC_INVALID_FRAME;
+                }
+            }  // else this is what is expected
         }
 
-        if (pExt->aacPlusEnabled == false)
-        {
-            sbrBitStream->NrElements = 0;   /* disable aac processing  */
-        }
     }
     else
     {
@@ -677,7 +675,7 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
          *  This is AAC, but if aac+/eaac+ was declared in the stream, and there is not sbr content
          *  something is wrong
          */
-        if (pMC_Info->sbrPresentFlag || pMC_Info->psPresentFlag)
+        if ((pMC_Info->sbrPresentFlag || pMC_Info->psPresentFlag) && (pExt->aacPlusEnabled == true))
         {
             status = MP4AUDEC_INVALID_FRAME;
         }

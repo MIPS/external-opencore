@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -339,9 +339,18 @@ Int get_GA_specific_config(
              * dummy tag = 0 and
              * set up decoding configurations
              */
-            channel_config--;
-            pVars->prog_config.front.ele_is_cpe[0] = channel_config;
-            pVars->prog_config.front.ele_tag[0] = 0;
+
+            if (pVars->multichannel_detected)  /* more than 2 channels */
+            {
+                pVars->prog_config.front.ele_is_cpe[0] = 1; /* In this case always default to play the stereo channel */
+                pVars->prog_config.front.ele_tag[0] = 0;
+            }
+            else
+            {
+                channel_config--;
+                pVars->prog_config.front.ele_is_cpe[0] = channel_config;
+                pVars->prog_config.front.ele_tag[0] = 0;
+            }
 
             status =
                 set_mc_info(
