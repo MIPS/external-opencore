@@ -241,7 +241,6 @@ derive SOLIBS_opencore_common from (LIBS_oscl_shared.
                        threadsafe_callback_ao_m_lib.pvmediadatastruct_m_lib.pvmimeutils_m_lib.pvgendatastruct_m_lib.
                        pvmf_m_lib.pvfileoutputnode_m_lib.
                        pvmediainputnode_m_lib.pvomxencnode_m_lib.pvmiofileinput_m_lib. 
-                       pvmioaviwavfileinput_m_lib.pvavifileparser_m_lib.
                        pvthreadmessaging_m_lib.pvmiofileoutput_m_lib.pvmediaoutputnode_m_lib.
                        pvomxvideodecnode_m_lib.pvomxaudiodecnode_m_lib.pvomxbasedecnode_m_lib.
                        pvlatmpayloadparser_m_lib.
@@ -265,7 +264,6 @@ derive AGGREGATE_LIBDIRS_opencore_common from (LIBDIR_oscl_shared.
                        threadsafe_callback_ao_m_mk.pvmediadatastruct_m_mk.pvmimeutils_m_mk.pvgendatastruct_m_mk.
                        pvmf_m_mk.pvfileoutputnode_m_mk.
                        pvmediainputnode_m_mk.pvomxencnode_m_mk.pvmiofileinput_m_mk.
-                       pvmioaviwavfileinput_m_mk.pvavifileparser_m_mk.
                        pvthreadmessaging_m_mk.pvmiofileoutput_m_mk.pvmediaoutputnode_m_mk.
                        pvomxvideodecnode_m_mk.pvomxaudiodecnode_m_mk.pvomxbasedecnode_m_mk.
                        pvlatmpayloadparser_m_mk.

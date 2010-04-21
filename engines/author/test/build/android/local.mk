@@ -14,15 +14,13 @@ XCPPFLAGS += -D_UNICODE -DUNICODE
 XINCDIRS +=  ../../../../common/include ../../src/single_core ../../config/android ../../../../../pvmi/pvmf/include ../../../../../nodes/common/include ../../../../../extern_libs_v2/khronos/openmax/include ../../../../../fileformats/mp4/parser/include ../../../../../fileformats/mp4/parser/config/opencore ../../../../../fileformats/mp4/parser/utils/mp4recognizer/include ../../../../../pvmi/content_policy_manager/include ../../../../../pvmi/content_policy_manager/plugins/common/include ../../../../../fileformats/id3parcom/include
 
 
-
-
 SRCDIR := ../../src
 INCSRCDIR := ../../src
 
 SRCS := pvaetest.cpp test_pv_author_engine_testset1.cpp test_pv_author_engine_testset4.cpp ./single_core/pvaetestinput.cpp test_pv_author_engine_testset5.cpp test_pv_author_engine_testset6.cpp test_pv_author_engine_testset7.cpp test_pv_mediainput_author_engine.cpp test_pv_author_engine_testset8.cpp
 
 
-LIBS := unit_test opencore_author opencore_common opencore_player
+LIBS := unit_test pvmioaviwavfileinput pvavifileparser opencore_author opencore_common opencore_player
 
 
 

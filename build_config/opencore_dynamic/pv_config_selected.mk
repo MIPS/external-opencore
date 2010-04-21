@@ -71,7 +71,7 @@ pvid3parcom_lib=m
 pvpvxparser_lib=m
 pvwav_lib=m
 pvasxparser_lib=n
-pvavifileparser_lib=m
+pvavifileparser_lib=y
 pvpvrff_lib=n
 asfrecognizer_utility_lib=n
 pv_divxfile_parser_lib=n
@@ -349,7 +349,7 @@ pvdtcpplugin_lib=n
 #
 pvmiofileinput_lib=m
 pvmiofileoutput_lib=m
-pvmioaviwavfileinput_lib=m
+pvmioaviwavfileinput_lib=y
 pvmio_comm_loopback_lib=m
 
 

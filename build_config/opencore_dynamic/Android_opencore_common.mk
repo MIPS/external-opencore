@@ -32,8 +32,6 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
  	libpvmediainputnode \
  	libpvomxencnode \
  	libpvmiofileinput \
- 	libpvmioaviwavfileinput \
- 	libpvavifileparser \
  	libpvthreadmessaging \
  	libpvmiofileoutput \
  	libpvmediaoutputnode \
@@ -80,8 +78,6 @@ include   $(PV_TOP)/nodes/pvfileoutputnode/Android.mk
 include   $(PV_TOP)/nodes/pvmediainputnode/Android.mk
 include   $(PV_TOP)/nodes/pvomxencnode/Android.mk
 include   $(PV_TOP)/pvmi/media_io/pvmi_mio_fileinput/Android.mk
-include   $(PV_TOP)/pvmi/media_io/pvmi_mio_avi_wav_fileinput/Android.mk
-include   $(PV_TOP)/fileformats/avi/parser/Android.mk
 include   $(PV_TOP)/baselibs/thread_messaging/Android.mk
 include   $(PV_TOP)/pvmi/media_io/pvmiofileoutput/Android.mk
 include   $(PV_TOP)/nodes/pvmediaoutputnode/Android.mk
