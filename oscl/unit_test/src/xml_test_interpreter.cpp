@@ -16,6 +16,9 @@
  * -------------------------------------------------------------------
  */
 #include "xml_test_interpreter.h"
+#ifndef STRINGABLE_H
+#include "stringable.h"
+#endif
 
 _STRING
 xml_test_interpreter::problem_string(const test_problem& problem) const
@@ -78,6 +81,7 @@ xml_test_interpreter::interpretation(const test_result& result, _STRING executab
     doc.addAttribute("tests", result.total_test_count());
     doc.addAttribute("errors", result.errors().size());
     doc.addAttribute("failures", result.failures().size());
+    doc.addAttribute("time", valueToString(result.get_elapsed_time() / 1000.0));
 
     _STRING suitename;
     _APPEND(suitename, "PV.");
@@ -99,6 +103,7 @@ xml_test_interpreter::interpretation(const test_result& result, _STRING executab
         {
             doc.addAttribute("name", sub_result.get_name());
         }
+        doc.addAttribute("time", valueToString(sub_result.get_elapsed_time() / 1000.0));
         doc.start("testcase");
         add_problems(doc, "failure", sub_result.failures());
         add_problems(doc, "error", sub_result.errors());

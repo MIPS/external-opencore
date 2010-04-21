@@ -110,6 +110,7 @@ class PVTest
         int32 iLastTest;
 };
 
+
 class pvplayer_engine_test_suite : public test_case
 {
 
@@ -388,9 +389,10 @@ class pvplayer_async_test_base : public OsclTimerObject,
 
 
 // test_base-based class which will run async tests on pvPlayer engine
-class pvplayer_engine_test : public test_case,
-        public pvplayer_async_test_observer,
-        public OsclTimerObserver
+class pvplayer_engine_test
+        : public test_case
+        , public pvplayer_async_test_observer
+        , public OsclTimerObserver
 {
     public:
         pvplayer_engine_test(char *aFileName,
@@ -2766,6 +2768,8 @@ class pvplayer_engine_test : public test_case,
         uint32 iMaxTestTimeTimerTimeout;
         bool iRunPRUtilityNoSchedulerTC;
         OsclTimer<OsclMemAllocator> *iTimer;
+
+        uint32 m_starttick; // used to compute elapsed time for test cases
 };
 
 /**

@@ -116,7 +116,8 @@ PVAuthorEngineTest::PVAuthorEngineTest(FILE* aStdOut, int32 aFirstTest, int32 aL
         iVideoEncoderMimeType(aVideoEncoderMimeType),
         iTextEncoderMimeType(aTextEncoderMimeType),
         iAVTConfig(aAVTConfig),
-        iAuthoringTime(aAuthoringTime)
+        iAuthoringTime(aAuthoringTime),
+        m_starttime(0)
 
 {
     iInputFileNameAudio = NULL;
@@ -257,10 +258,7 @@ void PVAuthorEngineTest::test()
             OsclExecScheduler *sched = OsclExecScheduler::Current();
             if (sched)
             {
-                uint32 currticks  = 0;
-                currticks = OsclTickCount::TickCount();
-                uint32 starttime = OsclTickCount::TicksToMsec(currticks);
-
+                m_starttime = OsclTickCount::TicksToMsec(OsclTickCount::TickCount());
                 iCurrentTest->StartTest();
 #if USE_NATIVE_SCHEDULER
                 // Have PV scheduler use the scheduler native to the system
@@ -269,10 +267,8 @@ void PVAuthorEngineTest::test()
                 int32 err;
                 OSCL_TRY(err, sched->StartScheduler(););
 #endif
-                currticks = OsclTickCount::TickCount();
-                uint32 endtime = OsclTickCount::TicksToMsec(currticks);
-                fprintf(file, "  Time taken by the test:  %d\n", (endtime - starttime));
-
+                uint32 time  = OsclTickCount::TicksToMsec(OsclTickCount::TickCount()) - m_starttime;
+                fprintf(file, "  Time taken by the test:  %d\n", time);
             }
             else
             {
@@ -535,10 +531,10 @@ void PVAuthorEngineTest::CompleteTest(test_case &tc)
     iCurrentTest->VerifyOutputFile();
 
     // Print out the result for this test case
-    const test_result the_result = tc.last_result();
-    m_last_result.add_result(the_result);
-    fprintf(file, "  Successes %d, Failures %d\n"
-            , the_result.success_count(), the_result.failures().size());
+    test_result tr = tc.last_result();
+    tr.set_elapsed_time(OsclTickCount::TicksToMsec(OsclTickCount::TickCount()) - m_starttime);
+    m_last_result.add_result(tr);
+    fprintf(file, "  Successes %d, Failures %d\n", tr.success_count(), tr.failures().size());
     fflush(file);
 
     // Go to next test
@@ -2587,16 +2583,18 @@ int RunCompressedTest(cmd_line *aCommandLine, int32 &iFirstTest, int32 &iLastTes
                      aAudioInputType, aVideoInputType, aTextInputType,
                      aComposerMimeType.get_cstr(), aAudioEncoderMimeType.get_cstr(), aAacEncoderProfileMimeType.get_cstr(), aVideoEncoderMimeType.get_cstr(), aTextEncoderMimeType.get_cstr(), AuthoringTime);
 
-             testSuite->run_test();
-             //if (runTestErr != OSCL_ERR_NONE)
-             // fprintf(file, "ERROR: Leave Occurred! Reason %d \n", runTestErr);
 
-             WriteFinalXmlSummary(xmlresultsfile, testSuite->last_result());
+             const uint32 starttick = OsclTickCount::TickCount();   // get start time
+
+             testSuite->run_test();                         // run author engine test
+
+             test_result tr = testSuite->last_result();
+             tr.set_elapsed_time(OsclTickCount::TicksToMsec(OsclTickCount::TickCount()) - OsclTickCount::TicksToMsec(starttick));
+             WriteFinalXmlSummary(xmlresultsfile, tr);
              text_test_interpreter interp;
-             _STRING rs = interp.interpretation(testSuite->last_result());
+             _STRING rs = interp.interpretation(tr);
              fprintf(file, "%s", rs.c_str());
-             const test_result the_result = testSuite->last_result();
-             retVal = (int)(the_result.success_count() != the_result.total_test_count());
+             retVal = (int)(tr.success_count() != tr.total_test_count());
 
              delete testSuite;
              testSuite = NULL;
@@ -2740,13 +2738,15 @@ int RunUnCompressedTest(cmd_line *aCommandLine, int32 &aFirstTest, int32 &aLastT
              WriteInitialXmlSummary(xmlresultsfile);
              PVMediaInputAuthorEngineTestSuite* test_suite =
                  new PVMediaInputAuthorEngineTestSuite(testparam);
+             const uint32 starttick = OsclTickCount::TickCount();   // get start time
              test_suite->run_test();
-             WriteFinalXmlSummary(xmlresultsfile, test_suite->last_result());
+             test_result tr = test_suite->last_result();
+             tr.set_elapsed_time(OsclTickCount::TicksToMsec(OsclTickCount::TickCount()) - OsclTickCount::TicksToMsec(starttick));
+             WriteFinalXmlSummary(xmlresultsfile, tr);
              text_test_interpreter interp;
-             _STRING rs = interp.interpretation(test_suite->last_result());
+             _STRING rs = interp.interpretation(tr);
              fprintf(file, "%s", rs.c_str());
-             const test_result the_result = test_suite->last_result();
-             retVal = (int)(the_result.success_count() != the_result.total_test_count());
+             retVal = (int)(tr.success_count() != tr.total_test_count());
 
              delete test_suite;
              test_suite = NULL;

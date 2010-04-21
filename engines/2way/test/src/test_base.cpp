@@ -50,13 +50,14 @@ void test_base::test()
 
     this->AddToScheduler();
 
+    iStarttime = OsclTickCount::TicksToMsec(OsclTickCount::TickCount());
     if (start_async_test())
     {
         /*!
-
           Step 5: Start scheduler
           Start scheduler- will start sending messages once initialized
         */
+
         OSCL_TRY(error, scheduler->StartScheduler());
         if (error != 0)
         {
@@ -772,6 +773,7 @@ void test_base::TestCompleted()
     char name[128];
     oscl_snprintf(name, 128, "Test %.2d: %s", iTestNum, iTestName.get_cstr());
     m_last_result.set_name(name);
+    m_last_result.set_elapsed_time(OsclTickCount::TicksToMsec(OsclTickCount::TickCount()) - iStarttime);
 
     // Print out the result for this test case
     PV2WayUtil::OutputInfo("\nResults for Test Case %d:\n", iTestNum);

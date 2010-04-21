@@ -343,6 +343,7 @@ template <typename T> bool CmdLinePopulator<T>::PopulateCmdLine(oscl_wchar* apFi
     return retval;
 }
 
+
 /** Name: ConvertToLowerCase
   * Description: Utility function to convert a string in lower case
   *              convert upper case ASCII String to lower case.
@@ -2088,8 +2089,8 @@ int CreateTestSuiteAndRun(char *aFileName,
                           uint32 aMaxTestTimeTimerTimeout,
                           bool aRunPRUtilityNoSchedulerTC)
 {
-    pvplayer_engine_test_suite *engine_tests = NULL;
-    engine_tests = new pvplayer_engine_test_suite(aFileName,
+    int retval = 1;
+    pvplayer_engine_test_suite* pTestSuite = new pvplayer_engine_test_suite(aFileName,
             aFileType,
             aFirstTest,
             aLastTest,
@@ -2108,55 +2109,42 @@ int CreateTestSuiteAndRun(char *aFileName,
             aSplitLogFile,
             aMaxTestTimeTimerTimeout,
             aRunPRUtilityNoSchedulerTC);
-    if (engine_tests)
+
+    if (0 != pTestSuite)
     {
-        //Set the Initial timer
+        const uint32 starttick = OsclTickCount::TickCount();   // get start time
 
-        uint32 starttick = OsclTickCount::TickCount();
-        // Run the engine test
-        engine_tests->run_test();
-        uint32 endtick = OsclTickCount::TickCount();
+        pTestSuite->run_test();                           // run the engine test
 
-        double t1 = OsclTickCount::TicksToMsec(starttick);
-        double t2 = OsclTickCount::TicksToMsec(endtick);
-        fprintf(file, "Total Execution time for file %s is : %f seconds", afilenameinfo.get_cstr(), (t2 - t1) / 1000);
+        double time = OsclTickCount::TicksToMsec(OsclTickCount::TickCount()) - OsclTickCount::TicksToMsec(starttick);
+        fprintf(file, "Total Execution time for file %s is : %f seconds", afilenameinfo.get_cstr(), time / 1000);
 
-        //append results
-        atestResult->add_result(engine_tests->last_result());
-        const test_result the_result = engine_tests->last_result();
+        test_result tr = pTestSuite->last_result();
+        tr.set_elapsed_time(static_cast<int>(time));
+        atestResult->add_result(tr);
+        retval = (tr.success_count() != tr.total_test_count());
 
-        delete engine_tests;
-        engine_tests = NULL;
-
-        if (aasciiCmdLinePopulator)
-        {
-            delete aasciiCmdLinePopulator;
-            aasciiCmdLinePopulator = NULL;
-        }
-
-        if (awcharCmdLinePopulator)
-        {
-            delete awcharCmdLinePopulator;
-            awcharCmdLinePopulator = NULL;
-        }
-        return (the_result.success_count() != the_result.total_test_count());
+        delete pTestSuite;
+        pTestSuite = 0;
     }
     else
     {
-        if (aasciiCmdLinePopulator)
-        {
-            delete aasciiCmdLinePopulator;
-            aasciiCmdLinePopulator = NULL;
-        }
-
-        if (awcharCmdLinePopulator)
-        {
-            delete awcharCmdLinePopulator;
-            awcharCmdLinePopulator = NULL;
-        }
         fprintf(file, "ERROR! pvplayer_engine_test_suite could not be instantiated.\n");
-        return 1;
     }
+
+    if (0 != aasciiCmdLinePopulator)
+    {
+        delete aasciiCmdLinePopulator;
+        aasciiCmdLinePopulator = 0;
+    }
+
+    if (0 != awcharCmdLinePopulator)
+    {
+        delete awcharCmdLinePopulator;
+        awcharCmdLinePopulator = 0;
+    }
+
+    return retval;
 }
 
 
@@ -2266,8 +2254,8 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
     fprintf(file, "  Compressed output Video(%s) Audio(%s)\n", (compV) ? "Yes" : "No", (compA) ? "Yes" : "No");
     fprintf(file, "  Log level %d; Log node %d Log Text %d Log Mem %d\n", loglevel, lognode, logtext, logmem);
 
-    test_result *testResult = OSCL_NEW(test_result, ());
-    testResult->delete_contents();
+    test_result tr;
+
     int result = 0;
     if (!ListFound)
     {
@@ -2292,7 +2280,7 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
                                        filenameinfo,
                                        asciiCmdLinePopulator,
                                        wcharCmdLinePopulator,
-                                       testResult,
+                                       &tr,
                                        maxTestTimeTimerTimeout,
                                        runPRUtilityNoSchedulerTCFlag);
     }
@@ -2325,7 +2313,7 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
                                                filenameinfo,
                                                asciiCmdLinePopulator,
                                                wcharCmdLinePopulator,
-                                               testResult,
+                                               &tr,
                                                maxTestTimeTimerTimeout,
                                                runPRUtilityNoSchedulerTCFlag);
 
@@ -2339,12 +2327,10 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
         }
     }
     //display results summary
-    WriteFinalXmlSummary(xmlresultsfile, *testResult);
+    WriteFinalXmlSummary(xmlresultsfile, tr);
     text_test_interpreter interp;
-    _STRING rs = interp.interpretation(*testResult);
+    _STRING rs = interp.interpretation(tr);
     fprintf(file, "%s", rs.c_str());
-    OSCL_DELETE(testResult);
-    testResult = NULL;
     return result;
 }
 
@@ -2367,7 +2353,7 @@ pvplayer_engine_test_suite::pvplayer_engine_test_suite(char *aFileName,
         uint32 aDownloadRateInKbps,
         bool aSplitLogFile,
         uint32 aMaxTestTimeTimerTimeout,
-        bool aRunPRUtilityNoSchedulerTC): test_case()
+        bool aRunPRUtilityNoSchedulerTC)
 {
     adopt_test_case(new pvplayer_engine_test(aFileName,
                     aFileType,
@@ -2438,6 +2424,7 @@ pvplayer_engine_test::pvplayer_engine_test(char *aFileName,
     iDownloadRateInKbps = aDownloadRateInKbps;
     iRunPRUtilityNoSchedulerTC = aRunPRUtilityNoSchedulerTC;
     iTimer = NULL;
+    m_starttick = 0;
 
 #ifdef BUILD_N_ARM
     OMX_Init(CONFIG_FILE_NAME);
@@ -2639,11 +2626,12 @@ bool pvplayer_engine_test::ValidateTestCase(int& aCurrentTestCaseNumber)
 void pvplayer_engine_test::TestCompleted(test_case &tc)
 {
     // Print out the result for this test case
-    const test_result the_result = tc.last_result();
-    m_last_result.add_result(the_result);
+    test_result tr = tc.last_result();
+    tr.set_elapsed_time(OsclTickCount::TicksToMsec(OsclTickCount::TickCount()) - OsclTickCount::TicksToMsec(m_starttick));
+    m_last_result.add_result(tr);
     fprintf(file, "Results for Test Case %d:\n", iCurrentTestNumber);
     fprintf(file, "  Successes %d, Failures %d\n"
-            , the_result.success_count(), the_result.failures().size());
+            , tr.success_count(), tr.failures().size());
     fflush(file);
 
     // Go to next test
@@ -7891,6 +7879,7 @@ void pvplayer_engine_test::test()
                     fprintf(file, "Started maximum test time timer for %d seconds.\n", iMaxTestTimeTimerTimeout);
                 }
 
+                m_starttick = OsclTickCount::TickCount();   // get start time
                 // Start the scheduler so the test case would run
 #if USE_NATIVE_SCHEDULER
                 // Have PV scheduler use the scheduler native to the system

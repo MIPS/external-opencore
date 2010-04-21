@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -822,44 +822,26 @@ void PVMediaInputAuthorEngineTest::test()
 
             // Setup Scheduler
             OsclExecScheduler *sched = OsclExecScheduler::Current();
-            if (sched)
-            {
-                int32 err;
-                iCurrentTest->StartTest();
-
-#if(USE_NATIVE_SCHEDULER)
-                OSCL_TRY(err,
-                         uint32 currticks  = 0;
-                         currticks = OsclTickCount::TickCount();
-                         uint32 starttime = OsclTickCount::TicksToMsec(currticks);
-
-                         sched->StartNativeScheduler();
-
-                         currticks = OsclTickCount::TickCount();
-                         uint32 endtime = OsclTickCount::TicksToMsec(currticks);
-                         fprintf(iFile, "  Time taken by the test:  %d\n", (endtime - starttime)););
-
-#else
-                OSCL_TRY(err,
-                         uint32 currticks  = 0;
-                         currticks = OsclTickCount::TickCount();
-                         uint32 starttime = OsclTickCount::TicksToMsec(currticks);
-
-                         sched->StartScheduler();
-
-                         currticks = OsclTickCount::TickCount();
-                         uint32 endtime = OsclTickCount::TicksToMsec(currticks);
-                         fprintf(iFile, "  Time taken by the test:  %d\n", (endtime - starttime));
-                        );
-#endif
-
-            }
-            else
+            if (0 == sched)
             {
                 fprintf(iFile, "ERROR! Scheduler is not available. Test case could not run.");
                 iNextTestCase++;
+                continue;
             }
 
+            m_starttime = OsclTickCount::TicksToMsec(OsclTickCount::TickCount());
+            iCurrentTest->StartTest();
+
+            int32 err;
+            OSCL_TRY(err,
+#if(USE_NATIVE_SCHEDULER)
+                     sched->StartNativeScheduler();
+#else
+                     sched->StartScheduler();
+#endif
+                    );
+
+            fprintf(iFile, "  Time taken by the test:  %d\n", OsclTickCount::TicksToMsec(OsclTickCount::TickCount()) - m_starttime);
         }
         else
         {
@@ -877,7 +859,8 @@ void PVMediaInputAuthorEngineTest::test()
 void PVMediaInputAuthorEngineTest::CompleteTest(test_case& arTC)
 {
     // Print out the result for this test case
-    const test_result the_result = arTC.last_result();
+    test_result the_result = arTC.last_result();
+    the_result.set_elapsed_time(OsclTickCount::TicksToMsec(OsclTickCount::TickCount()) - m_starttime);
 
     fprintf(iFile, "  Successes %d, Failures %d\n", the_result.success_count() - iTotalSuccess,
             the_result.failures().size() - iTotalFail);

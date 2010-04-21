@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,6 +81,7 @@ class PVAuthorEngineTest : public test_case,
         OSCL_HeapString<OsclMemAllocator> iTextEncoderMimeType;
         AVTConfig iAVTConfig;
         uint32 iAuthoringTime;
+        uint32 m_starttime;
 };
 
 

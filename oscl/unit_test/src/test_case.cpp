@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -210,15 +210,12 @@ test_case::test(void)
 test_case::test_case(void)
 {
     _cmdLinePtr = NULL;
-    m_last_result.delete_contents();
     m_subtests.clear();
 }
 
 //destruction
 test_case::~test_case(void)
 {
-    m_last_result.delete_contents();
-
     _VECTOR(test_case*, unit_test_allocator)::iterator iter = m_subtests.begin();
 
     for (; iter != m_subtests.end();
