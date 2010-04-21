@@ -7,6 +7,7 @@ LOCAL_SRC_FILES := \
 	android_camera_input.cpp \
 	android_audio_input.cpp \
 	android_audio_input_threadsafe_callbacks.cpp \
+	android_camera_input_threadsafe_callbacks.cpp \
 	../thread_init.cpp \
 
 ifeq ($(PLATFORM_VERSION),1.5)
