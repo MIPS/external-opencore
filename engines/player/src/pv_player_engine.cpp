@@ -2960,7 +2960,7 @@ void PVPlayerEngine::RecognizeCompleted(PVMFFormatType aSourceFormatType, OsclAn
     // Send the event to notify the user of the updated format type
     int32 len = iSourceFormatType.getMIMEStrLen();
     uint8* localbuffer = (uint8*)iSourceFormatType.getMIMEStrPtr();
-    SendInformationalEvent(PVMFInfoSourceFormatUpdated, NULL, NULL, localbuffer, len);
+    SendInformationalEvent(PVMFInfoSourceFormatUpdated, NULL, NULL, localbuffer, len + 1 /*including the null-terminator*/);
 }
 
 void PVPlayerEngine::CPMCommandCompleted(const PVMFCmdResp& aResponse)
