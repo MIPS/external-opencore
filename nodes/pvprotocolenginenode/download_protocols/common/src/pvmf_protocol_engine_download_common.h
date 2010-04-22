@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
 #include "pvdl_config_file.h"
 #endif
 
-class DownloadState : public ProtocolState
+class OSCL_IMPORT_REF DownloadState : public ProtocolState
 {
     public:
         void setConfigInfo(OsclAny* aConfigInfo)
@@ -59,17 +59,17 @@ class DownloadState : public ProtocolState
         }
 
     protected:
-        OSCL_IMPORT_REF virtual int32 processMicroStateSendRequestPreCheck();
-        OSCL_IMPORT_REF virtual int32 processMicroStateGetResponsePreCheck();
+        virtual int32 processMicroStateSendRequestPreCheck();
+        virtual int32 processMicroStateGetResponsePreCheck();
         // To compose a request, only need to override/implement these two functions
-        OSCL_IMPORT_REF virtual void setRequestBasics();
-        OSCL_IMPORT_REF virtual void setResponseBasics();
-        OSCL_IMPORT_REF virtual bool setHeaderFields();
-        OSCL_IMPORT_REF virtual int32 updateDownloadStatistics();
-        OSCL_IMPORT_REF virtual void saveConfig();
+        virtual void setRequestBasics();
+        virtual void setResponseBasics();
+        virtual bool setHeaderFields();
+        virtual int32 updateDownloadStatistics();
+        virtual void saveConfig();
 
         // shared routine for all the download protocols
-        OSCL_IMPORT_REF virtual int32 checkParsingStatus(int32 parsingStatus);
+        virtual int32 checkParsingStatus(int32 parsingStatus);
 
     protected:
         OsclSharedPtr<PVDlCfgFile> iCfgFile;

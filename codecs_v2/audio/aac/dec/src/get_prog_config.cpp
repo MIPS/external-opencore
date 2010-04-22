@@ -677,7 +677,7 @@ Int get_prog_config(
                  *  if the upsampling factor is active, then the output frequency needs
                  *  to be adjusted accordingly
                  */
-                pVars->prog_config.sampling_rate_idx = -3;
+                pVars->prog_config.sampling_rate_idx -= 3;
             }
 
         }

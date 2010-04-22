@@ -107,6 +107,7 @@ SRCS := 3gpp_amrdecoderspecificinfo.cpp \
 	videomediaheaderatom.cpp \
 	visualsampleentry.cpp \
 	paspatom.cpp \
+	piffboxes.cpp
 
 HDRS := impeg4file.h \
 	isucceedfail.h \

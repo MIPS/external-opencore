@@ -81,6 +81,10 @@
 #endif
 
 
+#ifndef _PIFFBOXES_H_
+#include "piffboxes.h"
+#endif
+
 class AVCSampleEntry;
 /*
 Class Movie Atom
@@ -94,6 +98,7 @@ class MovieAtom : public Atom
                                   OSCL_wString& filename,
                                   uint32 size,
                                   uint32 type,
+                                  TrackEncryptionBoxContainer*& apTrckEncryptnBx,
                                   bool oPVContent = false,
                                   bool oPVContentDownloadable = false,
                                   uint32 parsingMode = 0,
@@ -832,8 +837,34 @@ class MovieAtom : public Atom
                 return false;
         }
 
+        PIFF_PROTECTION_SYSTEM GetPIFFProtectionSystem()
+        {
+            if (_protectionSystemSpecificBox)
+            {
+                return _protectionSystemSpecificBox->GetPIFFProtectionSystem();
+            }
+            else
+            {
+                return PIFF_PROTECTION_SYSTEM_UNKNOWN;
+            }
+        }
+
+        MP4_ERROR_CODE GetPIFFProtectionSystemSpecificData(const uint8*& aOpaqueData, uint32& aDataSize)
+        {
+            if (_protectionSystemSpecificBox)
+            {
+                aDataSize = _protectionSystemSpecificBox->GetDataSize();
+                aOpaqueData = _protectionSystemSpecificBox->GetData();
+                return EVERYTHING_FINE;
+            }
+            else
+            {
+                return READ_FAILED;
+            }
+        }
+
     private:
-        void addTrackAtom(TrackAtom *a);
+        void addTrackAtom(TrackAtom*& a);
 
         MovieHeaderAtom       *_pmovieHeaderAtom;
         ObjectDescriptorAtom  *_pobjectDescriptorAtom;
@@ -857,7 +888,7 @@ class MovieAtom : public Atom
 
         OSCL_wHeapString<OsclMemAllocator> _emptyString;
 
-
+        ProtectionSystemSpecificHeaderBox*  _protectionSystemSpecificBox;
 };
 
 #endif // MOVIEATOM_H_INCLUDED

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -290,7 +290,8 @@ class PVMediaInputAuthorEngineTest: public test_case,
                 iNextTestCase(aTestParam.iFirstTest),
                 iAsap(aTestParam.iAsap),
                 iFile(aTestParam.iMediainputParam.iFile),
-                iMediaInputParam(aTestParam.iMediainputParam)
+                iMediaInputParam(aTestParam.iMediainputParam),
+                m_starttime(0)
         {};
 
         // From test_case
@@ -317,6 +318,7 @@ class PVMediaInputAuthorEngineTest: public test_case,
         uint32                    iAllocFails;
         uint32                    iNumAllocs;
         PVMediaInputTestParam     iMediaInputParam;
+        uint32                    m_starttime;
 };
 
 class PVMediaInputAuthorEngineTestSuite: public test_case

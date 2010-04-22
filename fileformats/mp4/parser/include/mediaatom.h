@@ -736,6 +736,13 @@ class MediaAtom : public Atom
             return 0;
         }
 
+        TrackEncryptionBox* GetTrackEncryptionBox() const
+        {
+            if (_pmediaInformation)
+                return _pmediaInformation->GetTrackEncryptionBox();
+            return NULL;
+        }
+
     private:
         MediaHeaderAtom *_pmediaHeader;
         HandlerAtom *_phandler;

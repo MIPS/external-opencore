@@ -118,6 +118,16 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_BUFFERHEADERTYPE* aOutBuffer, OMX_
             return OMX_FALSE;
 
         Mpeg4InitCompleteFlag = OMX_TRUE;
+
+        if (CodecMode == H263_MODE)
+        {
+            /* SVH mode is activated inside the decoder.
+            ** Reset The init flag to get the width/height next frame.
+            */
+            Mpeg4InitCompleteFlag = OMX_FALSE;
+            *aInBufSize -= InitSize;
+            return OMX_TRUE;
+        }
         aPortParam->format.video.nFrameWidth = iDisplay_Width;
         aPortParam->format.video.nFrameHeight = iDisplay_Height;
 
@@ -138,22 +148,9 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_BUFFERHEADERTYPE* aOutBuffer, OMX_
 
         // normally - in case of mp4 - the config parser will read the vol header ahead of time
         // and set the port values - so there'll be no port reconfig - but just in case ...
-        if ((iDisplay_Width != OldWidth) || (iDisplay_Height != OldHeight))
-        {
-            *aResizeFlag = OMX_TRUE;
-        }
-        else if (NULL != aOutBuffer)
-        {
-            // if there'll be no port reconfig - the current output YUV buffer is good enough
-            PVSetReferenceYUV(&VideoCtrl, (uint8*)(aOutBuffer->pBuffer));
-            // take care of ref count for the buffer
-            BufferCtrlStruct *pBCTRL = (BufferCtrlStruct *)(aOutBuffer->pOutputPortPrivate);
-            pBCTRL->iRefCount++;
-            ipRefCtrPreviousReferenceBuffer = &(pBCTRL->iRefCount);
-            iReferenceYUVWasSet = OMX_TRUE;
-        }
 
-        *aFrameCount = 1;
+        CheckPortReConfig(aOutBuffer, OldWidth, OldHeight, aResizeFlag, aFrameCount);
+
         *aInBufSize -= InitSize;
         return OMX_TRUE;
     }
@@ -198,26 +195,10 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_BUFFERHEADERTYPE* aOutBuffer, OMX_
         aPortParam->nBufferSize = (aPortParam->format.video.nSliceHeight * aPortParam->format.video.nStride * 3) >> 1;
 
         iFrameSize = (aPortParam->format.video.nSliceHeight * aPortParam->format.video.nStride);
+
         // in case of h263 - port reconfig is pretty common - we'll alos have to do SetReferenceYUV later
-        if ((iDisplay_Width != OldWidth) || (iDisplay_Height != OldHeight))
-        {
-            *aResizeFlag = OMX_TRUE;
-        }
-        else if (NULL != aOutBuffer)
-        {
-            // if there'll be no port reconfig - the current output YUV buffer is good enough
-            PVSetReferenceYUV(&VideoCtrl, (uint8*)(aOutBuffer->pBuffer));
-            // take care of ref count for the buffer
-            BufferCtrlStruct *pBCTRL = (BufferCtrlStruct *)(aOutBuffer->pOutputPortPrivate);
-            pBCTRL->iRefCount++;
-            ipRefCtrPreviousReferenceBuffer = &(pBCTRL->iRefCount);
 
-            iReferenceYUVWasSet = OMX_TRUE;
-        }
-
-        *aFrameCount = 1;
-
-
+        CheckPortReConfig(aOutBuffer, OldWidth, OldHeight, aResizeFlag, aFrameCount);
         return OMX_TRUE;
     }
 
@@ -254,6 +235,7 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_BUFFERHEADERTYPE* aOutBuffer, OMX_
 #ifdef _DEBUG
         //printf("Frame number %d\n", ++FrameCount);
 #endif
+
         // advance input buffer ptr
         *aInputBuf += (InputSize - *aInBufSize);
 
@@ -267,7 +249,6 @@ OMX_BOOL Mpeg4Decoder_OMX::Mp4DecodeVideo(OMX_BUFFERHEADERTYPE* aOutBuffer, OMX_
             ipOMXComponent->iNumAvailableOutputBuffers++;
             // posssibly reschedule the component?
         }
-
 
         // use the current buffer as reference for the next decode
         BufferCtrlStruct *pBCTRL = (BufferCtrlStruct *)(aOutBuffer->pOutputPortPrivate);
@@ -392,5 +373,27 @@ OMX_S32 Mpeg4Decoder_OMX::GetVideoHeader(int32 aLayer, uint8* aBuf, int32 aMaxSi
         }
     }
     return count;
+}
+
+
+// Check for resizeflag and whether Reference YUV buff needs to set.
+void Mpeg4Decoder_OMX::CheckPortReConfig(OMX_BUFFERHEADERTYPE* aOutBuffer, OMX_S32 OldWidth, OMX_S32 OldHeight, OMX_BOOL *aResizeFlag, OMX_S32* aFrameCount)
+{
+    if ((iDisplay_Width != OldWidth) || (iDisplay_Height != OldHeight))
+    {
+        *aResizeFlag = OMX_TRUE;
+    }
+    else if (NULL != aOutBuffer)
+    {
+        // if there'll be no port reconfig - the current output YUV buffer is good enough
+        PVSetReferenceYUV(&VideoCtrl, (uint8*)(aOutBuffer->pBuffer));
+        // take care of ref count for the buffer
+        BufferCtrlStruct *pBCTRL = (BufferCtrlStruct *)(aOutBuffer->pOutputPortPrivate);
+        pBCTRL->iRefCount++;
+        ipRefCtrPreviousReferenceBuffer = &(pBCTRL->iRefCount);
+
+        iReferenceYUVWasSet = OMX_TRUE;
+    }
+    *aFrameCount = 1;
 }
 

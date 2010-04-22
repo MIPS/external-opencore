@@ -82,6 +82,185 @@ class OsclFileHandle;
 class PvmiDataStreamObserver;
 class AVCSampleEntry;
 
+class EncryptionInfo
+{
+    public:
+        EncryptionInfo(uint32 aAlgoId, uint8 aIVSz, const uint8* const& aKID)
+                : iAlogorithmID(aAlgoId)
+                , iIVSz(aIVSz)
+        {
+            oscl_memcpy(iKID, aKID, DEFAULT_KEY_SIZE);
+        }
+
+        uint32 GetAlgoID() const
+        {
+            return iAlogorithmID;
+        }
+
+        uint8 GetIVSize() const
+        {
+            return iIVSz;
+        }
+
+        const uint8* GetKeyID() const
+        {
+            return iKID;
+        }
+
+        enum
+        {
+            DEFAULT_KEY_SIZE = 16
+        };
+    private:
+        uint32  iAlogorithmID;
+        uint8   iIVSz;
+        uint8   iKID[DEFAULT_KEY_SIZE];
+};
+
+class EntryInfo
+{
+    public:
+        EntryInfo(uint16 aClearBytesCnt, uint32 aEncryptedBytesCnt): iClearBytes(aClearBytesCnt), iEncryptedBytes(aEncryptedBytesCnt) {}
+        uint16 GetClearBytesCount() const
+        {
+            return iClearBytes;
+        }
+        uint32 GetEncryptedBytesCount() const
+        {
+            return iEncryptedBytes;
+        }
+    private:
+        uint16 iClearBytes;
+        uint32 iEncryptedBytes;
+};
+
+class SampleInfo
+{
+    public:
+        SampleInfo(uint32 aSampleNumber): iSampleNumber(aSampleNumber), iNumberOfEntries(0) {}
+
+        void SetEntryCount(uint32 aEntryCount)
+        {
+            iNumberOfEntries = aEntryCount;
+            iEntryInfoVect.reserve(iNumberOfEntries);
+            for (uint i = 0; i < iNumberOfEntries; i++)
+            {
+                iEntryInfoVect.push_back(NULL);
+            }
+        }
+
+        void SetEntryInfo(uint32 aIndex, EntryInfo* apEntryInfo)
+        {
+            if (aIndex < iNumberOfEntries)
+            {
+                iEntryInfoVect[aIndex] = apEntryInfo;
+            }
+            else
+            {
+                OSCL_LEAVE(OsclErrArgument);
+            }
+        }
+
+        EntryInfo* GetEntryInfo(uint32 aIndex) const
+        {
+            if (iEntryInfoVect.size() > aIndex)
+                return iEntryInfoVect[aIndex];
+            else
+                return NULL;
+        }
+
+        uint32 GetEntriesCount() const
+        {
+            return iNumberOfEntries;
+        }
+
+        uint32 GetSampleNumber() const
+        {
+            return iSampleNumber;
+        }
+
+    private:
+        uint32 iSampleNumber;
+        uint32 iNumberOfEntries;
+        Oscl_Vector<EntryInfo*, OsclMemAllocator> iEntryInfoVect;
+};
+
+class PVPIFFProtectedSampleDecryptionInfo
+{
+    public:
+        PVPIFFProtectedSampleDecryptionInfo(const EncryptionInfo* aSampleEncryptionInfo, const uint8* aInitializationVector, const SampleInfo* apSampleInfo)
+                : ipInitializationVector(aInitializationVector)
+                , ipSampleInfo(apSampleInfo)
+                , ipSampleEncryptionInfo(aSampleEncryptionInfo) {}
+
+        const uint8* GetKeyUsedForEncryption() const
+        {
+            if (ipSampleEncryptionInfo)
+            {
+                return ipSampleEncryptionInfo->GetKeyID();
+            }
+            return NULL;
+        }
+
+        uint8 GetInitializationVector(const uint8*& apInitializationVector)
+        {
+            if (ipSampleEncryptionInfo)
+            {
+                apInitializationVector = ipInitializationVector;
+                return ipSampleEncryptionInfo->GetIVSize();
+            }
+            return 0;
+        }
+
+        bool GetSampleEntriesCnt(uint32& aEntryCount) const
+        {
+            if (ipSampleInfo)
+            {
+                aEntryCount = ipSampleInfo->GetEntriesCount();
+                return true;
+            }
+            aEntryCount = 0;
+            return false;
+        }
+
+        bool GetEntryInfo(uint32 aIndex, EntryInfo*& aEntryInfo) const
+        {
+            if (ipSampleInfo)
+            {
+                aEntryInfo = ipSampleInfo->GetEntryInfo(aIndex);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        uint32 GetAlgoUsedForEncryption() const
+        {
+            if (ipSampleEncryptionInfo)
+            {
+                return ipSampleEncryptionInfo->GetAlgoID();
+            }
+            return SAMPLE_NOT_ENCRYPTED;
+        }
+
+        enum
+        {
+            SAMPLE_NOT_ENCRYPTED = 0
+        };
+    private:
+        const uint8* ipInitializationVector;
+        const SampleInfo* ipSampleInfo; //A sample is composed of set of entries
+        const EncryptionInfo* ipSampleEncryptionInfo;
+};
+
+enum PIFF_PROTECTION_SYSTEM
+{
+    PIFF_PROTECTION_SYSTEM_PLAYREADY = 0,
+    PIFF_PROTECTION_SYSTEM_UNKNOWN
+};
+
 /*------------- Interface of Class Mpeg4 File ----------------*/
 class IMpeg4File : public ISucceedFail
 {
@@ -107,16 +286,16 @@ class IMpeg4File : public ISucceedFail
 
         virtual MP4_ERROR_CODE getKeyMediaSampleNumAt(uint32 aTrackId,
                 uint32 aKeySampleNum,
-                GAU    *pgau) = 0;
+                GAU    *pgau, Oscl_Vector<PVPIFFProtectedSampleDecryptionInfo, OsclMemAllocator>* = NULL) = 0;
         virtual int32 getPrevKeyMediaSample(uint64 inputtimestamp,
                                             uint32 &aKeySampleNum,
                                             uint32 id,
                                             uint32 *n,
-                                            GAU    *pgau) = 0;
+                                            GAU    *pgau, Oscl_Vector<PVPIFFProtectedSampleDecryptionInfo, OsclMemAllocator>* = NULL) = 0;
         virtual int32 getNextKeyMediaSample(uint32 &aKeySampleNum,
                                             uint32 id,
                                             uint32 *n,
-                                            GAU    *pgau) = 0;
+                                            GAU    *pgau, Oscl_Vector<PVPIFFProtectedSampleDecryptionInfo, OsclMemAllocator>* = NULL) = 0;
 
         /* Returns the timestamp for the previously returned media samples from the requested track
            id:  The track ID of the track from which the method is to retrieve the sample timestamp.
@@ -218,7 +397,7 @@ class IMpeg4File : public ISucceedFail
 
         virtual int32 getNextBundledAccessUnits(const uint32 id,
                                                 uint32 *n,
-                                                GAU    *pgau) = 0;
+                                                GAU    *pgau, Oscl_Vector<PVPIFFProtectedSampleDecryptionInfo , OsclMemAllocator>* pSampleDecryptionInfoVect = NULL) = 0;
 
         virtual int32 peekNextBundledAccessUnits(const uint32 id,
                 uint32 *n,
@@ -385,6 +564,22 @@ class IMpeg4File : public ISucceedFail
          * the "odkm" is only present for OMA2 protected content.
          */
         virtual uint8* getTrackLevelOMA2DRMInfo(uint32 trackID) = 0;
+
+        /**
+         * If the file is protected as per Portable Interoperable File Format spec
+         * Then, there could be multiple protection systems used to protect the file
+         * GetPIFFProtectionSystemID returns the uuid of the system uniquely
+         * identifying the content protection sytem
+        */
+        virtual PIFF_PROTECTION_SYSTEM GetPIFFProtectionSystem() = 0;
+
+        /**
+         * If the file is protected as per Portable Interoperable File Format spec
+         * Then, there could be multiple protection systems used to protect the file
+         * GetPIFFProtectionSystemSpecificData provides the protection system specific
+         * opaque data and the data size.
+        */
+        virtual MP4_ERROR_CODE GetPIFFProtectionSystemSpecificData(const uint8*& aOpaqueData, uint32& aDataSize) = 0;
 
         /*
          * This API is used to set a callback request on the datastream interface.

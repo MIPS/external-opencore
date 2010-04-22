@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -659,7 +659,33 @@ void OmxDecTestExtraPartialFrames::Run()
             }
 #endif
 
-            VerifyOutput(TestName);
+            if (ipOutputFile)
+            {
+                VerifyOutput(TestName);
+            }
+            else
+            {
+                if (OMX_FALSE == iTestStatus)
+                {
+#ifdef PRINT_RESULT
+                    fprintf(iConsOutFile, "%s: Fail \n", TestName);
+                    OMX_DEC_TEST(false);
+                    iTestCase->TestCompleted();
+#endif
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
+                                    (0, "OmxDecTestExtraPartialFrames::Run() - %s : Fail", TestName));
+                }
+                else
+                {
+#ifdef PRINT_RESULT
+                    fprintf(iConsOutFile, "%s: Success {Output file not available} \n", TestName);
+                    OMX_DEC_TEST(true);
+                    iTestCase->TestCompleted();
+#endif
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
+                                    (0, "OmxDecTestExtraPartialFrames::Run() - %s : Success {Output file not available}", TestName));
+                }
+            }
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxDecTestExtraPartialFrames::Run() - StateStop OUT"));
 

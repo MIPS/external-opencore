@@ -51,6 +51,10 @@
 #include "oscl_mem.h"
 #endif
 
+#ifndef _PIFFBOXES_H_
+#include "piffboxes.h"
+#endif
+
 class TrackDurationInfo : public HeapBase
 {
     public:
@@ -119,7 +123,8 @@ class TrackFragmentAtom : public Atom
                           Oscl_Vector<TrackExtendsAtom*, OsclMemAllocator> *trackExtendAtomVec,
                           bool &parseTrafCompletely,
                           bool &trafParsingCompleted,
-                          uint32 &countOfTrunsParsed);
+                          uint32 &countOfTrunsParsed,
+                          const TrackEncryptionBoxContainer* apTrackEncryptionBoxCntr);
 
         virtual ~TrackFragmentAtom();
 
@@ -150,8 +155,8 @@ class TrackFragmentAtom : public Atom
         uint32 getDefaultSampleSize() const;
         uint32 getDefaultSampleFlags() const;
         TrackFragmentRunAtom *getTrackFragmentRunForSampleNum(uint32 samplenum, uint32 &samplecount) const;
-        int32 getNextNSamples(uint32 startSampleNum, uint32 *n, uint32 totalSampleRead, GAU    *pgau);
-        int32 getNextBundledAccessUnits(uint32 *n, uint32 totalSampleRead, GAU *pgau);
+        int32 getNextNSamples(uint32 startSampleNum, uint32 *n, uint32 totalSampleRead, GAU    *pgau, Oscl_Vector<PVPIFFProtectedSampleDecryptionInfo, OsclMemAllocator>*  apSampleDecryptionInfoVect);
+        int32 getNextBundledAccessUnits(uint32 *n, uint32 totalSampleRead, GAU *pgau, Oscl_Vector<PVPIFFProtectedSampleDecryptionInfo, OsclMemAllocator>*  apSampleDecryptionInfoVect);
         int32 peekNextNSamples(uint32 startSampleNum, uint32 *n, uint32 totalSampleRead, MediaMetaInfo *mInfo);
         int32 peekNextBundledAccessUnits(uint32 *n, uint32 totalSampleRead, MediaMetaInfo *mInfo);
         uint32 getTotalNumSampleInTraf() const;
@@ -165,7 +170,7 @@ class TrackFragmentAtom : public Atom
         uint32 _trackFragmentEndOffset;
 
     private:
-
+        SampleEncryptionBox* ipSampleEncryptionBox;
         TrackFragmentHeaderAtom * _pTrackFragmentHeaderAtom;
         TrackFragmentRunAtom *_pTrackFragmentRunAtom;
         Oscl_Vector<TrackFragmentRunAtom*, OsclMemAllocator> *_pTrackFragmentRunAtomVec;
@@ -189,6 +194,7 @@ class TrackFragmentAtom : public Atom
         uint32 tf_flags;
         TOsclFileOffset trun_offset;
         bool trunParsingCompleted;
+        const TrackEncryptionBoxContainer* ipTrackEncryptionBoxCntr;
 };
 
 #endif

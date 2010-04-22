@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -778,6 +778,15 @@ void OmxEncTestEosMissing::Run()
 
             OMX_ERRORTYPE Err = OMX_ErrorNone;
 
+            /*Send an output buffer before dynamic reconfig */
+            Err = OMX_FillThisBuffer(ipAppPriv->Handle, ipOutBuffer[0]);
+            CHECK_ERROR(Err, "FillThisBuffer");
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                            (0, "OmxComponentEncTest::Run() - FillThisBuffer command called for initiating dynamic port reconfiguration"));
+
+            ipOutReleased[0] = OMX_FALSE;
+
             Err = OMX_SendCommand(ipAppPriv->Handle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
             CHECK_ERROR(Err, "SendCommand Idle->Executing");
 
@@ -787,6 +796,51 @@ void OmxEncTestEosMissing::Run()
             iPendingCommands = 1;
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxEncTestEosMissing::Run() - StateIdle OUT"));
+        }
+        break;
+
+        case StateDisablePort:
+        {
+            OMX_BOOL Status = OMX_TRUE;
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentEncTest::Run() - StateDisablePort IN"));
+
+            if (!iDisableRun)
+            {
+                Status = HandlePortDisable();
+                if (OMX_FALSE == Status)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                    (0, "OmxComponentEncTest::Run() - Error occured in this state, StateDisablePort OUT"));
+                    iState = StateError;
+                    RunIfNotReady();
+                    break;
+                }
+
+                RunIfNotReady();
+            }
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentEncTest::Run() - StateDisablePort OUT"));
+        }
+        break;
+
+        case StateDynamicReconfig:
+        {
+            OMX_BOOL Status = OMX_TRUE;
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentEncTest::Run() - StateDynamicReconfig IN"));
+
+            Status = HandlePortReEnable();
+            if (OMX_FALSE == Status)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "OmxComponentEncTest::Run() - Error occured in this state, StateDynamicReconfig OUT"));
+                iState = StateError;
+                RunIfNotReady();
+                break;
+            }
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentEncTest::Run() - StateDynamicReconfig OUT"));
         }
         break;
 
@@ -1045,6 +1099,8 @@ void OmxEncTestEosMissing::Run()
                                 (0, "OmxEncTestEosMissing::Run() - %s: Fail", TestName));
 #ifdef PRINT_RESULT
                 printf("%s: Fail \n", TestName);
+                OMX_ENC_TEST(false);
+                iTestCase->TestCompleted();
 #endif
 
             }

@@ -47,8 +47,9 @@ TrackFragmentAtom::TrackFragmentAtom(MP4_FF_FILE *fp,
                                      Oscl_Vector<TrackExtendsAtom*, OsclMemAllocator> *trackExtendAtomVec,
                                      bool &parseTrafCompletely,
                                      bool &trafParsingCompleted,
-                                     uint32 &countOfTrunsParsed)
-        : Atom(fp, size, type)
+                                     uint32 &countOfTrunsParsed,
+                                     const TrackEncryptionBoxContainer* apTrackEncryptionBoxCntr)
+        : Atom(fp, size, type), ipTrackEncryptionBoxCntr(apTrackEncryptionBoxCntr)
 {
     OSCL_UNUSED_ARG(movieFragmentCurrentOffset);
 
@@ -68,6 +69,7 @@ TrackFragmentAtom::TrackFragmentAtom(MP4_FF_FILE *fp,
     _default_duration = 0;
     _use_default_duratoin = false;
     _pTrackDurationContainer = trackDurationContainer;
+    ipSampleEncryptionBox = NULL;
 
     tf_flags = 0;
     trun_offset = 0;
@@ -246,6 +248,41 @@ TrackFragmentAtom::TrackFragmentAtom(MP4_FF_FILE *fp,
                     break;
                 }
             }
+            else if (atomType == UUID_ATOM)
+            {
+                //if Atom is typeof sample encryption box UUID atom
+                uint8 atomUUID[UUID_SIZE] = {0};
+                AtomUtils::readByteData(fp, UUID_SIZE, atomUUID);
+                if (AtomUtils::IsHexUInt8StrEqual(SAMPLE_ENCRYPTION_BOX_UUID, atomUUID, UUID_SIZE))
+                {
+                    //Got Sample Encryption Box to parse
+
+                    if (ipTrackEncryptionBoxCntr)
+                    {
+                        PV_MP4_FF_NEW(fp->auditCB, SampleEncryptionBox, (fp, atomSize, atomType, atomUUID, ipTrackEncryptionBoxCntr->GetTrackEncryptionBox(trackId)), ipSampleEncryptionBox);
+                    }
+                    else
+                        PV_MP4_FF_NEW(fp->auditCB, SampleEncryptionBox, (fp, atomSize, atomType, atomUUID, NULL), ipSampleEncryptionBox);
+
+                    if (!ipSampleEncryptionBox || (!ipSampleEncryptionBox->MP4Success()))
+                    {
+                        _success = false;
+                        _mp4ErrorCode = READ_TRACK_EXTENDS_ATOM_FAILED;
+                        return;
+                    }
+                    else
+                    {
+                        ipSampleEncryptionBox->setParent(this);
+                        count -= ipSampleEncryptionBox->getSize();
+                    }
+                }
+                else
+                {
+                    count -= atomSize;
+                    atomSize -= (DEFAULT_ATOM_SIZE + UUID_SIZE);
+                    AtomUtils::seekFromCurrPos(fp, atomSize);
+                }
+            }
             else
             {
                 count -= atomSize;
@@ -277,7 +314,6 @@ void TrackFragmentAtom::ParseTrafAtom(MP4_FF_FILE *fp,
     OSCL_UNUSED_ARG(type);
     OSCL_UNUSED_ARG(movieFragmentCurrentOffset);
     OSCL_UNUSED_ARG(moofSize);
-    uint32 count = size;
     TOsclFileOffset trun_start = 0;
     TOsclFileOffset _movieFragmentBaseOffset = movieFragmentBaseOffset - DEFAULT_ATOM_SIZE;
     bool bdo_present = false;
@@ -297,7 +333,7 @@ void TrackFragmentAtom::ParseTrafAtom(MP4_FF_FILE *fp,
     {
         for (uint32 i = 0; i < 1; i++)
         {
-            if (count > 0)
+            if (size > 0)
             {
                 if (trunParsingCompleted)
                 {
@@ -327,9 +363,8 @@ void TrackFragmentAtom::ParseTrafAtom(MP4_FF_FILE *fp,
                         if (trunParsingCompleted)
                         {
                             bdo_present = false;
-                            count -= _pTrackFragmentRunAtom->getSize();
-                            size = count;
-                            PVMF_MP4FFPARSER_LOGPARSEDINFO((0, "count %d", count));
+                            size -= _pTrackFragmentRunAtom->getSize();
+                            PVMF_MP4FFPARSER_LOGPARSEDINFO((0, "size %d", size));
                             uint32 trunFlags = _pTrackFragmentRunAtom->getFlags();
                             if (!(trunFlags & 0x000100))
                             {
@@ -384,9 +419,44 @@ void TrackFragmentAtom::ParseTrafAtom(MP4_FF_FILE *fp,
                         trackDurationContainer->updateTrackDurationForTrackId(trackId,
                                 _trackEndDuration);
                     }
+                    else if (atomType == UUID_ATOM)
+                    {
+                        //if Atom is typeof sample encryption box UUID atom
+                        uint8 atomUUID[UUID_SIZE] = {0};
+                        AtomUtils::readByteData(fp, UUID_SIZE, atomUUID);
+                        if (AtomUtils::IsHexUInt8StrEqual(SAMPLE_ENCRYPTION_BOX_UUID, atomUUID, UUID_SIZE))
+                        {
+                            //Got Sample Encryption Box to parse
+
+                            if (ipTrackEncryptionBoxCntr)
+                            {
+                                PV_MP4_FF_NEW(fp->auditCB, SampleEncryptionBox, (fp, atomSize, atomType, atomUUID, ipTrackEncryptionBoxCntr->GetTrackEncryptionBox(trackId)), ipSampleEncryptionBox);
+                            }
+                            else
+                                PV_MP4_FF_NEW(fp->auditCB, SampleEncryptionBox, (fp, atomSize, atomType, atomUUID, NULL), ipSampleEncryptionBox);
+
+                            if (!ipSampleEncryptionBox || (!ipSampleEncryptionBox->MP4Success()))
+                            {
+                                _success = false;
+                                _mp4ErrorCode = READ_TRACK_EXTENDS_ATOM_FAILED;
+                                return;
+                            }
+                            else
+                            {
+                                ipSampleEncryptionBox->setParent(this);
+                                size -= ipSampleEncryptionBox->getSize();
+                            }
+                        }
+                        else
+                        {
+                            size -= atomSize;
+                            atomSize -= (DEFAULT_ATOM_SIZE + UUID_SIZE);
+                            AtomUtils::seekFromCurrPos(fp, atomSize);
+                        }
+                    }
                     else
                     {
-                        count -= atomSize;
+                        size -= atomSize;
                         atomSize -= DEFAULT_ATOM_SIZE;
                         AtomUtils::seekFromCurrPos(fp, atomSize);
                     }
@@ -409,9 +479,8 @@ void TrackFragmentAtom::ParseTrafAtom(MP4_FF_FILE *fp,
                     if (trunParsingCompleted)
                     {
                         bdo_present = false;
-                        count -= _pTrackFragmentRunAtom->getSize();
-                        size = count;
-                        PVMF_MP4FFPARSER_LOGPARSEDINFO((0, "count %d", count));
+                        size -= _pTrackFragmentRunAtom->getSize();
+                        PVMF_MP4FFPARSER_LOGPARSEDINFO((0, "size %d", size));
                         uint32 trunFlags = _pTrackFragmentRunAtom->getFlags();
                         if (!(trunFlags & 0x000100))
                         {
@@ -469,9 +538,9 @@ void TrackFragmentAtom::ParseTrafAtom(MP4_FF_FILE *fp,
                     trafParsingCompleted = false;
                 }
             }
-            else if (count == 0)
+            else if (size == 0)
             {
-                PVMF_MP4FFPARSER_LOGPARSEDINFO((0, "TRAF END count %d", count));
+                PVMF_MP4FFPARSER_LOGPARSEDINFO((0, "TRAF END size %d", size));
                 trafParsingCompleted = true;
                 break;
             }
@@ -480,9 +549,9 @@ void TrackFragmentAtom::ParseTrafAtom(MP4_FF_FILE *fp,
                 break;
             }
         }
-        if (count == 0)
+        if (size == 0)
         {
-            PVMF_MP4FFPARSER_LOGPARSEDINFO((0, "TRAF END count %d", count));
+            PVMF_MP4FFPARSER_LOGPARSEDINFO((0, "TRAF END size %d", size));
             trafParsingCompleted = true;
         }
     }
@@ -494,6 +563,10 @@ void TrackFragmentAtom::ParseTrafAtom(MP4_FF_FILE *fp,
 
 TrackFragmentAtom::~TrackFragmentAtom()
 {
+    if (ipSampleEncryptionBox != NULL)
+    {
+        PV_MP4_FF_DELETE(NULL, SampleEncryptionBox, ipSampleEncryptionBox);
+    }
     if (_pTrackFragmentHeaderAtom != NULL)
     {
         PV_MP4_FF_DELETE(NULL, TrackFragmentHeaderAtom, _pTrackFragmentHeaderAtom);
@@ -514,7 +587,7 @@ TrackFragmentAtom::~TrackFragmentAtom()
 int32
 TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
                                    uint32 *n, uint32 totalSampleRead,
-                                   GAU    *pgau)
+                                   GAU    *pgau, Oscl_Vector<PVPIFFProtectedSampleDecryptionInfo, OsclMemAllocator>*  apSampleDecryptionInfoVect)
 {
     uint32  numSamplesInCurrentTrackFragmentRun = 0;
     uint64 currTSBase = 0;
@@ -796,8 +869,18 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
     PV_MP4_FF_TEMPLATED_DELETE(NULL, fragmentptrOffsetVecType,
                                Oscl_Vector, _pFragmentptrOffsetVec);
 
-    return (_mp4ErrorCode);
+    PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentAtom::getNextNSamples- Track Fragment Run Start sampel Num %d _currentPlaybackSampleTimestamp[%d]", startSampleNum, _currentPlaybackSampleTimestamp));
 
+    if (apSampleDecryptionInfoVect && ipSampleEncryptionBox && (EVERYTHING_FINE == _mp4ErrorCode))
+    {
+        _mp4ErrorCode = ipSampleEncryptionBox->GetSamplesDecryptionInfo(startSampleNum, numSamples, apSampleDecryptionInfoVect);
+        if (_mp4ErrorCode != EVERYTHING_FINE)
+        {
+            _currentPlaybackSampleTimestamp = _startTrackFragmentTSOffset;
+            *n = 0;
+        }
+    }
+    return (_mp4ErrorCode);
 }
 
 TrackFragmentRunAtom *
@@ -878,7 +961,7 @@ TrackFragmentAtom::getTimestampForSampleNumber(uint32 sampleNumber, uint64& aTim
 
 int32
 TrackFragmentAtom::getNextBundledAccessUnits(uint32 *n, uint32 totalSampleRead,
-        GAU    *pgau)
+        GAU    *pgau, Oscl_Vector<PVPIFFProtectedSampleDecryptionInfo, OsclMemAllocator>*  apSampleDecryptionInfoVect)
 {
     int32 nReturn = -1;
 
@@ -890,7 +973,8 @@ TrackFragmentAtom::getNextBundledAccessUnits(uint32 *n, uint32 totalSampleRead,
     // save the sample number of the first sample in the bundle
     uint32 fNum = _currentTrackFragmentRunSampleNumber;
 
-    nReturn = getNextNSamples(_currentTrackFragmentRunSampleNumber, n, totalSampleRead, pgau);
+    PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentAtom::getNextNSamples- %u", _currentTrackFragmentRunSampleNumber));
+    nReturn = getNextNSamples(_currentTrackFragmentRunSampleNumber, n, totalSampleRead, pgau, apSampleDecryptionInfoVect);
 
     if (0 != *n)
     {

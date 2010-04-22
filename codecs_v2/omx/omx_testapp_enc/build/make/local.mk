@@ -27,8 +27,7 @@ SRCS := omx_threadsafe_callbacks.cpp \
 
 
 
-LIBS :=  pv_video_config_parser \
-			omx_common_lib \
+LIBS :=  		omx_common_lib \
 			omx_m4venc_component_lib \
 			omx_avcenc_component_lib \
 			omx_amrenc_component_lib \
@@ -69,9 +68,9 @@ LIBS :=  pv_video_config_parser \
 			pvomx_proxy_lib \
 			omx_queue_lib \
 			threadsafe_callback_ao \
+			pvlogger \
 			osclio \
 			osclproc \
-			pvlogger \
 			osclutil \
 			osclmemory \
 			osclerror \
@@ -80,4 +79,44 @@ LIBS :=  pv_video_config_parser \
 
 SYSLIBS += $(SYS_THREAD_LIB)
 
+# If user has not specified any test arguments
+ifeq ($(TEST_ARGS),)
+  
+# Run AMR test case number 2 as the default run target
+TEST_ARGS := -config $(SRC_ROOT)/codecs_v2/omx/omx_testapp_enc/data/amrenc_test_omx.txt -c amr -t 2 2
+
+#Enable the flag to run all other formats
+RUN_ALL_TARGETS:=1
+
+endif
+
 include $(MK)/prog.mk
+
+ifeq ($(RUN_ALL_TARGETS),1)
+
+run_omx_avcenc_test: REALTARGET:=$(REALTARGET)
+run_omx_avcenc_test: CW_DIR := $(LOCAL_PATH)
+
+run_omx_avcenc_test: $(REALTARGET)
+	$(call cd_and_run_test,$(CW_DIR),$(REALTARGET),-config $(SRC_ROOT)/codecs_v2/omx/omx_testapp_enc/data/avcenc_test_omx.txt -c avc)
+
+run_omx_mpeg4enc_test: REALTARGET:=$(REALTARGET)
+run_omx_mpeg4enc_test: CW_DIR := $(LOCAL_PATH)
+run_omx_mpeg4enc_test: $(REALTARGET)
+	$(call cd_and_run_test,$(CW_DIR),$(REALTARGET),-config $(SRC_ROOT)/codecs_v2/omx/omx_testapp_enc/data/m4venc_test_omx.txt -c mpeg4)
+
+run_omx_aacenc_test: REALTARGET:=$(REALTARGET)
+run_omx_aacenc_test: CW_DIR := $(LOCAL_PATH)
+
+run_omx_aacenc_test: $(REALTARGET)
+	$(call cd_and_run_test,$(CW_DIR),$(REALTARGET),-config $(SRC_ROOT)/codecs_v2/omx/omx_testapp_enc/data/aacenc_test_omx.txt -c aac)
+	
+run_omx_amrenc_test: REALTARGET:=$(REALTARGET)
+run_omx_amrenc_test: CW_DIR := $(LOCAL_PATH)
+
+run_omx_amrenc_test: $(REALTARGET)
+	$(call cd_and_run_test,$(CW_DIR),$(REALTARGET),-config $(SRC_ROOT)/codecs_v2/omx/omx_testapp_enc/data/amrenc_test_omx.txt -c amr)
+
+run_test_omxenc_client : run_omx_avcenc_test run_omx_mpeg4enc_test run_omx_aacenc_test run_omx_amrenc_test
+
+endif

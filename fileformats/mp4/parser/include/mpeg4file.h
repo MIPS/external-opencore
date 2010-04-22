@@ -138,7 +138,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
 
         MP4_ERROR_CODE getKeyMediaSampleNumAt(uint32 aTrackId,
                                               uint32 aKeySampleNum,
-                                              GAU    *pgau);
+                                              GAU    *pgau, Oscl_Vector<PVPIFFProtectedSampleDecryptionInfo, OsclMemAllocator>* aSampleDecryptionInfoVect = NULL);
 
         uint32 getNumKeyFrames(uint32 trackid)
         {
@@ -156,8 +156,9 @@ class Mpeg4File : public IMpeg4File, public Parentable
                                     uint32 &aKeySampleNum,
                                     uint32 id,
                                     uint32 *n,
-                                    GAU    *pgau)
+                                    GAU    *pgau, Oscl_Vector<PVPIFFProtectedSampleDecryptionInfo, OsclMemAllocator>* apSampleDecryptionInfoVect = NULL)
         {
+            OSCL_UNUSED_ARG(apSampleDecryptionInfoVect);
             if (_pmovieAtom == NULL)
             {
                 return READ_MOVIE_ATOM_FAILED;
@@ -168,8 +169,9 @@ class Mpeg4File : public IMpeg4File, public Parentable
         int32 getNextKeyMediaSample(uint32 &aKeySampleNum,
                                     uint32 id,
                                     uint32 *n,
-                                    GAU    *pgau)
+                                    GAU    *pgau, Oscl_Vector<PVPIFFProtectedSampleDecryptionInfo, OsclMemAllocator>* apSampleDecryptionInfoVect = NULL)
         {
+            OSCL_UNUSED_ARG(apSampleDecryptionInfoVect);
             if (_pmovieAtom == NULL)
             {
                 return READ_MOVIE_ATOM_FAILED;
@@ -381,7 +383,8 @@ class Mpeg4File : public IMpeg4File, public Parentable
                 uint32 *n,
                 MediaMetaInfo *mInfo);
 
-        virtual int32 getNextBundledAccessUnits(const uint32 trackID, uint32 *n, GAU *pgau);
+        virtual int32 getNextBundledAccessUnits(const uint32 trackID, uint32 *n, GAU *pgau,
+                                                Oscl_Vector<PVPIFFProtectedSampleDecryptionInfo , OsclMemAllocator>* pSampleDecryptionInfoVect = NULL);
         MovieFragmentAtom *getMovieFragmentForTrackId(uint32 id);
 
         uint32 getSampleCountInTrack(uint32 id);
@@ -437,6 +440,9 @@ class Mpeg4File : public IMpeg4File, public Parentable
         virtual bool IsMobileMP4();
 
         OSCL_wString& convertModificationTime(uint32 time);
+
+        //PIFF imeplementation pvt fxns
+        TrackEncryptionBoxContainer* ipTrckEncryptnBxCntr;
 
 //Metadata Retrieval Functions
 
@@ -878,6 +884,10 @@ class Mpeg4File : public IMpeg4File, public Parentable
 
         uint32 getTrackLevelOMA2DRMInfoSize(uint32 trackID);
         uint8* getTrackLevelOMA2DRMInfo(uint32 trackID);
+
+        virtual PIFF_PROTECTION_SYSTEM GetPIFFProtectionSystem();
+
+        virtual MP4_ERROR_CODE GetPIFFProtectionSystemSpecificData(const uint8*& aOpaqueData, uint32& aDataSize);
 
         MP4_ERROR_CODE RequestReadCapacityNotification(PvmiDataStreamObserver& aObserver,
                 TOsclFileOffset aFileOffset,

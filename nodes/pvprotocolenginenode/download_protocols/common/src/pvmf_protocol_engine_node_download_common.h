@@ -35,43 +35,43 @@
 ////////////////////////////////////////////////////////////////////////////////////
 //////  DownloadContainer
 ////////////////////////////////////////////////////////////////////////////////////
-class DownloadContainer : public ProtocolContainer
+class OSCL_IMPORT_REF DownloadContainer : public ProtocolContainer
 {
     public:
         // constructor
-        OSCL_IMPORT_REF DownloadContainer(PVMFProtocolEngineNode *aNode = NULL);
+        DownloadContainer(PVMFProtocolEngineNode *aNode = NULL);
         virtual ~DownloadContainer()
         {
             ;
         }
 
-        OSCL_IMPORT_REF virtual void deleteProtocolObjects();
-        OSCL_IMPORT_REF virtual int32 doPreStart();
-        OSCL_IMPORT_REF virtual bool doPause();
-        OSCL_IMPORT_REF virtual PVMFStatus doStop();
-        OSCL_IMPORT_REF virtual void doClear(const bool aNeedDelete = false);
-        OSCL_IMPORT_REF virtual void doCancelClear();
-        OSCL_IMPORT_REF virtual bool doInfoUpdate(const uint32 downloadStatus);
-        OSCL_IMPORT_REF virtual bool addSourceData(OsclAny* aSourceData);
-        OSCL_IMPORT_REF virtual bool createCfgFile(OSCL_String& aUri);
-        OSCL_IMPORT_REF virtual bool getProxy(OSCL_String& aProxyName, uint32 &aProxyPort);
-        OSCL_IMPORT_REF virtual void setHttpVersion(const uint32 aHttpVersion);
-        OSCL_IMPORT_REF virtual void setHttpExtensionHeaderField(OSCL_String &aFieldKey,
+        virtual void deleteProtocolObjects();
+        virtual int32 doPreStart();
+        virtual bool doPause();
+        virtual PVMFStatus doStop();
+        virtual void doClear(const bool aNeedDelete = false);
+        virtual void doCancelClear();
+        virtual bool doInfoUpdate(const uint32 downloadStatus);
+        virtual bool addSourceData(OsclAny* aSourceData);
+        virtual bool createCfgFile(OSCL_String& aUri);
+        virtual bool getProxy(OSCL_String& aProxyName, uint32 &aProxyPort);
+        virtual void setHttpVersion(const uint32 aHttpVersion);
+        virtual void setHttpExtensionHeaderField(OSCL_String &aFieldKey,
                 OSCL_String &aFieldValue,
                 const HttpMethod aMethod,
                 const bool aPurgeOnRedirect);
 
-        OSCL_IMPORT_REF virtual bool handleContentRangeUnmatch();
-        OSCL_IMPORT_REF virtual bool downloadUpdateForHttpHeaderAvailable();
-        OSCL_IMPORT_REF virtual bool isStreamingPlayback();
-        OSCL_IMPORT_REF virtual bool handleProtocolStateComplete(PVProtocolEngineNodeInternalEvent &aEvent, PVProtocolEngineNodeInternalEventHandler *aEventHandler);
-        OSCL_IMPORT_REF virtual void checkSendResumeNotification();
+        virtual bool handleContentRangeUnmatch();
+        virtual bool downloadUpdateForHttpHeaderAvailable();
+        virtual bool isStreamingPlayback();
+        virtual bool handleProtocolStateComplete(PVProtocolEngineNodeInternalEvent &aEvent, PVProtocolEngineNodeInternalEventHandler *aEventHandler);
+        virtual void checkSendResumeNotification();
 
     protected:
-        OSCL_IMPORT_REF virtual int32 initNodeOutput();
-        OSCL_IMPORT_REF virtual bool initProtocol_SetConfigInfo();
-        OSCL_IMPORT_REF virtual void initDownloadControl();
-        OSCL_IMPORT_REF virtual void updateDownloadControl(const bool isDownloadComplete = false);
+        virtual int32 initNodeOutput();
+        virtual bool initProtocol_SetConfigInfo();
+        virtual void initDownloadControl();
+        virtual void updateDownloadControl(const bool isDownloadComplete = false);
         virtual bool isDownloadComplete(const uint32 downloadStatus) const
         {
             return ((downloadStatus == PROCESS_SUCCESS_END_OF_MESSAGE ||
@@ -80,13 +80,13 @@ class DownloadContainer : public ProtocolContainer
                      downloadStatus == PROCESS_SUCCESS_END_OF_MESSAGE_BY_SERVER_DISCONNECT) &&
                     iInterfacingObjectContainer->isWholeSessionDone());
         }
-        OSCL_IMPORT_REF virtual bool ignoreThisTimeout(const int32 timerID);
+        virtual bool ignoreThisTimeout(const int32 timerID);
         virtual bool needToCheckResumeNotificationMaually()
         {
             return iNeedCheckResumeNotificationManually;
         }
-        OSCL_IMPORT_REF void setEventReporterSupportObjects();
-        OSCL_IMPORT_REF void requiredSocketReconnect(const bool aForceSocketReconnect = true);
+        void setEventReporterSupportObjects();
+        void requiredSocketReconnect(const bool aForceSocketReconnect = true);
 
     protected:
         bool iForceSocketReconnect;
@@ -150,11 +150,11 @@ class pvHttpDownloadOutput : public PVMFProtocolEngineNodeOutput
 
 // This class does auto-resume control and download progress update for event report
 class DownloadProgressInterface;
-class pvDownloadControl : public DownloadControlInterface
+class OSCL_IMPORT_REF pvDownloadControl : public DownloadControlInterface
 {
     public:
         // constructor, may leave for creating download clock
-        OSCL_IMPORT_REF pvDownloadControl();
+        pvDownloadControl();
         virtual ~pvDownloadControl()
         {
             clearBody();
@@ -168,17 +168,17 @@ class pvDownloadControl : public DownloadControlInterface
         //      protocol engine object,
         //      DownloadProgressInterface object,   (to get the clip duraton)
         //      PVMFProtocolEngineNodeOutput object
-        OSCL_IMPORT_REF void setSupportObject(OsclAny *aDLSupportObject, DownloadControlSupportObjectType aType);
+        void setSupportObject(OsclAny *aDLSupportObject, DownloadControlSupportObjectType aType);
 
         // From PVMFDownloadProgressInterface API pass down
-        OSCL_IMPORT_REF virtual void requestResumeNotification(const uint32 currentNPTReadPosition, bool& aDownloadComplete, bool& aNeedSendUnderflowEvent);
-        OSCL_IMPORT_REF void cancelResumeNotification();
+        virtual void requestResumeNotification(const uint32 currentNPTReadPosition, bool& aDownloadComplete, bool& aNeedSendUnderflowEvent);
+        void cancelResumeNotification();
 
         // check whether to make resume notification; if needed, then make resume notification
         // Return value: 1 means making resume notification normally (underflow->auto resume),
         //               2 means making resume notification for download complete
         //               0 means anything else
-        OSCL_IMPORT_REF virtual int32 checkResumeNotification(const bool aDownloadComplete = true);
+        virtual int32 checkResumeNotification(const bool aDownloadComplete = true);
 
         // From PVMFDownloadProgressInterface API
         virtual void getDownloadClock(OsclSharedPtr<PVMFMediaClock> &aClock)
@@ -196,7 +196,7 @@ class pvDownloadControl : public DownloadControlInterface
             iPrevDownloadSize = aPrevDownloadSize;
         }
 
-        OSCL_IMPORT_REF virtual void clear();
+        virtual void clear();
 
         // clear several fields for progressive playback repositioning
         virtual void clearPerRequest()
@@ -212,14 +212,14 @@ class pvDownloadControl : public DownloadControlInterface
     protected:
 
         // simple routine to focus on sending resume notification only
-        OSCL_IMPORT_REF virtual void sendResumeNotification(const bool aDownloadComplete);
-        OSCL_IMPORT_REF void sendDownloadCompleteNotification();
+        virtual void sendResumeNotification(const bool aDownloadComplete);
+        void sendDownloadCompleteNotification();
 
         // auto-resume playback decision
-        OSCL_IMPORT_REF bool isResumePlayback(const uint32 aDownloadRate, const uint32 aCurrDownloadSize, const uint32 aFileSize);
+        bool isResumePlayback(const uint32 aDownloadRate, const uint32 aCurrDownloadSize, const uint32 aFileSize);
 
         // create iDlProgressClock, will leave when memory allocation fails
-        OSCL_IMPORT_REF void createDownloadClock();
+        void createDownloadClock();
         virtual bool updateDownloadClock() = 0;
 
         // ready means, download clock has been created, and all the objects have passed down
@@ -232,10 +232,10 @@ class pvDownloadControl : public DownloadControlInterface
         };
 
         // called by isResumePlayback()
-        OSCL_IMPORT_REF virtual bool isDlAlgoPreConditionMet(const uint32 aDownloadRate,
-                const uint32 aDurationMsec,
-                const uint32 aCurrDownloadSize,
-                const uint32 aFileSize);
+        virtual bool isDlAlgoPreConditionMet(const uint32 aDownloadRate,
+                                             const uint32 aDurationMsec,
+                                             const uint32 aCurrDownloadSize,
+                                             const uint32 aFileSize);
 
         // update duration by new playback rate, called by checkAutoResumeAlgoWithConstraint
         virtual uint32 checkNewDuration(const uint32 aCurrDurationMsec)
@@ -269,19 +269,19 @@ class pvDownloadControl : public DownloadControlInterface
         }
 
         // with contraint: file size and clip duration are both available
-        OSCL_IMPORT_REF bool checkAutoResumeAlgoWithConstraint(const uint32 aDownloadRate,
-                const uint32 aRemainingDownloadSize,
-                const uint32 aDurationMsec,
-                const uint32 aFileSize);
+        bool checkAutoResumeAlgoWithConstraint(const uint32 aDownloadRate,
+                                               const uint32 aRemainingDownloadSize,
+                                               const uint32 aDurationMsec,
+                                               const uint32 aFileSize);
 
         // use fixed-point calculation to replace the float-point calculation: aRemainingDLSize<0.0009*aDownloadRate*aRemainingPlaybackTime
-        OSCL_IMPORT_REF virtual bool approveAutoResumeDecision(const uint32 aRemainingDLSize,
-                const uint32 aDownloadRate,
-                const uint32 aRemainingPlaybackTime);
+        virtual bool approveAutoResumeDecision(const uint32 aRemainingDLSize,
+                                               const uint32 aDownloadRate,
+                                               const uint32 aRemainingPlaybackTime);
 
         // old algorithm
-        OSCL_IMPORT_REF bool isResumePlaybackWithOldAlg(const uint32 aDownloadRate,
-                const uint32 aRemainingDownloadSize);
+        bool isResumePlaybackWithOldAlg(const uint32 aDownloadRate,
+                                        const uint32 aRemainingDownloadSize);
 
         virtual bool canRunAutoResumeAlgoWithConstraint(const uint32 aDurationMsec,
                 const uint32 aFileSize)
@@ -298,22 +298,22 @@ class pvDownloadControl : public DownloadControlInterface
 
 
         // handle overflow issue: // result = x*1000/y
-        OSCL_IMPORT_REF uint32 divisionInMilliSec(const uint32 x, const uint32 y);
+        uint32 divisionInMilliSec(const uint32 x, const uint32 y);
 
         // called by checkResumeNotification()
-        OSCL_IMPORT_REF bool checkSendingNotification(const bool aDownloadComplete = false);
+        bool checkSendingNotification(const bool aDownloadComplete = false);
 
         // set file size to parser node for the new API, setFileSize()
-        OSCL_IMPORT_REF virtual void setFileSize(const uint32 aFileSize);
-        OSCL_IMPORT_REF virtual void updateFileSize();
-        OSCL_IMPORT_REF bool getPlaybackTimeFromEngineClock(uint32 &aPlaybackTime);
+        virtual void setFileSize(const uint32 aFileSize);
+        virtual void updateFileSize();
+        bool getPlaybackTimeFromEngineClock(uint32 &aPlaybackTime);
         virtual void setProtocolInfo()
         {
             ;
         }
 
     private:
-        OSCL_IMPORT_REF void clearBody();
+        void clearBody();
 
 
     protected:
@@ -348,12 +348,12 @@ class pvDownloadControl : public DownloadControlInterface
 ////////////////////////////////////////////////////////////////////////////////////
 //////  DownloadProgress
 ////////////////////////////////////////////////////////////////////////////////////
-class DownloadProgress : public DownloadProgressInterface
+class OSCL_IMPORT_REF DownloadProgress : public DownloadProgressInterface
 {
     public:
 
         // cosntructor and destructor
-        OSCL_IMPORT_REF DownloadProgress();
+        DownloadProgress();
         virtual ~DownloadProgress()
         {
             reset();
@@ -365,13 +365,13 @@ class DownloadProgress : public DownloadProgressInterface
         //      config file object,         (for progressive download only)
         //      track selction container    (for fastrack download only)
         //      PVMFProtocolEngineNodeOutput object (for fasttrack download only)
-        OSCL_IMPORT_REF virtual void setSupportObject(OsclAny *aDLSupportObject, DownloadControlSupportObjectType aType);
+        virtual void setSupportObject(OsclAny *aDLSupportObject, DownloadControlSupportObjectType aType);
 
         // updata download progress
-        OSCL_IMPORT_REF bool update(const bool aDownloadComplete = false);
+        bool update(const bool aDownloadComplete = false);
 
         // return true for the new download progress
-        OSCL_IMPORT_REF bool getNewProgressPercent(uint32 &aProgressPercent);
+        bool getNewProgressPercent(uint32 &aProgressPercent);
 
         void setNewProgressPercent(const uint32 aProgressPercent)
         {
@@ -391,10 +391,10 @@ class DownloadProgress : public DownloadProgressInterface
 
 
     protected:
-        OSCL_IMPORT_REF virtual uint32 getClipDuration();
-        OSCL_IMPORT_REF virtual bool updateDownloadClock(const bool aDownloadComplete) = 0;
-        OSCL_IMPORT_REF virtual bool calculateDownloadPercent(uint32 &aDownloadProgressPercent);
-        OSCL_IMPORT_REF virtual void reset();
+        virtual uint32 getClipDuration();
+        virtual bool updateDownloadClock(const bool aDownloadComplete) = 0;
+        virtual bool calculateDownloadPercent(uint32 &aDownloadProgressPercent);
+        virtual void reset();
 
     protected:
         HttpBasedProtocol *iProtocol;
@@ -479,7 +479,7 @@ class PVMFDownloadDataSourceContainer
 ////////////////////////////////////////////////////////////////////////////////////
 //////  PVDlCfgFileContainer and its derived class definition
 ////////////////////////////////////////////////////////////////////////////////////
-class PVDlCfgFileContainer
+class OSCL_IMPORT_REF PVDlCfgFileContainer
 {
     public:
         virtual ~PVDlCfgFileContainer() {}
@@ -491,7 +491,7 @@ class PVDlCfgFileContainer
             iDataPathLogger = PVLogger::GetLoggerObject("datapath.sourcenode.protocolenginenode");
         }
 
-        OSCL_IMPORT_REF virtual PVMFStatus createCfgFile(OSCL_String &aUrl);
+        virtual PVMFStatus createCfgFile(OSCL_String &aUrl);
         void setDataSource(PVMFDownloadDataSourceContainer *aDataSource)
         {
             iDataSource = aDataSource;
@@ -516,8 +516,8 @@ class PVDlCfgFileContainer
         }
 
     protected:
-        OSCL_IMPORT_REF virtual PVMFStatus configCfgFile(OSCL_String &aUrl);
-        OSCL_IMPORT_REF PVMFStatus loadOldConfig(); // utility function for configCfgFile()
+        virtual PVMFStatus configCfgFile(OSCL_String &aUrl);
+        PVMFStatus loadOldConfig(); // utility function for configCfgFile()
 
     protected:
         OsclSharedPtr<PVDlCfgFile> iCfgFileObj;

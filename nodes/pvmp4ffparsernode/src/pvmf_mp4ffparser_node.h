@@ -114,6 +114,10 @@
 #include "pvmf_source_node_utils.h"
 #endif
 
+#ifndef PVMF_CPMPLUGIN_DECRYPTION_CONTEXT_H_INCLUDED
+#include "pvmf_cpmplugin_decryption_context.h"
+#endif
+
 #ifndef PVMF_MP4FF_MFRA_INFO_UPDATE_H_INCLUDED
 #include "pvmf_mp4_mfra_info_update.h"
 #endif
@@ -378,7 +382,7 @@ class PVMFMP4FFParserNode
         PVMFStatus InitImotionMetaData();
         uint32 CountImotionMetaDataKeys();
         int32 CountMetaDataKeys();
-        PVMFStatus CompleteInit(PVMFNodeCommand& aCmd);
+        PVMFStatus CompleteInit(PVMFNodeCommand& aCmd, PVMFStatus aStatus = PVMFSuccess);
         void CompleteCancelAfterInit();
 
         PVMFStatus DoPrepare();
@@ -575,7 +579,7 @@ class PVMFMP4FFParserNode
         void GetCPMContentType();
         bool GetCPMMetaDataExtensionInterface();
         void GetCPMLicenseInterface();
-        void RequestUsage(PVMP4FFNodeTrackOMA2DRMInfo* aInfo);
+        PVMFStatus RequestUsage(PVMP4FFNodeTrackOMA2DRMInfo* aInfo);
         void SendUsageComplete();
         void CloseCPMSession();
         void ResetCPM();
@@ -588,6 +592,7 @@ class PVMFMP4FFParserNode
         void CompleteGetLicense();
 
         void PopulateOMA1DRMInfo();
+        bool PopulatePIFFDRMInfo();
         /*
          * OMA2 DRM Related Methods
          */
@@ -684,7 +689,7 @@ class PVMFMP4FFParserNode
         int32 iDataRate;
         int32 minFileOffsetTrackID;
         uint32 iTotalMoofFrags;
-
+        bool    iCPMDecryptionDoneInplace;
         Oscl_Vector<PVMFMP4MfraInfoUpdate, OsclMemAllocator> iMoofInfoUpdateVec;
         bool iIsByteSeekNotSupported;
 };
@@ -738,4 +743,3 @@ class PVMFMP4FFPortIter : public PVMFPortIter
 };
 
 #endif // PVMF_MP4FFPARSER_NODE_H_INCLUDED
-

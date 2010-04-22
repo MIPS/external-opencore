@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,12 +43,22 @@ class test_result
         //the accumulated number of successes (including subtests)
         int m_success_count;
 
+        //the test time in ms
+        int m_elapsed_time;
+
 
     public:
+        //constructor
+        test_result();
+        virtual ~test_result();
         //set the name of the test
         void set_name(_STRING name);
         //get the name of the test
         _STRING get_name(void) const;
+        //set the elapsed time
+        void set_elapsed_time(int time);
+        //get the elapsed time
+        int get_elapsed_time(void) const;
         //add an error (problem in testing or error in test framework)
         void add_error(const test_problem& new_error);
         //add a failure (test for truth or equality failed)

@@ -163,12 +163,12 @@ class ProtocolStateObserver
 
 class RedirectComposer;
 // This class is based on state pattern, to encapsulate all state specific behavior.
-class ProtocolState : public HttpParsingBasicObjectObserver,
+class OSCL_IMPORT_REF ProtocolState : public HttpParsingBasicObjectObserver,
         public UserCommands
 {
     public:
         // has base implementation, basically create a templete
-        OSCL_IMPORT_REF virtual int32 processMicroState(INPUT_DATA_QUEUE &aDataQueue);
+        virtual int32 processMicroState(INPUT_DATA_QUEUE &aDataQueue);
 
         // protocol objects own these objects, observer, composer and parser
         // need to pass these objects down to state objects
@@ -199,7 +199,7 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
 
         // get functions to expose the information that node needs
         // The header could be http header, sdp or asf header
-        OSCL_IMPORT_REF virtual bool getHeader(Oscl_Vector<OsclRefCounterMemFrag, OsclMemAllocator> &aHeader) = 0;
+        virtual bool getHeader(Oscl_Vector<OsclRefCounterMemFrag, OsclMemAllocator> &aHeader) = 0;
         virtual uint32 getContentLength()
         {
             return (iParser == NULL ? 0 : iParser->getContentLength());
@@ -213,8 +213,8 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
             if (iParser == NULL || iParser->getContentLength() == 0) return 0;
             return iParser->getContentLength() - iParser->getDownloadSize();
         }
-        OSCL_IMPORT_REF virtual uint32 getDownloadRate();
-        OSCL_IMPORT_REF uint32 getDownloadTimeForEstimation();
+        virtual uint32 getDownloadRate();
+        uint32 getDownloadTimeForEstimation();
         uint32 getResponseStatusCode()
         {
             return (iParser == NULL ? 0 : iParser->getStatusCode());
@@ -377,8 +377,8 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
         /////// Following APIs are related composing and sending http request ///////
         /////////////////////////////////////////////////////////////////////////////
         // check all the info is ready for composing and sending a request
-        OSCL_IMPORT_REF virtual int32 processMicroStateSendRequestPreCheck();
-        OSCL_IMPORT_REF virtual int32 processMicroStateSendRequest();
+        virtual int32 processMicroStateSendRequestPreCheck();
+        virtual int32 processMicroStateSendRequest();
         int32 composeRequest(OsclMemoryFragment &aFrag);
         // By default HTTP GET method, derived class may need to override this one
         virtual void setRequestBasics() = 0;
@@ -389,28 +389,28 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
             ;
         }
         // do final compose, fixed for all derived classes
-        OSCL_IMPORT_REF virtual int32 doCompose(OsclMemoryFragment &aFrag);
-        OSCL_IMPORT_REF bool setExtensionFields(Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> &aExtensionHeaderKeys,
-                                                Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> &aExtensionHeaderValues,
-                                                Oscl_Vector<uint32, OsclMemAllocator> &aMaskBitForHTTPMethod,
-                                                Oscl_Vector<bool, OsclMemAllocator> &aExtensionHeadersPurgeOnRedirect,
-                                                const HTTPMethod aMethod = HTTP_METHOD_GET);
+        virtual int32 doCompose(OsclMemoryFragment &aFrag);
+        bool setExtensionFields(Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> &aExtensionHeaderKeys,
+                                Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> &aExtensionHeaderValues,
+                                Oscl_Vector<uint32, OsclMemAllocator> &aMaskBitForHTTPMethod,
+                                Oscl_Vector<bool, OsclMemAllocator> &aExtensionHeadersPurgeOnRedirect,
+                                const HTTPMethod aMethod = HTTP_METHOD_GET);
         virtual bool getProtocolRequestType()
         {
             return (uint32)ProtocolRequestType_Normaldata;
         }
 
         // HTTP basic/digest authentication (RFC 2617)
-        OSCL_IMPORT_REF bool constructAuthenHeader(OSCL_String &aUserID, OSCL_String &aPasswd);
+        bool constructAuthenHeader(OSCL_String &aUserID, OSCL_String &aPasswd);
 
         /////////////////////////////////////////////////////////////////////////////
         /////// Following APIs are related parsing http response ////////////////////
         /////////////////////////////////////////////////////////////////////////////
         // check all the info is ready for parsing a new response
-        OSCL_IMPORT_REF virtual int32 processMicroStateGetResponsePreCheck();
-        OSCL_IMPORT_REF virtual int32 processMicroStateGetResponse(INPUT_DATA_QUEUE &aDataQueue);
+        virtual int32 processMicroStateGetResponsePreCheck();
+        virtual int32 processMicroStateGetResponse(INPUT_DATA_QUEUE &aDataQueue);
         // shared routine for all the download protocols
-        OSCL_IMPORT_REF virtual int32 checkParsingStatus(int32 parsingStatus);
+        virtual int32 checkParsingStatus(int32 parsingStatus);
 
         virtual bool isDownloadStreamingDoneState()
         {
@@ -466,7 +466,7 @@ class ProtocolState : public HttpParsingBasicObjectObserver,
         // called by constructAuthenHeader()
         int32 base64enc(char *data, char *out);
 
-        OSCL_IMPORT_REF void deleteRedirectComposer();
+        void deleteRedirectComposer();
 
         ByteSeekMode iByteSeekMode;
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,3 +133,24 @@ FullAtom::getDefaultSize() const
 }
 
 
+ExtendedFullAtom::ExtendedFullAtom(MP4_FF_FILE* const& aFilePtr, uint32 aSize, uint32 aType, const uint8* const& aUserTypeUUID)
+        : ExtendedAtom(aFilePtr, aSize, aType, aUserTypeUUID)
+{
+    if (_success)
+    {
+        // Size and type set in Atom constructor
+        uint32 data;
+
+        if (!AtomUtils::read32(aFilePtr, data))
+        {
+            _mp4ErrorCode = READ_FAILED;
+            _success = false;
+            return;
+        }
+
+        _version = (uint8)(data >> 24);
+        _flags = data & 0x00ffffff;
+
+
+    }
+}

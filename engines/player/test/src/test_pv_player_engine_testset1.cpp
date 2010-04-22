@@ -4409,7 +4409,7 @@ void pvplayer_async_test_preparedstop::HandleInformationalEvent(const PVAsyncInf
             {
                 fprintf(iTestMsgOutputFile, "\n\nPVMFInfoSourceFormatUpdated event received\n");
                 const char* localBuf = (const char*)aEvent.GetLocalBuffer();
-                fprintf(iTestMsgOutputFile, "Format: %s\n\n", localBuf);
+                fprintf(iTestMsgOutputFile, "Length: %d, Format: %s\n\n", aEvent.GetLocalBufferSize(), localBuf);
                 iFormatUpdatedEventReceived = true;
             }
             break;

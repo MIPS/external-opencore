@@ -1832,12 +1832,18 @@ void PVMFMP3FFParserNode::CleanupFileSource()
         }
         // clear the vector element
         iClipInfoList.pop_back();
-        iPlaybackClipIndex = -1;
     }
 
     iPlaybackParserObj = NULL;
     iMetadataParserObj = NULL;
     iPlaylistExhausted = false;
+
+    iNumClipsInPlayList = 0;
+    iPlaybackClipIndex = -1;
+    iClipIndexForMetadata = -1;
+    iPlaylistRepositioning = false;
+    iNextInitializedClipIndex = -1;
+    iInitNextClip = false;
 
     if (iDataStreamInterface != NULL)
     {
@@ -1880,8 +1886,6 @@ void PVMFMP3FFParserNode::CleanupFileSource()
     oWaitingOnLicense = false;
     iDownloadComplete = false;
     iUseCPMPluginRegistry = false;
-
-    iInitNextClip = false;
 }
 
 /**
@@ -3337,25 +3341,14 @@ void PVMFSubNodeContainerBaseMp3::CommandDone(PVMFStatus aStatus, PVInterface*aE
                     (0, "PVMFCPMContainerMp3::CommandDone "));
     // Sub-node command is completed, process the result.
     OSCL_ASSERT(aStatus != PVMFPending);
+
+    iCmdState = EIdle;
+    PVMFStatus status = aStatus;
+
     // Pop the sub-node command vector.
     OSCL_ASSERT(!iContainer->iSubNodeCmdVec.empty());
     iContainer->iSubNodeCmdVec.erase(&iContainer->iSubNodeCmdVec.front());
 
-    iCmdState = EIdle;
-    PVMFStatus status = aStatus;
-    //Check whether the node command is being cancelled.
-    if (iCancelCmdState != EIdle)
-    {
-        if (!iContainer->iSubNodeCmdVec.empty())
-        {
-            //even if this command succeeded, we want to report
-            //the node command status as cancelled since some sub-node
-            //commands were not yet issued.
-            status = PVMFErrCancelled;
-            //go into an error state since the command is partially completed
-            iContainer->SetState(EPVMFNodeError);
-        }
-    }
     // Figure out the next step in the sequence
     // We need to finish all the subnode commands before completing the node
     // command. But, before continuing with the rest of the commands, store
@@ -3375,6 +3368,13 @@ void PVMFSubNodeContainerBaseMp3::CommandDone(PVMFStatus aStatus, PVInterface*aE
         OSCL_ASSERT(iContainer->IsCommandInProgress(iContainer->iCurrentCommand));
         iContainer->CommandComplete(iContainer->iCurrentCommand, iFirstSubNodeFailure, aExtMsg, aEventData);
         iFirstSubNodeFailure = PVMFSuccess;
+
+        // If cancel command pending and current command was cancelled
+        if (iCancelCmdState != EIdle)
+        {
+            // Complete the cancel command
+            CancelCommandDone(PVMFSuccess, NULL, NULL);
+        }
     }
 }
 

@@ -63,7 +63,8 @@ class test_base : public engine_test,
                 iTimerConnectionID(1),
                 iTimerTestTimeoutID(2),
                 iTimeoutConnectionInfo(0),
-                iTimeoutTestInfo(0)
+                iTimeoutTestInfo(0),
+                iStarttime(0)
         {
             iMaxTestDuration += aTimeConnection;
             iTestNum = iTestCounter;
@@ -217,6 +218,7 @@ class test_base : public engine_test,
         int32 iTimerTestTimeoutID;
         int32 iTimeoutConnectionInfo;
         int32 iTimeoutTestInfo;
+        uint32 iStarttime;
 };
 
 

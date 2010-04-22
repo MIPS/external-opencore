@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2008, The Android Open Source Project
  * Copyright (C) 2008 HTC Inc.
+ * Copyright (c) 2010, Code Aurora Forum. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +54,9 @@
 #endif
 #ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
 #include "pvmf_media_clock.h"
+#endif
+#ifndef ANDROID_CAMERA_INPUT_THREADSAFE_CALLBACK_H_INCLUDED
+#include "android_camera_input_threadsafe_callbacks.h"
 #endif
 
 using namespace android;
@@ -450,6 +454,9 @@ class AndroidCameraInput
         PVMFMediaClockNotificationsInterface *iClockNotificationsInf;
 
         uint32 iAudioFirstFrameTs;
+
+        //request active object which the camera input thread uses to schedule this timer object to run
+        AndroidCameraInputThreadSafeCallbackAO *iPostCameraFrameAO;
 };
 
 #endif // ANDROID_CAMERA_INPUT_H_INCLUDED

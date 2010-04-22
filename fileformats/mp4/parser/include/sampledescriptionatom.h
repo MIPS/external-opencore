@@ -72,7 +72,7 @@
 
 class ProtectionSchemeInformationBox;
 class SpeechSampleEntry3GPP2;
-
+class TrackEncryptionBox;
 class SampleDescriptionAtom : public FullAtom
 {
 
@@ -182,6 +182,8 @@ class SampleDescriptionAtom : public FullAtom
             }
             return 0;
         }
+
+        TrackEncryptionBox* GetTrackEncryptionBox() const;
 
         uint32 getTrackLevelOMA2DRMInfoSize();
         uint8* getTrackLevelOMA2DRMInfo();

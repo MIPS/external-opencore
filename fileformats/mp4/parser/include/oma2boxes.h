@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,10 @@
 #include "decoderspecificinfo.h"
 #endif
 
+#ifndef _PIFFBOXES_H_
+#include "piffboxes.h"
+#endif
+
 class OMADRMKMSBox : public FullAtom
 {
     public:
@@ -121,9 +125,14 @@ class SchemeInformationBox : public Atom
             return NULL;
         }
 
+        TrackEncryptionBox* GetTrackEncryptionBox() const
+        {
+            return ipTrackEncryptionBox;
+        }
+
     private:
         OMADRMKMSBox* _pOMADRMKMSBox;
-
+        TrackEncryptionBox* ipTrackEncryptionBox;
 };
 
 class OriginalFormatbox : public Atom
@@ -162,6 +171,13 @@ class ProtectionSchemeInformationBox : public Atom
             {
                 return (_pSchemeInformationBox->getTrackLevelOMA2DRMInfo());
             }
+            return NULL;
+        }
+
+        TrackEncryptionBox* GetTrackEncryptionBox() const
+        {
+            if (_pSchemeInformationBox)
+                return _pSchemeInformationBox->GetTrackEncryptionBox();
             return NULL;
         }
 

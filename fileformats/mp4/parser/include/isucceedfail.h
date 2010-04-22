@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@
 #ifndef OSCL_FILE_IO_H_INCLUDED
 #include "oscl_file_io.h"
 #endif
-
 
 #define MAX_ERROR_CODES 113
 
@@ -193,9 +192,9 @@ typedef enum {  READ_FAILED = -1,
 
                 EXCEED_MAX_LIMIT_SUPPORTED_FOR_TOTAL_TRACKS = 156,
                 READ_3GPP2_SPEECH_SAMPLE_ENTRY_FAILED = 157,
-
-                READ_ID3V2_ATOM_FAILED = 158
-
+                READ_ID3V2_ATOM_FAILED = 158,
+                PSSH_BOX_UNRECOGNISED_SYSTEM_ID = 159,
+                MP4_ERROR_CODE_LAST
              } MP4_ERROR_CODE;
 
 

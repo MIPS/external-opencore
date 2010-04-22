@@ -46,6 +46,9 @@
 #include "oscl_utf8conv.h"
 #endif
 
+#include "text_test_interpreter.h"
+
+
 #define PV_ARGSTR_LENGTH 128
 
 #define PV_OMX_MAX_COMPONENT_NAME_LEN 128
@@ -150,7 +153,6 @@ int local_main(FILE* filehandle, cmd_line* command_line)
     OMX_STRING ComponentName = NULL, Role = NULL;
     OMX_S32 ArgIndex = 0, FirstTest, LastTest;
     OMX_U32 Channels = 2;
-    OMX_BOOL InitSchedulerFlag = OMX_FALSE;
 
     //File format and band mode for Without marker test case, to be specified by user as ip argument
     OMX_AUDIO_AMRFRAMEFORMATTYPE AmrInputFileType;
@@ -161,6 +163,8 @@ int local_main(FILE* filehandle, cmd_line* command_line)
 
     //Whether log commands should go in a file
     OMX_BOOL IsLogFile = OMX_FALSE;
+
+    int result = 0;
 
     // OSCL Initializations
     OsclBase::Init();
@@ -185,6 +189,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
 
         oscl_strncpy(InFileName, argstr, oscl_strlen(argstr) + 1);
         pInputFile = fopen(InFileName, "rb");
+        fprintf(filehandle, "Input File to be decoded: %s\n", InFileName);
 
         //default is to run all tests.
         FirstTest = 0;
@@ -431,10 +436,10 @@ int local_main(FILE* filehandle, cmd_line* command_line)
     }
 
 
-    //Verify both input & output files are specified
-    if ((NULL == pInputFile) || (NULL == pOutputFile))
+    //Verify input file is specified
+    if (NULL == pInputFile)
     {
-        fprintf(filehandle, "One of the input/output file missing/corrupted, exit from here \n");
+        fprintf(filehandle, "Input file missing/corrupted, exit from here \n");
 
         if (ComponentName)
         {
@@ -483,687 +488,37 @@ int local_main(FILE* filehandle, cmd_line* command_line)
             OsclRefCounterSA<LogAppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
                 new OsclRefCounterSA<LogAppenderDestructDealloc<TextFileAppender<TimeAndIdLayout, 1024> > >(appender);
             refCounter = appenderRefCounter;
+
+            OsclSharedPtr<PVLoggerAppender> appenderPtr(appender, refCounter);
+
+            //Log all the loggers
+            PVLogger *rootnode = PVLogger::GetLoggerObject("");
+            rootnode->AddAppender(appenderPtr);
+            rootnode->SetLogLevel(PVLOGMSG_DEBUG);
         }
-        else
-        {
-            appender = new StdErrAppender<TimeAndIdLayout, 1024>();
-            OsclRefCounterSA<LogAppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > > *appenderRefCounter =
-                new OsclRefCounterSA<LogAppenderDestructDealloc<StdErrAppender<TimeAndIdLayout, 1024> > >(appender);
-            refCounter = appenderRefCounter;
 
-        }
+        //create a test suite
+        OmxDecTestSuite *pTestSuite = OSCL_NEW(OmxDecTestSuite, (filehandle, FirstTest, LastTest,
+                                               InFileName, InFileName2,
+                                               OutFileName, pRefFileName, ComponentName, Role,
+                                               ComponentFormat, Channels));
 
-        OsclSharedPtr<PVLoggerAppender> appenderPtr(appender, refCounter);
+        pTestSuite->run_test();     //Run the test
 
-        //Log all the loggers
-        PVLogger *rootnode = PVLogger::GetLoggerObject("");
-        rootnode->AddAppender(appenderPtr);
-        rootnode->SetLogLevel(PVLOGMSG_DEBUG);
+        //Create interpreter
+        text_test_interpreter interp;
 
+        //interpretating results and dumping them into a UnitTest_String
+        _STRING rs = interp.interpretation(pTestSuite->last_result());
 
-        //Run the tests
-        OMX_S32 CurrentTestNumber = FirstTest;
-        OmxComponentDecTest* pCurrentTest = NULL;
+        //Print in filehandle
+        fprintf(filehandle, "%s", rs.c_str());
 
-        while (CurrentTestNumber <= LastTest)
-        {
-            // Shutdown PVLogger and scheduler before checking mem stats
+        const test_result the_result = pTestSuite->last_result();
+        //if the success count is different from the total test count then return 1,else 0
+        result = (int)(the_result.success_count() != the_result.total_test_count());
 
-            switch (CurrentTestNumber)
-            {
-                case GET_ROLES_TEST:
-                {
-                    fprintf(filehandle, "\nStarting test %4d: GET_ROLES_TEST \n", (int32)CurrentTestNumber);
-
-                    pCurrentTest =  OSCL_NEW(OmxDecTestCompRole, (filehandle, pInputFile, pOutputFile,
-                                             OutFileName, pRefFileName, ComponentName, Role,
-                                             ComponentFormat, Channels));
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pCurrentTest->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pCurrentTest->StartTestApp();
-                    OSCL_DELETE(pCurrentTest);
-
-                    pCurrentTest = NULL;
-                    CurrentTestNumber++;
-
-                    fclose(pInputFile);
-                    pInputFile = NULL;
-                    fclose(pOutputFile);
-                    pOutputFile = NULL;
-                }
-                break;
-
-                case BUFFER_NEGOTIATION_TEST:
-                {
-                    fprintf(filehandle, "\nStarting test %4d: BUFFER_NEGOTIATION_TEST \n", (int32)CurrentTestNumber);
-
-                    pCurrentTest = OSCL_NEW(OmxDecTestBufferNegotiation, (filehandle, pInputFile, pOutputFile,
-                                            OutFileName, pRefFileName, ComponentName, Role,
-                                            ComponentFormat, Channels));
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pCurrentTest->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pCurrentTest->StartTestApp();
-
-                    OSCL_DELETE(pCurrentTest);
-
-                    pCurrentTest = NULL;
-                    CurrentTestNumber++;
-
-                }
-                break;
-
-                case DYNAMIC_PORT_RECONFIG:
-                {
-                    OMX_BOOL iCallbackFlag1, iCallbackFlag2;
-
-                    /* Run the testcase for FILE 1 */
-                    fprintf(filehandle, "\nStarting test %4d: DYNAMIC_PORT_RECONFIG for %s\n", (int32)CurrentTestNumber, InFileName);
-
-                    pInputFile = fopen(InFileName, "rb");
-                    pOutputFile = fopen(OutFileName, "wb");
-
-                    pCurrentTest = OSCL_NEW(OmxDecTestPortReconfig, (filehandle, pInputFile, pOutputFile,
-                                            OutFileName, pRefFileName, ComponentName, Role,
-                                            ComponentFormat, Channels));
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pCurrentTest->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pCurrentTest->StartTestApp();
-
-                    iCallbackFlag1 = pCurrentTest->iPortSettingsFlag;
-
-                    OSCL_DELETE(pCurrentTest);
-                    pCurrentTest = NULL;
-
-                    fclose(pInputFile);
-                    pInputFile = NULL;
-                    fclose(pOutputFile);
-                    pOutputFile = NULL;
-
-
-                    /* Run the test case for FILE 2 */
-                    if (0 != oscl_strcmp(InFileName2, "\0"))
-                    {
-                        pInputFile = fopen(InFileName2, "rb");
-                    }
-
-                    if (NULL == pInputFile)
-                    {
-                        fprintf(filehandle, "Cannot run this test for second input bitstream File Open Error\n");
-                        fprintf(filehandle, "DYNAMIC_PORT_RECONFIG Fail\n");
-                        CurrentTestNumber++;
-                        break;
-                    }
-
-                    pOutputFile = fopen(OutFileName, "wb");
-                    fprintf(filehandle, "\nStarting test %4d: DYNAMIC_PORT_RECONFIG for %s\n", (int32)CurrentTestNumber, InFileName2);
-
-                    pCurrentTest = OSCL_NEW(OmxDecTestPortReconfig, (filehandle, pInputFile, pOutputFile,
-                                            OutFileName, pRefFileName, ComponentName, Role,
-                                            ComponentFormat, Channels));
-
-                    pCurrentTest->StartTestApp();
-
-                    iCallbackFlag2 = pCurrentTest->iPortSettingsFlag;
-                    OSCL_DELETE(pCurrentTest);
-                    pCurrentTest = NULL;
-
-                    fclose(pInputFile);
-                    pInputFile = NULL;
-
-                    fclose(pOutputFile);
-                    pOutputFile = NULL;
-
-
-                    /*Verify the test case */
-                    if ((OMX_TRUE == iCallbackFlag1) || (OMX_TRUE == iCallbackFlag2))
-                    {
-                        fprintf(filehandle, "\nDYNAMIC_PORT_RECONFIG Success\n");
-                    }
-                    else
-                    {
-                        fprintf(filehandle, "\n No Port Settings Changed Callback arrived for either of the input bit-streams\n");
-                        fprintf(filehandle, "DYNAMIC_PORT_RECONFIG Fail\n");
-                    }
-
-                    CurrentTestNumber++;
-                }
-                break;
-
-                case PORT_RECONFIG_TRANSITION_TEST:
-                {
-                    fprintf(filehandle, "\nStarting test %4d: PORT_RECONFIG_TRANSITION_TEST\n", (int32)CurrentTestNumber);
-
-                    pInputFile = fopen(InFileName, "rb");
-                    pOutputFile = fopen(OutFileName, "wb");
-
-                    pCurrentTest = OSCL_NEW(OmxDecTestPortReconfigTransitionTest, (filehandle, pInputFile,
-                                            pOutputFile, OutFileName, pRefFileName, ComponentName,
-                                            Role, ComponentFormat, Channels));
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pCurrentTest->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pCurrentTest->StartTestApp();
-
-                    OSCL_DELETE(pCurrentTest);
-                    pCurrentTest = NULL;
-
-                    fclose(pInputFile);
-                    pInputFile = NULL;
-
-                    fclose(pOutputFile);
-                    pOutputFile = NULL;
-
-                    CurrentTestNumber++;
-                }
-                break;
-
-                case PORT_RECONFIG_TRANSITION_TEST_2:
-                {
-                    fprintf(filehandle, "\nStarting test %4d: PORT_RECONFIG_TRANSITION_TEST_2\n", (int32)CurrentTestNumber);
-
-                    pInputFile = fopen(InFileName, "rb");
-                    pOutputFile = fopen(OutFileName, "wb");
-
-                    pCurrentTest = OSCL_NEW(OmxDecTestPortReconfigTransitionTest_2, (filehandle, pInputFile,
-                                            pOutputFile, OutFileName, pRefFileName, ComponentName,
-                                            Role, ComponentFormat, Channels));
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pCurrentTest->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pCurrentTest->StartTestApp();
-
-                    OSCL_DELETE(pCurrentTest);
-                    pCurrentTest = NULL;
-
-                    fclose(pInputFile);
-                    pInputFile = NULL;
-
-                    fclose(pOutputFile);
-                    pOutputFile = NULL;
-                    CurrentTestNumber++;
-                }
-                break;
-
-                case PORT_RECONFIG_TRANSITION_TEST_3:
-                {
-                    fprintf(filehandle, "\nStarting test %4d: PORT_RECONFIG_TRANSITION_TEST_3\n", (int32)CurrentTestNumber);
-
-                    pInputFile = fopen(InFileName, "rb");
-                    pOutputFile = fopen(OutFileName, "wb");
-
-                    pCurrentTest = OSCL_NEW(OmxDecTestPortReconfigTransitionTest_3, (filehandle, pInputFile,
-                                            pOutputFile, OutFileName, pRefFileName, ComponentName,
-                                            Role, ComponentFormat, Channels));
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pCurrentTest->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pCurrentTest->StartTestApp();
-
-                    OSCL_DELETE(pCurrentTest);
-                    pCurrentTest = NULL;
-
-                    fclose(pInputFile);
-                    pInputFile = NULL;
-
-                    fclose(pOutputFile);
-                    pOutputFile = NULL;
-
-                    CurrentTestNumber++;
-                }
-                break;
-
-                case FLUSH_PORT_TEST:
-                {
-                    fprintf(filehandle, "\nStarting test %4d: FLUSH_PORT_TEST \n", (int32)CurrentTestNumber);
-
-                    pInputFile = fopen(InFileName, "rb");
-                    pOutputFile = fopen(OutFileName, "wb");
-
-                    pCurrentTest = OSCL_NEW(OmxDecTestFlushPort, (filehandle, pInputFile, pOutputFile,
-                                            OutFileName, pRefFileName, ComponentName, Role,
-                                            ComponentFormat, Channels));
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pCurrentTest->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pCurrentTest->StartTestApp();
-
-                    OSCL_DELETE(pCurrentTest);
-                    pCurrentTest = NULL;
-
-                    fclose(pInputFile);
-                    pInputFile = NULL;
-
-                    fclose(pOutputFile);
-                    pOutputFile = NULL;
-
-                    CurrentTestNumber++;
-                }
-                break;
-
-                case EOS_AFTER_FLUSH_PORT_TEST:
-                {
-                    fprintf(filehandle, "\nStarting test %4d: EOS_AFTER_FLUSH_PORT_TEST \n", (int32)CurrentTestNumber);
-
-                    pInputFile = fopen(InFileName, "rb");
-                    pOutputFile = fopen(OutFileName, "wb");
-
-                    pCurrentTest = OSCL_NEW(OmxDecTestEosAfterFlushPort, (filehandle, pInputFile, pOutputFile,
-                                            OutFileName, pRefFileName, ComponentName, Role,
-                                            ComponentFormat, Channels));
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pCurrentTest->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pCurrentTest->StartTestApp();
-
-                    OSCL_DELETE(pCurrentTest);
-                    pCurrentTest = NULL;
-
-                    fclose(pInputFile);
-                    pInputFile = NULL;
-
-                    fclose(pOutputFile);
-                    pOutputFile = NULL;
-                    CurrentTestNumber++;
-                }
-                break;
-
-                case MULTIPLE_INSTANCE_TEST:
-                {
-                    fprintf(filehandle, "\nStarting test %4d: MULTIPLE_INSTANCE_TEST \n", (int32)CurrentTestNumber);
-
-                    pCurrentTest = OSCL_NEW(OmxDecTestMultipleInstance, (filehandle, pInputFile, pOutputFile,
-                                            OutFileName, pRefFileName, ComponentName, Role,
-                                            ComponentFormat, Channels));
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pCurrentTest->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pCurrentTest->StartTestApp();
-
-                    OSCL_DELETE(pCurrentTest);
-                    pCurrentTest = NULL;
-
-                    CurrentTestNumber++;
-                }
-                break;
-
-
-                case NORMAL_SEQ_TEST:
-                {
-                    fprintf(filehandle, "\nStarting test %4d: NORMAL_SEQ_TEST \n", (int32)CurrentTestNumber);
-
-                    pInputFile = fopen(InFileName, "rb");
-                    pOutputFile = fopen(OutFileName, "wb");
-
-                    pCurrentTest = OSCL_NEW(OmxComponentDecTest, (filehandle, pInputFile, pOutputFile,
-                                            OutFileName, pRefFileName, ComponentName, Role,
-                                            ComponentFormat, Channels));
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pCurrentTest->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pCurrentTest->StartTestApp();
-
-                    OSCL_DELETE(pCurrentTest);
-                    pCurrentTest = NULL;
-
-                    fclose(pInputFile);
-                    pInputFile = NULL;
-
-                    CurrentTestNumber++;
-                }
-                break;
-
-                case NORMAL_SEQ_TEST_USEBUFF:
-                {
-                    fprintf(filehandle, "\nStarting test %4d: NORMAL_SEQ_TEST_USEBUFF \n", (int32)CurrentTestNumber);
-
-                    pInputFile = fopen(InFileName, "rb");
-                    pOutputFile = fopen(OutFileName, "wb");
-
-                    pCurrentTest = OSCL_NEW(OmxDecTestUseBuffer, (filehandle, pInputFile, pOutputFile,
-                                            OutFileName, pRefFileName, ComponentName, Role,
-                                            ComponentFormat, Channels));
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pCurrentTest->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pCurrentTest->StartTestApp();
-
-                    OSCL_DELETE(pCurrentTest);
-                    pCurrentTest = NULL;
-
-                    fclose(pInputFile);
-                    pInputFile = NULL;
-
-                    CurrentTestNumber++;
-                }
-                break;
-
-                case ENDOFSTREAM_MISSING_TEST:
-                {
-                    fprintf(filehandle, "\nStarting test %4d: ENDOFSTREAM_MISSING_TEST \n", (int32)CurrentTestNumber);
-
-                    pInputFile = fopen(InFileName, "rb");
-                    pOutputFile = fopen(OutFileName, "wb");
-
-                    pCurrentTest = OSCL_NEW(OmxDecTestEosMissing, (filehandle, pInputFile, pOutputFile,
-                                            OutFileName, pRefFileName, ComponentName, Role,
-                                            ComponentFormat, Channels));
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pCurrentTest->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pCurrentTest->StartTestApp();
-
-                    OSCL_DELETE(pCurrentTest);
-                    pCurrentTest = NULL;
-
-                    fclose(pInputFile);
-                    pInputFile = NULL;
-
-                    pOutputFile = NULL;
-
-                    CurrentTestNumber++;
-                }
-                break;
-
-
-                case PARTIAL_FRAMES_TEST:
-                {
-                    fprintf(filehandle, "\nStarting test %4d: PARTIAL_FRAMES_TEST \n", (int32)CurrentTestNumber);
-
-                    pInputFile = fopen(InFileName, "rb");
-                    pOutputFile = fopen(OutFileName, "wb");
-
-                    pCurrentTest = OSCL_NEW(OmxDecTestPartialFrames, (filehandle, pInputFile, pOutputFile,
-                                            OutFileName, pRefFileName, ComponentName, Role,
-                                            ComponentFormat, Channels));
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pCurrentTest->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pCurrentTest->StartTestApp();
-
-                    OSCL_DELETE(pCurrentTest);
-                    pCurrentTest = NULL;
-                    fclose(pInputFile);
-                    pInputFile = NULL;
-                    CurrentTestNumber++;
-                }
-                break;
-
-                case EXTRA_PARTIAL_FRAMES_TEST:
-                {
-                    fprintf(filehandle, "\nStarting test %4d: EXTRA_PARTIAL_FRAMES_TEST \n", (int32)CurrentTestNumber);
-
-                    pInputFile = fopen(InFileName, "rb");
-                    pOutputFile = fopen(OutFileName, "wb");
-
-                    pCurrentTest = OSCL_NEW(OmxDecTestExtraPartialFrames, (filehandle, pInputFile, pOutputFile,
-                                            OutFileName, pRefFileName, ComponentName, Role,
-                                            ComponentFormat, Channels));
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pCurrentTest->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pCurrentTest->StartTestApp();
-
-                    OSCL_DELETE(pCurrentTest);
-                    pCurrentTest = NULL;
-
-                    fclose(pInputFile);
-                    pInputFile = NULL;
-
-                    CurrentTestNumber++;
-                }
-                break;
-
-                case INPUT_OUTPUT_BUFFER_BUSY_TEST:
-                {
-                    fprintf(filehandle, "\nStarting test %4d: INPUT_OUTPUT_BUFFER_BUSY_TEST \n", (int32)CurrentTestNumber);
-
-                    pInputFile = fopen(InFileName, "rb");
-                    pOutputFile = fopen(OutFileName, "wb");
-
-                    pCurrentTest = OSCL_NEW(OmxDecTestBufferBusy, (filehandle, pInputFile, pOutputFile,
-                                            OutFileName, pRefFileName, ComponentName, Role,
-                                            ComponentFormat, Channels));
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pCurrentTest->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pCurrentTest->StartTestApp();
-
-                    OSCL_DELETE(pCurrentTest);
-                    pCurrentTest = NULL;
-
-                    fclose(pInputFile);
-                    pInputFile = NULL;
-
-                    CurrentTestNumber++;
-                }
-                break;
-
-
-                case PAUSE_RESUME_TEST:
-                {
-                    fprintf(filehandle, "\nStarting test %4d: PAUSE_RESUME_TEST \n", (int32)CurrentTestNumber);
-
-                    pInputFile = fopen(InFileName, "rb");
-                    pOutputFile = fopen(OutFileName, "wb");
-
-                    pCurrentTest = OSCL_NEW(OmxDecTestPauseResume, (filehandle, pInputFile, pOutputFile,
-                                            OutFileName, pRefFileName, ComponentName, Role,
-                                            ComponentFormat, Channels));
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pCurrentTest->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pCurrentTest->StartTestApp();
-
-                    OSCL_DELETE(pCurrentTest);
-                    pCurrentTest = NULL;
-
-                    fclose(pInputFile);
-                    pInputFile = NULL;
-
-                    CurrentTestNumber++;
-                }
-                break;
-
-                case REPOSITIONING_TEST:
-                {
-                    fprintf(filehandle, "\nStarting test %4d: REPOSITIONING_TEST \n", (int32)CurrentTestNumber);
-
-                    pInputFile = fopen(InFileName, "rb");
-                    pOutputFile = fopen(OutFileName, "wb");
-
-                    pCurrentTest = OSCL_NEW(OmxDecTestReposition, (filehandle, pInputFile, pOutputFile,
-                                            OutFileName, pRefFileName, ComponentName, Role,
-                                            ComponentFormat, Channels));
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pCurrentTest->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pCurrentTest->StartTestApp();
-
-                    OSCL_DELETE(pCurrentTest);
-                    pCurrentTest = NULL;
-
-                    fclose(pInputFile);
-                    pInputFile = NULL;
-
-                    CurrentTestNumber++;
-                }
-                break;
-
-                case MISSING_NAL_TEST:
-                {
-                    fprintf(filehandle, "\nStarting test %4d: MISSING_NAL_TEST\n", (int32)CurrentTestNumber);
-
-                    pInputFile = fopen(InFileName, "rb");
-                    pOutputFile = fopen(OutFileName, "wb");
-
-                    pCurrentTest = OSCL_NEW(OmxDecTestMissingNALTest, (filehandle, pInputFile, pOutputFile,
-                                            OutFileName, pRefFileName, ComponentName, Role,
-                                            ComponentFormat, Channels));
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pCurrentTest->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pCurrentTest->StartTestApp();
-
-                    OSCL_DELETE(pCurrentTest);
-                    pCurrentTest = NULL;
-
-                    fclose(pInputFile);
-                    pInputFile = NULL;
-
-                    fclose(pOutputFile);
-                    pOutputFile = NULL;
-
-                    CurrentTestNumber++;
-                }
-                break;
-
-                case CORRUPT_NAL_TEST:
-                {
-                    fprintf(filehandle, "\nStarting test %4d: CORRUPT_NAL_TEST\n", (int32)CurrentTestNumber);
-
-                    pInputFile = fopen(InFileName, "rb");
-                    pOutputFile = fopen(OutFileName, "wb");
-
-                    pCurrentTest = OSCL_NEW(OmxDecTestCorruptNALTest, (filehandle, pInputFile, pOutputFile,
-                                            OutFileName, pRefFileName, ComponentName, Role,
-                                            ComponentFormat, Channels));
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pCurrentTest->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pCurrentTest->StartTestApp();
-
-                    OSCL_DELETE(pCurrentTest);
-                    pCurrentTest = NULL;
-
-                    fclose(pInputFile);
-                    pInputFile = NULL;
-
-                    fclose(pOutputFile);
-                    pOutputFile = NULL;
-
-                    CurrentTestNumber++;
-                }
-                break;
-
-                case INCOMPLETE_NAL_TEST:
-                {
-                    fprintf(filehandle, "\nStarting test %4d: INCOMPLETE_NAL_TEST\n", (int32)CurrentTestNumber);
-
-                    pInputFile = fopen(InFileName, "rb");
-                    pOutputFile = fopen(OutFileName, "wb");
-
-                    pCurrentTest = OSCL_NEW(OmxDecTestIncompleteNALTest, (filehandle, pInputFile, pOutputFile,
-                                            OutFileName, pRefFileName, ComponentName, Role,
-                                            ComponentFormat, Channels));
-
-                    if (OMX_FALSE == InitSchedulerFlag)
-                    {
-                        pCurrentTest->InitScheduler();
-                        InitSchedulerFlag = OMX_TRUE;
-                    }
-
-                    pCurrentTest->StartTestApp();
-
-                    OSCL_DELETE(pCurrentTest);
-                    pCurrentTest = NULL;
-
-                    fclose(pInputFile);
-                    pInputFile = NULL;
-
-                    fclose(pOutputFile);
-                    pOutputFile = NULL;
-
-                    CurrentTestNumber++;
-                }
-                break;
-
-                default:
-                {
-                    // just skip the count
-                    CurrentTestNumber++;
-                }
-                break;
-            }
-        }
+        OSCL_DELETE(pTestSuite);
 
         if (ComponentName)
         {
@@ -1180,6 +535,10 @@ int local_main(FILE* filehandle, cmd_line* command_line)
             fclose(pInputFile);
         }
 
+        if (pOutputFile)
+        {
+            fclose(pOutputFile);
+        }
     }
 
     //Uninstall the scheduler
@@ -1192,8 +551,507 @@ int local_main(FILE* filehandle, cmd_line* command_line)
     OsclBase::Cleanup();
     mem_lock_mutex.Close();
 
-    return 0;
+    return result;
 }
+
+
+OmxDecTestSuite::OmxDecTestSuite(FILE *filehandle, const int32 &aFirstTest,
+                                 const int32 &aLastTest,
+                                 char aInFileName[], char aInFileName2[], char aOutFileName[],
+                                 char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
+                                 char aFormat[], OMX_U32 aChannels)
+        : iWrapper(NULL)
+{
+    iWrapper = OSCL_NEW(OmxDecTest_wrapper , (filehandle, aFirstTest, aLastTest, aInFileName, aInFileName2,
+                        aOutFileName, aRefFileName, aName, aRole,
+                        aFormat, aChannels));
+    adopt_test_case(iWrapper);
+}
+
+OmxDecTest_wrapper::OmxDecTest_wrapper(FILE *filehandle, const int32 &aFirstTest,
+                                       const int32 &aLastTest,
+                                       char aInFileName[], char aInFileName2[], char aOutFileName[],
+                                       char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
+                                       char aFormat[], OMX_U32 aChannels) :
+        iTestApp(NULL),
+        iCurrentTestNumber(0),
+        iFirstTest(aFirstTest),
+        iLastTest(aLastTest),
+        iFilehandle(filehandle),
+        iInitSchedulerFlag(OMX_FALSE),
+        iName(aName),
+        iRole(aRole),
+        iNumberOfChannels(aChannels),
+        iTotalSuccess(0),
+        iTotalError(0),
+        iTotalFail(0)
+{
+    oscl_strncpy(iInFileName, aInFileName, oscl_strlen(aInFileName) + 1);
+    oscl_strncpy(iInFileName2, aInFileName2, oscl_strlen(aInFileName2) + 1);
+    oscl_strncpy(iOutFileName, aOutFileName, oscl_strlen(aOutFileName) + 1);
+    oscl_strncpy(iRefFile, aRefFileName, oscl_strlen(aRefFileName) + 1);
+    oscl_strncpy(iFormat, aFormat, oscl_strlen(aFormat) + 1);
+}
+
+void OmxDecTest_wrapper::test()
+{
+    //Run the tests
+    FILE* pInputFile = NULL;
+    FILE* pOutputFile = NULL;
+    OMX_BOOL OutfileOpen = OMX_FALSE;
+
+    iCurrentTestNumber = iFirstTest;
+
+    while (iCurrentTestNumber <= iLastTest)
+    {
+        OutfileOpen = OMX_FALSE;
+        // Shutdown PVLogger and scheduler before checking mem stats
+        switch (iCurrentTestNumber)
+        {
+            case GET_ROLES_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: GET_ROLES_TEST \n", (int32)iCurrentTestNumber);
+                iTestApp =  OSCL_NEW(OmxDecTestCompRole, (iFilehandle, pInputFile, pOutputFile,
+                                     iOutFileName, iRefFile, iName, iRole,
+                                     iFormat, iNumberOfChannels, this));
+            }
+            break;
+
+            case BUFFER_NEGOTIATION_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: BUFFER_NEGOTIATION_TEST \n", (int32)iCurrentTestNumber);
+                iTestApp = OSCL_NEW(OmxDecTestBufferNegotiation, (iFilehandle, pInputFile, pOutputFile,
+                                    iOutFileName, iRefFile, iName, iRole,
+                                    iFormat, iNumberOfChannels, this));
+
+            }
+            break;
+
+            case DYNAMIC_PORT_RECONFIG:
+            {
+                OMX_BOOL iCallbackFlag1, iCallbackFlag2;
+
+                /* Run the testcase for FILE 1 */
+                fprintf(iFilehandle, "\nStarting test %4d: DYNAMIC_PORT_RECONFIG for %s\n", (int32)iCurrentTestNumber, iInFileName);
+
+                pInputFile = fopen(iInFileName, "rb");
+                if (0 != oscl_strcmp(iOutFileName, "\0"))
+                {
+                    pOutputFile = fopen(iOutFileName, "wb");
+                }
+
+                iTestApp = OSCL_NEW(OmxDecTestPortReconfig, (iFilehandle, pInputFile, pOutputFile,
+                                    iOutFileName, iRefFile, iName, iRole,
+                                    iFormat, iNumberOfChannels, this));
+
+                if (OMX_FALSE == iInitSchedulerFlag)
+                {
+                    iTestApp->InitScheduler();
+                    iInitSchedulerFlag = OMX_TRUE;
+                }
+
+                iTestApp->StartTestApp();
+
+                iCallbackFlag1 = iTestApp->iPortSettingsFlag;
+
+                OSCL_DELETE(iTestApp);
+                iTestApp = NULL;
+
+                fclose(pInputFile);
+                pInputFile = NULL;
+
+                if (pOutputFile)
+                {
+                    fclose(pOutputFile);
+                    pOutputFile = NULL;
+                }
+
+
+                /* Run the test case for FILE 2 */
+                if (0 != oscl_strcmp(iInFileName2, "\0"))
+                {
+                    pInputFile = fopen(iInFileName2, "rb");
+                }
+
+                if (NULL == pInputFile)
+                {
+                    fprintf(iFilehandle, "Cannot run this test for second input bitstream File Open Error\n");
+                    fprintf(iFilehandle, "DYNAMIC_PORT_RECONFIG Fail\n");
+                    break;
+                }
+
+                if (0 != oscl_strcmp(iOutFileName, "\0"))
+                {
+                    pOutputFile = fopen(iOutFileName, "wb");
+                }
+                fprintf(iFilehandle, "\nStarting test %4d: DYNAMIC_PORT_RECONFIG for %s\n", (int32)iCurrentTestNumber, iInFileName2);
+
+                iTestApp = OSCL_NEW(OmxDecTestPortReconfig, (iFilehandle, pInputFile, pOutputFile,
+                                    iOutFileName, iRefFile, iName, iRole,
+                                    iFormat, iNumberOfChannels, this));
+
+                iTestApp->StartTestApp();
+
+                iCallbackFlag2 = iTestApp->iPortSettingsFlag;
+                OSCL_DELETE(iTestApp);
+                iTestApp = NULL;
+
+                fclose(pInputFile);
+                pInputFile = NULL;
+
+                if (pOutputFile)
+                {
+                    fclose(pOutputFile);
+                    pOutputFile = NULL;
+                }
+
+
+                /*Verify the test case */
+                if ((OMX_TRUE == iCallbackFlag1) || (OMX_TRUE == iCallbackFlag2))
+                {
+                    fprintf(iFilehandle, "\nDYNAMIC_PORT_RECONFIG Success\n");
+                }
+                else
+                {
+                    fprintf(iFilehandle, "\n No Port Settings Changed Callback arrived for either of the input bit-streams\n");
+                    fprintf(iFilehandle, "DYNAMIC_PORT_RECONFIG Fail\n");
+                }
+            }
+            break;
+
+            case PORT_RECONFIG_TRANSITION_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: PORT_RECONFIG_TRANSITION_TEST\n", (int32)iCurrentTestNumber);
+
+                pInputFile = fopen(iInFileName, "rb");
+                if (0 != oscl_strcmp(iOutFileName, "\0"))
+                {
+                    pOutputFile = fopen(iOutFileName, "wb");
+                    OutfileOpen = OMX_TRUE;
+                }
+
+                iTestApp = OSCL_NEW(OmxDecTestPortReconfigTransitionTest, (iFilehandle, pInputFile, pOutputFile,
+                                    iOutFileName, iRefFile, iName, iRole,
+                                    iFormat, iNumberOfChannels, this));
+            }
+            break;
+
+            case PORT_RECONFIG_TRANSITION_TEST_2:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: PORT_RECONFIG_TRANSITION_TEST_2\n", (int32)iCurrentTestNumber);
+
+                pInputFile = fopen(iInFileName, "rb");
+                if (0 != oscl_strcmp(iOutFileName, "\0"))
+                {
+                    pOutputFile = fopen(iOutFileName, "wb");
+                    OutfileOpen = OMX_TRUE;
+                }
+
+                iTestApp = OSCL_NEW(OmxDecTestPortReconfigTransitionTest_2, (iFilehandle, pInputFile, pOutputFile,
+                                    iOutFileName, iRefFile, iName, iRole,
+                                    iFormat, iNumberOfChannels, this));
+            }
+            break;
+
+            case PORT_RECONFIG_TRANSITION_TEST_3:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: PORT_RECONFIG_TRANSITION_TEST_3\n", (int32)iCurrentTestNumber);
+
+                pInputFile = fopen(iInFileName, "rb");
+                if (0 != oscl_strcmp(iOutFileName, "\0"))
+                {
+                    pOutputFile = fopen(iOutFileName, "wb");
+                    OutfileOpen = OMX_TRUE;
+                }
+
+                iTestApp = OSCL_NEW(OmxDecTestPortReconfigTransitionTest_3, (iFilehandle, pInputFile, pOutputFile,
+                                    iOutFileName, iRefFile, iName, iRole,
+                                    iFormat, iNumberOfChannels, this));
+            }
+            break;
+
+            case FLUSH_PORT_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: FLUSH_PORT_TEST \n", (int32)iCurrentTestNumber);
+
+                pInputFile = fopen(iInFileName, "rb");
+                if (0 != oscl_strcmp(iOutFileName, "\0"))
+                {
+                    pOutputFile = fopen(iOutFileName, "wb");
+                    OutfileOpen = OMX_TRUE;
+                }
+
+                iTestApp = OSCL_NEW(OmxDecTestFlushPort, (iFilehandle, pInputFile, pOutputFile,
+                                    iOutFileName, iRefFile, iName, iRole,
+                                    iFormat, iNumberOfChannels, this));
+            }
+            break;
+
+            case EOS_AFTER_FLUSH_PORT_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: EOS_AFTER_FLUSH_PORT_TEST \n", (int32)iCurrentTestNumber);
+
+                pInputFile = fopen(iInFileName, "rb");
+                if (0 != oscl_strcmp(iOutFileName, "\0"))
+                {
+                    pOutputFile = fopen(iOutFileName, "wb");
+                    OutfileOpen = OMX_TRUE;
+                }
+
+                iTestApp = OSCL_NEW(OmxDecTestEosAfterFlushPort, (iFilehandle, pInputFile, pOutputFile,
+                                    iOutFileName, iRefFile, iName, iRole,
+                                    iFormat, iNumberOfChannels, this));
+            }
+            break;
+
+            case MULTIPLE_INSTANCE_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: MULTIPLE_INSTANCE_TEST \n", (int32)iCurrentTestNumber);
+
+                iTestApp = OSCL_NEW(OmxDecTestMultipleInstance, (iFilehandle, pInputFile, pOutputFile,
+                                    iOutFileName, iRefFile, iName, iRole,
+                                    iFormat, iNumberOfChannels, this));
+            }
+            break;
+
+
+            case NORMAL_SEQ_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: NORMAL_SEQ_TEST \n", (int32)iCurrentTestNumber);
+
+                pInputFile = fopen(iInFileName, "rb");
+                if (0 != oscl_strcmp(iOutFileName, "\0"))
+                {
+                    pOutputFile = fopen(iOutFileName, "wb");
+                }
+
+                iTestApp = OSCL_NEW(OmxComponentDecTest, (iFilehandle, pInputFile, pOutputFile,
+                                    iOutFileName, iRefFile, iName, iRole,
+                                    iFormat, iNumberOfChannels, this));
+            }
+            break;
+
+            case NORMAL_SEQ_TEST_USEBUFF:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: NORMAL_SEQ_TEST_USEBUFF \n", (int32)iCurrentTestNumber);
+
+                pInputFile = fopen(iInFileName, "rb");
+                if (0 != oscl_strcmp(iOutFileName, "\0"))
+                {
+                    pOutputFile = fopen(iOutFileName, "wb");
+                }
+
+                iTestApp = OSCL_NEW(OmxDecTestUseBuffer, (iFilehandle, pInputFile, pOutputFile,
+                                    iOutFileName, iRefFile, iName, iRole,
+                                    iFormat, iNumberOfChannels, this));
+            }
+            break;
+
+            case ENDOFSTREAM_MISSING_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: ENDOFSTREAM_MISSING_TEST \n", (int32)iCurrentTestNumber);
+
+                pInputFile = fopen(iInFileName, "rb");
+                if (0 != oscl_strcmp(iOutFileName, "\0"))
+                {
+                    pOutputFile = fopen(iOutFileName, "wb");
+                }
+
+                iTestApp = OSCL_NEW(OmxDecTestEosMissing, (iFilehandle, pInputFile, pOutputFile,
+                                    iOutFileName, iRefFile, iName, iRole,
+                                    iFormat, iNumberOfChannels, this));
+            }
+            break;
+
+
+            case PARTIAL_FRAMES_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: PARTIAL_FRAMES_TEST \n", (int32)iCurrentTestNumber);
+
+                pInputFile = fopen(iInFileName, "rb");
+                if (0 != oscl_strcmp(iOutFileName, "\0"))
+                {
+                    pOutputFile = fopen(iOutFileName, "wb");
+                }
+
+                iTestApp = OSCL_NEW(OmxDecTestPartialFrames, (iFilehandle, pInputFile, pOutputFile,
+                                    iOutFileName, iRefFile, iName, iRole,
+                                    iFormat, iNumberOfChannels, this));
+            }
+            break;
+
+            case EXTRA_PARTIAL_FRAMES_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: EXTRA_PARTIAL_FRAMES_TEST \n", (int32)iCurrentTestNumber);
+
+                pInputFile = fopen(iInFileName, "rb");
+                if (0 != oscl_strcmp(iOutFileName, "\0"))
+                {
+                    pOutputFile = fopen(iOutFileName, "wb");
+                }
+
+                iTestApp = OSCL_NEW(OmxDecTestExtraPartialFrames, (iFilehandle, pInputFile, pOutputFile,
+                                    iOutFileName, iRefFile, iName, iRole,
+                                    iFormat, iNumberOfChannels, this));
+            }
+            break;
+
+            case INPUT_OUTPUT_BUFFER_BUSY_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: INPUT_OUTPUT_BUFFER_BUSY_TEST \n", (int32)iCurrentTestNumber);
+
+                pInputFile = fopen(iInFileName, "rb");
+                if (0 != oscl_strcmp(iOutFileName, "\0"))
+                {
+                    pOutputFile = fopen(iOutFileName, "wb");
+                }
+
+                iTestApp = OSCL_NEW(OmxDecTestBufferBusy, (iFilehandle, pInputFile, pOutputFile,
+                                    iOutFileName, iRefFile, iName, iRole,
+                                    iFormat, iNumberOfChannels, this));
+            }
+            break;
+
+
+            case PAUSE_RESUME_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: PAUSE_RESUME_TEST \n", (int32)iCurrentTestNumber);
+
+                pInputFile = fopen(iInFileName, "rb");
+                if (0 != oscl_strcmp(iOutFileName, "\0"))
+                {
+                    pOutputFile = fopen(iOutFileName, "wb");
+                }
+
+                iTestApp = OSCL_NEW(OmxDecTestPauseResume, (iFilehandle, pInputFile, pOutputFile,
+                                    iOutFileName, iRefFile, iName, iRole,
+                                    iFormat, iNumberOfChannels, this));
+            }
+            break;
+
+            case REPOSITIONING_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: REPOSITIONING_TEST \n", (int32)iCurrentTestNumber);
+
+                pInputFile = fopen(iInFileName, "rb");
+                if (0 != oscl_strcmp(iOutFileName, "\0"))
+                {
+                    pOutputFile = fopen(iOutFileName, "wb");
+                }
+
+                iTestApp = OSCL_NEW(OmxDecTestReposition, (iFilehandle, pInputFile, pOutputFile,
+                                    iOutFileName, iRefFile, iName, iRole,
+                                    iFormat, iNumberOfChannels, this));
+            }
+            break;
+
+            case MISSING_NAL_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: MISSING_NAL_TEST\n", (int32)iCurrentTestNumber);
+
+                pInputFile = fopen(iInFileName, "rb");
+                if (0 != oscl_strcmp(iOutFileName, "\0"))
+                {
+                    pOutputFile = fopen(iOutFileName, "wb");
+                    OutfileOpen = OMX_TRUE;
+                }
+
+                iTestApp = OSCL_NEW(OmxDecTestMissingNALTest, (iFilehandle, pInputFile, pOutputFile,
+                                    iOutFileName, iRefFile, iName, iRole,
+                                    iFormat, iNumberOfChannels, this));
+            }
+            break;
+
+            case CORRUPT_NAL_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: CORRUPT_NAL_TEST\n", (int32)iCurrentTestNumber);
+
+                pInputFile = fopen(iInFileName, "rb");
+                if (0 != oscl_strcmp(iOutFileName, "\0"))
+                {
+                    pOutputFile = fopen(iOutFileName, "wb");
+                    OutfileOpen = OMX_TRUE;
+                }
+
+                iTestApp = OSCL_NEW(OmxDecTestCorruptNALTest, (iFilehandle, pInputFile, pOutputFile,
+                                    iOutFileName, iRefFile, iName, iRole,
+                                    iFormat, iNumberOfChannels, this));
+            }
+            break;
+
+            case INCOMPLETE_NAL_TEST:
+            {
+                fprintf(iFilehandle, "\nStarting test %4d: INCOMPLETE_NAL_TEST\n", (int32)iCurrentTestNumber);
+
+                pInputFile = fopen(iInFileName, "rb");
+                if (0 != oscl_strcmp(iOutFileName, "\0"))
+                {
+                    pOutputFile = fopen(iOutFileName, "wb");
+                    OutfileOpen = OMX_TRUE;
+                }
+
+                iTestApp = OSCL_NEW(OmxDecTestIncompleteNALTest, (iFilehandle, pInputFile, pOutputFile,
+                                    iOutFileName, iRefFile, iName, iRole,
+                                    iFormat, iNumberOfChannels, this));
+
+            }
+            break;
+
+            default:
+            {
+                // don't do anything here
+            }
+            break;
+        }
+
+
+        if (iTestApp != NULL)
+        {
+            if (OMX_FALSE == iInitSchedulerFlag)
+            {
+                iTestApp->InitScheduler();
+                iInitSchedulerFlag = OMX_TRUE;
+            }
+
+            iTestApp->StartTestApp();
+            OSCL_DELETE(iTestApp);
+
+            iTestApp = NULL;
+            // Go to next test
+            iCurrentTestNumber++;
+
+            if (pInputFile)
+            {
+                fclose(pInputFile);
+                pInputFile = NULL;
+            }
+
+            if (OMX_TRUE == OutfileOpen)
+            {
+                fclose(pOutputFile);
+                pOutputFile = NULL;
+            }
+        }
+        else
+        {
+            ++iCurrentTestNumber;
+        }
+    }
+}
+
+
+void OmxDecTest_wrapper::TestCompleted()
+{
+    // Print out the result for this test case
+    const test_result the_result = this->last_result();
+    fprintf(iFilehandle, "Results for Test Case %d:\n", iCurrentTestNumber);
+    fprintf(iFilehandle, "  Successes %d, Failures %d\n"
+            , the_result.success_count() - iTotalSuccess, the_result.failures().size() - iTotalFail);
+    iTotalSuccess = the_result.success_count();
+    iTotalFail = the_result.failures().size();
+    iTotalError = the_result.errors().size();
+}
+
 
 
 OMX_ERRORTYPE OmxComponentDecTest::GetInput()
@@ -3345,8 +3203,16 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWma()
 bool OmxComponentDecTest::WriteOutput(OMX_U8* aOutBuff, OMX_U32 aSize)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::WriteOutput() called, Num of bytes %d", aSize));
+    OMX_U32 BytesWritten;
+    if (ipOutputFile)
+    {
+        BytesWritten = fwrite(aOutBuff, sizeof(OMX_U8), aSize, ipOutputFile);
+    }
+    else
+    {
+        BytesWritten = aSize;
+    }
 
-    OMX_U32 BytesWritten = fwrite(aOutBuff, sizeof(OMX_U8), aSize, ipOutputFile);
     return (BytesWritten == aSize);
 }
 
@@ -3984,7 +3850,33 @@ void OmxComponentDecTest::Run()
             }
 #endif
 
-            VerifyOutput(TestName);
+            if (ipOutputFile)
+            {
+                VerifyOutput(TestName);
+            }
+            else
+            {
+                if (OMX_FALSE == iTestStatus)
+                {
+#ifdef PRINT_RESULT
+                    fprintf(iConsOutFile, "%s: Fail \n", TestName);
+                    OMX_DEC_TEST(false);
+                    iTestCase->TestCompleted();
+#endif
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
+                                    (0, "OmxComponentDecTest::Run() - %s : Fail", TestName));
+                }
+                else
+                {
+#ifdef PRINT_RESULT
+                    fprintf(iConsOutFile, "%s: Success {Output file not available} \n", TestName);
+                    OMX_DEC_TEST(true);
+                    iTestCase->TestCompleted();
+#endif
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
+                                    (0, "OmxComponentDecTest::Run() - %s : Success {Output file not available}", TestName));
+                }
+            }
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentDecTest::Run() - StateStop OUT"));
 
@@ -4114,6 +4006,8 @@ void OmxComponentDecTest::VerifyOutput(OMX_U8 aTestName[])
 
 #ifdef PRINT_RESULT
                     fprintf(iConsOutFile, "%s: Fail {Output not bit-exact}\n", aTestName);
+                    OMX_DEC_TEST(false);
+                    iTestCase->TestCompleted();
 #endif
                 }
                 else
@@ -4123,6 +4017,8 @@ void OmxComponentDecTest::VerifyOutput(OMX_U8 aTestName[])
 
 #ifdef PRINT_RESULT
                     fprintf(iConsOutFile, "%s: Success {Output Bit-exact}\n", aTestName);
+                    OMX_DEC_TEST(true);
+                    iTestCase->TestCompleted();
 #endif
                 }
 
@@ -4131,6 +4027,8 @@ void OmxComponentDecTest::VerifyOutput(OMX_U8 aTestName[])
             {
 #ifdef PRINT_RESULT
                 fprintf(iConsOutFile, "%s: Fail {Output not bit-exact}\n", aTestName);
+                OMX_DEC_TEST(false);
+                iTestCase->TestCompleted();
 #endif
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                                 (0, "OmxComponentDecTest::VerifyOutput() - %s : Fail {Output not bit-exact}", aTestName));
@@ -4148,6 +4046,8 @@ void OmxComponentDecTest::VerifyOutput(OMX_U8 aTestName[])
             {
 #ifdef PRINT_RESULT
                 fprintf(iConsOutFile, "%s: Fail \n", aTestName);
+                OMX_DEC_TEST(false);
+                iTestCase->TestCompleted();
 #endif
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
@@ -4157,6 +4057,8 @@ void OmxComponentDecTest::VerifyOutput(OMX_U8 aTestName[])
             {
 #ifdef PRINT_RESULT
                 fprintf(iConsOutFile, "%s: Success {Ref file not available} \n", aTestName);
+                OMX_DEC_TEST(true);
+                iTestCase->TestCompleted();
 #endif
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
@@ -4179,6 +4081,8 @@ void OmxComponentDecTest::VerifyOutput(OMX_U8 aTestName[])
         {
 #ifdef PRINT_RESULT
             fprintf(iConsOutFile, "%s: Fail \n", aTestName);
+            OMX_DEC_TEST(false);
+            iTestCase->TestCompleted();
 #endif
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                             (0, "OmxComponentDecTest::VerifyOutput() - %s : Fail", aTestName));
@@ -4187,6 +4091,8 @@ void OmxComponentDecTest::VerifyOutput(OMX_U8 aTestName[])
         {
 #ifdef PRINT_RESULT
             fprintf(iConsOutFile, "%s: Success {Ref file not available} \n", aTestName);
+            OMX_DEC_TEST(true);
+            iTestCase->TestCompleted();
 #endif
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
                             (0, "OmxComponentDecTest::VerifyOutput() - %s : Success {Ref file not available}", aTestName));

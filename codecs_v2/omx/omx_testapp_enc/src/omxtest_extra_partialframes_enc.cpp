@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -799,6 +799,51 @@ void OmxEncTestExtraPartialFrames::Run()
         }
         break;
 
+        case StateDisablePort:
+        {
+            OMX_BOOL Status = OMX_TRUE;
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentEncTest::Run() - StateDisablePort IN"));
+
+            if (!iDisableRun)
+            {
+                Status = HandlePortDisable();
+                if (OMX_FALSE == Status)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                    (0, "OmxComponentEncTest::Run() - Error occured in this state, StateDisablePort OUT"));
+                    iState = StateError;
+                    RunIfNotReady();
+                    break;
+                }
+
+                RunIfNotReady();
+            }
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentEncTest::Run() - StateDisablePort OUT"));
+        }
+        break;
+
+        case StateDynamicReconfig:
+        {
+            OMX_BOOL Status = OMX_TRUE;
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentEncTest::Run() - StateDynamicReconfig IN"));
+
+            Status = HandlePortReEnable();
+            if (OMX_FALSE == Status)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "OmxComponentEncTest::Run() - Error occured in this state, StateDynamicReconfig OUT"));
+                iState = StateError;
+                RunIfNotReady();
+                break;
+            }
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxComponentEncTest::Run() - StateDynamicReconfig OUT"));
+        }
+        break;
+
         case StateExecuting:
         {
             static OMX_BOOL EosFlag = OMX_FALSE;
@@ -1069,6 +1114,8 @@ void OmxEncTestExtraPartialFrames::Run()
                                 (0, "OmxEncTestExtraPartialFrames::Run() - %s: Fail", TestName));
 #ifdef PRINT_RESULT
                 printf("%s: Fail \n", TestName);
+                OMX_ENC_TEST(false);
+                iTestCase->TestCompleted();
 #endif
 
             }

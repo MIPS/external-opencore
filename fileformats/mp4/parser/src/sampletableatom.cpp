@@ -1717,6 +1717,7 @@ uint64 SampleTableAtom::resetTrackByTime(uint64 time, bool oDependsOn)
     else
     {
         _currentPlaybackSampleNumber = 0;
+        _currentPlaybackSampleTimestamp = 0;
         _currChunkOffset  = 0;
         trueTS = 0;
         _ptimeToSampleAtom->ResetStateVariables();

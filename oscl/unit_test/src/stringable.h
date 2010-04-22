@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,14 @@ _STRING valueToString(const int & value)
 {
     char buffer[32];
     sprintf(buffer, "%d", value);
+    return buffer;
+}
+
+inline
+_STRING valueToString(const double & value)
+{
+    char buffer[32];
+    sprintf(buffer, "%f", value);
     return buffer;
 }
 

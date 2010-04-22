@@ -25,6 +25,10 @@
 
 #include <stdio.h>
 
+#ifndef TEST_CASE_H
+#include "test_case.h"
+#endif
+
 #ifndef OMXDECTESTBASE_H_INCLUDED
 #include "omxdectestbase.h"
 #endif
@@ -51,32 +55,7 @@
 #define PRINT_RESULT
 
 
-enum DecTests
-{
-    GET_ROLES_TEST = 0,
-    BUFFER_NEGOTIATION_TEST,
-    DYNAMIC_PORT_RECONFIG,
-    PORT_RECONFIG_TRANSITION_TEST,
-    PORT_RECONFIG_TRANSITION_TEST_2,
-    PORT_RECONFIG_TRANSITION_TEST_3,
-    FLUSH_PORT_TEST,
-    EOS_AFTER_FLUSH_PORT_TEST,
-    MULTIPLE_INSTANCE_TEST,
 
-    NORMAL_SEQ_TEST = 11,
-    NORMAL_SEQ_TEST_USEBUFF,
-    ENDOFSTREAM_MISSING_TEST,
-    WITHOUT_MARKER_BIT_TEST,
-    PARTIAL_FRAMES_TEST,
-    EXTRA_PARTIAL_FRAMES_TEST,
-    INPUT_OUTPUT_BUFFER_BUSY_TEST,
-    PAUSE_RESUME_TEST,
-    REPOSITIONING_TEST,
-
-    MISSING_NAL_TEST = 21,
-    CORRUPT_NAL_TEST,
-    INCOMPLETE_NAL_TEST
-};
 
 class AVCBitstreamObject;
 
@@ -89,6 +68,8 @@ static unsigned char NAL_START_CODE[4] = {0, 0, 0, 1};
 // this definition should be in pv_omxdefs.h
 //#define INSERT_NAL_START_CODE
 
+//This macro helps to keep the TestCase pass/fail count
+#define OMX_DEC_TEST( condition ) (this->iTestCase->test_is_true_stub( (condition), (#condition), __FILE__, __LINE__ ))
 
 /* Macro to reset the structure for GetParemeter call and also to set the size and version of it*/
 #define INIT_GETPARAMETER_STRUCT(name, str)\
@@ -124,23 +105,108 @@ static unsigned char NAL_START_CODE[4] = {0, 0, 0, 1};
     }
 
 
+
+class OmxComponentDecTest;
+
+// test_base-based class which will run async tests on pvPlayer engine
+class OmxDecTest_wrapper : public test_case
+
+{
+    public:
+        OmxDecTest_wrapper(FILE *filehandle, const int32 &aFirstTest, const int32 &aLastTest,
+                           char aInFileName[], char aInFileName2[], char aOutFileName[],
+                           char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
+                           char aFormat[], OMX_U32 aChannels);
+
+        // From test_case
+        virtual void test();
+        //This function will help us to act like an observer
+        void TestCompleted();
+
+        enum DecTests
+        {
+            GET_ROLES_TEST = 0,
+            BUFFER_NEGOTIATION_TEST,
+            DYNAMIC_PORT_RECONFIG,
+            PORT_RECONFIG_TRANSITION_TEST,
+            PORT_RECONFIG_TRANSITION_TEST_2,
+            PORT_RECONFIG_TRANSITION_TEST_3,
+            FLUSH_PORT_TEST,
+            EOS_AFTER_FLUSH_PORT_TEST,
+            MULTIPLE_INSTANCE_TEST,
+
+            NORMAL_SEQ_TEST = 11,
+            NORMAL_SEQ_TEST_USEBUFF,
+            ENDOFSTREAM_MISSING_TEST,
+            WITHOUT_MARKER_BIT_TEST,
+            PARTIAL_FRAMES_TEST,
+            EXTRA_PARTIAL_FRAMES_TEST,
+            INPUT_OUTPUT_BUFFER_BUSY_TEST,
+            PAUSE_RESUME_TEST,
+            REPOSITIONING_TEST,
+
+            MISSING_NAL_TEST = 21,
+            CORRUPT_NAL_TEST,
+            INCOMPLETE_NAL_TEST
+        };
+
+
+    private:
+        OmxComponentDecTest* iTestApp;
+        int32 iCurrentTestNumber;
+        int32 iFirstTest;
+        int32 iLastTest;
+
+        FILE *iFilehandle;
+        OMX_BOOL iInitSchedulerFlag;
+
+        char        iInFileName[200];
+        char        iInFileName2[200];
+        char        iOutFileName[200];
+        char        iRefFile[200];
+        OMX_STRING iName;
+        OMX_STRING iRole;
+        char        iFormat[10];
+        uint32     iNumberOfChannels;
+
+        // For test results
+        int32 iTotalSuccess;
+        int32 iTotalError;
+        int32 iTotalFail;
+};
+
+
+//Omx Decoder test suite
+class OmxDecTestSuite : public test_case
+{
+    public:
+        OmxDecTestSuite(FILE *filehandle, const int32 &aFirstTest,
+                        const int32 &aLastTest,
+                        char aInFileName[], char aInFileName2[], char aOutFileName[],
+                        char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
+                        char aFormat[], OMX_U32 aChannels);
+    private:
+        OmxDecTest_wrapper *iWrapper;
+};
+
+
 //Main AO class for the TestApplication
 class OmxComponentDecTest : public OmxDecTestBase
 {
     public:
 
-        OmxComponentDecTest(FILE* aConsOutFile, FILE* aInputFile, FILE* aOutputFile, char aOutFileName[],
+        OmxComponentDecTest(FILE *filehandle, FILE* aInputFile, FILE* aOutputFile, char aOutFileName[],
                             char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
-                            char aFormat[], OMX_U32 aChannels) :
+                            char aFormat[], OMX_U32 aChannels, OmxDecTest_wrapper *aTestCase) : OmxDecTestBase("OMX_Comp_DecTestApp")
 
-                OmxDecTestBase("OMX_Comp_DecTestApp")
-                , iConsOutFile(aConsOutFile)
-                , ipInputFile(aInputFile)
-                , ipOutputFile(aOutputFile)
-                , iName(aName)
-                , iRole(aRole)
-                , iNumberOfChannels(aChannels)
         {
+            iConsOutFile = filehandle;
+            ipInputFile = aInputFile;
+            ipOutputFile = aOutputFile;
+            iName = aName;
+            iRole = aRole;
+            iNumberOfChannels = aChannels;
+
             oscl_strncpy(iOutFileName, aOutFileName, oscl_strlen(aOutFileName) + 1);
             oscl_strncpy(iRefFile, aRefFileName, oscl_strlen(aRefFileName) + 1);
             oscl_strncpy(iFormat, aFormat, oscl_strlen(aFormat) + 1);
@@ -161,12 +227,16 @@ class OmxComponentDecTest : public OmxDecTestBase
             iDecTimeScale = 1000;
             iOmxTimeScale = 1000000;
             iInputTimestampClock.set_timescale(iDecTimeScale); // keep the timescale set to input timestamp
+
+            iTestCase = aTestCase;
         }
 
         void VerifyOutput(OMX_U8 aTestName[]);
 
         //Keep it public to be accessed from main()
         OMX_BOOL iPortSettingsFlag;
+
+        OmxDecTest_wrapper *iTestCase;
 
     protected:
         FILE*       iConsOutFile;
@@ -244,11 +314,11 @@ class OmxDecTestUseBuffer : public OmxComponentDecTest
 
         OmxDecTestUseBuffer(FILE* aConsOutFile, FILE* aInputFile, FILE* aOutputFile, char aOutFileName[],
                             char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
-                            char aFormat[], OMX_U32 aChannels) :
+                            char aFormat[], OMX_U32 aChannels, OmxDecTest_wrapper *aTestCase) :
 
                 OmxComponentDecTest(aConsOutFile, aInputFile, aOutputFile, aOutFileName,
                                     aRefFileName, aName, aRole, aFormat,
-                                    aChannels)
+                                    aChannels, aTestCase)
         { };
 
     private:
@@ -263,11 +333,11 @@ class OmxDecTestEosMissing : public OmxComponentDecTest
 
         OmxDecTestEosMissing(FILE* aConsOutFile, FILE* aInputFile, FILE* aOutputFile, char aOutFileName[],
                              char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
-                             char aFormat[], OMX_U32 aChannels) :
+                             char aFormat[], OMX_U32 aChannels, OmxDecTest_wrapper *aTestCase) :
 
                 OmxComponentDecTest(aConsOutFile, aInputFile, aOutputFile, aOutFileName,
                                     aRefFileName, aName, aRole, aFormat,
-                                    aChannels)
+                                    aChannels, aTestCase)
         { };
 
     private:
@@ -284,11 +354,11 @@ class OmxDecTestWithoutMarker : public OmxComponentDecTest
         OmxDecTestWithoutMarker(FILE* aConsOutFile, FILE* aInputFile, FILE* aOutputFile, char aOutFileName[],
                                 char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
                                 char aFormat[], OMX_U32 aChannels, OMX_AUDIO_AMRFRAMEFORMATTYPE aAmrFileType,
-                                OMX_AUDIO_AMRBANDMODETYPE aAMRFileBandMode) :
+                                OMX_AUDIO_AMRBANDMODETYPE aAMRFileBandMode, OmxDecTest_wrapper *aTestCase) :
 
                 OmxComponentDecTest(aConsOutFile, aInputFile, aOutputFile, aOutFileName,
                                     aRefFileName, aName, aRole, aFormat,
-                                    aChannels)
+                                    aChannels, aTestCase)
         {
             iAmrFileType = aAmrFileType;
             iAmrFileMode = aAMRFileBandMode;
@@ -306,11 +376,11 @@ class OmxDecTestPartialFrames : public OmxComponentDecTest
 
         OmxDecTestPartialFrames(FILE* aConsOutFile, FILE* aInputFile, FILE* aOutputFile, char aOutFileName[],
                                 char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
-                                char aFormat[], OMX_U32 aChannels) :
+                                char aFormat[], OMX_U32 aChannels, OmxDecTest_wrapper *aTestCase) :
 
                 OmxComponentDecTest(aConsOutFile, aInputFile, aOutputFile, aOutFileName,
                                     aRefFileName, aName, aRole, aFormat,
-                                    aChannels)
+                                    aChannels, aTestCase)
         { };
 
     private:
@@ -325,11 +395,11 @@ class OmxDecTestExtraPartialFrames : public OmxComponentDecTest
 
         OmxDecTestExtraPartialFrames(FILE* aConsOutFile, FILE* aInputFile, FILE* aOutputFile, char aOutFileName[],
                                      char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
-                                     char aFormat[], OMX_U32 aChannels) :
+                                     char aFormat[], OMX_U32 aChannels, OmxDecTest_wrapper *aTestCase) :
 
                 OmxComponentDecTest(aConsOutFile, aInputFile, aOutputFile, aOutFileName,
                                     aRefFileName, aName, aRole, aFormat,
-                                    aChannels)
+                                    aChannels, aTestCase)
         { };
 
     private:
@@ -346,11 +416,11 @@ class OmxDecTestBufferBusy : public OmxComponentDecTest
 
         OmxDecTestBufferBusy(FILE* aConsOutFile, FILE* aInputFile, FILE* aOutputFile, char aOutFileName[],
                              char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
-                             char aFormat[], OMX_U32 aChannels) :
+                             char aFormat[], OMX_U32 aChannels, OmxDecTest_wrapper *aTestCase) :
 
                 OmxComponentDecTest(aConsOutFile, aInputFile, aOutputFile, aOutFileName,
                                     aRefFileName, aName, aRole, aFormat,
-                                    aChannels)
+                                    aChannels, aTestCase)
         { };
 
     private:
@@ -365,11 +435,11 @@ class OmxDecTestPauseResume : public OmxComponentDecTest
 
         OmxDecTestPauseResume(FILE* aConsOutFile, FILE* aInputFile, FILE* aOutputFile, char aOutFileName[],
                               char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
-                              char aFormat[], OMX_U32 aChannels) :
+                              char aFormat[], OMX_U32 aChannels, OmxDecTest_wrapper *aTestCase) :
 
                 OmxComponentDecTest(aConsOutFile, aInputFile, aOutputFile, aOutFileName,
                                     aRefFileName, aName, aRole, aFormat,
-                                    aChannels)
+                                    aChannels, aTestCase)
         {
             iFrameCount = 0;
             iPauseCommandSent = OMX_FALSE;
@@ -391,11 +461,11 @@ class OmxDecTestReposition : public OmxComponentDecTest
 
         OmxDecTestReposition(FILE* aConsOutFile, FILE* aInputFile, FILE* aOutputFile, char aOutFileName[],
                              char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
-                             char aFormat[], OMX_U32 aChannels) :
+                             char aFormat[], OMX_U32 aChannels, OmxDecTest_wrapper *aTestCase) :
 
                 OmxComponentDecTest(aConsOutFile, aInputFile, aOutputFile, aOutFileName,
                                     aRefFileName, aName, aRole, aFormat,
-                                    aChannels)
+                                    aChannels, aTestCase)
         {
             iFrameCount = 0;
             iRepositionCommandSent = OMX_FALSE;
@@ -426,11 +496,11 @@ class OmxDecTestMissingNALTest : public OmxComponentDecTest
 
         OmxDecTestMissingNALTest(FILE* aConsOutFile, FILE* aInputFile, FILE* aOutputFile, char aOutFileName[],
                                  char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
-                                 char aFormat[], OMX_U32 aChannels) :
+                                 char aFormat[], OMX_U32 aChannels, OmxDecTest_wrapper *aTestCase) :
 
                 OmxComponentDecTest(aConsOutFile, aInputFile, aOutputFile, aOutFileName,
                                     aRefFileName, aName, aRole, aFormat,
-                                    aChannels)
+                                    aChannels, aTestCase)
         {
             iFramesDropped = 0;
         };
@@ -450,11 +520,11 @@ class OmxDecTestCorruptNALTest : public OmxComponentDecTest
 
         OmxDecTestCorruptNALTest(FILE* aConsOutFile, FILE* aInputFile, FILE* aOutputFile, char aOutFileName[],
                                  char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
-                                 char aFormat[], OMX_U32 aChannels) :
+                                 char aFormat[], OMX_U32 aChannels, OmxDecTest_wrapper *aTestCase) :
 
                 OmxComponentDecTest(aConsOutFile, aInputFile, aOutputFile, aOutFileName,
                                     aRefFileName, aName, aRole, aFormat,
-                                    aChannels)
+                                    aChannels, aTestCase)
         {
             iFramesCorrupt = 0;
             iBitError = 0;
@@ -474,11 +544,11 @@ class OmxDecTestIncompleteNALTest : public OmxComponentDecTest
 
         OmxDecTestIncompleteNALTest(FILE* aConsOutFile, FILE* aInputFile, FILE* aOutputFile, char aOutFileName[],
                                     char aRefFileName[], OMX_STRING aName, OMX_STRING aRole,
-                                    char aFormat[], OMX_U32 aChannels) :
+                                    char aFormat[], OMX_U32 aChannels, OmxDecTest_wrapper *aTestCase) :
 
                 OmxComponentDecTest(aConsOutFile, aInputFile, aOutputFile, aOutFileName,
                                     aRefFileName, aName, aRole, aFormat,
-                                    aChannels)
+                                    aChannels, aTestCase)
         {
             iIncompleteFrames = 0;
         };

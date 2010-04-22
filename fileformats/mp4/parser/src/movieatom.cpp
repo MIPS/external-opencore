@@ -37,14 +37,16 @@
 #include "oscl_media_data.h"
 #include "pv_gau.h"
 #include "media_clock_converter.h"
-
 typedef Oscl_Vector<TrackAtom*, OsclMemAllocator> trackAtomVecType;
+
+#include "piffboxes.h"
 
 // Stream-in ctor
 OSCL_EXPORT_REF MovieAtom::MovieAtom(MP4_FF_FILE *fp,
                                      OSCL_wString& filename,
                                      uint32 size,
                                      uint32 type,
+                                     TrackEncryptionBoxContainer*& apTrckEncryptnBx,
                                      bool oPVContent,
                                      bool oPVContentDownloadable,
                                      uint32 parsingMode,
@@ -62,7 +64,7 @@ OSCL_EXPORT_REF MovieAtom::MovieAtom(MP4_FF_FILE *fp,
     _isMovieFragmentPresent = false;
     _oVideoTrackPresent = false;
 
-
+    _protectionSystemSpecificBox = NULL;
 
     if (_success)
     {
@@ -136,8 +138,38 @@ OSCL_EXPORT_REF MovieAtom::MovieAtom(MP4_FF_FILE *fp,
                     AtomUtils::seekFromCurrPos(fp, atomSize);
                 }
             }
+            else if (atomType == UUID_ATOM)
+            {
+                //if Atom is typeof PIFF UUID atom
+                uint8 atomUUID[UUID_SIZE] = {0};
+                AtomUtils::readByteData(fp, UUID_SIZE, atomUUID);
+                if (AtomUtils::IsHexUInt8StrEqual(PSSH_BOX_UUID, atomUUID, UUID_SIZE))
+                {
+                    //Got PSSH Box to parse
+                    PV_MP4_FF_NEW(fp->auditCB, ProtectionSystemSpecificHeaderBox, (fp, atomSize, atomType, atomUUID), _protectionSystemSpecificBox);
+                    if (!_protectionSystemSpecificBox || (!_protectionSystemSpecificBox->MP4Success()))
+                    {
+                        AtomUtils::seekFromStart(fp, currPtr);
+                        AtomUtils::seekFromCurrPos(fp, atomSize);
+                        PV_MP4_FF_DELETE(NULL, ProtectionSystemSpecificHeaderBox, _protectionSystemSpecificBox);
+                        _protectionSystemSpecificBox = NULL;
+                        _mp4ErrorCode  = _protectionSystemSpecificBox->GetMP4Error();
+                        count -= atomSize;
+                        break;
+                    }
+                    else
+                    {
+                        _protectionSystemSpecificBox->setParent(this);
+                        count -= _protectionSystemSpecificBox->getSize();
+                    }
+                }
+                else
+                {
+                    AtomUtils::seekFromCurrPos(fp, (atomSize - (DEFAULT_ATOM_SIZE + UUID_SIZE)));
+                    count -= atomSize;
+                }
+            }
             else if ((atomType == FREE_SPACE_ATOM) ||
-                     (atomType == UUID_ATOM) ||
                      (atomType == UNKNOWN_ATOM))
             {
                 if (atomSize < DEFAULT_ATOM_SIZE)
@@ -275,6 +307,15 @@ OSCL_EXPORT_REF MovieAtom::MovieAtom(MP4_FF_FILE *fp,
                     {
                         count -= track->getSize();
                         addTrackAtom(track);
+                        if (track)
+                        {
+                            TrackEncryptionBox* ptr = track->GetTrackEncryptionBox();
+                            if (ptr)
+                            {
+                                ptr->SetTrackId(track->getTrackID());
+                                apTrckEncryptnBx->PushTrackEncryptionBox(ptr);
+                            }
+                        }
                     }
                     else
                     {
@@ -304,6 +345,15 @@ OSCL_EXPORT_REF MovieAtom::MovieAtom(MP4_FF_FILE *fp,
                     {
                         count -= track->getSize();
                         addTrackAtom(track);
+                        if (track) //We pass ref of ptr to track to the func addTrackAtom. So, addTrackAtom can delete the track. Recheck the track ptr
+                        {
+                            TrackEncryptionBox* ptr = track->GetTrackEncryptionBox();
+                            if (ptr)
+                            {
+                                ptr->SetTrackId(track->getTrackID());
+                                apTrckEncryptnBx->PushTrackEncryptionBox(ptr);
+                            }
+                        }
                     }
                     else
                     {
@@ -388,6 +438,9 @@ OSCL_EXPORT_REF MovieAtom::~MovieAtom()
     {
         PV_MP4_FF_DELETE(NULL, MovieExtendsAtom , _pMovieExtendsAtom);
     }
+
+    if (_protectionSystemSpecificBox)
+        PV_MP4_FF_DELETE(NULL, ProtectionSystemSpecificHeaderBox, _protectionSystemSpecificBox);
 }
 
 uint64 MovieAtom::getTimestampForCurrentSample(uint32 id)
@@ -821,7 +874,7 @@ MovieAtom::getTrackForID(uint32 id)
 
 
 // Add a new Track (audio/video) only to the trackArray
-void MovieAtom::addTrackAtom(TrackAtom *a)
+void MovieAtom::addTrackAtom(TrackAtom*& a)
 {
     switch (a->getMediaType())
     {
@@ -852,6 +905,7 @@ void MovieAtom::addTrackAtom(TrackAtom *a)
         default:
 
             PV_MP4_FF_DELETE(NULL, TrackAtom, a);
+            a = NULL;
             break;
     }
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 #include "omxdectest_basic_test.h"
 #include "oscl_mem.h"
 
-#define TEST_NUM_BUFFERS_TO_PROCESS 10
+#define TEST_NUM_BUFFERS_TO_PROCESS 15
 
 /*
  * Active Object class's Run () function
@@ -750,11 +750,12 @@ void OmxDecTestEosAfterFlushPort::Run()
             }
 #endif
 
-            //VerifyOutput(TestName);
             if (OMX_FALSE == iTestStatus)
             {
 #ifdef PRINT_RESULT
                 fprintf(iConsOutFile, "%s: Fail \n", TestName);
+                OMX_DEC_TEST(false);
+                iTestCase->TestCompleted();
 #endif
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
@@ -764,6 +765,8 @@ void OmxDecTestEosAfterFlushPort::Run()
             {
 #ifdef PRINT_RESULT
                 fprintf(iConsOutFile, "%s: Success \n", TestName);
+                OMX_DEC_TEST(true);
+                iTestCase->TestCompleted();
 #endif
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,

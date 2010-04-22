@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
 #include "pvmf_recognizer_plugin.h"
 #endif
 
-class PVAACFFRecognizerFactory : public PVMFRecognizerPluginFactory
+class OSCL_IMPORT_REF PVAACFFRecognizerFactory : public PVMFRecognizerPluginFactory
 {
     public:
         PVAACFFRecognizerFactory()
@@ -33,8 +33,8 @@ class PVAACFFRecognizerFactory : public PVMFRecognizerPluginFactory
         {
         };
 
-        OSCL_IMPORT_REF PVMFRecognizerPluginInterface* CreateRecognizerPlugin();
-        OSCL_IMPORT_REF void DestroyRecognizerPlugin(PVMFRecognizerPluginInterface* aPlugIn);
+        PVMFRecognizerPluginInterface* CreateRecognizerPlugin();
+        void DestroyRecognizerPlugin(PVMFRecognizerPluginInterface* aPlugIn);
 };
 
 #endif // PVAACFFREC_FACTORY_H_INCLUDED

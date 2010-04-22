@@ -109,6 +109,7 @@ extern "C"
         Int            frameLength;
         Int            adif_test;
 
+
         BITS           inputStream;
 
         ProgConfig     prog_config;

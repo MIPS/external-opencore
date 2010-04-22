@@ -674,6 +674,13 @@ class MediaInformationAtom : public Atom
             return 0;
         }
 
+        TrackEncryptionBox* GetTrackEncryptionBox() const
+        {
+            if (_psampleTableAtom)
+                return _psampleTableAtom->GetTrackEncryptionBox();
+            return NULL;
+        }
+
     private:
 
         // This is actually a pointer to the base class.  The possible

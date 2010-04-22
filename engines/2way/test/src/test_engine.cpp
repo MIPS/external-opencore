@@ -62,8 +62,6 @@
 #define SIP_TEST_MAP(x) (x+SIP_TEST_OFFSET)
 #define NUM_SIP_ARGS 10
 
-int start_test();
-
 cmd_line *global_cmd_line;
 
 //Find test range args:
@@ -74,15 +72,8 @@ char engine_test::iProfileName[32] = "";
 uint32 engine_test::iMediaPorts[2] = { 0, 0 };
 char engine_test::iPeerAddress[64] = "";
 
-engine_test_suite::engine_test_suite() : test_case()
-{
-}
-
-engine_test_suite::~engine_test_suite()
-{
-}
-
-
+engine_test_suite::engine_test_suite() : test_case() {}
+engine_test_suite::~engine_test_suite() {}
 
 bool inRange(uint32 firstTest, uint32 lastTest)
 {
@@ -268,7 +259,6 @@ void engine_test_suite::AddAcceptableFormatsTests(const bool aProxy,
         pTemp->AddExpectedFormat(INCOMING, PV_VIDEO, PVMF_MIME_YUV420);
         pTemp->AddExpectedFormat(OUTGOING, PV_VIDEO, PVMF_MIME_YUV420);
         adopt_test_case(pTemp);
-
     }
 
     if (inRange(firstTest, lastTest))
@@ -1386,10 +1376,30 @@ bool engine_test_suite::proxy_tests4(const bool aProxy)
 #endif
 
 
-int test_wrapper()
+bool doTest
+(
+    bool (engine_test_suite::*a_fnctProxyTest)(const bool),
+    test_result& a_testResult
+)
 {
-    int result;
+    engine_test_suite ts;
 
+    if (false == (ts.*a_fnctProxyTest)(true))                  // setting iProxy
+        PV2WayUtil::OutputInfo("ERROR - unable to setup tests\n");
+
+    int32 err = 0;
+    OSCL_TRY(err, ts.run_test());
+    if (0 != err)
+        PV2WayUtil::OutputInfo("Leave %d\n", err);
+
+    test_result tr = ts.last_result();
+    a_testResult.add_result(tr);
+    return (tr.success_count() != tr.total_test_count());
+}
+
+
+bool test_wrapper()
+{
     /*!
 
       Step 1b: Initialization
@@ -1398,7 +1408,45 @@ int test_wrapper()
     OsclErrorTrap::Init();
     OsclScheduler::Init("PV2WayEngineFactory");
 
-    result = start_test();
+    OSCL_HeapString<OsclMemAllocator> xmlresultsfile;
+    FindXmlResultsFile(global_cmd_line, xmlresultsfile, PV2WayUtil::GetFileHandle());
+    WriteInitialXmlSummary(xmlresultsfile, PV2WayUtil::GetFileHandle());
+
+    // This result will be passed to all test suites
+    // and it will be use to append all the results
+    test_result tr;
+    printf(" >> >> >> >> Master test_result object %p\n", &tr);
+
+
+    typedef bool (engine_test_suite::*fnctProxyTest)(const bool);
+    fnctProxyTest testcase[] =
+    {
+#ifndef LIP_SYNC_TESTING
+        &engine_test_suite::proxy_tests1,
+        &engine_test_suite::proxy_tests2,
+        &engine_test_suite::proxy_tests3,
+        &engine_test_suite::proxy_tests5,
+        &engine_test_suite::proxy_tests6,
+        &engine_test_suite::proxy_tests7,
+#else
+        &engine_test_suite::proxy_tests4,
+#endif
+    };
+
+    const uint32 starttime = OsclTickCount::TicksToMsec(OsclTickCount::TickCount()); // get start time
+
+    bool retval = true;
+    for (size_t i = 0; i < sizeof(testcase) / sizeof(testcase[0]); ++i)
+    {
+        bool result = doTest(testcase[i], tr);
+        if (false == result)
+            retval = false;
+    }
+    tr.set_elapsed_time(OsclTickCount::TicksToMsec(OsclTickCount::TickCount()) - starttime);
+    WriteFinalXmlSummary(xmlresultsfile, tr, PV2WayUtil::GetFileHandle());
+    text_test_interpreter interp;
+    _STRING rs = interp.interpretation(tr);
+    PV2WayUtil::OutputInfo(rs.c_str());
 
     /*!
 
@@ -1408,7 +1456,7 @@ int test_wrapper()
     OsclScheduler::Cleanup();
     OsclErrorTrap::Cleanup();
 
-    return result;
+    return retval;
 }
 
 
@@ -1491,7 +1539,6 @@ int local_main(FILE* filehandle, cmd_line *command_line)
 #endif
 #endif
     /*!
-
       Step 12: Cleanup
       Step 12g: Cleanup PVLogger, etc
     */
@@ -1500,234 +1547,6 @@ int local_main(FILE* filehandle, cmd_line *command_line)
     return (result);
 }
 
-#ifndef LIP_SYNC_TESTING
-
-int start_test1(test_result *aTestResult)
-{
-    int32 leave = 0;
-    bool result = 0;
-    engine_test_suite* engine_tests = NULL;
-    engine_tests = OSCL_NEW(engine_test_suite, ());
-    if (engine_tests)
-    {
-        // setting iProxy
-        if (!engine_tests->proxy_tests1(true))
-        {
-            PV2WayUtil::OutputInfo("ERROR - unable to setup tests\n");
-        }
-        OSCL_TRY(leave, engine_tests->run_test());
-
-        if (leave != 0)
-            PV2WayUtil::OutputInfo("Leave %d\n", leave);
-
-        const test_result the_result = engine_tests->last_result();
-        result = (the_result.success_count() != the_result.total_test_count());
-        aTestResult->add_result(engine_tests->last_result());
-    }
-
-    OSCL_DELETE(engine_tests);
-    return result;
-}
-
-int start_test2(test_result *aTestResult)
-{
-    int32 leave = 0;
-    int result = 0;
-    engine_test_suite* engine_tests = NULL;
-    engine_tests = OSCL_NEW(engine_test_suite, ());
-    if (engine_tests)
-    {
-        // setting iProxy
-        if (!engine_tests->proxy_tests2(true))
-        {
-            PV2WayUtil::OutputInfo("ERROR - unable to setup tests\n");
-        }
-        OSCL_TRY(leave, engine_tests->run_test());
-        if (leave != 0)
-            PV2WayUtil::OutputInfo("Leave %d\n", leave);
-
-        const test_result the_result = engine_tests->last_result();
-        result = (the_result.success_count() != the_result.total_test_count());
-        aTestResult->add_result(engine_tests->last_result());
-    }
-    OSCL_DELETE(engine_tests);
-    return result;
-}
-
-int start_test3(test_result *aTestResult)
-{
-    int32 leave = 0;
-    int result = 0;
-    engine_test_suite* engine_tests = NULL;
-    engine_tests = OSCL_NEW(engine_test_suite, ());
-    if (engine_tests)
-    {
-        if (!engine_tests->proxy_tests3(true))
-        {
-            PV2WayUtil::OutputInfo("ERROR - unable to setup tests\n");
-        }
-        OSCL_TRY(leave, engine_tests->run_test());
-        if (leave != 0)
-            PV2WayUtil::OutputInfo("Leave %d\n", leave);
-
-        const test_result the_result = engine_tests->last_result();
-        result = (the_result.success_count() != the_result.total_test_count());
-        aTestResult->add_result(engine_tests->last_result());
-    }
-    OSCL_DELETE(engine_tests);
-    return result;
-}
-int start_test5(test_result *aTestResult)
-{
-    int32 leave = 0;
-    int result = 0;
-    engine_test_suite* engine_tests = NULL;
-    engine_tests = OSCL_NEW(engine_test_suite, ());
-    if (engine_tests)
-    {
-        if (!engine_tests->proxy_tests5(true))
-        {
-            PV2WayUtil::OutputInfo("ERROR - unable to setup tests\n");
-        }
-        OSCL_TRY(leave, engine_tests->run_test());
-        if (leave != 0)
-            PV2WayUtil::OutputInfo("Leave %d\n", leave);
-
-        const test_result the_result = engine_tests->last_result();
-        result = (the_result.success_count() != the_result.total_test_count());
-        aTestResult->add_result(engine_tests->last_result());
-    }
-    OSCL_DELETE(engine_tests);
-    return result;
-}
-int start_test6(test_result *aTestResult)
-{
-    int32 leave = 0;
-    int result = 0;
-    engine_test_suite* engine_tests = NULL;
-    engine_tests = OSCL_NEW(engine_test_suite, ());
-    if (engine_tests)
-    {
-        // setting iProxy
-        if (!engine_tests->proxy_tests6(true))
-        {
-            PV2WayUtil::OutputInfo("ERROR - unable to setup tests\n");
-        }
-        OSCL_TRY(leave, engine_tests->run_test());
-        if (leave != 0)
-            PV2WayUtil::OutputInfo("Leave %d\n", leave);
-
-        const test_result the_result = engine_tests->last_result();
-        result = (the_result.success_count() != the_result.total_test_count());
-        aTestResult->add_result(engine_tests->last_result());
-    }
-    OSCL_DELETE(engine_tests);
-    return result;
-}
-
-int start_test7(test_result *aTestResult)
-{
-    int32 leave = 0;
-    int result = 0;
-    engine_test_suite* engine_tests = NULL;
-    engine_tests = OSCL_NEW(engine_test_suite, ());
-    if (engine_tests)
-    {
-        // setting iProxy
-        if (!engine_tests->proxy_tests7(true))
-        {
-            PV2WayUtil::OutputInfo("ERROR - unable to setup tests\n");
-        }
-        OSCL_TRY(leave, engine_tests->run_test());
-        if (leave != 0)
-            PV2WayUtil::OutputInfo("Leave %d\n", leave);
-
-        const test_result the_result = engine_tests->last_result();
-        result = (the_result.success_count() != the_result.total_test_count());
-        aTestResult->add_result(engine_tests->last_result());
-    }
-    OSCL_DELETE(engine_tests);
-    return result;
-}
-#else
-
-int start_test4(test_result *aTestResult)
-{
-    int32 leave = 0;
-    int result = 0;
-    engine_test_suite* engine_tests = NULL;
-    engine_tests = OSCL_NEW(engine_test_suite, ());
-    if (engine_tests)
-    {
-        // setting iProxy
-        if (!engine_tests->proxy_tests4(true))
-        {
-            PV2WayUtil::OutputInfo("ERROR - unable to setup tests\n");
-        }
-        OSCL_TRY(leave, engine_tests->run_test());
-        if (leave != 0)
-            PV2WayUtil::OutputInfo("Leave %d\n", leave);
-
-        const test_result the_result = engine_tests->last_result();
-        result = (the_result.success_count() != the_result.total_test_count());
-        aTestResult->add_result(engine_tests->last_result());
-    }
-    OSCL_DELETE(engine_tests);
-    return result;
-}
-#endif
-
-
-int start_test()
-{
-    int result = 0;
-    int temp = 0;
-
-    OSCL_HeapString<OsclMemAllocator> xmlresultsfile;
-    FindXmlResultsFile(global_cmd_line, xmlresultsfile, PV2WayUtil::GetFileHandle());
-    WriteInitialXmlSummary(xmlresultsfile, PV2WayUtil::GetFileHandle());
-
-    //This result pointer will be passed to all test suites
-    //and it will be use to append all the results
-    test_result *TestResult = OSCL_NEW(test_result, ());
-    //this will clear all the private members of test_result
-    TestResult->delete_contents();
-#ifndef LIP_SYNC_TESTING
-    //for (uint i = 0; i < 1000; ++i)
-    {
-        temp = start_test1(TestResult);
-        if (temp != 0)
-            result = temp;
-        temp = start_test2(TestResult);
-        if (temp != 0)
-            result = temp;
-        temp = start_test3(TestResult);
-        if (temp != 0)
-            result = temp;
-
-        temp = start_test5(TestResult);
-        if (temp != 0)
-            result = temp;
-
-        temp = start_test6(TestResult);
-        if (temp != 0)
-            result = temp;
-        temp = start_test7(TestResult);
-        if (temp != 0)
-            result = temp;
-    }
-#else
-    temp = start_test4(TestResult);
-    if (temp != 0)
-        result = temp;
-#endif
-    WriteFinalXmlSummary(xmlresultsfile, *TestResult, PV2WayUtil::GetFileHandle());
-    text_test_interpreter interp;
-    _STRING rs = interp.interpretation(*TestResult);
-    PV2WayUtil::OutputInfo(rs.c_str());
-    OSCL_DELETE(TestResult);
-    return result;
-}
 
 #if (LINUX_MAIN==1)
 

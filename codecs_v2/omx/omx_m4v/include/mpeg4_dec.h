@@ -57,6 +57,7 @@ class Mpeg4Decoder_OMX
         OMX_ERRORTYPE Mp4DecDeinit();
 
         OMX_S32 GetVideoHeader(int32 aLayer, uint8 *aBuf, int32 aMaxSize);
+        void CheckPortReConfig(OMX_BUFFERHEADERTYPE* aOutBuffer, OMX_S32 OldWidth, OMX_S32 OldHeight, OMX_BOOL *aResizeFlag, OMX_S32* aFrameCount);
 
         OMX_BOOL Mpeg4InitCompleteFlag;
 

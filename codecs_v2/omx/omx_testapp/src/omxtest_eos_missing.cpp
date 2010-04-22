@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -637,6 +637,8 @@ void OmxDecTestEosMissing::Run()
                                 (0, "OmxDecTestEosMissing::Run() - %s: Fail", TestName));
 #ifdef PRINT_RESULT
                 fprintf(iConsOutFile, "%s: Fail \n", TestName);
+                OMX_DEC_TEST(false);
+                iTestCase->TestCompleted();
 #endif
 
             }
@@ -646,10 +648,15 @@ void OmxDecTestEosMissing::Run()
                                 (0, "OmxDecTestEosMissing::Run() - %s: Success", TestName));
 #ifdef PRINT_RESULT
                 fprintf(iConsOutFile, "%s: Success \n", TestName);
+                OMX_DEC_TEST(true);
+                iTestCase->TestCompleted();
 #endif
             }
 
-            fclose(ipOutputFile);
+            if (ipOutputFile)
+            {
+                fclose(ipOutputFile);
+            }
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "OmxDecTestEosMissing::Run() - StateStop OUT"));
 

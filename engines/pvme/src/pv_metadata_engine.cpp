@@ -1016,7 +1016,7 @@ void PVMetadataEngine::RecognizeCompleted(PVMFFormatType aSourceFormatType, Oscl
     // Send the event to notify the user of the updated format type
     int32 len = iSourceFormatType.getMIMEStrLen();
     uint8* localbuffer = (uint8*)iSourceFormatType.getMIMEStrPtr();
-    SendInformationalEvent(PVMFInfoSourceFormatUpdated, NULL, NULL, localbuffer, len);
+    SendInformationalEvent(PVMFInfoSourceFormatUpdated, NULL, NULL, localbuffer, len + 1 /*including null-terminator*/);
 
     retval = DoSourceNodeInit(cmdid, cmdcontext);
     if (retval != PVMFSuccess)

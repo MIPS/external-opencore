@@ -31,7 +31,6 @@
 #include "atomutils.h"
 #include "atomdefs.h"
 #include "oscl_utf8conv.h"
-
 // Read in the 64 bits byte by byte and take most significant byte first
 OSCL_EXPORT_REF bool
 AtomUtils::read64(MP4_FF_FILE *fp, uint64 &data)
@@ -1003,7 +1002,6 @@ OSCL_EXPORT_REF int32 AtomUtils::getNextAtomSize(uint8 *buf)
     return size;
 }
 
-
 OSCL_EXPORT_REF uint32 AtomUtils::getContentLength(MP4_FF_FILE *fp)
 {
     // this returns the content length if known
@@ -1031,5 +1029,43 @@ OSCL_EXPORT_REF void AtomUtils::getCurrentByteRange(MP4_FF_FILE *fp, TOsclFileOf
     fp->_pvfile.GetCurrentByteRange(aCurrentFirstByteOffset, aCurrentLastByteOffset);
 }
 
+//Assumes filepointer is pointing at offset 8 within the extended atom (sizeof(DefaultAtom) = 8 , sizeof(type) + sizeof(size) )
+OSCL_EXPORT_REF bool AtomUtils::GetUUIDFromFile(MP4_FF_FILE* const& aFilePtr, uint32 aSize, uint32& aAvailableBytesToRead, uint8* const& aAtomUUID)
+{
+    const uint32 largeSizeBytes = 4;  //sizeof(uint64)
+    if ((aSize == 1) && (aAvailableBytesToRead >= largeSizeBytes)) //Todo: Maybe we should rather read the largesize instead and update the aSize
+    {
+        AtomUtils::seekFromCurrPos(aFilePtr, largeSizeBytes);
+        aAvailableBytesToRead -= largeSizeBytes;
+    }
+    else
+    {
+        return false;
+    }
 
+    if (aAvailableBytesToRead > UUID_SIZE)
+    {
+        AtomUtils::readByteData(aFilePtr, UUID_SIZE, aAtomUUID);
+        aAvailableBytesToRead -= UUID_SIZE;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+OSCL_EXPORT_REF bool AtomUtils::IsHexUInt8StrEqual(const uint8* aUint8Base, const uint8* aUint8ToComp, uint8 aSize)
+{
+    bool retval = true;
+    for (int ii = 0; ii < aSize; ii++)
+    {
+        if (aUint8Base[ii] != aUint8ToComp[ii])
+        {
+            retval = false;
+            break;
+        }
+    }
+    return retval;
+}
 

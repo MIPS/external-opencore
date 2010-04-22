@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,10 @@
 #include "atom.h"
 #endif
 
+#ifndef ATOMUTILS_H_INCLUDED
+#include "atomutils.h"
+#endif
+
 const uint32 DEFAULT_FULL_ATOM_SIZE = 12; // (8 bytes from Atom + 1 for
 //  version and 3 for flags)
 
@@ -66,6 +70,39 @@ class FullAtom : public Atom
         uint32 _flags; // 3 (24bits) -- Will need to crop when writing to stream
 };
 
+//ExtendedFullAtom should be subobject of the specialized atoms of kind UUID only
+class ExtendedFullAtom: public ExtendedAtom
+{
+    public:
+    public:
+        ExtendedFullAtom(MP4_FF_FILE* const& aFilePtr, uint32 aSize, uint32 aType, const uint8* const& aUserTypeUUID);
+
+        virtual ~ExtendedFullAtom() {}
+
+        virtual uint32 getDefaultSize() const
+        {
+            return (ExtendedAtom::getDefaultSize() + SIZE_OF_VERS_FLD_IN_BYTES + SIZE_OF_FLAGS_FLD_IN_BYTES);
+        }
+
+        virtual uint8 getVersion() const
+        {
+            return _version;
+        }
+
+        virtual uint32 getFlags() const
+        {
+            return _flags;
+        }
+
+    private:
+        uint8 _version; // 1 (8bits)
+        uint32 _flags; // 3 (24bits)
+        enum
+        {
+            SIZE_OF_VERS_FLD_IN_BYTES = 1,
+            SIZE_OF_FLAGS_FLD_IN_BYTES = 3
+        };
+};
 
 #endif // FULLATOM_H_INCLUDED
 

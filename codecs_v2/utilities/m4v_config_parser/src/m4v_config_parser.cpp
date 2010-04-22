@@ -168,7 +168,10 @@ OSCL_EXPORT_REF int16 ParseM4VFSI(uint8* buffer, uint32 length,  M4VConfigInfo* 
 
     oscl_memset(iM4VConfigInfo, 0, sizeof(M4VConfigInfo));
 
+    //Set Default values
     iM4VConfigInfo->iProfilelevelValue = 0x0000FFFF; // init to some invalid value. When this value is returned, then no profilelevel info is available
+    iM4VConfigInfo->iFrameWidth[0] = H263_DEFAULT_WIDTH;
+    iM4VConfigInfo->iFrameHeight[0] = H263_DEFAULT_HEIGHT;
 
     //visual_object_sequence_start_code
     ShowBits(psBits, 32, &codeword);
@@ -385,7 +388,9 @@ OSCL_EXPORT_REF int16 ParseM4VFSI(uint8* buffer, uint32 length,  M4VConfigInfo* 
             if (psBits->dataBitPos >= (psBits->numBytes << 3))
             {
                 iM4VConfigInfo->iShortHeader = 1;
-                return SHORT_HEADER_MODE; /* SH */
+                // END OF VOP
+                return 0; //SUCCESS
+
             }
             else
             {
@@ -752,7 +757,8 @@ decode_vol:
         if (codeword == SHORT_VIDEO_START_MARKER)
         {
             iM4VConfigInfo->iShortHeader = 1;
-            iDecodeShortHeader(psBits, &iWidth, &iHeight, (int32*)&(iM4VConfigInfo->iFrameWidth[0]), (int32*)&(iM4VConfigInfo->iFrameHeight[0]));
+            return (iDecodeShortHeader(psBits, &iWidth, &iHeight, (int32*)&(iM4VConfigInfo->iFrameWidth[0]), (int32*)&(iM4VConfigInfo->iFrameHeight[0])));
+
         }
         else
         {

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,9 @@ OmxEncTestBase::OmxEncTestBase(const char AOName[]) :
     iCount1 = 0;
     iCount2 = 0;
     iCount3 = 0;
+
+    iDisableRun = OMX_FALSE;
+    iFlagDisablePort = OMX_FALSE;
 
     for (jj = 0; jj < 50; jj++)
     {
@@ -226,10 +229,44 @@ OMX_ERRORTYPE OmxEncTestBase::EventHandler(OMX_OUT OMX_HANDLETYPE aComponent,
                     break;
             }
         }
+        else if (OMX_CommandPortDisable == aData1)
+        {
+            //Do the transition only if no error has occured previously
+            if (StateStop != iState && StateError != iState)
+            {
+                iState = StateDynamicReconfig;
+
+                if (0 == --iPendingCommands)
+                {
+                    RunIfNotReady();
+                }
+            }
+        }
+        else if (OMX_CommandPortEnable == aData1)
+        {
+            //Change the state from Reconfig to Executing on receiving this callback if there is no error
+            if (StateStop != iState && StateError != iState)
+            {
+                iState = StateExecuting;
+
+                if (0 == --iPendingCommands)
+                {
+                    RunIfNotReady();
+                }
+            }
+        }
+    }
+
+    else if (OMX_EventPortSettingsChanged == aEvent)
+    {
+        if (StateIdle == iState || StateExecuting == iState)
+        {
+            iState = StateDisablePort;
+            RunIfNotReady();
+        }
     }
     else if (OMX_EventBufferFlag == aEvent)
     {   //callback for EOS  //Change the state on receiving EOS callback
-        printf("EOS Event recieved\n");
         iState = StateStopping;
         if (0 == --iPendingCommands)
         {

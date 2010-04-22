@@ -55,7 +55,8 @@ class MovieFragmentAtom : public Atom
                           Oscl_Vector<TrackExtendsAtom*, OsclMemAllocator> *trackExtendAtomVec,
                           bool &parseMoofCompletely,
                           bool &moofParsingCompleted,
-                          uint32 &countOfTrunsParsed);
+                          uint32 &countOfTrunsParsed,
+                          const TrackEncryptionBoxContainer* apTrackEncryptionBox);
 
 
         virtual ~MovieFragmentAtom();
@@ -83,7 +84,7 @@ class MovieFragmentAtom : public Atom
         uint32 getDefaultSampleDuration();
         uint32 getDefaultSampleSize();
         uint32 getDefaultSampleFlags();
-        int32 getNextBundledAccessUnits(const uint32 trackID, uint32 *n, uint32 totalSampleRead, GAU *pgau);
+        int32 getNextBundledAccessUnits(const uint32 trackID, uint32 *n, uint32 totalSampleRead, GAU *pgau, Oscl_Vector<PVPIFFProtectedSampleDecryptionInfo, OsclMemAllocator>*  apSampleDecryptionInfoVect);
         int32 peekNextBundledAccessUnits(const uint32 trackID, uint32 *n,
                                          uint32 totalSampleRead,
                                          MediaMetaInfo *mInfo);
@@ -99,6 +100,7 @@ class MovieFragmentAtom : public Atom
         uint32 getTotalSampleInTraf(uint32 id);
         int32 getOffsetByTime(uint32 id, uint64 ts, TOsclFileOffset* sampleFileOffset);
     private:
+        const TrackEncryptionBoxContainer*  ipTrackEncryptionBxCntr;
         MovieFragmentHeaderAtom * _pMovieFragmentHeaderAtom;
         TrackFragmentAtom *_pTrackFragmentAtom;
         Oscl_Vector<TrackFragmentAtom*, OsclMemAllocator> *_ptrackFragmentArray;
