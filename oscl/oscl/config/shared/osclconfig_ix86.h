@@ -31,11 +31,27 @@
 #ifndef OSCLCONFIG_IX86_H_INCLUDED
 #define OSCLCONFIG_IX86_H_INCLUDED
 
+#include <endian.h>
+
 
 // Define macros for integer alignment and little endian byte order.
 #define OSCL_INTEGERS_WORD_ALIGNED               1
-#define OSCL_BYTE_ORDER_BIG_ENDIAN               0
-#define OSCL_BYTE_ORDER_LITTLE_ENDIAN            1
 
 
+// though this file is called '...x86', it is included in _ALL_
+// android builds, regardless of target CPU.
+// Target endian determination must be made here.
+
+#if !defined(__BYTE_ORDER) || !defined (__BIG_ENDIAN)
+#error __BYTE_ORDER macros not defined
 #endif
+
+#if __BYTE_ORDER == __BIG_ENDIAN
+    #define OSCL_BYTE_ORDER_BIG_ENDIAN               1
+    #define OSCL_BYTE_ORDER_LITTLE_ENDIAN            0
+#else
+    #define OSCL_BYTE_ORDER_BIG_ENDIAN               0
+    #define OSCL_BYTE_ORDER_LITTLE_ENDIAN            1
+#endif // __BYTE_ORDER
+
+#endif //OSCLCONFIG_IX86_H_INCLUDED
