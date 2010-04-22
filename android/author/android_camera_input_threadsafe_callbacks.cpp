@@ -17,12 +17,12 @@
  * -------------------------------------------------------------------
  */
 
-#include <ui/CameraParameters.h>
+#include <camera/CameraParameters.h>
 #include <utils/Errors.h>
 #include <media/mediarecorder.h>
-#include <ui/ISurface.h>
-#include <ui/ICamera.h>
-#include <ui/Camera.h>
+#include <surfaceflinger/ISurface.h>
+#include <camera/ICamera.h>
+#include <camera/Camera.h>
 
 #include "android_camera_input_threadsafe_callbacks.h"
 #include "android_camera_input.h"
