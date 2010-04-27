@@ -1865,7 +1865,10 @@ void pvplayer_async_test_playlist_playback::HandleInformationalEvent(const PVAsy
                         {
                             iRetrieveCurrentPlayingMetadata = true;
                         }
-                        iState = STATE_GETMETADATAVALUELIST;
+                        if (STATE_UPDATEDATASOURCE != iState)
+                        {
+                            iState = STATE_GETMETADATAVALUELIST;
+                        }
                         RunIfNotReady();
                     }
                 }

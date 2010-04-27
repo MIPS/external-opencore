@@ -15336,7 +15336,7 @@ void PVPlayerEngine::HandleSinkNodeInfoEvent(const PVMFAsyncEvent& aEvent, int32
                     IssueSourceNodeAudioSinkEvent(aEvent);
                     iClipsCompleted++;
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                    (0, "PVPlayerEngine::HandleSinkNodeInfoEvent() - iClipsCompleted = %d, totalnumclips = %d", iClipsCompleted, iDataSource->GetNumClips()));
+                                    (0, "PVPlayerEngine::HandleSinkNodeInfoEvent() - iClipsCompleted = %d, iClipsCorrupted = %d, totalnumclips = %d", iClipsCompleted, iClipsCorrupted, iDataSource->GetNumClips()));
 
                     // scenarios where playlist playback is considered complete.
                     // If sum of number of clips played back and corrupted clips in list equates to total clips queued to Source Node.
