@@ -31,11 +31,11 @@
 
 #define OMX_HALFRANGE_THRESHOLD 0x7FFFFFFF
 
-#define AAC_MONO_SILENCE_FRAME_SIZE 10
-#define AAC_STEREO_SILENCE_FRAME_SIZE 11
+#define AAC_MONO_SILENCE_FRAME_SIZE 6
+#define AAC_STEREO_SILENCE_FRAME_SIZE 8
 
-static const OMX_U8 AAC_MONO_SILENCE_FRAME[]   = {0x01, 0x40, 0x20, 0x06, 0x4F, 0xDE, 0x02, 0x70, 0x0C, 0x1C};      // 10 bytes
-static const OMX_U8 AAC_STEREO_SILENCE_FRAME[] = {0x21, 0x10, 0x05, 0x00, 0xA0, 0x19, 0x33, 0x87, 0xC0, 0x00, 0x7E}; // 11 bytes)
+static const OMX_U8 AAC_MONO_SILENCE_FRAME[]   = {0x01, 0x40, 0x20, 0x06, 0x1D, 0x0E};      // 6 bytes
+static const OMX_U8 AAC_STEREO_SILENCE_FRAME[] = {0x21, 0x10, 0x05, 0x00, 0xA0, 0x18, 0x74, 0x38}; // 8 bytes)
 
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 
@@ -899,6 +899,8 @@ void OpenmaxAacAO::CheckForSilenceInsertion()
         {
             iSilenceFramesNeeded = TimestampGap / iOutputMicroSecPerFrame;
         }
+
+        iZeroFramesNeeded = 0;
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAacAO : CheckForSilenceInsertion OUT - Silence Insertion required here"));
     }
 
@@ -908,7 +910,8 @@ void OpenmaxAacAO::CheckForSilenceInsertion()
 //Perform the silence insertion
 void OpenmaxAacAO::DoSilenceInsertion()
 {
-    OMX_S32 NumOfChannels = ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->AudioPcmMode.nChannels;
+    // read the original i.e. encoded number of channels to be able to feed the correct silence frame (mono or stereo)
+    OMX_S32 NumOfChannels = ipPorts[OMX_PORT_INPUTPORT_INDEX]->AudioAacParam.nChannels;
     QueueType* pOutputQueue = ipPorts[OMX_PORT_OUTPUTPORT_INDEX]->pBufferQueue;
     ComponentPortType* pOutPort = ipPorts[OMX_PORT_OUTPUTPORT_INDEX];
 
@@ -979,6 +982,13 @@ void OpenmaxAacAO::DoSilenceInsertion()
                        &ResizeNeeded);
 
 
+        if (MP4AUDEC_SUCCESS != DecodeReturn)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAacAO : DoSilenceInsertion - Decode error of silence generation, Insert zero frames instead"));
+            iZeroFramesNeeded = iSilenceFramesNeeded;
+            iSilenceFramesNeeded = 0;
+            break;
+        }
 
         //Output length for a buffer of OMX_U8* will be double as that of OMX_S16*
         ipOutputBuffer->nFilledLen += OutputLength * 2;
@@ -988,14 +998,6 @@ void OpenmaxAacAO::DoSilenceInsertion()
         if (OutputLength > 0)
         {
             iCurrentFrameTS.UpdateTimestamp(iSamplesPerFrame);
-        }
-
-        if (MP4AUDEC_SUCCESS != DecodeReturn)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAacAO : DoSilenceInsertion - Silence frame decoding error. Skip inserting silence frame and move the timestamp forward"));
-            iCurrentFrameTS.SetFromInputTimestamp(iFrameTimestamp);
-            iSilenceInsertionInProgress = OMX_FALSE;
-            return;
         }
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAacAO : DoSilenceInsertion - silence frame decoded"));
@@ -1009,6 +1011,62 @@ void OpenmaxAacAO::DoSilenceInsertion()
 
         // Decrement the silence frame counter
         --iSilenceFramesNeeded;
+    }
+
+    // THE ZERO FRAME INSERTION IS PERFORMED ONLY IF SILENCE INSERTION FAILS
+    while (iZeroFramesNeeded > 0)
+    {
+        //Check whether prev output bufer has been consumed or not
+        if (OMX_TRUE == iNewOutBufRequired)
+        {
+            //Check whether a new output buffer is available or not
+            if (0 == (GetQueueNumElem(pOutputQueue)))
+            {
+                //Resume Silence insertion next time when component will be called
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAacAO : DoSilenceInsertion OUT output buffer unavailable"));
+                iSilenceInsertionInProgress = OMX_TRUE;
+                return;
+            }
+
+            ipOutputBuffer = (OMX_BUFFERHEADERTYPE*) DeQueue(pOutputQueue);
+            if (NULL == ipOutputBuffer)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAacAO : DoSilenceInsertion Error, output buffer dequeue returned NULL, OUT"));
+                iSilenceInsertionInProgress = OMX_TRUE;
+                return;
+            }
+            ipOutputBuffer->nFilledLen = 0;
+            iNewOutBufRequired = OMX_FALSE;
+
+            //Set the current timestamp to the output buffer timestamp
+            ipOutputBuffer->nTimeStamp = iCurrentFrameTS.GetConvertedTs();
+        }
+
+        pOutBuffer = &ipOutputBuffer->pBuffer[ipOutputBuffer->nFilledLen];
+        //Output length for a buffer of OMX_U8* will be double as that of OMX_S16*
+        OutputLength = iSamplesPerFrame * NumOfChannels * 2;
+
+        oscl_memset(pOutBuffer, 0, OutputLength);
+
+        ipOutputBuffer->nFilledLen += OutputLength;
+        ipOutputBuffer->nOffset = 0;
+
+        if (OutputLength > 0)
+        {
+            iCurrentFrameTS.UpdateTimestamp(iSamplesPerFrame);
+        }
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OpenmaxAacAO : DoSilenceInsertion - One frame of zeros inserted"));
+
+        //Send the output buffer back when it has become full
+        if ((ipOutputBuffer->nAllocLen - ipOutputBuffer->nFilledLen) < iOutputFrameLength)
+        {
+            ReturnOutputBuffer(ipOutputBuffer, pOutPort);
+            ipOutputBuffer = NULL;
+        }
+
+        // Decrement the silence frame counter
+        --iZeroFramesNeeded;
     }
 
     /* Completed Silence insertion successfully, now consider the input buffer already dequeued
