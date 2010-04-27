@@ -83,9 +83,9 @@ VisualSampleEntry::VisualSampleEntry(MP4_FF_FILE *fp, uint32 size, uint32 type)
             count -= 4;
         }
 
-        while (count > 0)
+        if (_success)
         {
-            if (_success)
+            while (count > 0)
             {
                 uint32 atomType = UNKNOWN_ATOM;
                 uint32 atomSize = 0;
@@ -95,8 +95,6 @@ VisualSampleEntry::VisualSampleEntry(MP4_FF_FILE *fp, uint32 size, uint32 type)
                 if (PIXELASPECTRATIO_BOX == atomType)
                 {
                     AtomUtils::seekFromCurrPos(fp, (atomSize - DEFAULT_ATOM_SIZE));
-
-
                 }
                 else if (atomType == ESD_ATOM)
                 {
@@ -127,17 +125,14 @@ VisualSampleEntry::VisualSampleEntry(MP4_FF_FILE *fp, uint32 size, uint32 type)
                         }
                         _pes->setParent(this);
                     }
-
                 }
                 count -= atomSize;
             }
-            else
-            {
-                _mp4ErrorCode = READ_VISUAL_SAMPLE_ENTRY_FAILED;
-            }
-
         }
-
+        else
+        {
+            _mp4ErrorCode = READ_VISUAL_SAMPLE_ENTRY_FAILED;
+        }
     }
     else
     {
