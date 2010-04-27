@@ -1180,13 +1180,6 @@ bool PVMFOMXEncNode::ProcessCommand(PVMFOMXEncNodeCommand& aCmd)
             DoCancelAllCommands(aCmd);
             break;
 
-        case PVMFOMXEncNodeCommand::PVOMXENC_NODE_CMD_GETNODEMETADATAKEY:
-        {
-            PVMFStatus retval = DoGetNodeMetadataKey(aCmd);
-            CommandComplete(iInputCommands, aCmd, retval);
-        }
-        break;
-
         case PVMFOMXEncNodeCommand::PVOMXENC_NODE_CMD_GETNODEMETADATAVALUE:
         {
             PVMFStatus retval = DoGetNodeMetadataValue(aCmd);
@@ -7508,109 +7501,6 @@ void PVMFOMXEncNode::DoReleasePort(PVMFOMXEncNodeCommand& aCmd)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXEncNode::DoGetNodeMetadataKey(PVMFOMXEncNodeCommand& aCmd)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFOMXEncNode-%s::DoGetNodeMetadataKey() In", iNodeTypeId));
-
-    PVMFMetadataList* keylistptr = NULL;
-    uint32 starting_index;
-    int32 max_entries;
-    char* query_key;
-
-    aCmd.PVMFOMXEncNodeCommand::Parse(keylistptr, starting_index, max_entries, query_key);
-
-    // Check parameters
-    if (keylistptr == NULL)
-    {
-        // The list pointer is invalid
-        return PVMFErrArgument;
-    }
-
-    // Update the available metadata keys
-    iAvailableMetadataKeys.clear();
-    int32 leavecode = 0;
-    leavecode = Push_Back_MetadataKeys(PVOMXENCMETADATA_CODECINFO_VIDEO_FORMAT_KEY);
-
-    if (iYUVWidth > 0 && iYUVHeight > 0)
-    {
-        leavecode = 0;
-        leavecode = Push_Back_MetadataKeys(PVOMXENCMETADATA_CODECINFO_VIDEO_WIDTH_KEY);
-        if (0 == leavecode)
-            leavecode = Push_Back_MetadataKeys(PVOMXENCMETADATA_CODECINFO_VIDEO_HEIGHT_KEY);
-    }
-    // add the profile, level and avgbitrate
-    uint32 aProfile; //PVMF_MPEGVideoProfileType
-    uint32 aLevel; //PVMF_MPEGVideoLevelType
-    if (GetProfileAndLevel(aProfile, aLevel) == PVMFSuccess)
-    {
-        // For H263 this metadata will be available only after first frame decoding
-        leavecode = 0;
-        leavecode = Push_Back_MetadataKeys(PVOMXENCMETADATA_CODECINFO_VIDEO_PROFILE_KEY);
-        if (0 == leavecode)
-            leavecode = Push_Back_MetadataKeys(PVOMXENCMETADATA_CODECINFO_VIDEO_LEVEL_KEY);
-    }
-    if (0 == leavecode)
-        leavecode = Push_Back_MetadataKeys(PVOMXENCMETADATA_CODECINFO_VIDEO_AVGBITRATE_KEY);
-
-    if ((starting_index > (iAvailableMetadataKeys.size() - 1)) || max_entries == 0)
-    {
-        // Invalid starting index and/or max entries
-        return PVMFErrArgument;
-    }
-
-    // Copy the requested keys
-    uint32 num_entries = 0;
-    int32 num_added = 0;
-    for (uint32 lcv = 0; lcv < iAvailableMetadataKeys.size(); lcv++)
-    {
-        if (query_key == NULL)
-        {
-            // No query key so this key is counted
-            ++num_entries;
-            if (num_entries > starting_index)
-            {
-                // Past the starting index so copy the key
-                leavecode = 0;
-                leavecode = Push_Back_MetadataKeys(keylistptr, lcv);
-                OSCL_FIRST_CATCH_ANY(leavecode,
-                                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                                     (0, "PVMFOMXEncNode-%s::DoGetNodeMetadataKey() Memory allocation failure when copying metadata key", iNodeTypeId));
-                                     return PVMFErrNoMemory);
-                num_added++;
-            }
-        }
-        else
-        {
-            // Check if the key matche the query key
-            if (pv_mime_strcmp(iAvailableMetadataKeys[lcv].get_cstr(), query_key) >= 0)
-            {
-                // This key is counted
-                ++num_entries;
-                if (num_entries > starting_index)
-                {
-                    // Past the starting index so copy the key
-                    leavecode = 0;
-                    leavecode = Push_Back_MetadataKeys(keylistptr, lcv);
-                    OSCL_FIRST_CATCH_ANY(leavecode,
-                                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFOMXEncNode-%s::DoGetNodeMetadataKey() Memory allocation failure when copying metadata key", iNodeTypeId));
-                                         return PVMFErrNoMemory);
-                    num_added++;
-                }
-            }
-        }
-
-        // Check if max number of entries have been copied
-        if (max_entries > 0 && num_added >= max_entries)
-        {
-            break;
-        }
-    }
-
-    return PVMFSuccess;
-}
-
-/////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVMFOMXEncNode::DoGetNodeMetadataValue(PVMFOMXEncNodeCommand& aCmd)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXEncNode-%s::DoGetNodeMetadataValue() In", iNodeTypeId));
@@ -8389,58 +8279,6 @@ bool PVMFOMXEncNode::queryInterface(const PVUuid& uuid, PVInterface*& iface)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-uint32 PVMFOMXEncNode::GetNumMetadataKeys(char* aQueryKeyString)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXEncNode-%s::GetNumMetadataKeys() called", iNodeTypeId));
-
-    // Update the available metadata keys
-    iAvailableMetadataKeys.clear();
-    int32 errcode = 0;
-    OSCL_TRY(errcode, iAvailableMetadataKeys.push_back(PVOMXENCMETADATA_CODECINFO_VIDEO_FORMAT_KEY));
-
-    if (iYUVWidth > 0 && iYUVHeight > 0)
-    {
-        errcode = 0;
-        OSCL_TRY(errcode,
-                 iAvailableMetadataKeys.push_back(PVOMXENCMETADATA_CODECINFO_VIDEO_WIDTH_KEY);
-                 iAvailableMetadataKeys.push_back(PVOMXENCMETADATA_CODECINFO_VIDEO_HEIGHT_KEY));
-    }
-    // add the profile, level and avgbitrate
-    uint32 aProfile; //PVMF_MPEGVideoProfileType
-    uint32 aLevel; //PVMF_MPEGVideoLevelType
-    if (GetProfileAndLevel(aProfile, aLevel) == PVMFSuccess)
-    {
-        // For H263 this metadata will be available only after first frame decoding
-        errcode = 0;
-        OSCL_TRY(errcode, iAvailableMetadataKeys.push_back(PVOMXENCMETADATA_CODECINFO_VIDEO_PROFILE_KEY));
-        errcode = 0;
-        OSCL_TRY(errcode, iAvailableMetadataKeys.push_back(PVOMXENCMETADATA_CODECINFO_VIDEO_LEVEL_KEY));
-    }
-    errcode = 0;
-    OSCL_TRY(errcode, iAvailableMetadataKeys.push_back(PVOMXENCMETADATA_CODECINFO_VIDEO_AVGBITRATE_KEY));
-
-
-
-    uint32 num_entries = 0;
-
-    if (aQueryKeyString == NULL)
-    {
-        num_entries = iAvailableMetadataKeys.size();
-    }
-    else
-    {
-        for (uint32 i = 0; i < iAvailableMetadataKeys.size(); i++)
-        {
-            if (pv_mime_strcmp(iAvailableMetadataKeys[i].get_cstr(), aQueryKeyString) >= 0)
-            {
-                num_entries++;
-            }
-        }
-    }
-    return num_entries; // Number of elements
-}
-
-
 PVMFStatus PVMFOMXEncNode::getParametersSync(PvmiMIOSession aSession, PvmiKeyType aIdentifier, PvmiKvp*& aParameters, int& aNumParamElements, PvmiCapabilityContext aContext)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXEncNode-%s::getParametersSync()", iNodeTypeId));
@@ -8542,16 +8380,6 @@ uint32 PVMFOMXEncNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-PVMFCommandId PVMFOMXEncNode::GetNodeMetadataKeys(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList, uint32 starting_index, int32 max_entries, char* query_key, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXEncNodeCommand::GetNodeMetadataKeys() called", iNodeTypeId));
-
-    PVMFOMXEncNodeCommand cmd;
-    cmd.PVMFOMXEncNodeCommand::Construct(aSessionId, PVMFOMXEncNodeCommand::PVOMXENC_NODE_CMD_GETNODEMETADATAKEY, &aKeyList, starting_index, max_entries, query_key, aContext);
-    return QueueCommandL(cmd);
-}
-
-/////////////////////////////////////////////////////////////////////////////
 PVMFCommandId PVMFOMXEncNode::GetNodeMetadataValues(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, uint32 starting_index, int32 max_entries, const OsclAny* aContext)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXEncNodeCommand::GetNodeMetadataValue() called", iNodeTypeId));
@@ -8559,15 +8387,6 @@ PVMFCommandId PVMFOMXEncNode::GetNodeMetadataValues(PVMFSessionId aSessionId, PV
     PVMFOMXEncNodeCommand cmd;
     cmd.PVMFOMXEncNodeCommand::Construct(aSessionId, PVMFOMXEncNodeCommand::PVOMXENC_NODE_CMD_GETNODEMETADATAVALUE, &aKeyList, &aValueList, starting_index, max_entries, aContext);
     return QueueCommandL(cmd);
-}
-
-// From PVMFMetadataExtensionInterface
-/////////////////////////////////////////////////////////////////////////////
-PVMFStatus PVMFOMXEncNode::ReleaseNodeMetadataKeys(PVMFMetadataList& , uint32 , uint32)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXEncNode-%s::ReleaseNodeMetadataKeys() called", iNodeTypeId));
-    //nothing needed-- there's no dynamic allocation in this node's key list
-    return PVMFSuccess;
 }
 
 // From PVMFMetadataExtensionInterface

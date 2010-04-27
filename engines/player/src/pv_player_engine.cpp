@@ -364,29 +364,6 @@ PVCommandId PVPlayerEngine::Init(const OsclAny* aContextData)
 }
 
 
-PVCommandId PVPlayerEngine::GetMetadataKeys(PVPMetadataList& aKeyList, int32 aStartingIndex, int32 aMaxEntries,
-        char* aQueryKey, const OsclAny* aContextData, uint32 aClipIndex)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::GetMetadataKeys()"));
-    Oscl_Vector<PVPlayerEngineCommandParamUnion, OsclMemAllocator> paramvec;
-    paramvec.reserve(5);
-    paramvec.clear();
-    PVPlayerEngineCommandParamUnion param;
-
-    param.pOsclAny_value = (OsclAny*) & aKeyList;
-    paramvec.push_back(param);
-    param.int32_value = aStartingIndex;
-    paramvec.push_back(param);
-    param.int32_value = aMaxEntries;
-    paramvec.push_back(param);
-    param.pChar_value = aQueryKey;
-    paramvec.push_back(param);
-    param.uint32_value = aClipIndex;
-    paramvec.push_back(param);
-
-    return AddCommandToQueue(PVP_ENGINE_COMMAND_GET_METADATA_KEY, (OsclAny*)aContextData, &paramvec);
-}
-
 PVCommandId PVPlayerEngine::GetMetadataValues(PVPMetadataList& aKeyList, int32 aStartingValueIndex, int32 aMaxValueEntries, int32& aNumAvailableValueEntries,
         Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, const OsclAny* aContextData, bool aMetadataValuesCopiedInCallBack, uint32 aClipIndex)
 {
@@ -1216,9 +1193,6 @@ void PVPlayerEngine::Construct(PVCommandStatusObserver* aCmdStatusObserver,
     iMetadataIFList.reserve(6);
     iMetadataIFList.clear();
 
-    iMetadataKeyReleaseList.reserve(6);
-    iMetadataKeyReleaseList.clear();
-
     iMetadataValueReleaseList.reserve(6);
     iMetadataValueReleaseList.clear();
 
@@ -1555,10 +1529,6 @@ void PVPlayerEngine::Run()
 
             case PVP_ENGINE_COMMAND_INIT:
                 cmdstatus = DoInit(cmd);
-                break;
-
-            case PVP_ENGINE_COMMAND_GET_METADATA_KEY:
-                cmdstatus = DoGetMetadataKey(cmd);
                 break;
 
             case PVP_ENGINE_COMMAND_GET_METADATA_VALUE:
@@ -1930,24 +1900,10 @@ void PVPlayerEngine::NodeCommandCompleted(const PVMFCmdResp& aResponse)
                         (0, "PVPlayerEngine::NodeCommandCompleted() Cancel in node completed for cancel command. Pending %d", iNumberCancelCmdPending));
         --iNumberCancelCmdPending;
 
-        // If cmd to cancel was GetMetadataKeys() or GetMetadataValues() and if these commands return with
+        // If cmd to cancel was GetMetadataValues() and if this commands return with
         // success then first release the memory for the node which return with success.
-        if (iCmdToCancel[0].GetCmdType() == PVP_ENGINE_COMMAND_GET_METADATA_KEY &&
+        if (iCmdToCancel[0].GetCmdType() == PVP_ENGINE_COMMAND_GET_METADATA_VALUE &&
                 aResponse.GetCmdStatus() == PVMFSuccess)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVPlayerEngine::NodeCommandCompleted() Cancel in node completed for GetMetadataKeys with success, release memory."));
-            // Release the memory allocated for the metadata keys
-            uint32 numkeysadded = iGetMetadataKeysParam.iKeyList->size() - iGetMetadataKeysParam.iNumKeyEntriesInList;
-            uint32 start = iGetMetadataKeysParam.iNumKeyEntriesInList;
-            uint32 end = iGetMetadataKeysParam.iNumKeyEntriesInList + numkeysadded - 1;
-
-            PVMFMetadataExtensionInterface* mdif = iMetadataIFList[iGetMetadataKeysParam.iCurrentInterfaceIndex].iInterface;
-            OSCL_ASSERT(mdif != NULL);
-            mdif->ReleaseNodeMetadataKeys(*(iGetMetadataKeysParam.iKeyList), start, end);
-        }
-        else if (iCmdToCancel[0].GetCmdType() == PVP_ENGINE_COMMAND_GET_METADATA_VALUE &&
-                 aResponse.GetCmdStatus() == PVMFSuccess)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVPlayerEngine::NodeCommandCompleted() Cancel in node completed for GetMetadataValue with success, release memory."));
@@ -2026,141 +1982,6 @@ void PVPlayerEngine::NodeCommandCompleted(const PVMFCmdResp& aResponse)
     else if (nodecontext->iCmdType == PVP_CMD_SinkNodeReset)
     {
         HandleSinkNodeReset(*nodecontext, aResponse);
-    }
-    else if (nodecontext->iCmdType == PVP_CMD_GetNodeMetadataKey)
-    {
-        // Ignore the command status since it does not matter and continue going through the metadata interface list
-
-        // Determine the number of keys were added
-        uint32 numkeysadded = iGetMetadataKeysParam.iKeyList->size() - iGetMetadataKeysParam.iNumKeyEntriesInList;
-        if (numkeysadded > 0)
-        {
-            // Create an entry for the metadata key release list
-            PVPlayerEngineMetadataReleaseEntry releaseentry;
-            releaseentry.iMetadataIFListIndex = iGetMetadataKeysParam.iCurrentInterfaceIndex;
-            // Save the start and end indices into the key list for keys that this node added
-            releaseentry.iStartIndex = iGetMetadataKeysParam.iNumKeyEntriesInList;
-            releaseentry.iEndIndex = iGetMetadataKeysParam.iNumKeyEntriesInList + numkeysadded - 1;
-
-            leavecode = 0;
-            OSCL_TRY(leavecode, iMetadataKeyReleaseList.push_back(releaseentry));
-            if (leavecode != 0)
-            {
-                // An element could not be added to the release list vector
-                // so notify completion of GetMetadataKey() command with memory failure
-                EngineCommandCompleted(nodecontext->iCmdId, (OsclAny*)nodecontext->iCmdContext, PVMFErrNoMemory);
-
-                // Release the last requested keys
-                PVMFMetadataExtensionInterface* mdif = iMetadataIFList[releaseentry.iMetadataIFListIndex].iInterface;
-                OSCL_ASSERT(mdif != NULL);
-                mdif->ReleaseNodeMetadataKeys(*(iGetMetadataKeysParam.iKeyList), releaseentry.iStartIndex, releaseentry.iEndIndex);
-
-                // Release the memory allocated for rest of the metadata keys
-                while (iMetadataKeyReleaseList.empty() == false)
-                {
-                    mdif = iMetadataIFList[iMetadataKeyReleaseList[0].iMetadataIFListIndex].iInterface;
-                    OSCL_ASSERT(mdif != NULL);
-                    mdif->ReleaseNodeMetadataKeys(*(iGetMetadataKeysParam.iKeyList), iMetadataKeyReleaseList[0].iStartIndex, iMetadataKeyReleaseList[0].iEndIndex);
-                    iMetadataKeyReleaseList.erase(iMetadataKeyReleaseList.begin());
-                }
-
-                // Remove the context from the list
-                // Need to do this since we're calling return from here
-                FreeEngineContext(nodecontext);
-                return;
-            }
-
-            // Update the variables tracking the key list
-            if (iGetMetadataKeysParam.iNumKeyEntriesToFill != -1)
-            {
-                iGetMetadataKeysParam.iNumKeyEntriesToFill -= numkeysadded;
-            }
-            iGetMetadataKeysParam.iNumKeyEntriesInList += numkeysadded;
-        }
-
-        // Update the interface index to the next one
-        ++iGetMetadataKeysParam.iCurrentInterfaceIndex;
-
-        // Loop until GetNodeMetadataKeys() is called or command is completed
-        bool endloop = false;
-        while (endloop == false)
-        {
-            // Check if there is another metadata interface to check
-            if (iGetMetadataKeysParam.iCurrentInterfaceIndex < iMetadataIFList.size())
-            {
-                PVMFMetadataExtensionInterface* mdif = iMetadataIFList[iGetMetadataKeysParam.iCurrentInterfaceIndex].iInterface;
-                OSCL_ASSERT(mdif != NULL);
-                PVMFSessionId sessionid = iMetadataIFList[iGetMetadataKeysParam.iCurrentInterfaceIndex].iSessionId;
-
-                // Determine the number of keys available for the specified query key
-                int32 numkeys = mdif->GetNumMetadataKeys(iGetMetadataKeysParam.iQueryKey);
-                if (numkeys <= 0)
-                {
-                    // Since there is no keys from this node, go to the next one
-                    ++iGetMetadataKeysParam.iCurrentInterfaceIndex;
-                    continue;
-                }
-
-                // If more key entries can be added, retrieve from the node
-                if (iGetMetadataKeysParam.iNumKeyEntriesToFill > 0 || iGetMetadataKeysParam.iNumKeyEntriesToFill == -1)
-                {
-                    int32 leavecode = 0;
-                    PVMFCommandId cmdid = -1;
-                    PVPlayerEngineContext* newcontext = AllocateEngineContext(iMetadataIFList[iGetMetadataKeysParam.iCurrentInterfaceIndex].iEngineDatapath,
-                                                        iMetadataIFList[iGetMetadataKeysParam.iCurrentInterfaceIndex].iNode,
-                                                        NULL, nodecontext->iCmdId, nodecontext->iCmdContext, PVP_CMD_GetNodeMetadataKey);
-                    OSCL_TRY(leavecode, cmdid = mdif->GetNodeMetadataKeys(sessionid,
-                                                *(iGetMetadataKeysParam.iKeyList),
-                                                0,
-                                                iGetMetadataKeysParam.iNumKeyEntriesToFill,
-                                                iGetMetadataKeysParam.iQueryKey,
-                                                (OsclAny*)newcontext));
-                    OSCL_FIRST_CATCH_ANY(leavecode,
-                                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::NodeCommandCompleted() GetNodeMetadataKeys on a node did a leave!"));
-                                         FreeEngineContext(newcontext);
-                                         // Go to the next metadata IF in the list and continue
-                                         ++iGetMetadataKeysParam.iCurrentInterfaceIndex;
-                                         continue;);
-
-                    // End the loop since GetNodeMetadataKeys() was called
-                    endloop = true;
-                }
-                else
-                {
-                    // Retrieved the requested number of keys so notify completion of GetMetadataKey() command
-                    EngineCommandCompleted(nodecontext->iCmdId, (OsclAny*)nodecontext->iCmdContext, aResponse.GetCmdStatus());
-
-                    // Release the memory allocated for the metadata keys
-                    while (iMetadataKeyReleaseList.empty() == false)
-                    {
-                        mdif = iMetadataIFList[iMetadataKeyReleaseList[0].iMetadataIFListIndex].iInterface;
-                        OSCL_ASSERT(mdif != NULL);
-                        mdif->ReleaseNodeMetadataKeys(*(iGetMetadataKeysParam.iKeyList), iMetadataKeyReleaseList[0].iStartIndex, iMetadataKeyReleaseList[0].iEndIndex);
-                        iMetadataKeyReleaseList.erase(iMetadataKeyReleaseList.begin());
-                    }
-
-                    // End the loop since finished command
-                    endloop = true;
-                }
-            }
-            else
-            {
-                // No more so notify completion of GetMetadataKey() command
-                EngineCommandCompleted(nodecontext->iCmdId, (OsclAny*)nodecontext->iCmdContext, aResponse.GetCmdStatus());
-
-                // Release the memory allocated for the metadata keys
-                while (iMetadataKeyReleaseList.empty() == false)
-                {
-                    PVMFMetadataExtensionInterface* mdif = iMetadataIFList[iMetadataKeyReleaseList[0].iMetadataIFListIndex].iInterface;
-                    OSCL_ASSERT(mdif != NULL);
-                    mdif->ReleaseNodeMetadataKeys(*(iGetMetadataKeysParam.iKeyList), iMetadataKeyReleaseList[0].iStartIndex, iMetadataKeyReleaseList[0].iEndIndex);
-                    iMetadataKeyReleaseList.erase(iMetadataKeyReleaseList.begin());
-                }
-
-                // End the loop since reached the end of the metadata IF list
-                endloop = true;
-            }
-        }
     }
     else if (nodecontext->iCmdType == PVP_CMD_GetNodeMetadataValue)
     {
@@ -4020,22 +3841,10 @@ void PVPlayerEngine::DoCancelCommandBeingProcessed(void)
     // There should be a command to cancel
     OSCL_ASSERT(iCmdToCancel.empty() == false);
 
-    // If cmd to cancel is GetMetadataKeys() or GetMetadataValues(), first release the memory for
+    // If cmd to cancel is GetMetadataValues(), first release the memory for
     // nodes which have already completed the call and then issue cancel on other nodes.
     switch (iCmdToCancel[0].GetCmdType())
     {
-        case PVP_ENGINE_COMMAND_GET_METADATA_KEY:
-        {
-            // Release the memory allocated for the metadata keys
-            while (iMetadataKeyReleaseList.empty() == false)
-            {
-                PVMFMetadataExtensionInterface* mdif = iMetadataIFList[iMetadataKeyReleaseList[0].iMetadataIFListIndex].iInterface;
-                OSCL_ASSERT(mdif != NULL);
-                mdif->ReleaseNodeMetadataKeys(*(iGetMetadataKeysParam.iKeyList), iMetadataKeyReleaseList[0].iStartIndex, iMetadataKeyReleaseList[0].iEndIndex);
-                iMetadataKeyReleaseList.erase(iMetadataKeyReleaseList.begin());
-            }
-            // no need to break from the current switch, as we need to issue Cancel on nodes. Continue.
-        }
         case PVP_ENGINE_COMMAND_GET_METADATA_VALUE:
         {
             // Release the memory allocated for the metadata values
@@ -5138,96 +4947,6 @@ PVMFStatus PVPlayerEngine::DoSourceNodeQueryInterfaceOptional(PVCommandId aCmdId
         return PVMFFailure;
     }
 }
-
-PVMFStatus PVPlayerEngine::DoGetMetadataKey(PVPlayerEngineCommand& aCmd)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iPerfLogger, PVLOGMSG_NOTICE,
-                    (0, "PVPlayerEngine::DoGetMetadataKey() Tick=%d", OsclTickCount::TickCount()));
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoGetMetadataKey() In"));
-
-    if (GetPVPlayerState() == PVP_STATE_ERROR)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoGetMetadataKey() Wrong engine state."));
-        return PVMFFailure;
-    }
-
-    iGetMetadataKeysParam.iKeyList = (PVPMetadataList*)(aCmd.GetParam(0).pOsclAny_value);
-    iGetMetadataKeysParam.iStartingKeyIndex = aCmd.GetParam(1).int32_value;
-    iGetMetadataKeysParam.iMaxKeyEntries = aCmd.GetParam(2).int32_value;
-    iGetMetadataKeysParam.iQueryKey = aCmd.GetParam(3).pChar_value;
-    iGetMetadataKeysParam.iClipIndex = aCmd.GetParam(4).uint32_value;
-
-    if (iGetMetadataKeysParam.iKeyList == NULL)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoGetMetadataKey() Passed in parameter invalid."));
-        return PVMFErrArgument;
-    }
-
-    if (iGetMetadataKeysParam.iMaxKeyEntries < -1 || iGetMetadataKeysParam.iMaxKeyEntries == 0 || iGetMetadataKeysParam.iStartingKeyIndex < 0)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoGetMetadataKey() Passed in parameter invalid."));
-        return PVMFErrArgument;
-    }
-
-    // Determine which node's metadata interface to start the retrieval based on the starting index
-    uint32 i = 0;
-    int32 totalnumkey = 0;
-    uint32 nodestartindex = 0;
-    while (i < iMetadataIFList.size())
-    {
-        int32 numkey = iMetadataIFList[i].iInterface->GetNumMetadataKeys(iGetMetadataKeysParam.iQueryKey);
-        if (iGetMetadataKeysParam.iStartingKeyIndex < (totalnumkey + numkey))
-        {
-            // Found the node to start the key retrieval
-            // Determine the start index for this node
-            nodestartindex = iGetMetadataKeysParam.iStartingKeyIndex - totalnumkey;
-            break;
-        }
-        else
-        {
-            // Keep checking
-            totalnumkey += numkey;
-            ++i;
-        }
-    }
-
-    // Check if the search succeeded
-    if (i == iMetadataIFList.size() || iMetadataIFList.size() == 0)
-    {
-        // Starting index is too large or there is no metadata interface available
-        return PVMFErrArgument;
-    }
-
-    // Retrieve the metadata key from the first node
-    PVPlayerEngineContext* context = AllocateEngineContext(iMetadataIFList[i].iEngineDatapath, iMetadataIFList[i].iNode, NULL, aCmd.GetCmdId(), aCmd.GetContext(), PVP_CMD_GetNodeMetadataKey);
-    PVMFMetadataExtensionInterface* metadataif = iMetadataIFList[i].iInterface;
-    PVMFSessionId sessionid = iMetadataIFList[i].iSessionId;
-    PVMFCommandId cmdid = -1;
-    metadataif->SetMetadataClipIndex(iGetMetadataKeysParam.iClipIndex);
-    cmdid = metadataif->GetNodeMetadataKeys(sessionid,
-                                            *(iGetMetadataKeysParam.iKeyList),
-                                            nodestartindex,
-                                            iGetMetadataKeysParam.iMaxKeyEntries,
-                                            iGetMetadataKeysParam.iQueryKey,
-                                            (OsclAny*)context);
-    if (cmdid == -1)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "PVPlayerEngine::DoGetMetadataKey() GetNodeMetadataKeys failed"));
-        return PVMFFailure;
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoGetMetadataKey() Out"));
-
-    // Save the current metadata value retrieval status
-    iGetMetadataKeysParam.iCurrentInterfaceIndex = i;
-    iGetMetadataKeysParam.iNumKeyEntriesToFill = iGetMetadataKeysParam.iMaxKeyEntries;
-    iGetMetadataKeysParam.iNumKeyEntriesInList = iGetMetadataKeysParam.iKeyList->size();
-
-    return PVMFSuccess;
-}
-
 
 PVMFStatus PVPlayerEngine::DoGetMetadataValue(PVPlayerEngineCommand& aCmd)
 {

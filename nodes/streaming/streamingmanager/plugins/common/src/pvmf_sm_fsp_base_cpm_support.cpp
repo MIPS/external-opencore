@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,19 +140,6 @@ OSCL_EXPORT_REF void PVMFSMFSPBaseNode::ResetCPM()
     iCPMResetCmdId = iCPM->Reset();
 }
 
-OSCL_EXPORT_REF void PVMFSMFSPBaseNode::GetCPMMetaDataKeys()
-{
-    if (iCPMMetaDataExtensionInterface != NULL)
-    {
-        iCPMMetadataKeys.clear();
-        iCPMGetMetaDataKeysCmdId =
-            iCPMMetaDataExtensionInterface->GetNodeMetadataKeys(iCPMSessionID,
-                    iCPMMetadataKeys,
-                    0,
-                    PVMF_STREAMING_MANAGER_NODE_MAX_CPM_METADATA_KEYS);
-    }
-}
-
 OSCL_EXPORT_REF PVMFStatus
 PVMFSMFSPBaseNode::CheckCPMCommandCompleteStatus(PVMFCommandId aID,
         PVMFStatus aStatus)
@@ -269,15 +256,6 @@ OSCL_EXPORT_REF void PVMFSMFSPBaseNode::CPMCommandCompleted(const PVMFCmdResp& a
             OSCL_ASSERT(!iCurrentCommand.empty());
             OSCL_ASSERT(iCurrentCommand.front().iCmd == PVMF_SMFSP_NODE_INIT);
             CompleteDRMInit();
-        }
-        else if (id == iCPMGetMetaDataKeysCmdId)
-        {
-            /* End of GetNodeMetaDataKeys */
-            PVMFStatus status =
-                CompleteGetMetadataKeys(iCurrentCommand.front());
-            CommandComplete(iCurrentCommand,
-                            iCurrentCommand.front(),
-                            status);
         }
         else if (id == iCPMUsageCompleteCmdId)
         {

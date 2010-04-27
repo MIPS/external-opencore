@@ -83,7 +83,6 @@ class PVMFOMXAudioDecNode: public PVMFOMXBaseDecNode
         ~PVMFOMXAudioDecNode();
 
         //From PVMFMetadataExtensionInterface
-        uint32 GetNumMetadataKeys(char* query_key = NULL);
         uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
 
 
@@ -100,7 +99,6 @@ class PVMFOMXAudioDecNode: public PVMFOMXBaseDecNode
     private:
 
         PVMFStatus DoRequestPort(PVMFPortInterface*&);
-        PVMFStatus DoGetNodeMetadataKey();
         PVMFStatus DoGetNodeMetadataValue();
         PVMFStatus CheckIfIncomingMsgIsCmd(PVMFSharedMediaMsgPtr msg);
         bool ProcessIncomingMsg(PVMFPortInterface* aPort);

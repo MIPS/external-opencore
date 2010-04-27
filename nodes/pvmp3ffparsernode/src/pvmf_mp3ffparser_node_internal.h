@@ -54,8 +54,7 @@ typedef OsclMemAllocator PVMFMP3FFParserNodeAllocator;
 //Node command type, IDs for all of the asynchronous node commands.
 enum PVMFMP3FFParserNodeCommandType
 {
-    PVMP3FF_NODE_CMD_GETNODEMETADATAKEY = PVMF_GENERIC_NODE_COMMAND_LAST,
-    PVMP3FF_NODE_CMD_GETNODEMETADATAVALUE,
+    PVMP3FF_NODE_CMD_GETNODEMETADATAVALUE = PVMF_GENERIC_NODE_COMMAND_LAST,
     PVMP3FF_NODE_CMD_SETDATASOURCEPOSITION,
     PVMP3FF_NODE_CMD_QUERYDATASOURCEPOSITION,
     PVMP3FF_NODE_CMD_SETDATASOURCERATE,
@@ -138,38 +137,6 @@ class PVMFMP3FFParserNodeCommand : public PVMFMP3FFParserNodeCommandBase
             aTimebase = (PVMFTimebase*)iParam2;
         }
 
-        // Constructor and parser for GetNodeMetadataKeys
-        void Construct(PVMFSessionId aSessionId, int32 cmd
-                       , PVMFMetadataList& aKeyList
-                       , uint32 aStartingIndex
-                       , int32 aMaxEntries
-                       , char* aQueryKey
-                       , const OsclAny* aContext)
-        {
-            PVMFMP3FFParserNodeCommandBase::Construct(aSessionId, cmd, aContext);
-            iParam1 = (OsclAny*) & aKeyList;
-            iParam2 = (OsclAny*)aStartingIndex;
-            iParam3 = (OsclAny*)aMaxEntries;
-            if (aQueryKey)
-            {
-                //allocate a copy of the query key string.
-                Oscl_TAlloc<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> str;
-                iParam4 = str.ALLOC_AND_CONSTRUCT(aQueryKey);
-            }
-        }
-        void Parse(PVMFMetadataList*& MetaDataListPtr, uint32 &aStartingIndex, int32 &aMaxEntries, char*& aQueryKey)
-        {
-            MetaDataListPtr = (PVMFMetadataList*)iParam1;
-            aStartingIndex = (uint32)iParam2;
-            aMaxEntries = (int32)iParam3;
-            aQueryKey = NULL;
-            if (iParam4)
-            {
-                OSCL_HeapString<OsclMemAllocator>* keystring = (OSCL_HeapString<OsclMemAllocator>*)iParam4;
-                aQueryKey = keystring->get_str();
-            }
-        }
-
         // Constructor and parser for GetNodeMetadataValue
         void Construct(PVMFSessionId aSessionId, int32 cmd, PVMFMetadataList& aKeyList, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, uint32 aStartIndex, int32 aMaxEntries, const OsclAny* aContext)
         {
@@ -240,46 +207,6 @@ class PVMFMP3FFParserNodeCommand : public PVMFMP3FFParserNodeCommandBase
             aLicenseData = (PVMFTimestamp*)iParam2;
             aDataSize = (uint32)iParam3;
             aTimeoutMsec = (int32)iParam4;
-        }
-
-
-        //need to overlaod the base Destroy routine to cleanup metadata key.
-        void Destroy()
-        {
-            PVMFGenericNodeCommand<OsclMemAllocator>::Destroy();
-            switch (iCmd)
-            {
-                case PVMP3FF_NODE_CMD_GETNODEMETADATAKEY:
-                    if (iParam4)
-                    {
-                        //cleanup the allocated string
-                        Oscl_TAlloc<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> str;
-                        str.destruct_and_dealloc(iParam4);
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        //need to overlaod the base Copy routine to copy metadata key.
-        void Copy(const PVMFGenericNodeCommand<OsclMemAllocator>& aCmd)
-        {
-            PVMFGenericNodeCommand<OsclMemAllocator>::Copy(aCmd);
-            switch (aCmd.iCmd)
-            {
-                case PVMP3FF_NODE_CMD_GETNODEMETADATAKEY:
-                    if (aCmd.iParam4)
-                    {
-                        //copy the allocated string
-                        OSCL_HeapString<OsclMemAllocator>* aStr = (OSCL_HeapString<OsclMemAllocator>*)aCmd.iParam4;
-                        Oscl_TAlloc<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> str;
-                        iParam4 = str.ALLOC_AND_CONSTRUCT(*aStr);
-                    }
-                    break;
-                default:
-                    break;
-            }
         }
 };
 

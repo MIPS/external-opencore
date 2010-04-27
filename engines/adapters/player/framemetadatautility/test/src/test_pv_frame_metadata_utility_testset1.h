@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,10 +39,6 @@
 
 #ifndef PV_ENGINE_TYPES_H_INCLUDED
 #include "pv_engine_types.h"
-#endif
-
-#ifndef OSCL_FILE_IO_H_INCLUDED
-#include "oscl_file_io.h"
 #endif
 
 #ifndef PVMI_CONFIG_AND_CAPABILITY_H_INCLUDED
@@ -85,7 +81,6 @@ class pvframemetadata_async_test_newdelete : public pvframemetadata_async_test_b
  *  - Sequence:
  *             -# CreateFrameAndMetadataUtility()
  *             -# AddDataSource()
- *             -# GetMetadataKeys()
  *             -# GetMetadataValues()
  *             -# RemoveDataSource()
  *             -# DeleteFrameAndMetadataUtility()
@@ -121,14 +116,10 @@ class pvframemetadata_async_test_getmetadata : public pvframemetadata_async_test
         void HandleErrorEvent(const PVAsyncErrorEvent& aEvent);
         void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
 
-        void SaveMetadataInfo();
-        void SaveVideoFrame();
-
         enum PVTestState
         {
             STATE_CREATE,
             STATE_ADDDATASOURCE,
-            STATE_GETMETADATAKEYS1,
             STATE_GETMETADATAVALUES1,
             STATE_GETFRAME,
             STATE_REMOVEDATASOURCE,
@@ -155,9 +146,9 @@ class pvframemetadata_async_test_getmetadata : public pvframemetadata_async_test
         OSCL_wHeapString<OsclMemAllocator> wFileName;
 
         Oscl_FileServer iFS;
+        Oscl_File iFrameFile;
         Oscl_File iMetadataFile;
         char iTextOutputBuf[512];
-        Oscl_File iFrameFile;
 
         uint32 iMode;
         bool iBestThumbNailMode;
@@ -178,10 +169,8 @@ class pvframemetadata_async_test_getmetadata : public pvframemetadata_async_test
  *  - Sequence:
  *             -# CreateFrameAndMetadataUtility()
  *             -# AddDataSource()
- *             -# GetMetadataKeys()
  *             -# GetMetadataValues()
  *             -# GetFrame()
- *             -# GetMetadataKeys()
  *             -# GetMetadataValues()
  *             -# RemoveDataSource()
  *             -# DeleteFrameAndMetadataUtility()
@@ -208,17 +197,12 @@ class pvframemetadata_async_test_getfirstframemetadata : public pvframemetadata_
         void HandleErrorEvent(const PVAsyncErrorEvent& aEvent);
         void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
 
-        void SaveMetadataInfo();
-        void SaveVideoFrame();
-
         enum PVTestState
         {
             STATE_CREATE,
             STATE_ADDDATASOURCE,
-            STATE_GETMETADATAKEYS1,
             STATE_GETMETADATAVALUES1,
             STATE_GETFRAME,
-            STATE_GETMETADATAKEYS2,
             STATE_GETMETADATAVALUES2,
             STATE_REMOVEDATASOURCE,
             STATE_CLEANUPANDCOMPLETE
@@ -243,9 +227,9 @@ class pvframemetadata_async_test_getfirstframemetadata : public pvframemetadata_
         OSCL_wHeapString<OsclMemAllocator> wFileName;
 
         Oscl_FileServer iFS;
+        Oscl_File iFrameFile;
         Oscl_File iMetadataFile;
         char iTextOutputBuf[512];
-        Oscl_File iFrameFile;
 };
 
 
@@ -284,7 +268,6 @@ class pvframemetadata_async_test_getfirstframeutilitybuffer : public pvframemeta
         void HandleErrorEvent(const PVAsyncErrorEvent& aEvent);
         void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
 
-        void SaveVideoFrame();
 
         enum PVTestState
         {
@@ -349,7 +332,6 @@ class pvframemetadata_async_test_get30thframe : public pvframemetadata_async_tes
         void HandleErrorEvent(const PVAsyncErrorEvent& aEvent);
         void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
 
-        void SaveVideoFrame();
 
         enum PVTestState
         {
@@ -417,7 +399,6 @@ class pvframemetadata_async_test_get10secframe : public pvframemetadata_async_te
         void HandleErrorEvent(const PVAsyncErrorEvent& aEvent);
         void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
 
-        void SaveVideoFrame();
 
         enum PVTestState
         {
@@ -455,7 +436,7 @@ class pvframemetadata_async_test_get10secframe : public pvframemetadata_async_te
  *  - Output: None\n
  *  - Sequence:
  *             -# CreateFrameAndMetadataUtility()
- *             -# AddDataSource()/GetMetadataKeys()/GetFrame()
+ *             -# AddDataSource()/GetFrame()
  *             -# CancelAllCommands() (after AddDataSource() completes)
  *             -# RemoveDataSource()
  *             -# DeleteFrameAndMetadataUtility()
@@ -519,17 +500,14 @@ class pvframemetadata_async_test_cancelcommand : public pvframemetadata_async_te
  *  - Sequence:
  *             -# CreateFrameAndMetadataUtility()
  *             -# AddDataSource() (passed-in clip)
- *             -# GetMetadataKeys()
  *             -# GetMetadataValues()
  *             -# GetFrame()
  *             -# RemoveDataSource()
  *             -# AddDataSource() (test.mp4)
- *             -# GetMetadataKeys()
  *             -# GetMetadataValues()
  *             -# GetFrame()
  *             -# RemoveDataSource()
  *             -# AddDataSource() (passed-in clip)
- *             -# GetMetadataKeys()
  *             -# GetMetadataValues()
  *             -# GetFrame()
  *             -# RemoveDataSource()
@@ -557,24 +535,18 @@ class pvframemetadata_async_test_multigetfirstframemetadata : public pvframemeta
         void HandleErrorEvent(const PVAsyncErrorEvent& aEvent);
         void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
 
-        void SaveMetadataInfo();
-        void SaveVideoFrame();
-
         enum PVTestState
         {
             STATE_CREATE,
             STATE_ADDDATASOURCE1,
-            STATE_GETMETADATAKEYS1,
             STATE_GETMETADATAVALUES1,
             STATE_GETFRAME1,
             STATE_REMOVEDATASOURCE1,
             STATE_ADDDATASOURCE2,
-            STATE_GETMETADATAKEYS2,
             STATE_GETMETADATAVALUES2,
             STATE_GETFRAME2,
             STATE_REMOVEDATASOURCE2,
             STATE_ADDDATASOURCE3,
-            STATE_GETMETADATAKEYS3,
             STATE_GETMETADATAVALUES3,
             STATE_GETFRAME3,
             STATE_REMOVEDATASOURCE3,
@@ -600,9 +572,9 @@ class pvframemetadata_async_test_multigetfirstframemetadata : public pvframemeta
         OSCL_wHeapString<OsclMemAllocator> wFileName;
 
         Oscl_FileServer iFS;
+        Oscl_File iFrameFile;
         Oscl_File iMetadataFile;
         char iTextOutputBuf[512];
-        Oscl_File iFrameFile;
 };
 
 
@@ -643,7 +615,6 @@ class pvframemetadata_async_test_multigetframe : public pvframemetadata_async_te
         void HandleErrorEvent(const PVAsyncErrorEvent& aEvent);
         void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
 
-        void SaveVideoFrame();
 
         enum PVTestState
         {
@@ -736,7 +707,6 @@ class pvframemetadata_async_test_invalidsourcefile : public pvframemetadata_asyn
  *  - Sequence:
  *             -# CreateFrameAndMetadataUtility()
  *             -# AddDataSource()
- *             -# GetMetadataKeys()
  *             -# GetMetadataValues()
  *             -# RemoveDataSource()
  *             -# DeleteFrameAndMetadataUtility()
@@ -763,13 +733,10 @@ class pvframemetadata_async_test_nogetframe : public pvframemetadata_async_test_
         void HandleErrorEvent(const PVAsyncErrorEvent& aEvent);
         void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
 
-        void SaveMetadataInfo();
-
         enum PVTestState
         {
             STATE_CREATE,
             STATE_ADDDATASOURCE,
-            STATE_GETMETADATAKEYS,
             STATE_GETMETADATAVALUES,
             STATE_REMOVEDATASOURCE,
             STATE_CLEANUPANDCOMPLETE
@@ -789,6 +756,7 @@ class pvframemetadata_async_test_nogetframe : public pvframemetadata_async_test_
         OSCL_wHeapString<OsclMemAllocator> wFileName;
 
         Oscl_FileServer iFS;
+        Oscl_File iFrameFile;
         Oscl_File iMetadataFile;
         char iTextOutputBuf[512];
 };
@@ -802,10 +770,8 @@ class pvframemetadata_async_test_nogetframe : public pvframemetadata_async_test_
  *  - Sequence:
  *             -# CreateFrameAndMetadataUtility()
  *             -# AddDataSource()
- *             -# GetMetadataKeys()
  *             -# GetMetadataValues()
  *             -# GetFrame()
- *             -# GetMetadataKeys()
  *             -# GetMetadataValues()
  *             -# RemoveDataSource()
  *             -# DeleteFrameAndMetadataUtility()
@@ -832,16 +798,12 @@ class pvframemetadata_async_test_novideotrack : public pvframemetadata_async_tes
         void HandleErrorEvent(const PVAsyncErrorEvent& aEvent);
         void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
 
-        void SaveMetadataInfo();
-
         enum PVTestState
         {
             STATE_CREATE,
             STATE_ADDDATASOURCE,
-            STATE_GETMETADATAKEYS1,
             STATE_GETMETADATAVALUES1,
             STATE_GETFRAME,
-            STATE_GETMETADATAKEYS2,
             STATE_GETMETADATAVALUES2,
             STATE_REMOVEDATASOURCE,
             STATE_CLEANUPANDCOMPLETE
@@ -866,6 +828,7 @@ class pvframemetadata_async_test_novideotrack : public pvframemetadata_async_tes
         OSCL_wHeapString<OsclMemAllocator> wFileName;
 
         Oscl_FileServer iFS;
+        Oscl_File iFrameFile;
         Oscl_File iMetadataFile;
         char iTextOutputBuf[512];
 };
@@ -910,9 +873,6 @@ class pvframemetadata_async_test_settimeout_getframe : public pvframemetadata_as
         void HandleErrorEvent(const PVAsyncErrorEvent& aEvent);
         void HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent);
 
-        void SaveMetadataInfo();
-        void SaveVideoFrame();
-
         enum PVTestState
         {
             STATE_CREATE,
@@ -946,9 +906,9 @@ class pvframemetadata_async_test_settimeout_getframe : public pvframemetadata_as
         OSCL_wHeapString<OsclMemAllocator> wFileName;
 
         Oscl_FileServer iFS;
+        Oscl_File iFrameFile;
         Oscl_File iMetadataFile;
         char iTextOutputBuf[512];
-        Oscl_File iFrameFile;
 
         uint32 iMode;
         bool iBestThumbNailMode;

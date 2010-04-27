@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,7 +180,6 @@ class pvplayer_async_test_streamingopenplaystop : public pvplayer_async_test_bas
             STATE_ADDDATASOURCE,
             STATE_CONFIGPARAMS,
             STATE_INIT,
-            STATE_GETMETADATAKEYLIST,
             STATE_GETMETADATAVALUELIST,
             STATE_ADDDATASINK_VIDEO,
             STATE_ADDDATASINK_AUDIO,
@@ -405,7 +404,6 @@ class pvplayer_async_test_streamingJBadjust: public pvplayer_async_test_base
             STATE_ADDDATASOURCE,
             STATE_CONFIGPARAMS,
             STATE_INIT,
-            STATE_GETMETADATAKEYLIST,
             STATE_GETMETADATAVALUELIST,
             STATE_ADDDATASINK_VIDEO,
             STATE_ADDDATASINK_AUDIO,
@@ -534,7 +532,6 @@ class pvplayer_async_test_streaming_bitstream_switch: public pvplayer_async_test
             STATE_ADDDATASOURCE,
             STATE_INIT,
             STATE_SET_STREAM_SPEED,
-            STATE_GETMETADATAKEYLIST,
             STATE_GETMETADATAVALUELIST,
             STATE_ADDDATASINK_VIDEO,
             STATE_ADDDATASINK_AUDIO,
@@ -691,7 +688,6 @@ class pvplayer_async_test_streamingopenplaystoppreparelaystop : public pvplayer_
             STATE_ADDDATASOURCE,
             STATE_CONFIGPARAMS,
             STATE_INIT,
-            STATE_GETMETADATAKEYLIST,
             STATE_GETMETADATAVALUELIST,
             STATE_ADDDATASINK_VIDEO,
             STATE_ADDDATASINK_AUDIO,
@@ -898,7 +894,6 @@ class pvplayer_async_test_dvbh_streamingopenplaystop : public pvplayer_async_tes
             STATE_ADDDATASOURCE,
             STATE_CONFIGPARAMS,
             STATE_INIT,
-            STATE_GETMETADATAKEYLIST,
             STATE_GETMETADATAVALUELIST,
             STATE_ADDDATASINK_VIDEO,
             STATE_ADDDATASINK_AUDIO,

@@ -128,7 +128,6 @@ class PVMFOMXVideoDecNode: public PVMFOMXBaseDecNode
         ~PVMFOMXVideoDecNode();
 
         // From PVMFMetadataExtensionInterface
-        uint32 GetNumMetadataKeys(char* query_key = NULL);
         uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
 
         // for WMV params
@@ -136,7 +135,6 @@ class PVMFOMXVideoDecNode: public PVMFOMXBaseDecNode
     private:
 
         PVMFStatus DoRequestPort(PVMFPortInterface*&);
-        PVMFStatus DoGetNodeMetadataKey();
         PVMFStatus DoGetNodeMetadataValue();
         PVMFStatus HandlePortReEnable();
 

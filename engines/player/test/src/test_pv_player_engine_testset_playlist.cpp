@@ -1099,27 +1099,6 @@ void pvplayer_async_test_playlist_playback::Run()
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;
-        case STATE_GETMETADATAKEYLIST:
-        {
-            if (iRetrieveCurrentPlayingMetadata)
-            {
-                // get the current playing clip's metadata
-                fprintf(iTestMsgOutputFile, "Calling GetMetadataKeys for playing clip index %d...\n", iCurrentPlaybackClip);
-
-                iCurrentPlayingMetadataKeyList.clear();
-                OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataKeys(iCurrentPlayingMetadataKeyList, 0, -1, NULL, (OsclAny*) & iContextObject, iCurrentPlaybackClip));
-            }
-            else if (iRetrieveCurrentInitializedMetadata)
-            {
-                // get just initialized clip's metadata
-                fprintf(iTestMsgOutputFile, "Calling GetMetadataKeys for initialized clip index %d...\n", iCurrentInitializedClip);
-
-                iCurrentInitializedMetadataKeyList.clear();
-                OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataKeys(iCurrentInitializedMetadataKeyList, 0, -1, NULL, (OsclAny*) & iContextObject, iCurrentInitializedClip));
-            }
-            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
         case STATE_GETMETADATAVALUELIST:
         {
             iNumValues = 0;
@@ -1132,6 +1111,8 @@ void pvplayer_async_test_playlist_playback::Run()
                 fprintf(iTestMsgOutputFile, "Calling GetMetadataValues for playing clip index %d...\n", iCurrentPlaybackClip);
 
                 iCurrentPlayingMetadataValueList.clear();
+                iCurrentPlayingMetadataKeyList.clear();
+                iCurrentPlayingMetadataKeyList.push_back(OSCL_HeapString<OsclMemAllocator>("all"));
                 OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataValues(iCurrentPlayingMetadataKeyList, 0, -1, iNumValues, iCurrentPlayingMetadataValueList, (OsclAny*) & iContextObject, true, iCurrentPlaybackClip));
             }
             else if (iRetrieveCurrentInitializedMetadata)
@@ -1142,6 +1123,8 @@ void pvplayer_async_test_playlist_playback::Run()
                 fprintf(iTestMsgOutputFile, "Calling GetMetadataValues for initialized clip index %d...\n", iCurrentInitializedClip);
 
                 iCurrentInitializedMetadataValueList.clear();
+                iCurrentInitializedMetadataKeyList.clear();
+                iCurrentInitializedMetadataKeyList.push_back(OSCL_HeapString<OsclMemAllocator>("all"));
                 OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataValues(iCurrentInitializedMetadataKeyList, 0, -1, iNumValues, iCurrentInitializedMetadataValueList, (OsclAny*) & iContextObject, true, iCurrentInitializedClip));
             }
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -1445,7 +1428,7 @@ void pvplayer_async_test_playlist_playback::CommandCompleted(const PVCmdResponse
                     iRetrieveCurrentPlayingMetadata = true;
                 }
 
-                iState = STATE_GETMETADATAKEYLIST;
+                iState = STATE_GETMETADATAVALUELIST;
                 fprintf(iTestMsgOutputFile, "...Init Complete\n");
                 RunIfNotReady();
                 iInitComplete = true;
@@ -1463,25 +1446,6 @@ void pvplayer_async_test_playlist_playback::CommandCompleted(const PVCmdResponse
                     fprintf(iTestMsgOutputFile, "...Init FAILED\n");
                     PVPATB_TEST_IS_TRUE(false);
                 }
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-            }
-            break;
-
-        case STATE_GETMETADATAKEYLIST:
-            if (PVMFSuccess == aResponse.GetCmdStatus() || PVMFErrArgument == aResponse.GetCmdStatus())
-            {
-                fprintf(iTestMsgOutputFile, "...GetMetadataKeys Complete\n");
-
-                iState = STATE_GETMETADATAVALUELIST;
-                RunIfNotReady();
-            }
-            else
-            {
-                // GetMetadataKeys failed
-                fprintf(iTestMsgOutputFile, "...GetMetadataKeys FAILED\n");
-
-                PVPATB_TEST_IS_TRUE(false);
                 iState = STATE_CLEANUPANDCOMPLETE;
                 RunIfNotReady();
             }
@@ -1518,7 +1482,7 @@ void pvplayer_async_test_playlist_playback::CommandCompleted(const PVCmdResponse
                     // need to get metadata value for 2 clips, the just initialized and the playing
                     if (iMetadataTest && (iRetrieveCurrentInitializedMetadata || iRetrieveCurrentPlayingMetadata))
                     {
-                        iState = STATE_GETMETADATAKEYLIST;
+                        iState = STATE_GETMETADATAVALUELIST;
                         RunIfNotReady();
                     }
                     else
@@ -1663,7 +1627,7 @@ void pvplayer_async_test_playlist_playback::CommandCompleted(const PVCmdResponse
                         iRetrieveCurrentPlayingMetadata = true;
                     }
 
-                    iState = STATE_GETMETADATAKEYLIST;
+                    iState = STATE_GETMETADATAVALUELIST;
                     RunIfNotReady();
                 }
             }
@@ -1901,7 +1865,7 @@ void pvplayer_async_test_playlist_playback::HandleInformationalEvent(const PVAsy
                         {
                             iRetrieveCurrentPlayingMetadata = true;
                         }
-                        iState = STATE_GETMETADATAKEYLIST;
+                        iState = STATE_GETMETADATAVALUELIST;
                         RunIfNotReady();
                     }
                 }

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,16 +65,6 @@ class PVMFMetadataExtensionInterface : public PVInterface
         virtual PVMFStatus SetMetadataClipIndex(uint32 aClipIndex) = 0;
 
         /**
-         * Synchronous method to return the number of metadata keys for the specified query key string
-         *
-         * @param aQueryKeyString A NULL terminated character string specifying a subset of metadata keys to count.
-         *                        If the string is NULL, total number of all keys will be returned
-         *
-         * @returns The number of metadata keys
-         **/
-        virtual uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL) = 0;
-
-        /**
          * Synchronous method to return the number of metadata values for the specified list of key strings
          *
          * @param aKeyList A reference to a metadata key list to specifying the values of interest to count
@@ -82,26 +72,6 @@ class PVMFMetadataExtensionInterface : public PVInterface
          * @returns The number of metadata values based on the provided key list
          **/
         virtual uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList) = 0;
-
-        /**
-         * Asynchronous method to retrieve a list of metadata keys. The subset of all available keys in the node can
-         * be specified by providing a combination of query key string, starting index, and maximum number of keys to retrieve
-         *
-         * @param aSessionId The assigned node session ID to use for this request
-         * @param aKeyList A reference to a metadata key list to add the metadata keys
-         * @param aStartingKeyIndex Index into the node's total key list that corresponds to the first key entry to retrieve
-         * @param aMaxKeyEntries The maximum number of key entries to add to aKeyList. If there is no maximum, set to -1.
-         * @param aQueryKeyString Optional NULL terminated character string to select a subset of keys
-         * @param aContext Optional opaque data to be passed back to user with the command response
-         *
-         * @returns A unique command ID for asynchronous completion
-         **/
-        virtual PVMFCommandId GetNodeMetadataKeys(PVMFSessionId aSessionId,
-                PVMFMetadataList& aKeyList,
-                uint32 aStartingKeyIndex,
-                int32 aMaxKeyEntries = -1,
-                char* aQueryKeyString = NULL,
-                const OsclAny* aContextData = NULL) = 0;
 
         /**
          * Asynchronous method to retrieve a list of metadata values. The subset of all available values in the node can
@@ -122,22 +92,6 @@ class PVMFMetadataExtensionInterface : public PVInterface
                 uint32 aStartingValueIndex,
                 int32 aMaxValueEntries = -1,
                 const OsclAny* aContextData = NULL) = 0;
-
-        /**
-         * Synchronous method to free up the specified range of metadata keys in the list. It is assumed that caller of this function
-         * knows that start and end indices should correspond to metadata keys returned by this particular instance of the
-         * metadata extension interface using GetNodeMetadataKeys().
-         *
-         * @param aKeyList A reference to a metadata key list to free the key entries
-         * @param aStartingKeyIndex Index into aKeyList that corresponds to the first key entry to release
-         * @param aEndKeyIndex Index into aKeyList that corresponds to the last key entry to release
-         *
-         * @returns PVMFSuccess if the release of specified keys succeeded. PVMFErrArgument if indices are invalid or the list is empty.
-         *          PVMFFailure otherwise.
-         **/
-        virtual PVMFStatus ReleaseNodeMetadataKeys(PVMFMetadataList& aKeyList,
-                uint32 aStartingKeyIndex,
-                uint32 aEndKeyIndex) = 0;
 
         /**
          * Synchronous method to free up the specified range of metadata values in the list. It is assumed that caller of this function

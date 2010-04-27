@@ -538,10 +538,6 @@ bool PVMFCPMPassThruPlugInOMA1::ProcessCommand(PVMFCPMPassThruPlugInOMA1Command&
             break;
 
 
-        case PVMF_CPM_PASSTHRU_PLUGIN_OMA1_METADATA_KEYS:
-            DoMetadataKeys(aCmd);
-            break;
-
         case PVMF_CPM_PASSTHRU_PLUGIN_OMA1_METADATA_VALUES:
             DoMetadataValues(aCmd);
             break;
@@ -722,11 +718,6 @@ void PVMFCPMPassThruPlugInOMA1::DoCancelGetLicense(PVMFCPMPassThruPlugInOMA1Comm
     CommandComplete(iInputCommands, aCmd, PVMFSuccess);
 }
 
-void PVMFCPMPassThruPlugInOMA1::DoMetadataKeys(PVMFCPMPassThruPlugInOMA1Command& aCmd)
-{
-    CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-}
-
 void PVMFCPMPassThruPlugInOMA1::DoMetadataValues(PVMFCPMPassThruPlugInOMA1Command& aCmd)
 {
     CommandComplete(iInputCommands, aCmd, PVMFSuccess);
@@ -826,34 +817,6 @@ OSCL_EXPORT_REF void PVMFCPMPassThruPlugInOMA1::SetObserver(PVMFCPMStatusObserve
 }
 
 /**
- * Synchronous method to return the number of metadata keys for the specified query key string
- *
- * @param aQueryKeyString A NULL terminated character string specifying a subset of metadata keys to count.
- *                        If the string is NULL, total number of all keys will be returned
- *
- * @returns The number of metadata keys
- **/
-OSCL_EXPORT_REF uint32 PVMFCPMPassThruPlugInOMA1::GetNumMetadataKeys(char* aQueryKeyString)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFCPMPassThruPlugInOMA1::GetNumMetadataKeys() called"));
-    uint32 total = 0;
-    for (uint32 i = 0; i < ELicLastOMA1; i++)
-    {
-        if (iMetaData[i].iValid)
-        {
-            if (!aQueryKeyString
-                    || iMetaData[i].iQuery == aQueryKeyString)
-            {
-                total++;
-            }
-        }
-    }
-    return total;
-}
-
-
-/**
  * Synchronous method to return the number of metadata values for the specified list of key strings
  *
  * @param aKeyList A reference to a metadata key list to specifying the values of interest to count
@@ -884,53 +847,6 @@ OSCL_EXPORT_REF PVMFStatus PVMFCPMPassThruPlugInOMA1::SetMetadataClipIndex(uint3
 {
     //@TODO add implementation
     return (aClipIndex == 0) ? PVMFSuccess : PVMFErrArgument;
-}
-
-/**
- * Asynchronous method to retrieve a list of metadata keys. The subset of all available keys in the node can
- * be specified by providing a combination of query key string, starting index, and maximum number of keys to retrieve
- *
- * @param aSessionId The assigned node session ID to use for this request
- * @param aKeyList A reference to a metadata key list to add the metadata keys
- * @param aStartingKeyIndex Index into the node's total key list that corresponds to the first key entry to retrieve
- * @param aMaxKeyEntries The maximum number of key entries to add to aKeyList. If there is no maximum, set to -1.
- * @param aQueryKeyString Optional NULL terminated character string to select a subset of keys
- * @param aContext Optional opaque data to be passed back to user with the command response
- *
- * @returns A unique command ID for asynchronous completion
- **/
-OSCL_EXPORT_REF PVMFCommandId PVMFCPMPassThruPlugInOMA1::GetNodeMetadataKeys(PVMFSessionId aSessionId,
-        PVMFMetadataList& aKeyList,
-        uint32 aStartingKeyIndex,
-        int32 aMaxKeyEntries ,
-        char* aQueryKeyString ,
-        const OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFCPMPassThruPlugInOMA1::GetNodeMetadataKeys() called"));
-    int32 total = 0;
-    for (uint32 i = aStartingKeyIndex; i < ELicLastOMA1; i++)
-    {
-        if (iMetaData[i].iValid)
-        {
-            if (aMaxKeyEntries >= 0
-                    && total >= aMaxKeyEntries)
-                break;
-            if (!aQueryKeyString
-                    || iMetaData[i].iQuery == aQueryKeyString)
-            {
-                aKeyList.push_back(iMetaData[i].iQuery);
-                total++;
-            }
-        }
-    }
-    //MyCmdResp resp(aSessionId,aContextData);
-    //return QueueCmdResp(resp,PVMFSuccess);
-    PVMFCPMPassThruPlugInOMA1Command cmd;
-    cmd.PVMFCPMPassThruPlugInOMA1CommandBase::Construct(aSessionId,
-            PVMF_CPM_PASSTHRU_PLUGIN_OMA1_METADATA_KEYS,
-            aContextData);
-    return QueueCommandL(cmd);
 }
 
 /**
@@ -1004,31 +920,6 @@ OSCL_EXPORT_REF PVMFCommandId PVMFCPMPassThruPlugInOMA1::GetNodeMetadataValues(P
             PVMF_CPM_PASSTHRU_PLUGIN_OMA1_METADATA_VALUES,
             aContextData);
     return QueueCommandL(cmd);
-}
-
-/**
- * Synchronous method to free up the specified range of metadata keys in the list. It is assumed that caller of this function
- * knows that start and end indices should correspond to metadata keys returned by this particular instance of the
- * metadata extension interface using GetNodeMetadataKeys().
- *
- * @param aKeyList A reference to a metadata key list to free the key entries
- * @param aStartingKeyIndex Index into aKeyList that corresponds to the first key entry to release
- * @param aEndKeyIndex Index into aKeyList that corresponds to the last key entry to release
- *
- * @returns PVMFSuccess if the release of specified keys succeeded. PVMFErrArgument if indices are invalid or the list is empty.
- *          PVMFFailure otherwise.
- **/
-OSCL_EXPORT_REF PVMFStatus PVMFCPMPassThruPlugInOMA1::ReleaseNodeMetadataKeys(PVMFMetadataList& aKeyList,
-        uint32 aStartingKeyIndex,
-        uint32 aEndKeyIndex)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFCPMPassThruPlugInOMA1::ReleaseNodeMetadataKeys() called"));
-    //nothing needed.  metadata memory persists through the life of the plugin.
-    OSCL_UNUSED_ARG(aKeyList);
-    OSCL_UNUSED_ARG(aStartingKeyIndex);
-    OSCL_UNUSED_ARG(aEndKeyIndex);
-    return PVMFSuccess;
 }
 
 /**

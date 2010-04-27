@@ -178,23 +178,13 @@ class PVMFWAVFFParserNode : public PVMFNodeInterfaceImpl,
         {
             return (aClipNum == 0) ? PVMFSuccess : PVMFErrArgument;
         }
-        uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL);
         uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
-        PVMFCommandId GetNodeMetadataKeys(PVMFSessionId aSessionId,
-                                          PVMFMetadataList& aKeyList,
-                                          uint32 aStartingKeyIndex,
-                                          int32 aMaxKeyEntries,
-                                          char* aQueryKeyString = NULL,
-                                          const OsclAny* aContextData = NULL);
         PVMFCommandId GetNodeMetadataValues(PVMFSessionId aSessionId,
                                             PVMFMetadataList& aKeyList,
                                             Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
                                             uint32 aStartingValueIndex,
                                             int32 aMaxValueEntries,
                                             const OsclAny* aContextData = NULL);
-        PVMFStatus ReleaseNodeMetadataKeys(PVMFMetadataList& aKeyList,
-                                           uint32 aStartingKeyIndex,
-                                           uint32 aEndKeyIndex) ;
         PVMFStatus ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
                                              uint32 aStartingValueIndex,
                                              uint32 aEndValueIndex) ;
@@ -238,7 +228,6 @@ class PVMFWAVFFParserNode : public PVMFNodeInterfaceImpl,
         PVMFStatus DoSetDataSourcePosition();
         PVMFStatus DoQueryDataSourcePosition();
         PVMFStatus DoSetDataSourceRate();
-        PVMFStatus DoGetNodeMetadataKey();
         PVMFStatus DoGetNodeMetadataValue();
 
         void InitializeTrackStructure();
@@ -260,7 +249,6 @@ class PVMFWAVFFParserNode : public PVMFNodeInterfaceImpl,
         int32 PushBackPortActivity(PVMFPortActivity &aActivity);
         int32 CreateNewArray(char*& aPtr, int32 aLen);
         int32 PushBackKeyVal(Oscl_Vector<PvmiKvp, OsclMemAllocator>*& aValueListPtr, PvmiKvp &aKeyVal);
-        PVMFStatus PushBackMetadataKeys(PVMFMetadataList *&aKeyListPtr, uint32 aLcv);
 
     private: // private member variables
         /**

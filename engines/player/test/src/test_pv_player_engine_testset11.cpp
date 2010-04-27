@@ -460,17 +460,11 @@ void pvplayer_async_test_genericcancelall::Run()
         }
         break;
 
-        case STATE_GETMETADATAKEYLIST:
-        {
-            iMetadataKeyList.clear();
-            OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataKeys(iMetadataKeyList, 0, 20, NULL, (OsclAny*) & iContextObject));
-            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
         case STATE_GETMETADATAVALUELIST:
         {
             iMetadataValueList.clear();
+            iMetadataKeyList.clear();
+            iMetadataKeyList.push_back(OSCL_HeapString<OsclMemAllocator>("all"));
             iNumValues = 0;
             OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataValues(iMetadataKeyList, 0, 20, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -940,21 +934,6 @@ void pvplayer_async_test_genericcancelall::CommandCompleted(const PVCmdResponse&
             }
             break;
 
-        case STATE_GETMETADATAKEYLIST:
-            if (aResponse.GetCmdStatus() == PVMFSuccess)
-            {
-                iState = STATE_GETMETADATAVALUELIST;
-                RunIfNotReady();
-            }
-            else
-            {
-                // GetMetadataKeys failed
-                PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-            }
-            break;
-
         case STATE_GETMETADATAVALUELIST:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
@@ -1043,7 +1022,7 @@ void pvplayer_async_test_genericcancelall::CommandCompleted(const PVCmdResponse&
                 }
                 else
                 {
-                    iState = STATE_GETMETADATAKEYLIST;
+                    iState = STATE_GETMETADATAVALUELIST;
                 }
                 RunIfNotReady();
             }

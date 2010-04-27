@@ -293,9 +293,7 @@ typedef enum
     // Engine API commands
     PVFM_UTILITY_COMMAND_QUERY_INTERFACE = 1,
     PVFM_UTILITY_COMMAND_CANCEL_ALL_COMMANDS,
-    PVFM_UTILITY_COMMAND_GET_STATE,
     PVFM_UTILITY_COMMAND_ADD_DATA_SOURCE,
-    PVFM_UTILITY_COMMAND_GET_METADATA_KEYS,
     PVFM_UTILITY_COMMAND_GET_METADATA_VALUES,
     PVFM_UTILITY_COMMAND_SET_PARAMETERS,
     PVFM_UTILITY_COMMAND_GET_FRAME_USER_BUFFER,
@@ -353,11 +351,7 @@ class PVFMUtilityCommandCompareLess
                     return 5;
                 case PVFM_UTILITY_COMMAND_CANCEL_ALL_COMMANDS:
                     return 8;
-                case PVFM_UTILITY_COMMAND_GET_STATE:
-                    return 5;
                 case PVFM_UTILITY_COMMAND_ADD_DATA_SOURCE:
-                    return 5;
-                case PVFM_UTILITY_COMMAND_GET_METADATA_KEYS:
                     return 5;
                 case PVFM_UTILITY_COMMAND_GET_METADATA_VALUES:
                     return 5;
@@ -415,10 +409,8 @@ class PVFrameAndMetadataUtility
         // From PVFrameAndMetadataInterface
         PVCommandId QueryInterface(const PVUuid& aUuid, PVInterface*& aInterfacePtr, const OsclAny* aContextData = NULL);
         PVCommandId CancelAllCommands(const OsclAny* aContextData = NULL);
-        PVCommandId GetState(PVFrameAndMetadataState& aState, const OsclAny* aContextData = NULL);
         PVMFStatus GetStateSync(PVFrameAndMetadataState& aState);
         PVCommandId AddDataSource(PVPlayerDataSource& aDataSource, const OsclAny* aContextData = NULL);
-        PVCommandId GetMetadataKeys(PVPMetadataList& aKeyList, int32 aStartingIndex = 0, int32 aMaxEntries = -1, char* aQueryKey = NULL, const OsclAny* aContextData = NULL);
         PVCommandId GetMetadataValues(PVPMetadataList& aKeyList, int32 aStartingValueIndex, int32 aMaxValueEntries, int32& aNumAvailableValueEntries, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, const OsclAny* aContextData = NULL);
         PVCommandId GetFrame(PVFrameSelector& aFrameInfo, uint8* aProvidedFrameBuffer, uint32& aBufferSize, PVFrameBufferProperty& aBufferProp, const OsclAny* aContextData = NULL);
         PVCommandId GetFrame(PVFrameSelector& aFrameInfo, uint8** aFrameBufferPtr, uint32& aBufferSize, PVFrameBufferProperty& aBufferProp, const OsclAny* aContextData = NULL);
@@ -497,9 +489,7 @@ class PVFrameAndMetadataUtility
         PVMFStatus DoPlayerQueryInterface(PVCommandId aCmdId, OsclAny* aCmdContext, PVUuid& aUuid, PVInterface*& aInterfacePtr);
         bool queryInterface(const PVUuid& uuid, PVInterface*& iface, PVCommandId cmdid, OsclAny* context);
 
-        PVMFStatus DoGetState(PVFMUtilityCommand& aCmd, bool aSyncCmd = false);
         PVMFStatus DoAddDataSource(PVFMUtilityCommand& aCmd);
-        PVMFStatus DoGetMetadataKeys(PVFMUtilityCommand& aCmd);
         PVMFStatus DoGetMetadataValues(PVFMUtilityCommand& aCmd);
         PVMFStatus DoCapConfigSetParameters(PVFMUtilityCommand& aCmd);
         PVMFStatus DoVerifyAndSetFMUParameter(PvmiKvp& aParameter, bool aSetParam);
@@ -518,7 +508,6 @@ class PVFrameAndMetadataUtility
             // Player commands
             PVFM_CMD_PlayerQueryInterface,
             PVFM_CMD_AddDataSource,
-            PVFM_CMD_GetMetadataKeys,
             PVFM_CMD_GetMetadataValues,
             PVFM_CMD_PlayerSetParametersSync,
             PVFM_CMD_GFPlayerSetPlaybackRange,

@@ -434,13 +434,9 @@ class PVMFAACFFParserNode
         {
             return (aClipIndex == 0) ? PVMFSuccess : PVMFErrArgument;
         }
-        uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL);
         uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
-        PVMFCommandId GetNodeMetadataKeys(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList,
-                                          uint32 aStartingKeyIndex, int32 aMaxKeyEntries, char* aQueryKeyString = NULL, const OsclAny* aContextData = NULL);
         PVMFCommandId GetNodeMetadataValues(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
                                             uint32 aStartingKeyIndex, int32 aMaxKeyEntries, const OsclAny* aContextData = NULL);
-        PVMFStatus ReleaseNodeMetadataKeys(PVMFMetadataList& aKeyList, uint32 aStartingKeyIndex, uint32 aEndKeyIndex);
         PVMFStatus ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, uint32 aStartingValueIndex, uint32 aEndValueIndex);
 
         // From PvmiDataStreamObserver
@@ -498,7 +494,6 @@ class PVMFAACFFParserNode
         PVMFStatus CompleteReset();
         void CompleteInit();
         void CompleteGetMetaDataValues();
-        PVMFStatus CompleteGetMetadataKeys();
         void CompleteGetLicense();
 
         //Command handlers for PVMFNodeInterfaceImpl APIs
@@ -510,7 +505,6 @@ class PVMFAACFFParserNode
         PVMFStatus DoReleasePort();
 
         //Command handlers for Extension APIs
-        PVMFStatus DoGetMetadataKeys();
         PVMFStatus DoGetMetadataValues();
         PVMFStatus DoSetDataSourcePosition();
         PVMFStatus DoQueryDataSourcePosition();
@@ -544,7 +538,6 @@ class PVMFAACFFParserNode
         void CloseCPMSession();
         void ResetCPM();
         void PopulateDRMInfo();
-        void GetCPMMetaDataKeys();
         void GetCPMMetaDataValues();
         PVMFStatus CheckCPMCommandCompleteStatus(PVMFCommandId, PVMFStatus);
         int32 CreateNewArray(oscl_wchar*& aPtr, int32 aLen);

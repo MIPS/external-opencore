@@ -360,7 +360,6 @@ typedef enum
     PVP_ENGINE_COMMAND_ADD_DATA_SOURCE,
     PVP_ENGINE_COMMAND_UPDATE_DATA_SOURCE,
     PVP_ENGINE_COMMAND_INIT,
-    PVP_ENGINE_COMMAND_GET_METADATA_KEY,
     PVP_ENGINE_COMMAND_GET_METADATA_VALUE,
     PVP_ENGINE_COMMAND_RELEASE_METADATA_VALUE,
     PVP_ENGINE_COMMAND_ADD_DATA_SINK,
@@ -476,8 +475,6 @@ class PVPlayerEngineCommandCompareLess
                 case PVP_ENGINE_COMMAND_ADD_DATA_SOURCE:
                     return 5;
                 case PVP_ENGINE_COMMAND_INIT:
-                    return 5;
-                case PVP_ENGINE_COMMAND_GET_METADATA_KEY:
                     return 5;
                 case PVP_ENGINE_COMMAND_GET_METADATA_VALUE:
                     return 5;
@@ -897,7 +894,6 @@ class PVPlayerEngine
         PVCommandId AddDataSource(PVPlayerDataSource& aDataSource, const OsclAny* aContextData = NULL);
         PVCommandId UpdateDataSource(PVPlayerDataSource& aDataSource, const OsclAny* aContextData = NULL);
         PVCommandId Init(const OsclAny* aContextData = NULL);
-        PVCommandId GetMetadataKeys(PVPMetadataList& aKeyList, int32 aStartingIndex = 0, int32 aMaxEntries = -1, char* aQueryKey = NULL, const OsclAny* aContextData = NULL, uint32 aClipIndex = 0);
         PVCommandId GetMetadataValues(PVPMetadataList& aKeyList, int32 aStartingValueIndex, int32 aMaxValueEntries, int32& aNumAvailableValueEntries, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, const OsclAny* aContextData = NULL, bool aMetadataValuesCopiedInCallBack = true, uint32 aClipIndex = 0);
         PVCommandId ReleaseMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, const OsclAny* aContextData = NULL, uint32 aClipIndex = 0);
         PVCommandId AddDataSink(PVPlayerDataSink& aDataSink, const OsclAny* aContextData = NULL);
@@ -1086,7 +1082,6 @@ class PVPlayerEngine
         PVMFStatus DoSourceNodeQueryTrackSelIF(PVCommandId aCmdId, OsclAny* aCmdContext);
         PVMFStatus DoSourceNodeQueryInterfaceOptional(PVCommandId aCmdId, OsclAny* aCmdContext);
         void DoSourceNodeQueryCPMLicenseInterface(PVCommandId aCmdId, OsclAny* aCmdContext);
-        PVMFStatus DoGetMetadataKey(PVPlayerEngineCommand& aCmd);
         PVMFStatus DoGetMetadataValue(PVPlayerEngineCommand& aCmd);
         PVMFStatus DoReleaseMetadataValues(PVPlayerEngineCommand& aCmd);
         PVMFStatus AddToMetadataInterfaceList(PVMFMetadataExtensionInterface* aMetadataIF, PVMFSessionId aSessionId, PVPlayerEngineDatapath* aEngineDatapath, PVMFNodeInterface* aNode);
@@ -1235,21 +1230,6 @@ class PVPlayerEngine
         };
         Oscl_Vector<PVPlayerEngineMetadataIFInfo, OsclMemAllocator> iMetadataIFList;
 
-        // Structure to hold the parameters for GetMetadataKeys()
-        struct PVPlayerEngineGetMetadataKeysParam
-        {
-            int32 iStartingKeyIndex;
-            int32 iMaxKeyEntries;
-            char* iQueryKey;
-            PVPMetadataList* iKeyList;
-            int32 iClipIndex;
-
-            uint32 iCurrentInterfaceIndex;
-            int32 iNumKeyEntriesToFill;
-            int32 iNumKeyEntriesInList;
-        };
-        PVPlayerEngineGetMetadataKeysParam iGetMetadataKeysParam;
-
         // Structure to hold the parameters for GetMetadataValues()
         struct PVPlayerEngineGetMetadataValuesParam
         {
@@ -1279,7 +1259,6 @@ class PVPlayerEngine
             int32 iStartIndex;
             int32 iEndIndex;
         };
-        Oscl_Vector<PVPlayerEngineMetadataReleaseEntry, OsclMemAllocator> iMetadataKeyReleaseList;
         Oscl_Vector<PVPlayerEngineMetadataReleaseEntry, OsclMemAllocator> iMetadataValueReleaseList;
 
         // Engine context related objects and utility functions
@@ -1328,7 +1307,6 @@ class PVPlayerEngine
             PVP_CMD_SinkNodeReset,
             PVP_CMD_DecNodeReset,
             PVP_CMD_GetNodeMetadataValue,
-            PVP_CMD_GetNodeMetadataKey,
             PVP_CMD_SinkNodeAutoPause,
             PVP_CMD_SinkNodeAutoResume,
             PVP_CMD_SourceNodeStop,

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,9 @@
 #include "test_pv_frame_metadata_utility_config.h"
 #endif
 
+#ifndef OSCL_FILE_IO_H_INCLUDED
+#include "oscl_file_io.h"
+#endif
 
 class pvframemetadata_utility_test_suite : public test_case
 {
@@ -179,6 +182,8 @@ class pvframemetadata_async_test_base : public OsclTimerObject,
                 }
             }
         }
+        virtual void SaveVideoFrame(Oscl_File& frameFile, uint8* frameBuffer, uint32 frameBufferSize);
+        virtual void SaveMetadataInfo(char* outputBuf, Oscl_Vector<PvmiKvp, OsclMemAllocator>& valueList, Oscl_File& metadataFile);
 
         pvframemetadata_async_test_observer* iObserver;
         test_case* iTestCase;

@@ -120,8 +120,7 @@ private:
         STATE_CREATE,
         STATE_QUERY_TRACK_SELECTION_HELPER,
         STATE_ADD_DATA_SOURCE,
-        STATE_GET_METADATA_KEYS,        // Optional.
-        STATE_GET_METADATA_VALUES,      // Depends on STATE_GET_METADATA_KEYS.
+        STATE_GET_METADATA_VALUES,      // Optional.
         STATE_GET_FRAME,                // Optional.
         STATE_REMOVE_DATA_SOURCE,
         STATE_CLEANUP_AND_COMPLETE,
@@ -186,7 +185,6 @@ private:
     // Required for meta data retrieval
     Oscl_Vector<PvmiKvp,OsclMemAllocator> mMetadataValueList;
     PVPMetadataList mMetadataKeyList;
-    PVPMetadataList mActualMetadataKeyList;
     int32 mNumMetadataValues;
 
     // Keep all these copies because of bug 1201885, otherwise, we can

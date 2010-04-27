@@ -81,39 +81,6 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
 {
 
     public:
-        // Constructor and parser for GetNodeMetadataKeys
-        void Construct(PVMFSessionId s, int32 cmd
-                       , PVMFMetadataList& aKeyList
-                       , uint32 aStartingIndex
-                       , int32 aMaxEntries
-                       , char* aQueryKey
-                       , const OsclAny* aContext)
-        {
-            PVMFNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*) & aKeyList;
-            iParam2 = (OsclAny*)aStartingIndex;
-            iParam3 = (OsclAny*)aMaxEntries;
-            if (aQueryKey)
-            {
-                //allocate a copy of the query key string.
-                Oscl_TAlloc<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> str;
-                iParam4 = str.ALLOC_AND_CONSTRUCT(aQueryKey);
-            }
-        }
-        void Parse(PVMFMetadataList*& MetaDataListPtr, uint32 &aStartingIndex, int32 &aMaxEntries,
-                   char*& aQueryKey)
-        {
-            MetaDataListPtr = (PVMFMetadataList*)iParam1;
-            aStartingIndex = (uint32)iParam2;
-            aMaxEntries = (int32)iParam3;
-            aQueryKey = NULL;
-            if (iParam4)
-            {
-                OSCL_HeapString<OsclMemAllocator>* keystring = (OSCL_HeapString<OsclMemAllocator>*)iParam4;
-                aQueryKey = keystring->get_str();
-            }
-        }
-
         // Constructor and parser for GetNodeMetadataValue
         void Construct(PVMFSessionId s, int32 cmd, PVMFMetadataList& aKeyList, Oscl_Vector < PvmiKvp,
                        OsclMemAllocator > & aValueList, uint32 aStartIndex, int32 aMaxEntries, const OsclAny* aContext)
@@ -399,47 +366,6 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
             aResumeTimestamp = (PVMFTimestamp)iParam1;
             aPlayBackPositionContinuous = (iParam2) ? true : false;
             aStreamID = (uint32)iParam3;
-        }
-
-        //need to overload the base Destroy routine to cleanup metadata key.
-        void Destroy()
-        {
-            PVMFGenericNodeCommand<OsclMemAllocator>::Destroy();
-            switch (iCmd)
-            {
-                case PVMF_GENERIC_NODE_GETNODEMETADATAKEYS:
-                    if (iParam4)
-                    {
-                        //cleanup the allocated string
-                        Oscl_TAlloc<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> str;
-                        str.destruct_and_dealloc(iParam4);
-                    }
-                    break;
-                default:
-                    break;
-            }
-            //Set the command ID as invalid after destroying it.
-            iCmd = PVMF_GENERIC_NODE_COMMAND_INVALID;
-        }
-
-        //need to overlaod the base Copy routine to copy metadata key.
-        void Copy(const PVMFGenericNodeCommand<OsclMemAllocator>& aCmd)
-        {
-            PVMFGenericNodeCommand<OsclMemAllocator>::Copy(aCmd);
-            switch (aCmd.iCmd)
-            {
-                case PVMF_GENERIC_NODE_GETNODEMETADATAKEYS:
-                    if (aCmd.iParam4)
-                    {
-                        //copy the allocated string
-                        OSCL_HeapString<OsclMemAllocator>* aStr = (OSCL_HeapString<OsclMemAllocator>*)aCmd.iParam4;
-                        Oscl_TAlloc<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> str;
-                        iParam4 = str.ALLOC_AND_CONSTRUCT(*aStr);
-                    }
-                    break;
-                default:
-                    break;
-            }
         }
 };
 

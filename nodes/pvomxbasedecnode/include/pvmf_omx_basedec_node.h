@@ -233,13 +233,9 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
 
         //**********begin PVMFMetadataExtensionInterface
         OSCL_IMPORT_REF virtual PVMFStatus SetMetadataClipIndex(uint32 aClipIndex);
-        OSCL_IMPORT_REF virtual uint32 GetNumMetadataKeys(char* query_key = NULL) = 0;
         OSCL_IMPORT_REF virtual uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList) = 0;
-        OSCL_IMPORT_REF PVMFCommandId GetNodeMetadataKeys(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList, uint32 starting_index, int32 max_entries,
-                char* query_key = NULL, const OsclAny* aContextData = NULL);
         OSCL_IMPORT_REF PVMFCommandId GetNodeMetadataValues(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList,
                 Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, uint32 starting_index, int32 max_entries, const OsclAny* aContextData = NULL);
-        OSCL_IMPORT_REF PVMFStatus ReleaseNodeMetadataKeys(PVMFMetadataList& aKeyList, uint32 starting_index, uint32 end_index);
         OSCL_IMPORT_REF PVMFStatus ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, uint32 starting_index, uint32 end_index);
         //**********End PVMFMetadataExtensionInterface
         OSCL_IMPORT_REF virtual bool VerifyParametersSync(PvmiMIOSession aSession, PvmiKvp* aParameters, int num_elements) = 0;
@@ -328,7 +324,6 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
 
     protected:
         virtual PVMFStatus DoRequestPort(PVMFPortInterface*&) = 0;
-        virtual PVMFStatus DoGetNodeMetadataKey() = 0;
         virtual PVMFStatus DoGetNodeMetadataValue() = 0;
         OSCL_IMPORT_REF PVMFStatus DoQueryInterface();
         OSCL_IMPORT_REF PVMFStatus DoReleasePort();

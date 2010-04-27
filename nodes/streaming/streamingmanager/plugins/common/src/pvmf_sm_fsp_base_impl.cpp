@@ -689,44 +689,9 @@ PVMFStatus PVMFSMFSPBaseNode::SetMetadataClipIndex(uint32 aClipNum)
     return (aClipNum == 0) ? PVMFSuccess : PVMFErrArgument;
 }
 
-OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataKeysBase(char* aQueryKeyString)
-{
-    uint32 num_entries = 0;
-
-    if (aQueryKeyString == NULL)
-    {
-        // No query key so just return all the available keys
-        num_entries = iAvailableMetadataKeys.size();
-    }
-    else
-    {
-        // Determine the number of metadata keys based on the query key string provided
-        uint32 i;
-        for (i = 0; i < iAvailableMetadataKeys.size(); i++)
-        {
-            // Check if the key matches the query key
-            if (pv_mime_strcmp(iAvailableMetadataKeys[i].get_cstr(), aQueryKeyString) >= 0)
-            {
-                num_entries++;
-            }
-        }
-    }
-
-    if ((iCPMMetaDataExtensionInterface != NULL) && (iSessionSourceInfo->iDRMProtected  == true))
-    {
-        num_entries +=
-            iCPMMetaDataExtensionInterface->GetNumMetadataKeys(aQueryKeyString);
-    }
-
-    return num_entries;
-}
-
 OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataList& aKeyList)
 {
-
-    uint32 numkeys = aKeyList.size();
-
-    if ((numkeys == 0) || !(iMetaDataInfo->iMetadataAvailable))
+    if (!(iMetaDataInfo->iMetadataAvailable))
     {
         return 0;
     }
@@ -735,123 +700,147 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
     uint32 numtracks = iMetaDataInfo->iNumTracks;
 
     uint32 numvalentries = 0;
+    if ((iCPMMetaDataExtensionInterface != NULL) &&
+            (iSessionSourceInfo->iDRMProtected  == true))
+    {
+        numvalentries =
+            iCPMMetaDataExtensionInterface->GetNumMetadataValues(aKeyList);
+    }
+
+    PVMFMetadataList* keylistptr_in = &aKeyList;
+    if (keylistptr_in->size() == 1)
+    {
+        if (oscl_strncmp((*keylistptr_in)[0].get_cstr(),
+                         PVMFSTREAMINGMGRNODE_ALL_METADATA_KEY,
+                         oscl_strlen(PVMFSTREAMINGMGRNODE_ALL_METADATA_KEY)) == 0)
+        {
+            //use the complete metadata key list
+            keylistptr_in = &iAvailableMetadataKeys;
+        }
+    }
+
+    uint32 numkeys = keylistptr_in->size();
+    if (numkeys == 0)
+    {
+        return 0;
+    }
     for (uint32 lcv = 0; lcv < numkeys; lcv++)
     {
-        if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_ALBUM_KEY) == 0 &&
+        if (oscl_strcmp((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_ALBUM_KEY) == 0 &&
                 iMetaDataInfo->iAlbumPresent)
         {
             // Album
             // Increment the counter for the number of values found so far
             ++numvalentries;
         }
-        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_AUTHOR_KEY) == 0 &&
+        else if (oscl_strcmp((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_AUTHOR_KEY) == 0 &&
                  iMetaDataInfo->iAuthorPresent)
         {
             // Author
             // Increment the counter for the number of values found so far
             ++numvalentries;
         }
-        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_ARTIST_KEY) == 0 &&
+        else if (oscl_strcmp((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_ARTIST_KEY) == 0 &&
                  iMetaDataInfo->iPerformerPresent)
         {
             // Artist/performer
             // Increment the counter for the number of values found so far
             ++numvalentries;
         }
-        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TITLE_KEY) == 0 &&
+        else if (oscl_strcmp((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TITLE_KEY) == 0 &&
                  iMetaDataInfo->iTitlePresent)
         {
             // Title
             // Increment the counter for the number of values found so far
             ++numvalentries;
         }
-        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_DESCRIPTION_KEY) == 0 &&
+        else if (oscl_strcmp((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_DESCRIPTION_KEY) == 0 &&
                  iMetaDataInfo->iDescriptionPresent)
         {
             // Description
             // Increment the counter for the number of values found so far
             ++numvalentries;
         }
-        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_RATING_KEY) == 0 &&
+        else if (oscl_strcmp((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_RATING_KEY) == 0 &&
                  iMetaDataInfo->iRatingPresent)
         {
             // Rating
             // Increment the counter for the number of values found so far
             ++numvalentries;
         }
-        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_COPYRIGHT_KEY) == 0 &&
+        else if (oscl_strcmp((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_COPYRIGHT_KEY) == 0 &&
                  iMetaDataInfo->iCopyRightPresent)
         {
             // Copyright
             // Increment the counter for the number of values found so far
             ++numvalentries;
         }
-        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_GENRE_KEY) == 0 &&
+        else if (oscl_strcmp((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_GENRE_KEY) == 0 &&
                  iMetaDataInfo->iGenrePresent)
         {
             // Genre
             // Increment the counter for the number of values found so far
             ++numvalentries;
         }
-        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_LYRICS_KEY) == 0 &&
+        else if (oscl_strcmp((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_LYRICS_KEY) == 0 &&
                  iMetaDataInfo->iLyricsPresent)
         {
             // Lyrics
             // Increment the counter for the number of values found so far
             ++numvalentries;
         }
-        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_CLASSIFICATION_KEY) == 0 &&
+        else if (oscl_strcmp((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_CLASSIFICATION_KEY) == 0 &&
                  iMetaDataInfo->iClassificationPresent)
         {
             // Classification
             // Increment the counter for the number of values found so far
             ++numvalentries;
         }
-        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_KEYWORDS_KEY) == 0 &&
+        else if (oscl_strcmp((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_KEYWORDS_KEY) == 0 &&
                  iMetaDataInfo->iKeyWordsPresent)
         {
             // Keywords
             // Increment the counter for the number of values found so far
             numvalentries += iMetaDataInfo->iNumKeyWords;
         }
-        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_LOCATION_KEY) == 0 &&
+        else if (oscl_strcmp((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_LOCATION_KEY) == 0 &&
                  iMetaDataInfo->iLocationPresent)
         {
             // Location
             // Increment the counter for the number of values found so far
             ++numvalentries;
         }
-        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_DURATION_KEY) == 0)
+        else if (oscl_strcmp((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_DURATION_KEY) == 0)
         {
             // Session Duration
             // Increment the counter for the number of values found so far
             ++numvalentries;
         }
-        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_NUMTRACKS_KEY) == 0 &&
+        else if (oscl_strcmp((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_NUMTRACKS_KEY) == 0 &&
                  numtracks > 0)
         {
             // Number of tracks
             // Increment the counter for the number of values found so far
             ++numvalentries;
         }
-        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_RANDOM_ACCESS_DENIED_KEY) == 0)
+        else if (oscl_strcmp((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_RANDOM_ACCESS_DENIED_KEY) == 0)
         {
             // Increment the counter for the number of values found so far
             ++numvalentries;
         }
-        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_YEAR_KEY) == 0)
+        else if (oscl_strcmp((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_YEAR_KEY) == 0)
         {
             // Increment the counter for the number of values found so far
             ++numvalentries;
         }
-        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_NUM_GRAPHICS_KEY) == 0 &&
+        else if (oscl_strcmp((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_NUM_GRAPHICS_KEY) == 0 &&
                  iMetaDataInfo->iWMPicturePresent)
         {
             // Num Picture
             // Increment the counter for the number of values found so far
             ++numvalentries;
         }
-        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_GRAPHICS_KEY) == 0 &&
+        else if (oscl_strcmp((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_GRAPHICS_KEY) == 0 &&
                  iMetaDataInfo->iWMPicturePresent)
         {
             // Picture
@@ -860,7 +849,7 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             const uint32 numPictures = iMetaDataInfo->iWMPictureIndexVec.size();
             uint32 endindex = numPictures - 1;
             /* Check if the index parameter is present */
-            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_INDEX));
+            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_INDEX));
             if (indexstr != NULL)
             {
                 /* Retrieve the index values */
@@ -876,14 +865,14 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             // Increment the counter for the number of values found so far
             numvalentries += (endindex + 1 - startindex);
         }
-        else if (oscl_strstr(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_TYPE_KEY) != NULL)
+        else if (oscl_strstr((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_TYPE_KEY) != NULL)
         {
             // Track type
             // Determine the index requested. Default to all tracks
             uint32 startindex = 0;
             uint32 endindex = numtracks - 1;
             // Check if the index parameter is present
-            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_INDEX));
+            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_INDEX));
             if (indexstr != NULL)
             {
                 // Retrieve the index values
@@ -908,14 +897,14 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             }
 
         }
-        else if (oscl_strstr(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_DURATION_KEY) != NULL)
+        else if (oscl_strstr((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_DURATION_KEY) != NULL)
         {
             // Track duration
             // Determine the index requested. Default to all tracks
             uint32 startindex = 0;
             uint32 endindex = numtracks - 1;
             // Check if the index parameter is present
-            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_INDEX));
+            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_INDEX));
             if (indexstr != NULL)
             {
                 // Retrieve the index values
@@ -930,14 +919,14 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             // Increment the counter for the number of values found so far
             numvalentries += (endindex + 1 - startindex);
         }
-        else if (oscl_strstr(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_SELECTED_KEY) != NULL)
+        else if (oscl_strstr((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_SELECTED_KEY) != NULL)
         {
             // Track selected
             // Determine the index requested. Default to all tracks
             uint32 startindex = 0;
             uint32 endindex = numtracks - 1;
             // Check if the index parameter is present
-            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_INDEX));
+            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_INDEX));
             if (indexstr != NULL)
             {
                 // Retrieve the index values
@@ -951,7 +940,7 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             // Increment the counter for the number of values found so far
             numvalentries += (endindex + 1 - startindex);
         }
-        else if ((oscl_strstr(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_WIDTH_KEY) != NULL))
+        else if ((oscl_strstr((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_WIDTH_KEY) != NULL))
         {
             /*
              * Codec Description
@@ -960,7 +949,7 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             uint32 startindex = 0;
             uint32 endindex   = 0;
             /* Check if the index parameter is present */
-            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr(aKeyList[lcv].get_cstr(),
+            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr((*keylistptr_in)[lcv].get_cstr(),
                                              PVMFSTREAMINGMGRNODE_INDEX));
             if (indexstr != NULL)
             {
@@ -976,7 +965,7 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             }
             numvalentries += (endindex + 1 - startindex);
         }
-        else if ((oscl_strstr(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_HEIGHT_KEY) != NULL))
+        else if ((oscl_strstr((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_HEIGHT_KEY) != NULL))
         {
             /*
              * Codec Description
@@ -985,7 +974,7 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             uint32 startindex = 0;
             uint32 endindex   = 0;
             /* Check if the index parameter is present */
-            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr(aKeyList[lcv].get_cstr(),
+            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr((*keylistptr_in)[lcv].get_cstr(),
                                              PVMFSTREAMINGMGRNODE_INDEX));
             if (indexstr != NULL)
             {
@@ -1001,7 +990,7 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             }
             numvalentries += (endindex + 1 - startindex);
         }
-        else if ((oscl_strstr(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_SAMPLERATE_KEY) != NULL))
+        else if ((oscl_strstr((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_SAMPLERATE_KEY) != NULL))
         {
             /*
              * Codec Description
@@ -1010,7 +999,7 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             uint32 startindex = 0;
             uint32 endindex   = 0;
             /* Check if the index parameter is present */
-            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr(aKeyList[lcv].get_cstr(),
+            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr((*keylistptr_in)[lcv].get_cstr(),
                                              PVMFSTREAMINGMGRNODE_INDEX));
             if (indexstr != NULL)
             {
@@ -1026,7 +1015,7 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             }
             numvalentries += (endindex + 1 - startindex);
         }
-        else if ((oscl_strstr(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_NUMCHANNELS_KEY) != NULL))
+        else if ((oscl_strstr((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_NUMCHANNELS_KEY) != NULL))
         {
             /*
              * Codec Description
@@ -1035,7 +1024,7 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             uint32 startindex = 0;
             uint32 endindex   = 0;
             /* Check if the index parameter is present */
-            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr(aKeyList[lcv].get_cstr(),
+            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr((*keylistptr_in)[lcv].get_cstr(),
                                              PVMFSTREAMINGMGRNODE_INDEX));
             if (indexstr != NULL)
             {
@@ -1051,7 +1040,7 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             }
             numvalentries += (endindex + 1 - startindex);
         }
-        else if ((oscl_strstr(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_AUDIO_BITS_PER_SAMPLE_KEY) != NULL))
+        else if ((oscl_strstr((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_AUDIO_BITS_PER_SAMPLE_KEY) != NULL))
         {
             /*
              * Codec Description
@@ -1060,7 +1049,7 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             uint32 startindex = 0;
             uint32 endindex   = 0;
             /* Check if the index parameter is present */
-            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr(aKeyList[lcv].get_cstr(),
+            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr((*keylistptr_in)[lcv].get_cstr(),
                                              PVMFSTREAMINGMGRNODE_INDEX));
             if (indexstr != NULL)
             {
@@ -1076,7 +1065,7 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             }
             numvalentries += (endindex + 1 - startindex);
         }
-        else if ((oscl_strstr(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_TRACKID_KEY) != NULL))
+        else if ((oscl_strstr((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_TRACKID_KEY) != NULL))
         {
             /*
              * Codec Description
@@ -1085,7 +1074,7 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             uint32 startindex = 0;
             uint32 endindex   = 0;
             /* Check if the index parameter is present */
-            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr(aKeyList[lcv].get_cstr(),
+            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr((*keylistptr_in)[lcv].get_cstr(),
                                              PVMFSTREAMINGMGRNODE_INDEX));
             if (indexstr != NULL)
             {
@@ -1101,12 +1090,12 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             }
             numvalentries += (endindex + 1 - startindex);
         }
-        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_CLIP_TYPE_KEY) == 0)
+        else if (oscl_strcmp((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_CLIP_TYPE_KEY) == 0)
         {
             // Increment the counter for the number of values found so far
             ++numvalentries;
         }
-        else if ((oscl_strstr(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_FRAME_RATE_KEY) != NULL))
+        else if ((oscl_strstr((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_FRAME_RATE_KEY) != NULL))
         {
             /*
              * Codec Description
@@ -1115,7 +1104,7 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             uint32 startindex = 0;
             uint32 endindex   = 0;
             /* Check if the index parameter is present */
-            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr(aKeyList[lcv].get_cstr(),
+            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr((*keylistptr_in)[lcv].get_cstr(),
                                              PVMFSTREAMINGMGRNODE_INDEX));
             if (indexstr != NULL)
             {
@@ -1131,7 +1120,7 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             }
             numvalentries += (endindex + 1 - startindex);
         }
-        else if ((oscl_strstr(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_CODEC_NAME_KEY) != NULL))
+        else if ((oscl_strstr((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_CODEC_NAME_KEY) != NULL))
         {
             /*
              * Codec Name
@@ -1140,7 +1129,7 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             uint32 startindex = 0;
             uint32 endindex   = 0;
             /* Check if the index parameter is present */
-            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr(aKeyList[lcv].get_cstr(),
+            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr((*keylistptr_in)[lcv].get_cstr(),
                                              PVMFSTREAMINGMGRNODE_INDEX));
             if (indexstr != NULL)
             {
@@ -1167,7 +1156,7 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
                 }
             }
         }
-        else if ((oscl_strstr(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_CODEC_DESCRIPTION_KEY) != NULL))
+        else if ((oscl_strstr((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_CODEC_DESCRIPTION_KEY) != NULL))
         {
             /*
              * Codec Description
@@ -1176,7 +1165,7 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             uint32 startindex = 0;
             uint32 endindex   = 0;
             /* Check if the index parameter is present */
-            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr(aKeyList[lcv].get_cstr(),
+            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr((*keylistptr_in)[lcv].get_cstr(),
                                              PVMFSTREAMINGMGRNODE_INDEX));
             if (indexstr != NULL)
             {
@@ -1202,7 +1191,7 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
                 }
             }
         }
-        else if ((oscl_strstr(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_CODEC_DATA_KEY) != NULL))
+        else if ((oscl_strstr((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_CODEC_DATA_KEY) != NULL))
         {
             /*
              * Codec Description
@@ -1211,7 +1200,7 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             uint32 startindex = 0;
             uint32 endindex   = 0;
             /* Check if the index parameter is present */
-            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr(aKeyList[lcv].get_cstr(),
+            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr((*keylistptr_in)[lcv].get_cstr(),
                                              PVMFSTREAMINGMGRNODE_INDEX));
             if (indexstr != NULL)
             {
@@ -1237,7 +1226,7 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
                 }
             }
         }
-        else if ((oscl_strcmp(aKeyList[lcv].get_cstr(), PVMF_DRM_INFO_IS_PROTECTED_QUERY) == 0)
+        else if ((oscl_strcmp((*keylistptr_in)[lcv].get_cstr(), PVMF_DRM_INFO_IS_PROTECTED_QUERY) == 0)
                  && ((iUseCPMPluginRegistry == false) || (iSessionSourceInfo->iDRMProtected == false)))
         {
             /*
@@ -1246,14 +1235,14 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
              */
             ++numvalentries;
         }
-        else if (oscl_strstr(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_BITRATE_KEY) != NULL)
+        else if (oscl_strstr((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_BITRATE_KEY) != NULL)
         {
             // Track bitrate
             // Determine the index requested. Default to all tracks
             uint32 startindex = 0;
             uint32 endindex = numtracks - 1;
             // Check if the index parameter is present
-            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_INDEX));
+            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_INDEX));
             if (indexstr != NULL)
             {
                 // Retrieve the index values
@@ -1267,18 +1256,18 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             // Increment the counter for the number of values found so far
             numvalentries += (endindex + 1 - startindex);
         }
-        else if (oscl_strstr(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_PAUSE_DENIED_KEY) != NULL)
+        else if (oscl_strstr((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_PAUSE_DENIED_KEY) != NULL)
         {
             ++numvalentries;
         }
-        else if (oscl_strstr(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_MAX_BITRATE_KEY) != NULL)
+        else if (oscl_strstr((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_TRACKINFO_MAX_BITRATE_KEY) != NULL)
         {
             // Track bitrate
             // Determine the index requested. Default to all tracks
             uint32 startindex = 0;
             uint32 endindex = numtracks - 1;
             // Check if the index parameter is present
-            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr(aKeyList[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_INDEX));
+            char* indexstr = OSCL_CONST_CAST(char*, oscl_strstr((*keylistptr_in)[lcv].get_cstr(), PVMFSTREAMINGMGRNODE_INDEX));
             if (indexstr != NULL)
             {
                 // Retrieve the index values
@@ -1300,7 +1289,7 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             {
                 OSCL_HeapString<OsclMemAllocator> extMetaDataName =
                     iMetaDataInfo->iExtendedMetaDataNameVec[i];
-                if (oscl_strcmp(aKeyList[lcv].get_cstr(), extMetaDataName.get_cstr()) == 0)
+                if (oscl_strcmp((*keylistptr_in)[lcv].get_cstr(), extMetaDataName.get_cstr()) == 0)
                 {
                     /*
                      * Increment the counter for the number of values found so far
@@ -1310,34 +1299,7 @@ OSCL_EXPORT_REF uint32 PVMFSMFSPBaseNode::GetNumMetadataValuesBase(PVMFMetadataL
             }
         }
     }
-    if ((iCPMMetaDataExtensionInterface != NULL) &&
-            (iSessionSourceInfo->iDRMProtected  == true))
-    {
-        numvalentries +=
-            iCPMMetaDataExtensionInterface->GetNumMetadataValues(aKeyList);
-    }
-
     return numvalentries; // Number of elements
-}
-
-OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::GetNodeMetadataKeys(PVMFSessionId aSessionId,
-        PVMFMetadataList& aKeyList,
-        uint32 aStartingKeyIndex,
-        int32 aMaxKeyEntries,
-        char* aQueryKeyString,
-        const OsclAny* aContextData)
-{
-    PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::GetNodeMetadataKeys - In"));
-    PVMFSMFSPBaseNodeCommand cmd;
-    cmd.PVMFSMFSPBaseNodeCommand::Construct(aSessionId,
-                                            PVMF_SMFSP_NODE_GETNODEMETADATAKEYS,
-                                            aKeyList,
-                                            aStartingKeyIndex,
-                                            aMaxKeyEntries,
-                                            aQueryKeyString,
-                                            aContextData);
-    PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::GetNodeMetadataKeys - Out"));
-    return QueueCommandL(cmd);
 }
 
 OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::GetNodeMetadataValues(PVMFSessionId aSessionId,
@@ -1358,18 +1320,6 @@ OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::GetNodeMetadataValues(PVMFSessi
                                             aContextData);
     PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFSMFSPBaseNode::GetNodeMetadataValues - Out"));
     return QueueCommandL(cmd);
-}
-
-OSCL_EXPORT_REF PVMFStatus PVMFSMFSPBaseNode::ReleaseNodeMetadataKeysBase(PVMFMetadataList& aKeyList,
-        uint32 aStartingKeyIndex,
-        uint32 aEndKeyIndex)
-{
-    PVMF_SM_FSP_BASE_LOGSTACKTRACE((0, "PVMFStreamingManagerNode::ReleaseNodeMetadataKeys() called"));
-    OSCL_UNUSED_ARG(aKeyList);
-    OSCL_UNUSED_ARG(aStartingKeyIndex);
-    OSCL_UNUSED_ARG(aEndKeyIndex);
-    //nothing needed-- there's no dynamic allocation in this node's key list
-    return PVMFSuccess;
 }
 
 OSCL_EXPORT_REF PVMFStatus PVMFSMFSPBaseNode::ReleaseNodeMetadataValuesBase(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
@@ -2311,40 +2261,12 @@ OSCL_EXPORT_REF PVMFCommandId PVMFSMFSPBaseNode::QueueErrHandlingCommandL(PVMFSM
 OSCL_EXPORT_REF void PVMFSMFSPBaseNodeCommand::Copy(const PVMFGenericNodeCommand<OsclMemAllocator>& aCmd)
 {
     PVMFGenericNodeCommand<OsclMemAllocator>::Copy(aCmd);
-    switch (aCmd.iCmd)
-    {
-        case PVMF_SMFSP_NODE_GETNODEMETADATAKEYS:
-            if (aCmd.iParam4)
-            {
-                /* copy the allocated string */
-                OSCL_HeapString<OsclMemAllocator>* aStr =
-                    (OSCL_HeapString<OsclMemAllocator>*)aCmd.iParam4;
-                Oscl_TAlloc<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> str;
-                iParam4 = str.ALLOC_AND_CONSTRUCT(*aStr);
-            }
-            break;
-        default:
-            break;
-    }
 }
 
 /* need to overlaod the base Destroy routine to cleanup metadata key */
 OSCL_EXPORT_REF void PVMFSMFSPBaseNodeCommand::Destroy()
 {
     PVMFGenericNodeCommand<OsclMemAllocator>::Destroy();
-    switch (iCmd)
-    {
-        case PVMF_SMFSP_NODE_GETNODEMETADATAKEYS:
-            if (iParam4)
-            {
-                /* cleanup the allocated string */
-                Oscl_TAlloc<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> str;
-                str.destruct_and_dealloc(iParam4);
-            }
-            break;
-        default:
-            break;
-    }
 }
 
 /* Called during a Reset */
@@ -2388,7 +2310,6 @@ OSCL_EXPORT_REF void PVMFSMFSPBaseNode::ResetNodeParams(bool aReleaseMem)
     iGraphConnectComplete = false;
 
     iAvailableMetadataKeys.clear();
-    iCPMMetadataKeys.clear();
 
     if (iMetaDataInfo)
         iMetaDataInfo->Reset();
@@ -2454,7 +2375,6 @@ void PVMFSMFSPBaseNode::ResetCPMParams(bool aReleaseMem)
             iAuthorizationDataKvp.key = NULL;
         }
     }
-    iCPMMetadataKeys.clear();
     iPreviewMode = false;
     iUseCPMPluginRegistry = false;
     iDRMResetPending = false;
@@ -2495,7 +2415,6 @@ void PVMFSMFSPBaseNode::ResetCPMParams(bool aReleaseMem)
     iCPMUsageCompleteCmdId = 0;
     iCPMCloseSessionCmdId = 0;
     iCPMResetCmdId = 0;
-    iCPMGetMetaDataKeysCmdId = 0;
     iCPMGetMetaDataValuesCmdId = 0;
     iCPMGetLicenseInterfaceCmdId = 0;
     iCPMGetCapConfigCmdId = 0;
@@ -2731,126 +2650,6 @@ OSCL_EXPORT_REF void PVMFSMFSPBaseNode::PopulateAvailableMetadataKeys()
     }
 }
 
-OSCL_EXPORT_REF PVMFStatus PVMFSMFSPBaseNode::DoGetMetadataKeysBase(PVMFSMFSPBaseNodeCommand& aCmd)
-{
-    if (!iMetaDataInfo->iMetadataAvailable)
-    {
-        return PVMFErrInvalidState;
-    }
-
-    iCPMMetadataKeys.clear();
-    /* Get Metadata keys from CPM for protected content only */
-    if ((iCPMMetaDataExtensionInterface != NULL) &&
-            (iSessionSourceInfo->iDRMProtected == true))
-    {
-        GetCPMMetaDataKeys();
-        return PVMFPending;
-    }
-
-    return (CompleteGetMetadataKeys(aCmd));
-}
-
-OSCL_EXPORT_REF PVMFStatus PVMFSMFSPBaseNode::CompleteGetMetadataKeys(PVMFSMFSPBaseNodeCommand& aCmd)
-{
-    PVMFMetadataList* keylistptr = NULL;
-    uint32 starting_index;
-    int32 max_entries;
-    char* query_key = NULL;
-
-    aCmd.PVMFSMFSPBaseNodeCommand::Parse(keylistptr, starting_index, max_entries, query_key);
-
-    // Check parameters
-    if (keylistptr == NULL)
-    {
-        // The list pointer is invalid
-        return PVMFErrArgument;
-    }
-
-    if ((starting_index > (iAvailableMetadataKeys.size() - 1)) || max_entries == 0)
-    {
-        // Invalid starting index and/or max entries
-        return PVMFErrArgument;
-    }
-
-    // Copy the requested keys
-    uint32 num_entries = 0;
-    int32 num_added = 0;
-    uint32 lcv = 0;
-    for (lcv = 0; lcv < iAvailableMetadataKeys.size(); lcv++)
-    {
-        if (query_key == NULL)
-        {
-            // No query key so this key is counted
-            ++num_entries;
-            if (num_entries > starting_index)
-            {
-                // Past the starting index so copy the key
-                PVMFStatus status = PushKeyToMetadataList(keylistptr, iAvailableMetadataKeys[lcv]);
-                if (PVMFSuccess == status)
-                    num_added++;
-                else
-                    return status;
-            }
-        }
-        else
-        {
-            // Check if the key matche the query key
-            if (pv_mime_strcmp(iAvailableMetadataKeys[lcv].get_cstr(), query_key) >= 0)
-            {
-                // This key is counted
-                ++num_entries;
-                if (num_entries > starting_index)
-                {
-                    PVMFStatus status = PushKeyToMetadataList(keylistptr, iAvailableMetadataKeys[lcv]);
-                    if (PVMFSuccess == status)
-                        num_added++;
-                    else
-                        return status;
-                }
-            }
-        }
-    }
-    for (lcv = 0; lcv < iCPMMetadataKeys.size(); lcv++)
-    {
-        if (query_key == NULL)
-        {
-            /* No query key so this key is counted */
-            ++num_entries;
-            if (num_entries > (uint32)starting_index)
-            {
-                PVMFStatus status = PushKeyToMetadataList(keylistptr, iCPMMetadataKeys[lcv]);
-                if (PVMFSuccess == status)
-                    num_added++;
-                else
-                    return status;
-            }
-        }
-        else
-        {
-            /* Check if the key matches the query key */
-            if (pv_mime_strcmp(iCPMMetadataKeys[lcv].get_cstr(), query_key) >= 0)
-            {
-                /* This key is counted */
-                ++num_entries;
-                if (num_entries > (uint32)starting_index)
-                {
-                    PVMFStatus status = PushKeyToMetadataList(keylistptr, iCPMMetadataKeys[lcv]);
-                    if (PVMFSuccess == status)
-                        num_added++;
-                    else
-                        return status;
-                }
-            }
-        }
-        // Check if max number of entries have been copied
-        if (max_entries > 0 && num_added >= max_entries)
-        {
-            break;
-        }
-    }
-    return PVMFSuccess;
-}
-
 OSCL_EXPORT_REF PVMFStatus PVMFSMFSPBaseNode::PushKeyToMetadataList(PVMFMetadataList* aMetaDataListPtr, const OSCL_HeapString<OsclMemAllocator> & aKey)const
 {
     PVMFStatus status = PVMFSuccess;
@@ -2870,7 +2669,6 @@ OSCL_EXPORT_REF PVMFStatus PVMFSMFSPBaseNode::PushKeyToMetadataList(PVMFMetadata
 
 OSCL_EXPORT_REF PVMFStatus PVMFSMFSPBaseNode::DoGetMetadataValuesBase(PVMFSMFSPBaseNodeCommand& aCmd)
 {
-
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFStreamingManagerNode::DoGetMetadataValues() In"));
 
     if (!iMetaDataInfo->iMetadataAvailable)
@@ -2891,8 +2689,18 @@ OSCL_EXPORT_REF PVMFStatus PVMFSMFSPBaseNode::DoGetMetadataValuesBase(PVMFSMFSPB
         return PVMFErrArgument;
     }
 
+    PVMFMetadataList* keylistptr_in = keylistptr;
+    if (keylistptr->size() == 1)
+    {
+        if (oscl_strncmp((*keylistptr)[0].get_cstr(),
+                         PVMFSTREAMINGMGRNODE_ALL_METADATA_KEY,
+                         oscl_strlen(PVMFSTREAMINGMGRNODE_ALL_METADATA_KEY)) == 0)
+        {
+            //use the complete metadata key list
+            keylistptr = &iAvailableMetadataKeys;
+        }
+    }
     uint32 numkeys = keylistptr->size();
-
     if (numkeys <= 0 || max_entries == 0)
     {
         // Don't do anything
@@ -4725,7 +4533,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFSMFSPBaseNode::DoGetMetadataValuesBase(PVMFSMFSPB
             }
             iCPMGetMetaDataValuesCmdId =
                 iCPMMetaDataExtensionInterface->GetNodeMetadataValues(iCPMSessionID,
-                        (*keylistptr),
+                        (*keylistptr_in),
                         (*valuelistptr),
                         cpmStartingIndex,
                         cpmMaxEntries

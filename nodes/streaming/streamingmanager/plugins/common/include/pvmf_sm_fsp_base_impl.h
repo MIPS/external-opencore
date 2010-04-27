@@ -209,23 +209,13 @@ class PVMFSMFSPBaseNode
 
         /* From PVMFMetadataExtensionInterface */
         OSCL_IMPORT_REF PVMFStatus SetMetadataClipIndex(uint32 aClipNum);
-        OSCL_IMPORT_REF virtual uint32 GetNumMetadataKeysBase(char* aQueryKeyString = NULL);
         OSCL_IMPORT_REF virtual uint32 GetNumMetadataValuesBase(PVMFMetadataList& aKeyList);
-        OSCL_IMPORT_REF virtual PVMFCommandId GetNodeMetadataKeys(PVMFSessionId aSessionId,
-                PVMFMetadataList& aKeyList,
-                uint32 aStartingKeyIndex,
-                int32 aMaxKeyEntries = -1,
-                char* aQueryKeyString = NULL,
-                const OsclAny* aContextData = NULL);
         OSCL_IMPORT_REF virtual PVMFCommandId GetNodeMetadataValues(PVMFSessionId aSessionId,
                 PVMFMetadataList& aKeyList,
                 Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
                 uint32 aStartingValueIndex,
                 int32 aMaxValueEntries = -1,
                 const OsclAny* aContextData = NULL);
-        OSCL_IMPORT_REF PVMFStatus ReleaseNodeMetadataKeysBase(PVMFMetadataList& aKeyList,
-                uint32 aStartingKeyIndex,
-                uint32 aEndKeyIndex);
         OSCL_IMPORT_REF PVMFStatus ReleaseNodeMetadataValuesBase(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
                 uint32 aStartingValueIndex,
                 uint32 aEndValueIndex);
@@ -347,8 +337,6 @@ class PVMFSMFSPBaseNode
         OSCL_IMPORT_REF virtual bool FlushPending();
 
         //PVMFMetadataExtensionInterface
-        OSCL_IMPORT_REF PVMFStatus DoGetMetadataKeysBase(PVMFSMFSPBaseNodeCommand& aCmd);
-        OSCL_IMPORT_REF PVMFStatus CompleteGetMetadataKeys(PVMFSMFSPBaseNodeCommand& aCmd);
         OSCL_IMPORT_REF PVMFStatus DoGetMetadataValuesBase(PVMFSMFSPBaseNodeCommand& aCmd);
 
         //CPM related functions
@@ -364,7 +352,6 @@ class PVMFSMFSPBaseNode
         OSCL_IMPORT_REF void SendUsageComplete();
         OSCL_IMPORT_REF void CloseCPMSession();
         OSCL_IMPORT_REF void ResetCPM();
-        OSCL_IMPORT_REF void GetCPMMetaDataKeys();
         OSCL_IMPORT_REF void CompleteGetMetaDataValues();
         OSCL_IMPORT_REF void CompleteDRMInit();
 
@@ -407,7 +394,6 @@ class PVMFSMFSPBaseNode
         uint32 iTotalNumRequestPortsComplete;
         //Filled on completion of init
         Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> iAvailableMetadataKeys;
-        Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> iCPMMetadataKeys;
         PVMFSMSessionMetaDataInfo* iMetaDataInfo;
 
         OSCL_IMPORT_REF PVMFStatus GetIndexParamValues(char* aString, uint32& aStartIndex, uint32& aEndIndex);
@@ -447,7 +433,6 @@ class PVMFSMFSPBaseNode
         PVMFCommandId iCPMUsageCompleteCmdId;
         PVMFCommandId iCPMCloseSessionCmdId;
         PVMFCommandId iCPMResetCmdId;
-        PVMFCommandId iCPMGetMetaDataKeysCmdId;
         PVMFCommandId iCPMGetMetaDataValuesCmdId;
         PVMFCommandId iCPMGetLicenseInterfaceCmdId;
         PVMFCommandId iCPMGetCapConfigCmdId;

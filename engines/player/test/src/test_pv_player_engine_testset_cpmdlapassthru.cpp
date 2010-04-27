@@ -462,19 +462,13 @@ void pvplayer_async_test_cpmdlapassthru::Run()
         }
         break;
 
-        case STATE_GETMETADATAKEYLIST:
-        {
-            iMetadataKeyList.clear();
-            OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataKeys(iMetadataKeyList, 0, 100, NULL, (OsclAny*) & iContextObject));
-            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
         case STATE_GETMETADATAVALUELIST:
         {
             iMetadataValueList.clear();
+            iMetadataKeyList.clear();
+            iMetadataKeyList.push_back(OSCL_HeapString<OsclMemAllocator>("all"));
             iNumValues = 0;
-            OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataValues(iMetadataKeyList, 0, 100, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
+            OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataValues(iMetadataKeyList, 0, -1, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;
@@ -1004,21 +998,6 @@ void pvplayer_async_test_cpmdlapassthru::CommandCompleted(const PVCmdResponse& a
             break;
 
 
-        case STATE_GETMETADATAKEYLIST:
-            if (aResponse.GetCmdStatus() == PVMFSuccess)
-            {
-                iState = STATE_GETMETADATAVALUELIST;
-                RunIfNotReady();
-            }
-            else
-            {
-                // GetMetadataKeys failed
-                PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-            }
-            break;
-
         case STATE_GETMETADATAVALUELIST:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
@@ -1087,7 +1066,7 @@ void pvplayer_async_test_cpmdlapassthru::CommandCompleted(const PVCmdResponse& a
         case STATE_PREPARE:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                iState = STATE_GETMETADATAKEYLIST;
+                iState = STATE_GETMETADATAVALUELIST;
                 RunIfNotReady();
             }
             else

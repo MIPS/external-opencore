@@ -47,54 +47,33 @@
 #define LOGGAPLESSINFO(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iGaplessLogger,PVLOGMSG_INFO,m);
 
 
-uint32 PVMFMP4FFParserNode::GetNumMetadataKeys(char* aQueryKeyString)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::GetNumMetadataKeys() called"));
-
-    uint32 num_entries = 0;
-    if (aQueryKeyString == NULL)
-    {
-        // No query key so just return all the available keys
-        num_entries = iClipInfoList[iClipIndexForMetadata].iAvailableMetadataKeys.size();
-    }
-    else
-    {
-        // Determine the number of metadata keys based on the query key string provided
-        for (uint32 i = 0; i < iClipInfoList[iClipIndexForMetadata].iAvailableMetadataKeys.size(); i++)
-        {
-            // Check if the key matches the query key
-            if (pv_mime_strcmp(iClipInfoList[iClipIndexForMetadata].iAvailableMetadataKeys[i].get_cstr(), aQueryKeyString) >= 0)
-            {
-                num_entries++;
-            }
-        }
-    }
-
-    if ((iCPMMetaDataExtensionInterface != NULL) &&
-            (iProtectedFile == true))
-    {
-        num_entries +=
-            iCPMMetaDataExtensionInterface->GetNumMetadataKeys(aQueryKeyString);
-    }
-
-    return num_entries;
-
-}
-
 uint32 PVMFMP4FFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::GetNumMetadataValues() called"));
     uint32 numvalentries = 0;
-    if (iMetadataParserObj)
-    {
-        numvalentries = iMetadataParserObj->GetNumMetadataValues(aKeyList);
-    }
 
     if (iCPMMetaDataExtensionInterface != NULL)
     {
-        numvalentries +=
+        numvalentries =
             iCPMMetaDataExtensionInterface->GetNumMetadataValues(aKeyList);
     }
+
+    PVMFMetadataList* keylistptr = &aKeyList;
+    if (aKeyList.size() == 1)
+    {
+        if (oscl_strncmp(aKeyList[0].get_cstr(),
+                         PVMP4_ALL_METADATA_KEY,
+                         oscl_strlen(PVMP4_ALL_METADATA_KEY)) == 0)
+        {
+            //use the complete metadata key list
+            keylistptr = &(iClipInfoList[iClipIndexForMetadata].iAvailableMetadataKeys);
+        }
+    }
+    if (iMetadataParserObj)
+    {
+        numvalentries += iMetadataParserObj->GetNumMetadataValues(*keylistptr);
+    }
+
     return numvalentries;
 }
 
@@ -110,15 +89,6 @@ PVMFStatus PVMFMP4FFParserNode::SetMetadataClipIndex(uint32 aClipNum)
     return PVMFFailure;
 }
 
-PVMFCommandId PVMFMP4FFParserNode::GetNodeMetadataKeys(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList, uint32 starting_index, int32 max_entries, char* query_key, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::GetNodeMetadataKeys() called"));
-
-    PVMFNodeCommand cmd;
-    cmd.PVMFNodeCommand::Construct(aSessionId, PVMF_GENERIC_NODE_GETNODEMETADATAKEYS, aKeyList, starting_index, max_entries, query_key, aContext);
-    return QueueCommandL(cmd);
-}
-
 
 PVMFCommandId PVMFMP4FFParserNode::GetNodeMetadataValues(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, uint32 starting_index, int32 max_entries, const OsclAny* aContext)
 {
@@ -127,15 +97,6 @@ PVMFCommandId PVMFMP4FFParserNode::GetNodeMetadataValues(PVMFSessionId aSessionI
     PVMFNodeCommand cmd;
     cmd.PVMFNodeCommand::Construct(aSessionId, PVMF_GENERIC_NODE_GETNODEMETADATAVALUES, aKeyList, aValueList, starting_index, max_entries, aContext);
     return QueueCommandL(cmd);
-}
-
-
-PVMFStatus PVMFMP4FFParserNode::ReleaseNodeMetadataKeys(PVMFMetadataList& , uint32 , uint32)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::ReleaseNodeMetadataKeys() called"));
-
-    // Nothing needed-- there's no dynamic allocation in this node's key list
-    return PVMFSuccess;
 }
 
 
@@ -179,143 +140,6 @@ PVMFStatus PVMFMP4FFParserNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, O
     return PVMFSuccess;
 }
 
-
-
-PVMFStatus
-PVMFMP4FFParserNode::DoGetNodeMetadataKeys()
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::DoGetMetadataKeys() In"));
-    /* Get Metadata keys from CPM for protected content only */
-    if ((iCPMMetaDataExtensionInterface != NULL) &&
-            (iProtectedFile == true))
-    {
-        GetCPMMetaDataKeys();
-        return PVMFPending;
-    }
-    if (iMetadataParserObj == NULL)
-    {
-        return PVMFErrInvalidState;
-    }
-    return (CompleteGetMetadataKeys());
-}
-
-PVMFStatus PVMFMP4FFParserNode::CompleteGetMetadataKeys()
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFMP4FFParserNode::CompleteGetMetadataKeys() In"));
-
-    PVMFMetadataList* keylistptr = NULL;
-    uint32 starting_index;
-    int32 max_entries;
-    char* query_key = NULL;
-
-    iCurrentCommand.PVMFNodeCommand::Parse(keylistptr, starting_index, max_entries, query_key);
-
-    // Check parameters
-    if (keylistptr == NULL)
-    {
-        // The list pointer is invalid
-        return PVMFErrArgument;
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFMP4FFParserNode::CompleteGetMetadataKeys() iAvailableMetadataKeys=%d iCPMMetadataKeys=%d",
-                     iClipInfoList[iClipIndexForMetadata].iAvailableMetadataKeys.size(), iCPMMetadataKeys.size()));
-
-    // Copy the requested keys
-    uint32 num_entries = 0;
-    int32 num_added = 0;
-    uint32 lcv = 0;
-    for (lcv = 0; lcv < iClipInfoList[iClipIndexForMetadata].iAvailableMetadataKeys.size(); lcv++)
-    {
-        if (query_key == NULL)
-        {
-            // No query key so this key is counted
-            ++num_entries;
-            if (num_entries > starting_index)
-            {
-                // Past the starting index so copy the key
-                PVMFStatus status = PushValueToList(iClipInfoList[iClipIndexForMetadata].iAvailableMetadataKeys, keylistptr, lcv);
-                if (PVMFErrNoMemory == status)
-                {
-                    return status;
-                }
-                num_added++;
-            }
-        }
-        else
-        {
-            // Check if the key matches the query key
-            if (oscl_strstr(iClipInfoList[iClipIndexForMetadata].iAvailableMetadataKeys[lcv].get_cstr(), query_key) != NULL)
-            {
-                // This key is counted
-                ++num_entries;
-                if (num_entries > starting_index)
-                {
-                    // Past the starting index so copy the key
-                    PVMFStatus status = PushValueToList(iClipInfoList[iClipIndexForMetadata].iAvailableMetadataKeys, keylistptr, lcv);
-                    if (PVMFErrNoMemory == status)
-                    {
-                        return status;
-                    }
-                    num_added++;
-                }
-            }
-        }
-
-        // Check if max number of entries have been copied
-        if (max_entries > 0 && num_added >= max_entries)
-        {
-            break;
-        }
-    }
-
-    for (lcv = 0; lcv < iCPMMetadataKeys.size(); lcv++)
-    {
-        if (query_key == NULL)
-        {
-            /* No query key so this key is counted */
-            ++num_entries;
-            if (num_entries > starting_index)
-            {
-                /* Past the starting index so copy the key */
-                PVMFStatus status = PushValueToList(iCPMMetadataKeys, keylistptr, lcv);
-                if (PVMFErrNoMemory == status)
-                {
-                    return status;
-                }
-                num_added++;
-            }
-        }
-        else
-        {
-            /* Check if the key matches the query key */
-            if (pv_mime_strcmp(iCPMMetadataKeys[lcv].get_cstr(), query_key) >= 0)
-            {
-                /* This key is counted */
-                ++num_entries;
-                if (num_entries > starting_index)
-                {
-                    /* Past the starting index so copy the key */
-                    PVMFStatus status = PushValueToList(iCPMMetadataKeys, keylistptr, lcv);
-                    if (PVMFErrNoMemory == status)
-                    {
-                        return status;
-                    }
-                    num_added++;
-                }
-            }
-        }
-        /* Check if max number of entries have been copied */
-        if ((max_entries > 0) && (num_added >= max_entries))
-        {
-            break;
-        }
-    }
-
-    return PVMFSuccess;
-}
-
-
 PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -344,7 +168,6 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
     }
 
     keylistptr = keylistptr_in;
-
     //If numkeys is one, just check to see if the request
     //is for ALL metadata
     if (keylistptr_in->size() == 1)
@@ -359,7 +182,6 @@ PVMFStatus PVMFMP4FFParserNode::DoGetNodeMetadataValues()
     }
 
     uint32 numKeys = keylistptr->size();
-
     // The underlying mp4 ff library will fill in the values.
     iClipInfoList[iClipIndexForMetadata].iTotalID3MetaDataTagInValueList = 0;
     PVMFStatus status = iMetadataParserObj->GetMetadataValues(*keylistptr, *valuelistptr,

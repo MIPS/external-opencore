@@ -289,14 +289,9 @@ class PVMFMP4FFParserNode
 
         // From PVMFMetadataExtensionInterface
         PVMFStatus SetMetadataClipIndex(uint32 aClipIndex);
-        uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL);
         uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
-
-        PVMFCommandId GetNodeMetadataKeys(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList, uint32 aStartingKeyIndex, int32 aMaxKeyEntries,
-                                          char* aQueryKeyString = NULL, const OsclAny* aContextData = NULL);
         PVMFCommandId GetNodeMetadataValues(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList,
                                             Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, uint32 aStartingValueIndex, int32 aMaxValueEntries, const OsclAny* aContextData = NULL);
-        PVMFStatus ReleaseNodeMetadataKeys(PVMFMetadataList& aKeyList, uint32 aStartingKeyIndex, uint32 aEndKeyIndex);
         PVMFStatus ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, uint32 aStartingValueIndex, uint32 aEndValueIndex);
 
         // From PvmfDataSourcePlaybackControlInterface
@@ -394,9 +389,6 @@ class PVMFMP4FFParserNode
 
         PVMFStatus CancelCurrentCommand();
         // For metadata extention interface
-        PVMFStatus DoGetNodeMetadataKeys();
-        PVMFStatus CompleteGetMetadataKeys();
-
         void PushToAvailableMetadataKeysList(uint32 aParserIndex, const char* aKeystr, char* aOptionalParam = NULL);
         PVMFStatus GetIndexParamValues(const char* aString, uint32& aStartIndex, uint32& aEndIndex);
         PVMFStatus CreateNewArray(uint32** aTrackidList, uint32 aNumTracks);
@@ -509,7 +501,6 @@ class PVMFMP4FFParserNode
         Oscl_FileServer iFileServer;
         uint32 iParsingMode;
         bool iProtectedFile;
-        Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> iCPMMetadataKeys;
         Oscl_Vector<PVMP4FFNodeTrackPortInfo, OsclMemAllocator> iNodeTrackPortList;
         Oscl_Vector<PVMFTrackInfo, OsclMemAllocator> iSelectedTrackInfoList;
         Oscl_Vector<VideoTrackDimensionInfo, OsclMemAllocator> iVideoDimensionInfoVec;
@@ -569,7 +560,6 @@ class PVMFMP4FFParserNode
         PVMFCommandId iCPMUsageCompleteCmdId;
         PVMFCommandId iCPMCloseSessionCmdId;
         PVMFCommandId iCPMResetCmdId;
-        PVMFCommandId iCPMGetMetaDataKeysCmdId;
         PVMFCommandId iCPMGetMetaDataValuesCmdId;
         PVMFCommandId iCPMGetLicenseInterfaceCmdId;
         void InitCPM();
@@ -583,7 +573,6 @@ class PVMFMP4FFParserNode
         void SendUsageComplete();
         void CloseCPMSession();
         void ResetCPM();
-        void GetCPMMetaDataKeys();
         PVMFStatus CheckCPMCommandCompleteStatus(PVMFCommandId, PVMFStatus);
         PVMFStatus iCPMRequestUsageCommandStatus;
 
@@ -743,3 +732,4 @@ class PVMFMP4FFPortIter : public PVMFPortIter
 };
 
 #endif // PVMF_MP4FFPARSER_NODE_H_INCLUDED
+

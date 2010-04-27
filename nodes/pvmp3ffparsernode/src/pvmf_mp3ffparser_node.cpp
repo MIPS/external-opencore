@@ -52,7 +52,6 @@ PVMFMP3FFParserNode::PVMFMP3FFParserNode(int32 aPriority)
     iCPMContainer.iCPMLicenseInterface = NULL;
     iCPMContainer.iCPMLicenseInterfacePVI = NULL;
     iCPMContainer.iCPMMetaDataExtensionInterface   = NULL;
-    iCPMGetMetaDataKeysCmdId = 0;
     iCPMGetMetaDataValuesCmdId = 0;
     iCPMUsageCompleteCmdId = 0;
     iCPMCloseSessionCmdId = 0;
@@ -177,9 +176,6 @@ PVMFStatus PVMFMP3FFParserNode::HandleExtensionAPICommands()
         case PVMF_GENERIC_NODE_SET_DATASOURCE_RATE:
             status = DoSetDataSourceRate();
             break;
-        case PVMF_GENERIC_NODE_GETNODEMETADATAKEYS:
-            status = DoGetNodeMetadataKeys();
-            break;
         case PVMF_GENERIC_NODE_GETNODEMETADATAVALUES:
             status = DoGetNodeMetadataValues();
             break;
@@ -201,7 +197,7 @@ PVMFStatus PVMFMP3FFParserNode::CancelCurrentCommand()
         return PVMFSuccess;
     }
 
-    /* The pending commands DoInit, DoReset, DoGetMetadataKeys and DoGetMetadataValues
+    /* The pending commands DoInit, DoReset, and DoGetMetadataValues
      * would be canceled in CPMCommandCompleted.
      * So return pending for now.
      */
@@ -632,96 +628,6 @@ PVMFStatus PVMFMP3FFParserNode::DoFlush()
     // Flush is asynchronous. It will remain pending until the flush completes
     return PVMFPending;
 }
-
-/**
- * CommandHandler for fetching Metadata Keys
- */
-PVMFStatus PVMFMP3FFParserNode::DoGetNodeMetadataKeys()
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFMP3FFParserNode::DoGetNodeMetadataKeys() In"));
-
-    /* Get Metadata keys from CPM for protected content only */
-    if (iCPMContainer.iCPMMetaDataExtensionInterface != NULL)
-    {
-        GetCPMMetaDataKeys();
-        return PVMFPending;
-    }
-    return (CompleteGetMetadataKeys());
-}
-
-PVMFStatus PVMFMP3FFParserNode::CompleteGetMetadataKeys()
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFMP3FFParserNode::CompleteGetMetadataKeys() In"));
-
-    PVMFMetadataList* keylistptr = NULL;
-    uint32 starting_index;
-    int32 max_entries;
-    char* query_key;
-
-    iCurrentCommand.PVMFNodeCommand::Parse(keylistptr, starting_index, max_entries, query_key);
-    // Check parameters
-    if (keylistptr == NULL || NULL == iMetadataParserObj)
-    {
-        // The list pointer is invalid
-        return PVMFErrArgument;
-    }
-    // The underlying mp3 ff library will fill in the keys.
-    iMetadataParserObj->GetMetadataKeys(*keylistptr, starting_index, max_entries, query_key);
-
-
-    /* Copy the requested keys */
-    uint32 num_entries = 0;
-    int32 num_added = 0;
-    uint32 lcv = 0;
-    for (lcv = 0; lcv < iCPMMetadataKeys.size(); lcv++)
-    {
-        if (query_key == NULL)
-        {
-            /* No query key so this key is counted */
-            ++num_entries;
-            if (num_entries > (uint32)starting_index)
-            {
-                /* Past the starting index so copy the key */
-                PVMFStatus status = PushBackCPMMetadataKeys(keylistptr, lcv);
-                if (PVMFErrNoMemory == status)
-                {
-                    return status;
-                }
-                num_added++;
-            }
-        }
-        else
-        {
-            /* Check if the key matches the query key */
-            if (pv_mime_strcmp(iCPMMetadataKeys[lcv].get_cstr(), query_key) >= 0)
-            {
-                /* This key is counted */
-                ++num_entries;
-                if (num_entries > (uint32)starting_index)
-                {
-                    /* Past the starting index so copy the key */
-                    PVMFStatus status = PushBackCPMMetadataKeys(keylistptr, lcv);
-                    if (PVMFErrNoMemory == status)
-                    {
-                        return status;
-                    }
-                    num_added++;
-                }
-            }
-        }
-        // Check if max number of entries have been copied
-        if ((max_entries > 0) && (num_added >= max_entries))
-        {
-            break;
-        }
-    }
-    return PVMFSuccess;
-}
-
-
-
 
 /**
  * CommandHandler for fetching Metadata Values
@@ -2331,24 +2237,6 @@ PVMFStatus PVMFMP3FFParserNode::SelectTracks(PVMFMediaPresentationInfo& aInfo)
 }
 
 // From PVMFMetadataExtensionInterface
-uint32 PVMFMP3FFParserNode::GetNumMetadataKeys(char* aQueryString)
-{
-    uint32 num_entries = 0;
-    if (NULL == iMetadataParserObj)
-    {
-        return num_entries;
-    }
-
-    num_entries = iMetadataParserObj->GetNumMetadataKeys(aQueryString);
-
-    if (iCPMContainer.iCPMMetaDataExtensionInterface != NULL)
-    {
-        num_entries +=
-            (iCPMContainer.iCPMMetaDataExtensionInterface)->GetNumMetadataKeys(aQueryString);
-    }
-    return num_entries;
-}
-
 uint32 PVMFMP3FFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
 {
     uint32 numvalentries = 0;
@@ -2356,14 +2244,31 @@ uint32 PVMFMP3FFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
     {
         return numvalentries;
     }
-
-    numvalentries = iMetadataParserObj->GetNumMetadataValues(aKeyList);
+    PVMFMetadataList mp3parserKeyList;
 
     if (iCPMContainer.iCPMMetaDataExtensionInterface != NULL)
     {
-        numvalentries +=
+        numvalentries =
             iCPMContainer.iCPMMetaDataExtensionInterface->GetNumMetadataValues(aKeyList);
     }
+
+    PVMFMetadataList* keylistptr = &aKeyList;
+    if (aKeyList.size() == 1)
+    {
+        if (oscl_strncmp(aKeyList[0].get_cstr(),
+                         PVMF_MP3_PARSER_NODE_ALL_METADATA_KEY,
+                         oscl_strlen(PVMF_MP3_PARSER_NODE_ALL_METADATA_KEY)) == 0)
+        {
+            //check if the user passed in "all" metadata key, in which case get the complete
+            //key list from MP3 FF lib first
+            int32 max = 0x7FFFFFFF;
+            char* query = NULL;
+            iMetadataParserObj->GetMetadataKeys(mp3parserKeyList, 0, max, query);
+            keylistptr = &mp3parserKeyList;
+        }
+    }
+    numvalentries += iMetadataParserObj->GetNumMetadataValues(*keylistptr);
+
     return numvalentries;
 }
 
@@ -2378,28 +2283,6 @@ PVMFStatus PVMFMP3FFParserNode::SetMetadataClipIndex(uint32 aClipNum)
     if (iMetadataParserObj)
         return PVMFSuccess;
     return PVMFFailure;
-}
-
-/**
- * From PVMFMetadataExtensionInterface
- * Queue an asynchronous node command for GetNodeMetadataKeys
- */
-PVMFCommandId PVMFMP3FFParserNode::GetNodeMetadataKeys(PVMFSessionId aSessionId,
-        PVMFMetadataList& aKeyList,
-        uint32 starting_index,
-        int32 max_entries,
-        char* query_key,
-        const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFMP3FFParserNode::GetNodeMetadataKeys() In"));
-    PVMFNodeCommand cmd;
-    cmd.PVMFNodeCommand::Construct(aSessionId,
-                                   PVMF_GENERIC_NODE_GETNODEMETADATAKEYS,
-                                   aKeyList, starting_index,
-                                   max_entries, query_key,
-                                   aContext);
-    return QueueCommandL(cmd);
 }
 
 /**
@@ -2423,19 +2306,6 @@ PVMFCommandId PVMFMP3FFParserNode::GetNodeMetadataValues(PVMFSessionId aSessionI
                                    starting_index, max_entries,
                                    aContext);
     return QueueCommandL(cmd);
-}
-
-/**
- * From PVMFMetadataExtensionInterface
- * Queue an asynchronous node command for ReleaseNodeMetadataKeys
- */
-PVMFStatus PVMFMP3FFParserNode::ReleaseNodeMetadataKeys(PVMFMetadataList& aMetaDataKeys,
-        uint32 , uint32)
-{
-    OSCL_UNUSED_ARG(aMetaDataKeys);
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                    (0, "PVMFMP3FFParserNode::ReleaseNodeMetadataKeys() In"));
-    return PVMFErrNotSupported;
 }
 
 /**
@@ -3295,13 +3165,6 @@ OSCL_EXPORT_REF void PVMFCPMContainerMp3::CPMCommandCompleted(const PVMFCmdResp&
         //Process node cancel command response
         CancelCommandDone(aResponse.GetCmdStatus(), aResponse.GetEventExtensionInterface(), aResponse.GetEventData());
     }
-    else if (aResponse.GetCmdId() == iContainer->iCPMGetMetaDataKeysCmdId)
-    {
-        // End of GetNodeMetaDataKeys
-        PVMFStatus status =
-            iContainer->CompleteGetMetadataKeys();
-        iContainer->CommandComplete(iContainer->iCurrentCommand, status);
-    }
     else if (aResponse.GetCmdId() == iContainer->iCPMGetMetaDataValuesCmdId)
     {
         // End of GetNodeMetaDataValues
@@ -3578,19 +3441,6 @@ PVMFStatus PVMFMP3FFParserNode::CheckForMP3HeaderAvailability(int32 aClipIndex)
     return retVal;
 }
 
-void PVMFMP3FFParserNode::GetCPMMetaDataKeys()
-{
-    if (iCPMContainer.iCPMMetaDataExtensionInterface != NULL)
-    {
-        iCPMMetadataKeys.clear();
-        iCPMGetMetaDataKeysCmdId =
-            iCPMContainer.iCPMMetaDataExtensionInterface->GetNodeMetadataKeys(iCPMContainer.iSessionId,
-                    iCPMMetadataKeys,
-                    0,
-                    PVMF_MP3_PARSER_NODE_MAX_CPM_METADATA_KEYS);
-    }
-}
-
 bool PVMFCPMContainerMp3::GetCPMMetaDataExtensionInterface()
 {
     PVInterface* temp = NULL;
@@ -3758,14 +3608,6 @@ PVMFStatus PVMFMP3FFParserNode::ReleaseMP3FileParser(int32 aClipIndex, bool clea
         return PVMFSuccess;
     }
     return PVMFFailure;
-}
-
-PVMFStatus PVMFMP3FFParserNode::PushBackCPMMetadataKeys(PVMFMetadataList *&aKeyListPtr, uint32 aLcv)
-{
-    int32 leavecode = 0;
-    OSCL_TRY(leavecode, aKeyListPtr->push_back(iCPMMetadataKeys[aLcv]));
-    OSCL_FIRST_CATCH_ANY(leavecode, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP3FFParserNode::CompleteGetMetadataKeys() Memory allocation failure when copying metadata key")); return PVMFErrNoMemory);
-    return PVMFSuccess;
 }
 
 void PVMFMP3FFParserNode::MetadataUpdated(uint32 aMetadataSize)

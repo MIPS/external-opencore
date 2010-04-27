@@ -344,7 +344,6 @@ OSCL_EXPORT_REF PVMFCPMImpl::PVMFCPMImpl(PVMFCPMStatusObserver& aObserver,
     iNumQueryCapConfigExtensionInterfacePending = 0;
     iNumQueryCapConfigExtensionInterfaceComplete = 0;
 
-    iGetMetaDataKeysSessionId = 0;
     iGetMetaDataValuesSessionId = 0;
 
     iExtensionRefCount = 0;
@@ -713,26 +712,6 @@ OSCL_EXPORT_REF PVMFStatus PVMFCPMImpl::SetMetadataClipIndex(uint32 aClipNum)
 }
 
 OSCL_EXPORT_REF PVMFCommandId
-PVMFCPMImpl::GetNodeMetadataKeys(PVMFSessionId aSessionId,
-                                 PVMFMetadataList& aKeyList,
-                                 uint32 aStartingKeyIndex,
-                                 int32 aMaxKeyEntries,
-                                 char* aQueryKeyString,
-                                 const OsclAny* aContextData)
-{
-    PVMF_CPM_LOGINFO((0, "PVMFCPMImpl::GetNodeMetadataKeys"));
-    PVMFCPMCommand cmd;
-    cmd.Construct(aSessionId,
-                  PVMF_CPM_GET_METADATA_KEYS,
-                  aKeyList,
-                  aStartingKeyIndex,
-                  aMaxKeyEntries,
-                  aQueryKeyString,
-                  aContextData);
-    return QueueCommandL(cmd);
-}
-
-OSCL_EXPORT_REF PVMFCommandId
 PVMFCPMImpl::GetNodeMetadataValues(PVMFSessionId aSessionId,
                                    PVMFMetadataList& aKeyList,
                                    Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
@@ -750,59 +729,6 @@ PVMFCPMImpl::GetNodeMetadataValues(PVMFSessionId aSessionId,
                   aMaxValueEntries,
                   aContextData);
     return QueueCommandL(cmd);
-}
-
-OSCL_EXPORT_REF PVMFStatus
-PVMFCPMImpl::ReleaseNodeMetadataKeys(PVMFMetadataList& aKeyList,
-                                     uint32 aStartingKeyIndex,
-                                     uint32 aEndKeyIndex)
-{
-    PVMF_CPM_LOGINFO((0, "PVMFCPMImpl::ReleaseNodeMetadataKeys called"));
-    if (((int32)aStartingKeyIndex < 0) ||
-            (aStartingKeyIndex > aEndKeyIndex) ||
-            (aKeyList.size() == 0))
-    {
-        PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::ReleaseNodeMetadataKeys() Invalid start/end index"));
-        return PVMFErrArgument;
-    }
-    if (aEndKeyIndex >= aKeyList.size())
-    {
-        aEndKeyIndex = aKeyList.size() - 1;
-    }
-
-    //Use the session ID from the prior GetMetaDataKeys command.
-    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn(iGetMetaDataKeysSessionId);
-    if (it)
-    {
-        uint32 plugInStartIndex = it->iMetaDataKeyStartIndex;
-        uint32 plugInEndIndex = it->iMetaDataKeyEndIndex;
-
-        uint32 releaseStartIndex = 0;
-        uint32 releaseEndIndex = 0;
-
-        if ((aStartingKeyIndex >= plugInStartIndex) &&
-                (aStartingKeyIndex <= plugInEndIndex))
-        {
-            releaseStartIndex = aStartingKeyIndex;
-            if (aEndKeyIndex > plugInEndIndex)
-            {
-                releaseEndIndex = plugInEndIndex;
-            }
-            else
-            {
-                releaseEndIndex = aEndKeyIndex;
-            }
-
-            if (NULL != it->PlugInMetaDataExtensionInterface())
-            {
-                it->PlugInMetaDataExtensionInterface()->ReleaseNodeMetadataKeys(aKeyList,
-                        releaseStartIndex,
-                        releaseEndIndex);
-            }
-        }
-        aStartingKeyIndex = releaseEndIndex + 1;
-    }
-    return PVMFSuccess;
 }
 
 OSCL_EXPORT_REF PVMFStatus
@@ -865,7 +791,7 @@ PVMFCPMImpl::QueryInterface(PVMFSessionId aSessionId,
                             PVInterface*& aInterfacePtr,
                             const OsclAny* aContext)
 {
-    PVMF_CPM_LOGINFO((0, "PVMFCPMImpl::GetNodeMetadataValues"));
+    PVMF_CPM_LOGINFO((0, "PVMFCPMImpl::QueryInterface"));
     PVMFCPMCommand cmd;
     cmd.PVMFCPMCommandBase::Construct(aSessionId,
                                       PVMF_CPM_QUERY_INTERFACE,
@@ -1047,21 +973,6 @@ bool PVMFCPMImpl::ProcessCommand(PVMFCPMCommand& aCmd)
         case PVMF_CPM_RESET:
             DoReset(aCmd);
             break;
-
-        case PVMF_CPM_GET_METADATA_KEYS:
-        {
-            iGetMetaDataKeysSessionId = aCmd.iSession;
-            PVMFStatus status = DoGetMetadataKeys_P(aCmd);
-            if (status != PVMFPending)
-            {
-                CommandComplete(iInputCommands, aCmd, status);
-            }
-            else
-            {
-                MoveCmdToCurrentQueue(aCmd);
-            }
-        }
-        break;
 
         case PVMF_CPM_GET_METADATA_VALUES:
             iGetMetaDataValuesSessionId = aCmd.iSession;
@@ -1804,83 +1715,6 @@ void PVMFCPMImpl::CompleteApproveUsage(CPMContentUsageContext* aContext)
         if (aContext->iNumAuthorizeRequestsComplete ==
                 aContext->iNumAuthorizeRequestsPending)
         {
-            PVMFStatus status = QueryForMetaDataKeys_P(iCurrentCommand.front());
-            if (status != PVMFPending)
-            {
-                CommandComplete(iCurrentCommand,
-                                iCurrentCommand.front(),
-                                status);
-            }
-        }
-    }
-    return;
-}
-
-PVMFStatus PVMFCPMImpl::QueryForMetaDataKeys_P(PVMFCPMCommand& aParentCmd)
-{
-    PVMFStatus status = PVMFSuccess;
-
-    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn(aParentCmd.iSession);
-    if (it)
-    {
-        if (it->PlugInMetaDataExtensionInterface() != NULL)
-        {
-            PVMFCPMCommandContext* internalCmd = RequestNewInternalCmd();
-            if (internalCmd != NULL)
-            {
-                internalCmd->cmd =
-                    PVMF_CPM_INTERNAL_GET_PLUGIN_META_DATA_KEYS_CMD;
-                internalCmd->parentCmd = aParentCmd.iCmd;
-                internalCmd->plugInID = it->iPlugInID;
-                OsclAny *cmdContextData =
-                    OSCL_REINTERPRET_CAST(OsclAny*, internalCmd);
-
-                it->iNumMetaDataKeysAvailable  = 0;
-                it->iAvailableMetadataKeys.clear();
-
-                it->iNumMetaDataKeysAvailable =
-                    it->PlugInMetaDataExtensionInterface()->GetNumMetadataKeys();
-                it->PlugInMetaDataExtensionInterface()->GetNodeMetadataKeys(it->iPlugInSessionID,
-                        it->iAvailableMetadataKeys,
-                        0,
-                        it->iNumMetaDataKeysAvailable,
-                        NULL,
-                        cmdContextData);
-
-                status = PVMFPending;
-
-            }
-            else
-            {
-                return PVMFErrNoMemory;
-            }
-        }
-    }
-    return status;
-}
-
-void PVMFCPMImpl::CompleteGetMetaDataKeys(uint32 aPlugInID)
-{
-    CPMPlugInParams* pluginInParams = LookUpPlugInParamsFromActiveList(aPlugInID);
-    if (pluginInParams == NULL)
-    {
-        PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::CompleteGetMetaDataKeys - Invalid PlugIn ID"));
-        CommandComplete(iCurrentCommand,
-                        iCurrentCommand.front(),
-                        PVMFFailure);
-    }
-    else
-    {
-        if (iCurrentCommand.front().iCmd == PVMF_CPM_GET_METADATA_KEYS)
-        {
-            PVMFStatus status = CompleteDoGetMetadataKeys(iCurrentCommand.front());
-
-            CommandComplete(iCurrentCommand,
-                            iCurrentCommand.front(),
-                            status);
-        }
-        else
-        {
             CommandComplete(iCurrentCommand,
                             iCurrentCommand.front(),
                             PVMFSuccess);
@@ -2299,10 +2133,6 @@ void PVMFCPMImpl::CPMPluginCommandCompleted(const PVMFCmdResp& aResponse)
             CompleteCPMReset();
             break;
 
-        case PVMF_CPM_INTERNAL_GET_PLUGIN_META_DATA_KEYS_CMD:
-            CompleteGetMetaDataKeys(cmdContextData->plugInID);
-            break;
-
         case PVMF_CPM_INTERNAL_GET_PLUGIN_META_DATA_VALUES_CMD:
         {
             CompleteGetMetaDataValues(cmdContextData);
@@ -2411,36 +2241,6 @@ CPMPlugInParams* PVMFCPMImpl::LookUpPlugInParamsFromActiveList(uint32 aID)
 }
 
 OSCL_EXPORT_REF uint32
-PVMFCPMImpl::GetNumMetadataKeys(char* aQueryKeyString)
-{
-    //There's no session ID in this API.  Just use the first session.  If any node tries to
-    //open multiple CPM sessions, this will break.
-    if (iListofActiveSessions.size() != 1)
-    {
-        PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::GetNumMetadataKeys - Invalid number of sessions"));
-        return 0;
-    }
-
-    uint32 numMetaDataKeys = 0;
-    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn(iListofActiveSessions[0].iSessionId);
-    if (it)
-    {
-        if (NULL != it->PlugInMetaDataExtensionInterface())
-        {
-            numMetaDataKeys +=
-                it->PlugInMetaDataExtensionInterface()->GetNumMetadataKeys(aQueryKeyString);
-        }
-        return numMetaDataKeys;
-    }
-    else
-    {
-        /* No access plugins */
-        PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::GetNumMetadataKeys - No Access Plugin"));
-        return numMetaDataKeys;
-    }
-}
-
-OSCL_EXPORT_REF uint32
 PVMFCPMImpl::GetNumMetadataValues(PVMFMetadataList& aKeyList)
 {
     //There's no session ID in this API.  Just use the first session.  If any node tries to
@@ -2468,98 +2268,6 @@ PVMFCPMImpl::GetNumMetadataValues(PVMFMetadataList& aKeyList)
         PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::GetNumMetadataValues - No Access Plugin"));
         return numMetaDataValues;
     }
-}
-
-PVMFStatus
-PVMFCPMImpl::DoGetMetadataKeys_P(PVMFCPMCommand& aCmd)
-{
-    PVMF_CPM_LOGINFO((0, "PVMFCPMImpl::DoGetMetadataKeys Called"));
-
-    PVMFStatus status = QueryForMetaDataKeys_P(aCmd);
-
-    if (status != PVMFPending)
-        return (CompleteDoGetMetadataKeys(aCmd));
-
-    return status;
-}
-
-PVMFStatus
-PVMFCPMImpl::CompleteDoGetMetadataKeys(PVMFCPMCommand& aCmd)
-{
-    int32 leavecode = OsclErrNone;
-    PVMFMetadataList* keylistptr = NULL;
-    int32 starting_index;
-    int32 max_entries;
-    char* query_key = NULL;
-    aCmd.PVMFCPMCommand::Parse(keylistptr,
-                               starting_index,
-                               max_entries,
-                               query_key);
-
-    /* Check parameters */
-    if ((keylistptr == NULL) ||
-            (starting_index < 0)  ||
-            (max_entries == 0))
-    {
-        /* Invalid starting index and/or max entries */
-        PVMF_CPM_LOGERROR((0, "PVMFCPMImpl::CompleteDoGetMetadataKeys - Invalid Args"));
-        return PVMFErrArgument;
-    }
-
-    /* Copy the requested keys from all active plugins */
-    uint32 num_entries = 0;
-    int32 num_added = 0;
-    Oscl_Vector<CPMPlugInParams, OsclMemAllocator>::iterator it = LookUpAccessPlugIn(aCmd.iSession);
-    if (it)
-    {
-        it->iMetaDataKeyStartIndex = keylistptr->size();
-        for (uint32 lcv = 0; lcv < it->iAvailableMetadataKeys.size(); lcv++)
-        {
-            if (query_key == NULL)
-            {
-                /* No query key so this key is counted */
-                ++num_entries;
-                if (num_entries > (uint32)starting_index)
-                {
-                    /* Past the starting index so copy the key */
-                    leavecode = OsclErrNone;
-                    leavecode = PushKVPKey(it->iAvailableMetadataKeys[lcv], *keylistptr);
-                    if (OsclErrNone != leavecode)
-                    {
-                        return PVMFErrNoMemory;
-                    }
-                    num_added++;
-                }
-            }
-            else
-            {
-                /* Check if the key matches the query key */
-                if (pv_mime_strcmp((char*)it->iAvailableMetadataKeys[lcv].get_cstr(), query_key) >= 0)
-                {
-                    /* This key is counted */
-                    ++num_entries;
-                    if (num_entries > (uint32)starting_index)
-                    {
-                        /* Past the starting index so copy the key */
-                        leavecode = OsclErrNone;
-                        leavecode = PushKVPKey(it->iAvailableMetadataKeys[lcv], *keylistptr);
-                        if (OsclErrNone != leavecode)
-                        {
-                            return PVMFErrNoMemory;
-                        }
-                        num_added++;
-                    }
-                }
-            }
-            /* Check if max number of entries have been copied */
-            if ((max_entries > 0) && (num_added >= max_entries))
-            {
-                break;
-            }
-        }
-        it->iMetaDataValueEndIndex = keylistptr->size();
-    }
-    return PVMFSuccess;
 }
 
 void

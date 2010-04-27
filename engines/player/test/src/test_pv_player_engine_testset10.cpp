@@ -456,17 +456,11 @@ void pvplayer_async_test_genericdelete::Run()
         }
         break;
 
-        case STATE_GETMETADATAKEYLIST:
-        {
-            iMetadataKeyList.clear();
-            OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataKeys(iMetadataKeyList, 0, 20, NULL, (OsclAny*) & iContextObject));
-            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
         case STATE_GETMETADATAVALUELIST:
         {
             iMetadataValueList.clear();
+            iMetadataKeyList.clear();
+            iMetadataKeyList.push_back(OSCL_HeapString<OsclMemAllocator>("all"));
             iNumValues = 0;
             OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataValues(iMetadataKeyList, 0, 20, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -877,7 +871,6 @@ void pvplayer_async_test_genericdelete::CommandCompleted(const PVCmdResponse& aR
         case STATE_INIT:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                //iState=STATE_GETMETADATAKEYLIST;
                 if ((!iDeleteWhileProc) && (iEndState == iState))
                 {
                     iState = STATE_CLEANUPANDCOMPLETE;
@@ -929,21 +922,6 @@ void pvplayer_async_test_genericdelete::CommandCompleted(const PVCmdResponse& aR
                     iState = STATE_CLEANUPANDCOMPLETE;
                     RunIfNotReady();
                 }
-            }
-            break;
-
-        case STATE_GETMETADATAKEYLIST:
-            if (aResponse.GetCmdStatus() == PVMFSuccess)
-            {
-                iState = STATE_GETMETADATAVALUELIST;
-                RunIfNotReady();
-            }
-            else
-            {
-                // GetMetadataKeys failed
-                PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
             }
             break;
 
@@ -1037,7 +1015,7 @@ void pvplayer_async_test_genericdelete::CommandCompleted(const PVCmdResponse& aR
                 }
                 else
                 {
-                    iState = STATE_GETMETADATAKEYLIST;
+                    iState = STATE_GETMETADATAVALUELIST;
                 }
                 RunIfNotReady();
             }
