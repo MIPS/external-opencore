@@ -4515,8 +4515,6 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
                                 if (sampleEntriesCnt > 0)
                                 {
                                     uint32 encryptedDataLen = 0; //offset into buffer
-                                    //It would have saved mem if we could have allocated buffer for encrypted data only.
-                                    //So as to create buffer while initializing encryptedDataOffset let us bear some extra mem overhead. May optimize later...
                                     uint8* buffer = OSCL_ARRAY_NEW(uint8, payloadSize);
                                     //initialize encryptedDataOffset and create buffer with encrypted data
                                     for (uint32 ii = 0; ii < sampleEntriesCnt; ii++)
