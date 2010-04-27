@@ -24,7 +24,7 @@
 #include "pvmp4ffcn_factory.h"
 #include "pvmp4ffcn_port.h"
 
-#ifdef ANDROID
+#if ANDROID_FILEWRITER
 // #define LOG_NDEBUG 0
 #define LOG_TAG "PvMp4Composer"
 #include <utils/Log.h>
@@ -249,7 +249,7 @@ class FragmentWriter: public Thread
         bool mExitRequested;
 };
 }
-#endif // ANDROID
+#endif // ANDROID_FILEWRITER
 
 #define LOG_STACK_TRACE(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, m);
 #define LOG_DEBUG(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, m);
@@ -361,7 +361,7 @@ PVMp4FFComposerNode::PVMp4FFComposerNode(int32 aPriority)
              OSCL_LEAVE(OsclErrNoMemory);
             );
 
-#ifdef ANDROID
+#if ANDROID_FILEWRITER
     iMaxReachedEvent = 0;
     iMaxReachedReported = false;
     iFragmentWriter = new android::FragmentWriter(this);
@@ -396,7 +396,7 @@ PVMp4FFComposerNode::~PVMp4FFComposerNode()
         LogDiagnostics();
     }
 
-#ifdef ANDROID
+#if ANDROID_FILEWRITER
     if (iFragmentWriter != NULL)
     {
         iFragmentWriter->requestExit(); // kick the thread
@@ -1486,7 +1486,7 @@ PVMFStatus PVMp4FFComposerNode::DoStop()
 
     PVMFStatus status = PVMFSuccess;
 
-#ifdef ANDROID
+#if ANDROID_FILEWRITER
     iFragmentWriter->flush();
 #endif
     if (!iNodeEndOfDataReached)
@@ -1592,7 +1592,7 @@ PVMFStatus PVMp4FFComposerNode::RenderToFile()
     }
 #endif
 
-#ifdef ANDROID
+#if ANDROID_FILEWRITER
     iFragmentWriter->flush();
 #endif
 
@@ -1682,7 +1682,7 @@ bool PVMp4FFComposerNode::FlushComplete()
             return false;
         }
     }
-#ifdef ANDROID
+#if ANDROID_FILEWRITER
     iFragmentWriter->flush();
 #endif
     if (!iNodeEndOfDataReached)
@@ -1940,7 +1940,7 @@ PVMFStatus PVMp4FFComposerNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
 
             uint32 currticks = OsclTickCount::TickCount();
             uint32 StartTime = OsclTickCount::TicksToMsec(currticks);
-#ifdef ANDROID
+#if ANDROID_FILEWRITER
             if (!iMaxReachedEvent)
             {
                 // TODO: We are passing port and port->GetFormat(), should pass port only.
@@ -2373,7 +2373,7 @@ PVMFStatus PVMp4FFComposerNode::CheckMaxFileSize(uint32 aFrameSize)
 
         if ((metaDataSize + mediaDataSize + aFrameSize) >= iMaxFileSize)
         {
-#ifdef ANDROID
+#if ANDROID_FILEWRITER
             // This code is executed on the fragment writer thread, we
             // don't want to call RenderToFile since it will call
             // flush() on the writer from this very same
@@ -2410,7 +2410,7 @@ PVMFStatus PVMp4FFComposerNode::CheckMaxDuration(uint32 aTimestamp)
     {
         if (aTimestamp >= iMaxTimeDuration)
         {
-#ifdef ANDROID
+#if ANDROID_FILEWRITER
             // This code is executed on the fragment writer thread, we
             // don't want to call RenderToFile since it will call
             // flush() on the writer from this very same
