@@ -133,7 +133,7 @@ PVMFSMRTSPTUnicastNode * PVMFSMRTSPTUnicastNode::New(int32 aPriority)
 
 
 
-PVMFSMRTSPTUnicastNode::PVMFSMRTSPTUnicastNode(int32 aPriority): PVMFSMFSPBaseNode(aPriority)
+OSCL_EXPORT_REF PVMFSMRTSPTUnicastNode::PVMFSMRTSPTUnicastNode(int32 aPriority): PVMFSMFSPBaseNode(aPriority)
 {
     iJitterBufferDurationInMilliSeconds = DEFAULT_JITTER_BUFFER_DURATION_IN_MS;
     ipRealChallengeGen = NULL;

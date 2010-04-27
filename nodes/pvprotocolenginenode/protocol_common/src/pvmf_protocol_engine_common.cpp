@@ -787,7 +787,7 @@ int32 ProtocolState::handleParsingSyntaxError()
     return PROCESS_PARSE_HTTP_RESPONSE_FAILURE;
 }
 
-uint32 ProtocolState::getDownloadRate()
+OSCL_EXPORT_REF uint32 ProtocolState::getDownloadRate()
 {
     TimeValue currentTime;
     currentTime.set_to_current_time();
