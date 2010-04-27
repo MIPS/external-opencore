@@ -728,11 +728,11 @@ derive SOLIBS_pvdtcp_mbds from pvdtcp_mbds_m_lib.pvdtcp_mbds_so_m_lib
 derive AGGREGATE_LIBDIRS_pvdtcp_mbds from pvdtcp_mbds_m_mk.pvdtcp_mbds_so_m_mk
 derive MODS_pvdtcp_mbds from "-lopencore_download -lopencore_common"
 
-derive pvmp4tu_so_name from pvmp4tu_lib==m ? "pvmp4tu" : ""
-derive pvmp4tu_aggregate_libtype from pvmp4tu_lib==m ? "shared":"static"
-derive SOLIBS_pvmp4tu from pvmp4tu_m_lib.getaacaudioinfo_m_lib
-derive AGGREGATE_LIBDIRS_pvmp4tu from pvmp4tu_m_mk.getaacaudioinfo_m_mk
-derive MODS_pvmp4tu from "-lopencore_common -lopencore_player -lopencore_author"
+derive pvmp4eu_so_name from pvmp4eu_lib==m ? "pvmp4eu" : ""
+derive pvmp4eu_aggregate_libtype from pvmp4eu_lib==m ? "shared":"static"
+derive SOLIBS_pvmp4eu from pvmp4eu_m_lib.getaacaudioinfo_m_lib
+derive AGGREGATE_LIBDIRS_pvmp4eu from pvmp4eu_m_mk.getaacaudioinfo_m_mk
+derive MODS_pvmp4eu from "-lopencore_common -lopencore_player -lopencore_author"
 
 
 derive TARGET_aggregate from (pv_so_name.opencore_common_so_name.
@@ -771,7 +771,7 @@ derive TARGET_aggregate from (pv_so_name.opencore_common_so_name.
                            pvmshttp_streaming_so_name.pvmshttp_streamingreg_so_name.pvpvrcommonimpl_streaming_so_name.
                            pvrtspunicastwithpvr_streaming_so_name.pvrtspunicastwithpvr_streamingreg_so_name.pvrtspbroadcastwithpvr_streaming_so_name.
                            pvrtspbroadcastwithpvr_streamingreg_so_name.pvfileplaybackwithpvr_streaming_so_name.pvfileplaybackwithpvr_streamingreg_so_name.
-                           pvdtcp_mbds_so_name.pvmp4tu_so_name.opencore_author_so_name.opencore_2way_so_name.opencore_pvme_so_name)
+                           pvdtcp_mbds_so_name.pvmp4eu_so_name.opencore_author_so_name.opencore_2way_so_name.opencore_pvme_so_name)
 
 # Derive compile directives
 derive USE_LOADABLE_MODULES from module_support==y 
