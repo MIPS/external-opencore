@@ -169,41 +169,6 @@ MediaAlbumArt *MetadataDriver::extractAlbumArt()
     return NULL;
 }
 
-// How to better manage these constant strings?
-bool MetadataDriver::containsSupportedKey(const OSCL_HeapString<OsclMemAllocator>& str) const
-{
-    LOGV("containsSupportedKey");
-    const char* cStr = str.get_cstr();
-    for (uint32 i = 0; i < NUM_METADATA_KEYS; ++i) {
-        if (strcasestr(cStr, METADATA_KEYS[i])) {
-            return true;
-        }
-    }
-
-    // Key "graphic" is a special metadata key for retrieving album art image.
-    if (strcasestr(cStr, "graphic")) {
-        return true;
-    }
-    return false;
-}
-
-// Delete unnecessary keys before retrieving the metadata values to avoid
-// retrieving all metadata values for all metadata keys
-void MetadataDriver::trimKeys()
-{
-    LOGV("trimKeys");
-    //dumpkeystolog(mMetadataKeyList);
-    mActualMetadataKeyList.clear();
-    uint32 n = mMetadataKeyList.size();
-    mActualMetadataKeyList.reserve(n);
-    for (uint32 i = 0; i < n; ++i) {
-        if (containsSupportedKey(mMetadataKeyList[i])) {
-            mActualMetadataKeyList.push_back(mMetadataKeyList[i]);
-        }
-    }
-    mMetadataKeyList.clear();
-}
-
 // Returns:
 // 1. UNKNOWN_ERROR
 //    a. If the metadata value(s) is too long, and cannot be hold in valueLength bytes
@@ -615,16 +580,6 @@ void MetadataDriver::handleCleanUp()
     }
 }
 
-// Retrieve all the available metadata keys.
-void MetadataDriver::handleGetMetadataKeys()
-{
-    LOGV("handleGetMetadataKeys");
-    int error = 0;
-    mMetadataKeyList.clear();
-    OSCL_TRY(error, mCmdId = mUtil->GetMetadataKeys(mMetadataKeyList, 0, -1, NULL, (OsclAny*)&mContextObject));
-    OSCL_FIRST_CATCH_ANY(error, handleCommandFailure());
-}
-
 // Retrieve a frame and store the contents into an internal buffer.
 void MetadataDriver::handleGetFrame()
 {
@@ -642,17 +597,12 @@ void MetadataDriver::handleGetMetadataValues()
     int error = 0;
     mNumMetadataValues = 0;
     mMetadataValueList.clear();
-    trimKeys();  // Switch to use actual supported key list.
-    const char* album_3000000_key = "graphic;format=APIC;maxsize=3000000";
-    const char* album_key = "graphic;format=APIC";
-    for (uint32 i = 0, n = mActualMetadataKeyList.size(); i < n; ++i) {
-         if (strcasestr(mActualMetadataKeyList[i].get_cstr(), album_key)) {
-             mActualMetadataKeyList[i].set(album_3000000_key, oscl_strlen(album_3000000_key));
-             LOGV("handleGetMetadataValues: album art key: %s", mActualMetadataKeyList[i].get_cstr());
-             break;
-         }
+    mMetadataKeyList.clear();
+    for (uint32 ii = 0; ii < NUM_METADATA_KEYS; ii++)
+    {
+        mMetadataKeyList.push_back(OSCL_HeapString<OsclMemAllocator>(METADATA_KEYS[ii]));
     }
-    OSCL_TRY(error, mCmdId = mUtil->GetMetadataValues(mActualMetadataKeyList, 0, -1, mNumMetadataValues, mMetadataValueList, (OsclAny*)&mContextObject));
+    OSCL_TRY(error, mCmdId = mUtil->GetMetadataValues(mMetadataKeyList, 0, -1, mNumMetadataValues, mMetadataValueList, (OsclAny*)&mContextObject));
     OSCL_FIRST_CATCH_ANY(error, handleCommandFailure());
 }
 
@@ -668,9 +618,6 @@ void MetadataDriver::Run()
             break;
         case STATE_ADD_DATA_SOURCE:
             handleAddDataSource();
-            break;
-        case STATE_GET_METADATA_KEYS:
-            handleGetMetadataKeys();
             break;
         case STATE_GET_METADATA_VALUES:
             handleGetMetadataValues();
@@ -730,7 +677,7 @@ void MetadataDriver::CommandCompleted(const PVCmdResponse& aResponse)
             break;
         case STATE_ADD_DATA_SOURCE:
             if (mMode & GET_METADATA_ONLY) {
-                mState = STATE_GET_METADATA_KEYS;
+                mState = STATE_GET_METADATA_VALUES;
             } else if (mMode & GET_FRAME_ONLY) {
                 mState = STATE_GET_FRAME;
             } else {
@@ -738,9 +685,6 @@ void MetadataDriver::CommandCompleted(const PVCmdResponse& aResponse)
                 mState = STATE_REMOVE_DATA_SOURCE;
             }
             mIsSetDataSourceSuccessful = true;
-            break;
-        case STATE_GET_METADATA_KEYS:
-            mState = STATE_GET_METADATA_VALUES;
             break;
         case STATE_GET_METADATA_VALUES:
             if (mMode & GET_FRAME_ONLY) {

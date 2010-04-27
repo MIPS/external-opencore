@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,7 +186,6 @@ class pvplayer_async_test_genericopenplaystop : public pvplayer_async_test_base
             STATE_ADDDATASOURCE,
             STATE_CONFIGPARAMS,
             STATE_INIT,
-            STATE_GETMETADATAKEYLIST,
             STATE_GETMETADATAVALUELIST,
             STATE_ADDDATASINK_VIDEO,
             STATE_ADDDATASINK_AUDIO,

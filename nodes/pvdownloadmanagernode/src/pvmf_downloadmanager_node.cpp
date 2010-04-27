@@ -850,16 +850,6 @@ PVMFStatus PVMFDownloadManagerNode::SelectTracks(PVMFMediaPresentationInfo& aInf
 }
 
 
-uint32 PVMFDownloadManagerNode::GetNumMetadataKeys(char* query_key)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::GetNumMetadataKeys() called"));
-    if (iFormatParserNode.Metadata())
-    {
-        return (iFormatParserNode.Metadata())->GetNumMetadataKeys(query_key);
-    }
-    return 0;
-}
-
 uint32 PVMFDownloadManagerNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::GetNumMetadataValues() called"));
@@ -868,20 +858,6 @@ uint32 PVMFDownloadManagerNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
         return (iFormatParserNode.Metadata())->GetNumMetadataValues(aKeyList);
     }
     return 0;
-}
-
-
-PVMFCommandId PVMFDownloadManagerNode::GetNodeMetadataKeys(PVMFSessionId aSessionId,
-        PVMFMetadataList& aKeyList,
-        uint32 starting_index,
-        int32 max_entries, char* query_key,
-        const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::GetNodeMetadataKeys() called"));
-
-    PVMFNodeCommand cmd;
-    cmd.PVMFNodeCommand::Construct(aSessionId, PVMF_GENERIC_NODE_GETNODEMETADATAKEYS, aKeyList, starting_index, max_entries, query_key, aContext);
-    return QueueCommandL(cmd);
 }
 
 
@@ -898,18 +874,6 @@ PVMFCommandId PVMFDownloadManagerNode::GetNodeMetadataValues(PVMFSessionId aSess
     PVMFNodeCommand cmd;
     cmd.PVMFNodeCommand::Construct(aSessionId, PVMF_GENERIC_NODE_GETNODEMETADATAVALUES, aKeyList, aValueList, starting_index, max_entries, aContext);
     return QueueCommandL(cmd);
-}
-
-// From PVMFMetadataExtensionInterface
-PVMFStatus PVMFDownloadManagerNode::ReleaseNodeMetadataKeys(PVMFMetadataList& keys,
-        uint32 start, uint32 end)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFDownloadManagerNode::ReleaseNodeMetadataKeys() called"));
-    if (iFormatParserNode.Metadata())
-    {
-        return iFormatParserNode.Metadata()->ReleaseNodeMetadataKeys(keys, start, end);
-    }
-    return PVMFFailure;
 }
 
 // From PVMFMetadataExtensionInterface
@@ -1659,13 +1623,6 @@ PVMFStatus PVMFDownloadManagerNode::ScheduleSubNodeCommands()
             Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::EQueryDataSourcePosition);
             break;
 
-        case PVMF_GENERIC_NODE_GETNODEMETADATAKEYS:
-            //if file isn't parsed (as in download-only), then fail command
-            if (!iFormatParserNode.iNode)
-                return PVMFErrNotSupported;
-            Push(iFormatParserNode, PVMFDownloadManagerSubNodeContainerBase::EGetMetadataKey);
-            break;
-
         case PVMF_GENERIC_NODE_GETNODEMETADATAVALUES:
             //if file isn't parsed (as in download-only), then fail command
             if (!iFormatParserNode.iNode)
@@ -2074,31 +2031,6 @@ PVMFStatus PVMFDownloadManagerSubNodeContainer::IssueCommand(int32 aCmd)
             iCmdId = iNode->Reset(iSessionId);
             LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s CmdId %d ", GETNODESTR, iCmdId));
             return PVMFPending;
-
-        case EGetMetadataKey:
-            OSCL_ASSERT(iNode != NULL);
-            {
-                if (!Metadata())
-                    return PVMFErrNotSupported;//no interface!
-
-                //extract params from current Node command.
-                OSCL_ASSERT(nodeCmd->iCmd == PVMF_GENERIC_NODE_GETNODEMETADATAKEYS);
-
-                PVMFMetadataList* aKeyList;
-                uint32 starting_index;
-                int32 max_entries;
-                char* query_key;
-
-                nodeCmd->Parse(aKeyList, starting_index, max_entries, query_key);
-                OSCL_ASSERT(aKeyList != NULL);
-                LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s Calling GetNodeMetadataKeys", GETNODESTR));
-                iCmdState = EBusy;
-                iCmdId = (Metadata())->GetNodeMetadataKeys(iSessionId, *aKeyList, starting_index, max_entries, query_key, NULL);
-
-                LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s CmdId %d ", GETNODESTR, iCmdId));
-                return PVMFPending;
-            }
-
 
         case EGetMetadataValue:
             OSCL_ASSERT(iNode != NULL);
@@ -3559,12 +3491,6 @@ PVMFStatus PVMFDownloadManagerNode::HandleExtensionAPICommands()
         case PVMF_GENERIC_NODE_QUERY_DATASOURCE_POSITION:
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "processing QueryDataSourcePosition in ScheduleSubNodeCommands()"));
-            status = ScheduleSubNodeCommands();
-            break;
-
-        case PVMF_GENERIC_NODE_GETNODEMETADATAKEYS:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "processing GetNodeMetadataKey in ScheduleSubNodeCommands()"));
             status = ScheduleSubNodeCommands();
             break;
 

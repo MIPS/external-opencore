@@ -326,21 +326,17 @@ class pvplayer_async_test_cpmopenplaystopreset : public pvplayer_async_test_base
  *             -# CreatePlayer()
  *             -# AddDataSource()
  *             -# Init()
- *             =# GetMetadataKeys()
  *             -# GetMetadataValues() Check the metadata values
  *             -# AddDataSink() (video)
  *             -# AddDataSink() (audio)
  *             -# Prepare()
- *             -# GetMetadataKeys() with key query string
  *             -# GetMetadataValues() Check the metadata values
- *             -# GetMetadataKeys() full list
  *             -# GetMetadataValues() full list
  *             -# GetMetadataValues() segment 1 (0-5)
  *             -# GetMetadataValues() segment 2 (6-end) Check that total of two segments is same as full list
  *             -# Start()
  *             -# WAIT 3 sec.
  *             -# Stop()
- *             -# GetMetadataKeys() Check that list of keys shrunk
  *             -# GetMetadataValues() Check the metadata values
  *             -# RemoveDataSink() (video)
  *             -# RemoveDataSink() (audio)
@@ -381,20 +377,16 @@ class pvplayer_async_test_metadata : public pvplayer_async_test_base
             STATE_CREATE,
             STATE_ADDDATASOURCE,
             STATE_INIT,
-            STATE_GETMETADATAKEYS1,
             STATE_GETMETADATAVALUES1,
             STATE_ADDDATASINK_VIDEO,
             STATE_ADDDATASINK_AUDIO,
             STATE_PREPARE,
-            STATE_GETMETADATAKEYS2,
             STATE_GETMETADATAVALUES2,
-            STATE_GETMETADATAKEYSSEG,
             STATE_GETMETADATAVALUESSEG1,
             STATE_GETMETADATAVALUESSEG2,
             STATE_GETMETADATAVALUESSEG3,
             STATE_START,
             STATE_STOP,
-            STATE_GETMETADATAKEYS3,
             STATE_GETMETADATAVALUES3,
             STATE_REMOVEDATASINK_VIDEO,
             STATE_REMOVEDATASINK_AUDIO,
@@ -2850,7 +2842,6 @@ class pvplayer_async_test_multipauseseekresume : public pvplayer_async_test_base
             STATE_CREATE,
             STATE_ADDDATASOURCE,
             STATE_INIT,
-            STATE_GETMETADATAKEYLIST,
             STATE_GETMETADATAVALUELIST,
             STATE_ADDDATASINK_VIDEO,
             STATE_ADDDATASINK_AUDIO,
@@ -2979,7 +2970,6 @@ class pvplayer_async_test_multiple_instance : public pvplayer_async_test_base
             STATE_CREATE,
             STATE_ADDDATASOURCE,
             STATE_INIT,
-            STATE_GETMETADATAKEYLIST,
             STATE_GETMETADATAVALUELIST,
             STATE_ADDDATASINK_VIDEO,
             STATE_ADDDATASINK_AUDIO,
@@ -3075,7 +3065,6 @@ class pvplayer_async_test_multiple_thread : public pvplayer_async_test_base
             STATE_CREATE,
             STATE_ADDDATASOURCE,
             STATE_INIT,
-            STATE_GETMETADATAKEYLIST,
             STATE_GETMETADATAVALUELIST,
             STATE_RELEASEMETADATAVALUES,
             STATE_ADDDATASINK_VIDEO,

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,14 +213,9 @@ class PVMFSMRTSPUnicastNode: public PVMFSMFSPBaseNode
         {
             return (aClipNum == 0) ? PVMFSuccess : PVMFErrArgument;
         }
-        virtual uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL);
         virtual uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
-        PVMFStatus DoGetMetadataKeys(PVMFSMFSPBaseNodeCommand& aCmd);
         PVMFStatus DoGetMetadataValues(PVMFSMFSPBaseNodeCommand& aCmd);
         PVMFStatus GetRTSPPluginSpecificValues(PVMFSMFSPBaseNodeCommand& aCmd);
-        virtual PVMFStatus ReleaseNodeMetadataKeys(PVMFMetadataList& aKeyList,
-                uint32 aStartingKeyIndex,
-                uint32 aEndKeyIndex);
         virtual PVMFStatus ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
                 uint32 aStartingValueIndex,
                 uint32 aEndValueIndex);

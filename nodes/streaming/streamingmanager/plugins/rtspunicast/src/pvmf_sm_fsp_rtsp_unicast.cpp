@@ -556,19 +556,6 @@ bool PVMFSMRTSPUnicastNode::ProcessCommand(PVMFSMFSPBaseNodeCommand& aCmd)
         case PVMF_SMFSP_NODE_SET_DATASOURCE_RATE:
 
             break;
-        case PVMF_SMFSP_NODE_GETNODEMETADATAKEYS:
-        {
-            PVMFStatus status = DoGetMetadataKeys(aCmd);
-            if (status != PVMFPending)
-            {
-                CommandComplete(iInputCommands, aCmd, status);
-            }
-            else
-            {
-                MoveCmdToCurrentQueue(aCmd);
-            }
-        }
-        break;
         case PVMF_SMFSP_NODE_GETNODEMETADATAVALUES:
         {
             PVMFStatus status = DoGetMetadataValues(aCmd);
@@ -3437,18 +3424,6 @@ PVMFStatus PVMFSMRTSPUnicastNode::SelectTracks(PVMFMediaPresentationInfo& aInfo)
 ///////////////////////////////////////////////////////////////////////////////
 //Implementation of PVMFMetadataExtensionInterface
 ///////////////////////////////////////////////////////////////////////////////
-uint32 PVMFSMRTSPUnicastNode::GetNumMetadataKeys(char* aQueryKeyString)
-{
-    //Metadata is avaialable in three forms
-    //1. Metadata common to streaming of all type of payloads and FF specific metadata
-    //2. Streaming specific metadata
-    //3. CPM metadata
-    //First two types are avaiable in iAvailableMetaDatakeys vector
-    //Third type can be had from metadataextension interface
-    //base class considers count of all of these
-    return PVMFSMFSPBaseNode::GetNumMetadataKeysBase(aQueryKeyString);
-}
-
 uint32 PVMFSMRTSPUnicastNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
 {
     //Metadata is avaialable in three forms
@@ -3459,11 +3434,6 @@ uint32 PVMFSMRTSPUnicastNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
     //Third type can be had from metadataextension interface
     //Base class considers count of all of these
     return PVMFSMFSPBaseNode::GetNumMetadataValuesBase(aKeyList);
-}
-
-PVMFStatus PVMFSMRTSPUnicastNode::DoGetMetadataKeys(PVMFSMFSPBaseNodeCommand& aCmd)
-{
-    return DoGetMetadataKeysBase(aCmd);
 }
 
 PVMFStatus PVMFSMRTSPUnicastNode::GetRTSPPluginSpecificValues(PVMFSMFSPBaseNodeCommand& aCmd)
@@ -3481,6 +3451,16 @@ PVMFStatus PVMFSMRTSPUnicastNode::GetRTSPPluginSpecificValues(PVMFSMFSPBaseNodeC
         return PVMFErrArgument;
     }
 
+    if (keylistptr->size() == 1)
+    {
+        if (oscl_strncmp((*keylistptr)[0].get_cstr(),
+                         PVMFSTREAMINGMGRNODE_ALL_METADATA_KEY,
+                         oscl_strlen(PVMFSTREAMINGMGRNODE_ALL_METADATA_KEY)) == 0)
+        {
+            //use the complete metadata key list
+            keylistptr = &iAvailableMetadataKeys;
+        }
+    }
     uint32 numkeys = keylistptr->size();
 
     if (numkeys <= 0 || max_entries == 0)
@@ -3576,14 +3556,6 @@ PVMFStatus PVMFSMRTSPUnicastNode::DoGetMetadataValues(PVMFSMFSPBaseNodeCommand& 
     if (PVMFSuccess != retval)
         return retval;
     return DoGetMetadataValuesBase(aCmd);
-}
-
-PVMFStatus PVMFSMRTSPUnicastNode::ReleaseNodeMetadataKeys(PVMFMetadataList& aKeyList,
-        uint32 aStartingKeyIndex,
-        uint32 aEndKeyIndex)
-{
-    //no allocation for any keys took in derived class so just calling base class release functions
-    return ReleaseNodeMetadataKeysBase(aKeyList, aStartingKeyIndex, aEndKeyIndex);
 }
 
 PVMFStatus PVMFSMRTSPUnicastNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
@@ -4717,7 +4689,6 @@ PVMFStatus PVMFSMRTSPUnicastNode::InitMetaData()
 {
     // Clear out the existing key list
     iAvailableMetadataKeys.clear();
-    iCPMMetadataKeys.clear();
 
     // Get the SDP info
     SDPInfo* sdpInfo = iSdpInfo.GetRep();

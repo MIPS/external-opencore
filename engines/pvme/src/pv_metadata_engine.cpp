@@ -575,9 +575,23 @@ PVMFStatus PVMetadataEngine::DoErrorHandling()
     if (iSourceNode)
     {
         int32 leavecode = 0;
-        // call reset on source node if not in created state
-        if (iSourceNode->GetState() != EPVMFNodeCreated)
+        // PVME transists the source node only to following states
+        // 1) Created
+        // 2) Idle
+        // 3) Initialized
+        // Reset should be called only when in Initialized state
+        if (iSourceNode->GetState() == EPVMFNodeInitialized)
         {
+            if (iValueList != NULL)
+            {
+                iSourceNodeMetadataExtIF->ReleaseNodeMetadataValues(*iValueList,
+                        0,
+                        (iValueList->size() - 1));
+
+                iValueList->clear();
+                iValueList = NULL;
+            }
+
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVMetadataEngine::DoErrorHandling() Issue reset on Source Node"));
             // error handling code set engine state to resetting
@@ -606,6 +620,12 @@ PVMFStatus PVMetadataEngine::DoErrorHandling()
 
             return PVMFPending;
         }
+    }
+
+    // Set the value list to NULL
+    if (iValueList != NULL && iValueList->empty())
+    {
+        iValueList = NULL;
     }
 
     // now remove the source node.
@@ -690,6 +710,7 @@ PVMFStatus PVMetadataEngine::DoReset(PVMECommand& aCmd)
                 0,
                 (iValueList->size() - 1));
 
+        iValueList->clear();
         iValueList = NULL;
     }
 
@@ -810,6 +831,7 @@ PVMFStatus PVMetadataEngine::DoGetMetadata(PVMECommand& aCmd)
                 (iValueList->size() - 1));
 
         iValueList->clear();
+        iValueList = NULL;
     }
 
     // Save the data source
@@ -1236,6 +1258,7 @@ PVMFStatus PVMetadataEngine::DoSourceNodeInit(PVCommandId aCmdId, OsclAny* aCmdC
         if (status != PVMFSuccess)
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMetadataEngine::DoSetupSourceNode() DoSetSourceInitializationData failed"));
+            return status;
         }
     }
 

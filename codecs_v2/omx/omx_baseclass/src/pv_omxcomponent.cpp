@@ -582,7 +582,8 @@ OMX_BOOL OmxComponentBase::AssemblePartialFrames(OMX_BUFFERHEADERTYPE* aInputBuf
                 ipInputBuffer->nOffset += sc_size;
             }
 
-            if ((ipInputBuffer->nFlags & OMX_BUFFERFLAG_ENDOFFRAME) != 0)
+            if (((ipInputBuffer->nFlags & OMX_BUFFERFLAG_ENDOFFRAME) != 0) ||
+                    ((ipInputBuffer->nFlags & OMX_BUFFERFLAG_EOS) != 0))
             {
                 break;
             }

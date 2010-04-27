@@ -23,7 +23,7 @@
 #endif
 
 // Number of metadata keys supported in this node.
-#define PVMFSTREAMINGMGRNODE_NUM_METADATAKEYS 16
+#define PVMFSTREAMINGMGRNODE_NUM_METADATAKEYS 35
 // Constant character strings for metadata keys
 //Common to all streaming sessions
 static const char PVMFSTREAMINGMGRNODE_ALBUM_KEY[] = "album";
@@ -53,6 +53,7 @@ static const char PVMFSTREAMINGMGRNODE_TRACKINFO_SAMPLERATE_KEY[] = "track-info/
 static const char PVMFSTREAMINGMGRNODE_TRACKINFO_NUMCHANNELS_KEY[] = "track-info/audio/channels";
 static const char PVMFSTREAMINGMGRNODE_TRACKINFO_AUDIO_BITS_PER_SAMPLE_KEY[] = "track-info/audio/bits-per-sample";
 static const char PVMFSTREAMINGMGRNODE_TRACKINFO_TRACKID_KEY[] = "track-info/track-id";
+static const char PVMFSTREAMINGMGRNODE_ALL_METADATA_KEY[] = "all";
 
 static const char PVMFSTREAMINGMGRNODE_CLIP_TYPE_KEY[] = "clip-type";
 static const char PVMFSTREAMINGMGRNODE_TRACKINFO_FRAME_RATE_KEY[] = "track-info/frame-rate";

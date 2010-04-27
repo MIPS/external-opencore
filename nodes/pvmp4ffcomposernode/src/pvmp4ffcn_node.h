@@ -23,7 +23,8 @@
 #ifndef PVMP4FFCN_NODE_H_INCLUDED
 #define PVMP4FFCN_NODE_H_INCLUDED
 
-#ifdef ANDROID
+#define ANDROID_FILEWRITER 0 // Set this to 1 to use the FileWriter thread on Android
+#if ANDROID_FILEWRITER
 #include <utils/RefBase.h>
 
 namespace android
@@ -286,7 +287,7 @@ class PVMp4FFComposerNode
         uint32 iMovieFragmentDuration;
         Oscl_File* iFileObject;
 
-#ifdef ANDROID
+#if ANDROID_FILEWRITER
         friend class android::FragmentWriter;  // Access AddSampleToTrack
 
         // Fragment to track writer thread.

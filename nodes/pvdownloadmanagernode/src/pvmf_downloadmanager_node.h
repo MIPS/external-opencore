@@ -135,23 +135,22 @@ class PVMFDownloadManagerSubNodeContainerBase
             , EPause = 15
             , EFlush = 16
             , EReset = 17
-            , EGetMetadataKey = 18
-            , EGetMetadataValue = 19
-            , ESetFFProgDownloadSupport = 20
-            , ESetDataSourcePosition = 21
-            , EQueryDataSourcePosition = 22
-            , EParserCreate = 23
+            , EGetMetadataValue = 18
+            , ESetFFProgDownloadSupport = 19
+            , ESetDataSourcePosition = 20
+            , EQueryDataSourcePosition = 21
+            , EParserCreate = 22
             //Recognizer module commands
-            , ERecognizerStart = 24
-            , ERecognizerClose = 25
+            , ERecognizerStart = 23
+            , ERecognizerClose = 24
             //CPM commands.
-            , ECPMInit = 26
-            , ECPMOpenSession = 27
-            , ECPMRegisterContent = 28
-            , ECPMApproveUsage = 29
-            , ECPMSetDecryptInterface = 30
-            , ECPMUsageComplete = 31
-            , ECPMReset = 32
+            , ECPMInit = 25
+            , ECPMOpenSession = 26
+            , ECPMRegisterContent = 27
+            , ECPMApproveUsage = 28
+            , ECPMSetDecryptInterface = 29
+            , ECPMUsageComplete = 30
+            , ECPMReset = 31
         };
 
         // Each subnode has a pointer to its container, which is the DLMGR node
@@ -447,13 +446,9 @@ class PVMFDownloadManagerNode
         {
             return (aClipNum == 0) ? PVMFSuccess : PVMFErrArgument;
         }
-        uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL);
         uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
-        PVMFCommandId GetNodeMetadataKeys(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList, uint32 aStartingKeyIndex, int32 aMaxKeyEntries,
-                                          char* aQueryKeyString = NULL, const OsclAny* aContextData = NULL);
         PVMFCommandId GetNodeMetadataValues(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList,
                                             Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, uint32 aStartingValueIndex, int32 aMaxValueEntries, const OsclAny* aContextData = NULL);
-        PVMFStatus ReleaseNodeMetadataKeys(PVMFMetadataList& aKeyList, uint32 aStartingKeyIndex, uint32 aEndKeyIndex);
         PVMFStatus ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, uint32 aStartingValueIndex, uint32 aEndValueIndex);
 
 

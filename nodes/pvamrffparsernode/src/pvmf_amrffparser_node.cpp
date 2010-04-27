@@ -80,7 +80,6 @@ PVMFAMRFFParserNode::PVMFAMRFFParserNode(int32 aPriority) :
     iApprovedUsage.key         = NULL;
     iAuthorizationDataKvp.key  = NULL;
     iCPMMetaDataExtensionInterface = NULL;
-    iCPMGetMetaDataKeysCmdId       = 0;
     iCPMGetMetaDataValuesCmdId     = 0;
     iAMRParserNodeMetadataValueCount = 0;
 
@@ -230,132 +229,6 @@ PVMFStatus  PVMFAMRFFParserNode::ProcessOutgoingMsg(PVAMRFFNodeTrackPortInfo* aT
         PVMF_AMRPARSERNODE_LOGERROR((0, "PVMFAMRParserNode::ProcessOutgoingMsg() - aTrackInfoPtr->iPort->Send() Failed"));
     }
     return status;
-}
-
-PVMFStatus PVMFAMRFFParserNode::DoGetNodeMetadataKeys()
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFAMRFFParserNode::DoGetNodeMetadataKeys() In"));
-
-    /* Get Metadata keys from CPM for protected content only */
-    if ((iCPMMetaDataExtensionInterface != NULL))
-
-    {
-        GetCPMMetaDataKeys();
-        return PVMFPending;
-    }
-    return (CompleteGetMetadataKeys());
-}
-
-PVMFStatus
-PVMFAMRFFParserNode::CompleteGetMetadataKeys()
-{
-    PVMF_AMRPARSERNODE_LOGSTACKTRACE((0, "PVMFAMRParserNode::CompleteGetMetadataKeys Called"));
-    PVMFMetadataList* keylistptr = NULL;
-    uint32 starting_index;
-    int32 max_entries;
-    char* query_key;
-
-    iCurrentCommand.PVMFNodeCommand::Parse(keylistptr, starting_index, max_entries, query_key);
-    if (keylistptr == NULL)
-    {
-        return PVMFErrArgument;
-    }
-
-    if ((starting_index > (iAvailableMetadataKeys.size() - 1)) || max_entries == 0)
-    {
-        return PVMFErrArgument;
-    }
-
-    uint32 num_entries = 0;
-    int32 num_added = 0;
-    uint32 lcv = 0;
-    for (lcv = 0; lcv < iAvailableMetadataKeys.size(); lcv++)
-    {
-        if (query_key == NULL)
-        {
-            ++num_entries;
-            if (num_entries > starting_index)
-            {
-                // Past the starting index so copy the key
-                PVMFStatus status = PushValueToList(iAvailableMetadataKeys, keylistptr, lcv);
-                if (PVMFErrNoMemory == status)
-                {
-                    return status;
-                }
-                num_added++;
-            }
-        }
-        else
-        {
-            // Check if the key matches the query key
-            if (pv_mime_strcmp(iAvailableMetadataKeys[lcv].get_cstr(), query_key) >= 0)
-            {
-                // This key is counted
-                ++num_entries;
-                if (num_entries > starting_index)
-                {
-                    // Past the starting index so copy the key
-                    PVMFStatus status = PushValueToList(iAvailableMetadataKeys, keylistptr, lcv);
-                    if (PVMFErrNoMemory == status)
-                    {
-                        return status;
-                    }
-                    num_added++;
-                }
-            }
-        }
-
-        // Check if max number of entries have been copied
-        if (max_entries > 0 && num_added >= max_entries)
-        {
-            break;
-        }
-    }
-    for (lcv = 0; lcv < iCPMMetadataKeys.size(); lcv++)
-    {
-        if (query_key == NULL)
-        {
-            /* No query key so this key is counted */
-            ++num_entries;
-            if (num_entries > (uint32)starting_index)
-            {
-                /* Past the starting index so copy the key */
-
-                PVMFStatus status = PushValueToList(iCPMMetadataKeys, keylistptr, lcv);
-                if (PVMFErrNoMemory == status)
-                {
-                    return status;
-                }
-                num_added++;
-            }
-        }
-        else
-        {
-            /* Check if the key matches the query key */
-            if (pv_mime_strcmp(iCPMMetadataKeys[lcv].get_cstr(), query_key) >= 0)
-            {
-                ++num_entries;
-                if (num_entries > (uint32)starting_index)
-                {
-                    /* Past the starting index so copy the key */
-
-                    PVMFStatus status = PushValueToList(iCPMMetadataKeys, keylistptr, lcv);
-                    if (PVMFErrNoMemory == status)
-                    {
-                        return status;
-                    }
-                    num_added++;
-                }
-            }
-        }
-        /* Check if max number of entries have been copied */
-        if ((max_entries > 0) && (num_added >= max_entries))
-        {
-            break;
-        }
-    }
-
-    return PVMFSuccess;
 }
 
 PVMFStatus PVMFAMRFFParserNode::DoGetNodeMetadataValues()
@@ -849,9 +722,6 @@ PVMFStatus PVMFAMRFFParserNode::HandleExtensionAPICommands()
             break;
         case PVMF_GENERIC_NODE_SET_DATASOURCE_RATE:
             status = DoSetDataSourceRate();
-            break;
-        case PVMF_GENERIC_NODE_GETNODEMETADATAKEYS:
-            status = DoGetNodeMetadataKeys();
             break;
         case PVMF_GENERIC_NODE_GETNODEMETADATAVALUES:
             status = DoGetNodeMetadataValues();
@@ -1614,46 +1484,6 @@ PVMFStatus PVMFAMRFFParserNode::SelectTracks(PVMFMediaPresentationInfo& aInfo)
     return PVMFSuccess;
 }
 
-uint32 PVMFAMRFFParserNode::GetNumMetadataKeys(char* aQueryKeyString)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFAMRFFParserNode::GetNumMetadataKeys() called"));
-
-    uint32 num_entries = 0;
-
-    if (aQueryKeyString == NULL)
-    {
-        // No query key so just return all the available keys
-        num_entries = iAvailableMetadataKeys.size();
-    }
-    else
-    {
-        // Determine the number of metadata keys based on the query key string provided
-        for (uint32 i = 0; i < iAvailableMetadataKeys.size(); i++)
-        {
-            // Check if the key matches the query key
-            if (pv_mime_strcmp(iAvailableMetadataKeys[i].get_cstr(), aQueryKeyString) >= 0)
-            {
-                num_entries++;
-            }
-        }
-    }
-    for (uint32 i = 0; i < iCPMMetadataKeys.size(); i++)
-    {
-        if (pv_mime_strcmp(iCPMMetadataKeys[i].get_cstr(),
-                           aQueryKeyString) >= 0)
-        {
-            num_entries++;
-        }
-    }
-
-    if ((iCPMMetaDataExtensionInterface != NULL))
-    {
-        num_entries +=
-            iCPMMetaDataExtensionInterface->GetNumMetadataKeys(aQueryKeyString);
-    }
-    return num_entries;
-}
-
 uint32 PVMFAMRFFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFAMRFFParserNode::GetNumMetadataValues() called"));
@@ -1664,39 +1494,60 @@ uint32 PVMFAMRFFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
         return 0;
     }
 
-    // Count the number of metadata value entries based on the key list provided
     uint32 numvalentries = 0;
+
+    if ((iCPMMetaDataExtensionInterface != NULL))
+    {
+        numvalentries =
+            iCPMMetaDataExtensionInterface->GetNumMetadataValues(aKeyList);
+    }
+
+    PVMFMetadataList* keylistptr = &aKeyList;
+    //If numkeys is one, just check to see if the request
+    //is for ALL metadata
+    if (aKeyList.size() == 1)
+    {
+        if (oscl_strncmp((*keylistptr)[0].get_cstr(),
+                         PVAMR_ALL_METADATA_KEY,
+                         oscl_strlen(PVAMR_ALL_METADATA_KEY)) == 0)
+        {
+            //use the complete metadata key list
+            keylistptr = &iAvailableMetadataKeys;
+        }
+    }
+
+    // Count the number of metadata value entries based on the key list provided
     for (uint32 lcv = 0; lcv < numkeys; lcv++)
     {
-        if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVAMRMETADATA_DURATION_KEY) == 0 &&
+        if (oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAMRMETADATA_DURATION_KEY) == 0 &&
                 iAMRFileInfo.iDuration > 0)
         {
             // Movie Duration
             ++numvalentries;
         }
-        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVAMRMETADATA_NUMTRACKS_KEY) == 0)
+        else if (oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAMRMETADATA_NUMTRACKS_KEY) == 0)
         {
             // Number of tracks
             ++numvalentries;
         }
-        else if ((oscl_strcmp(aKeyList[lcv].get_cstr(), PVAMRMETADATA_TRACKINFO_BITRATE_KEY) == 0) &&
+        else if ((oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAMRMETADATA_TRACKINFO_BITRATE_KEY) == 0) &&
                  iAMRFileInfo.iBitrate > 0)
         {
             // Bitrate
             ++numvalentries;
         }
-        else if ((oscl_strcmp(aKeyList[lcv].get_cstr(), PVAMRMETADATA_TRACKINFO_SELECTED_KEY) == 0))
+        else if ((oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAMRMETADATA_TRACKINFO_SELECTED_KEY) == 0))
         {
             //Track Selected
             ++numvalentries;
         }
-        else if ((oscl_strcmp(aKeyList[lcv].get_cstr(), PVAMRMETADATA_TRACKINFO_AUDIO_FORMAT_KEY) == 0) &&
+        else if ((oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAMRMETADATA_TRACKINFO_AUDIO_FORMAT_KEY) == 0) &&
                  iAMRFileInfo.iAmrFormat != EAMRUnrecognized)
         {
             // Format
             ++numvalentries;
         }
-        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVAMRMETADATA_RANDOM_ACCESS_DENIED_KEY) == 0)
+        else if (oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAMRMETADATA_RANDOM_ACCESS_DENIED_KEY) == 0)
         {
             /*
              * Random Access
@@ -1704,7 +1555,7 @@ uint32 PVMFAMRFFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
              */
             ++numvalentries;
         }
-        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVAMRMETADATA_CLIP_TYPE_KEY) == 0)
+        else if (oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAMRMETADATA_CLIP_TYPE_KEY) == 0)
         {
             /*
              * clip-type
@@ -1716,22 +1567,7 @@ uint32 PVMFAMRFFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
 
     }
 
-    if ((iCPMMetaDataExtensionInterface != NULL))
-    {
-        numvalentries +=
-            iCPMMetaDataExtensionInterface->GetNumMetadataValues(aKeyList);
-    }
     return numvalentries;
-}
-
-PVMFCommandId PVMFAMRFFParserNode::GetNodeMetadataKeys(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList
-        , uint32 aStartingKeyIndex, int32 aMaxKeyEntries, char* aQueryKeyString, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFAMRFFParserNode::GetNodeMetadataKeys() called"));
-
-    PVMFNodeCommand cmd;
-    cmd.PVMFNodeCommand::Construct(aSessionId, PVMF_GENERIC_NODE_GETNODEMETADATAKEYS, aKeyList, aStartingKeyIndex, aMaxKeyEntries, aQueryKeyString, aContext);
-    return QueueCommandL(cmd);
 }
 
 PVMFCommandId PVMFAMRFFParserNode::GetNodeMetadataValues(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList
@@ -1742,12 +1578,6 @@ PVMFCommandId PVMFAMRFFParserNode::GetNodeMetadataValues(PVMFSessionId aSessionI
     PVMFNodeCommand cmd;
     cmd.PVMFNodeCommand::Construct(aSessionId, PVMF_GENERIC_NODE_GETNODEMETADATAVALUES, aKeyList, aValueList, aStartingValueIndex, aMaxValueEntries, aContext);
     return QueueCommandL(cmd);
-}
-
-PVMFStatus PVMFAMRFFParserNode::ReleaseNodeMetadataKeys(PVMFMetadataList& , uint32 , uint32)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFAMRFFParserNode::ReleaseNodeMetadataKeys() called"));
-    return PVMFSuccess;
 }
 
 PVMFStatus PVMFAMRFFParserNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, uint32 start, uint32 end)
@@ -2234,19 +2064,6 @@ void PVMFAMRFFParserNode::ResetCPM()
     iCPMResetCmdId = iCPM->Reset();
 }
 
-void PVMFAMRFFParserNode::GetCPMMetaDataKeys()
-{
-    if (iCPMMetaDataExtensionInterface != NULL)
-    {
-        iCPMMetadataKeys.clear();
-        iCPMGetMetaDataKeysCmdId =
-            iCPMMetaDataExtensionInterface->GetNodeMetadataKeys(iCPMSessionID,
-                    iCPMMetadataKeys,
-                    0,
-                    PVMF_AMR_PARSER_NODE_MAX_CPM_METADATA_KEYS);
-    }
-}
-
 PVMFStatus
 PVMFAMRFFParserNode::CheckCPMCommandCompleteStatus(PVMFCommandId aID,
         PVMFStatus aStatus)
@@ -2401,12 +2218,6 @@ void PVMFAMRFFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
             {
                 CompleteInit();
             }
-        }
-        else if (id == iCPMGetMetaDataKeysCmdId)
-        {
-            /* End of GetNodeMetaDataKeys */
-            PVMFStatus status = CompleteGetMetadataKeys();
-            CommandComplete(iCurrentCommand, status);
         }
         else if (id == iCPMUsageCompleteCmdId)
         {
@@ -3042,7 +2853,7 @@ PVMFStatus PVMFAMRFFParserNode::CancelCurrentCommand()
         return PVMFSuccess;
     }
 
-    /* The pending commands DoInit, DoReset, DoGetMetadataKeys and DoGetMetadataValues
+    /* The pending commands DoInit, DoReset, and DoGetMetadataValues
      * would be canceled in CPMCommandCompleted.
      * So return pending for now.
      */

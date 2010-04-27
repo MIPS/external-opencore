@@ -207,6 +207,8 @@ class SampleEncryptionBox: public ExtendedFullAtom
         {
             if (iEncryptionInfoOwned)
             {
+                // Remove the const cast from ipEncryptionInfo since some compilers prevent
+                // deleting a pointer to a const object.
                 PV_MP4_FF_DELETE(NULL, EncryptionInfo, OSCL_CONST_CAST(EncryptionInfo*, ipEncryptionInfo));
             }
             int32 initVectSize =  iIVVect.size();

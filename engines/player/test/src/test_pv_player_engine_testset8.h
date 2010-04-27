@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,6 @@ class PvmiCapabilityAndConfig;
  *             -# CreatePlayer()
  *             -# AddDataSource()
  *             -# Init()
- *             -# GetMetadataKeys()
  *             -# GetMetadataValues()
  *             -# Print out the metadata list
  *             -# ReleaseMetadataValues()
@@ -120,12 +119,10 @@ class PvmiCapabilityAndConfig;
  *             -# Prepare()
  *             -# Start()
  *             -# WAIT 2 sec
- *             -# GetMetadataKeys()
  *             -# GetMetadataValues()
  *             -# Print out the metadata list
  *             -# ReleaseMetadataValues()
  *             -# Stop()
- *             -# GetMetadataKeys()
  *             -# GetMetadataValues()
  *             -# Print out the metadata list
  *             -# ReleaseMetadataValues()
@@ -187,7 +184,6 @@ class pvplayer_async_test_printmetadata : public pvplayer_async_test_base
             STATE_CREATE,
             STATE_ADDDATASOURCE,
             STATE_INIT,
-            STATE_GETMETADATAKEYLIST1,
             STATE_GETMETADATAVALUELIST1,
             STATE_RELEASEMETADATAVALUES1,
             STATE_ADDDATASINK_VIDEO,
@@ -195,11 +191,9 @@ class pvplayer_async_test_printmetadata : public pvplayer_async_test_base
             STATE_ADDDATASINK_TEXT,
             STATE_PREPARE,
             STATE_START,
-            STATE_GETMETADATAKEYLIST2,
             STATE_GETMETADATAVALUELIST2,
             STATE_RELEASEMETADATAVALUES2,
             STATE_STOP,
-            STATE_GETMETADATAKEYLIST3,
             STATE_GETMETADATAVALUELIST3,
             STATE_RELEASEMETADATAVALUES3,
             STATE_REMOVEDATASINK_VIDEO,
@@ -252,7 +246,6 @@ class pvplayer_async_test_printmetadata : public pvplayer_async_test_base
  *             -# CreatePlayer()
  *             -# AddDataSource()
  *             -# Init()
- *             -# GetMetadataKeys()
  *             -# GetMetadataValues()
  *             -# AddDataSink() (video)
  *             -# AddDataSink() (audio)
@@ -310,7 +303,6 @@ class pvplayer_async_test_printmemstats : public pvplayer_async_test_base
             STATE_CREATE,
             STATE_ADDDATASOURCE,
             STATE_INIT,
-            STATE_GETMETADATAKEYLIST,
             STATE_GETMETADATAVALUELIST,
             STATE_ADDDATASINK_VIDEO,
             STATE_ADDDATASINK_AUDIO,

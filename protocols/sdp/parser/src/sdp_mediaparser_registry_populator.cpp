@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 #include "sdp_mediaparser_factory.h"
 #endif
 
-SDPMediaParserRegistry* SDPMediaParserRegistryPopulater::PopulateRegistry()
+OSCL_EXPORT_REF SDPMediaParserRegistry* SDPMediaParserRegistryPopulater::PopulateRegistry()
 {
     SDPMediaParserRegistry* sdpMediaParserRegistry = NULL;
     StrPtrLen aac_latm("MP4A-LATM");
@@ -62,7 +62,7 @@ SDPMediaParserRegistry* SDPMediaParserRegistryPopulater::PopulateRegistry()
     return sdpMediaParserRegistry;
 }
 
-void SDPMediaParserRegistryPopulater::CleanupRegistry(SDPMediaParserRegistry*& aMediaParserRegistry)
+OSCL_EXPORT_REF void SDPMediaParserRegistryPopulater::CleanupRegistry(SDPMediaParserRegistry*& aMediaParserRegistry)
 {
     StrPtrLen rfc3640("mpeg4-generic");
     StrPtrLen pcmu("PCMU");

@@ -400,13 +400,9 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
         void MetadataUpdated(uint32 aMetadataSize);
         // From PVMFMetadataExtensionInterface
         PVMFStatus SetMetadataClipIndex(uint32 aClipNum);
-        uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL);
         uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
-        PVMFCommandId GetNodeMetadataKeys(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList,
-                                          uint32 aStartingKeyIndex, int32 aMaxValueEntries, char* aQueryKeyString = NULL, const OsclAny* aContextData = NULL);
         PVMFCommandId GetNodeMetadataValues(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList,
                                             Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, uint32 aStartingValueIndex, int32 aMaxValueEntries, const OsclAny* aContextData = NULL);
-        PVMFStatus ReleaseNodeMetadataKeys(PVMFMetadataList& aKeyList, uint32 aStartingKeyIndex, uint32 aEndKeyIndex);
         PVMFStatus ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, uint32 aStartingValueIndex, uint32 aEndValueIndex);
 
         // From PvmfDataSourcePlaybackControlInterface
@@ -500,7 +496,6 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
         PVMFStatus DoStart();
         PVMFStatus DoStop();
         PVMFStatus DoFlush();
-        PVMFStatus DoGetNodeMetadataKeys();
         PVMFStatus DoGetNodeMetadataValues();
         PVMFStatus DoSetDataSourceRate();
         PVMFStatus DoSetDataSourcePosition();
@@ -543,7 +538,6 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
         void DataStreamCommandCompleted(const PVMFCmdResp& aResponse);
         void DataStreamInformationalEvent(const PVMFAsyncEvent& aEvent);
         void DataStreamErrorEvent(const PVMFAsyncEvent& aEvent);
-        PVMFStatus PushBackCPMMetadataKeys(PVMFMetadataList *&aKeyListPtr, uint32 aLcv);
 
         // create parser objects for gapless
         PVMFStatus ConstructMP3FileParser(MP3ErrorType &aSuccess, int32 aClipIndex, PVMFCPMPluginAccessInterfaceFactory* aCPM = NULL);
@@ -630,12 +624,9 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
 
         //metadata related
         uint32 iMP3ParserNodeMetadataValueCount;
-        Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> iCPMMetadataKeys;
-        PVMFStatus CompleteGetMetadataKeys();
 
         //for CPM
         bool oWaitingOnLicense;
-        PVMFCommandId iCPMGetMetaDataKeysCmdId;
         PVMFCommandId iCPMGetMetaDataValuesCmdId;
         PVMFCommandId iCPMUsageCompleteCmdId;
         PVMFCommandId iCPMCloseSessionCmdId;
@@ -648,8 +639,6 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
                 PVMFSubNodeContainerBaseMp3::CmdType iCmd;
         };
         Oscl_Vector<SubNodeCmd, OsclMemAllocator> iSubNodeCmdVec;
-
-        void GetCPMMetaDataKeys();
 
         PVMp3DurationCalculator* iDurationCalcAO;
         bool iCheckForMP3HeaderDuringInit;

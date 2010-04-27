@@ -133,7 +133,7 @@ PVMFSMRTSPTUnicastNode * PVMFSMRTSPTUnicastNode::New(int32 aPriority)
 
 
 
-PVMFSMRTSPTUnicastNode::PVMFSMRTSPTUnicastNode(int32 aPriority): PVMFSMFSPBaseNode(aPriority)
+OSCL_EXPORT_REF PVMFSMRTSPTUnicastNode::PVMFSMRTSPTUnicastNode(int32 aPriority): PVMFSMFSPBaseNode(aPriority)
 {
     iJitterBufferDurationInMilliSeconds = DEFAULT_JITTER_BUFFER_DURATION_IN_MS;
     ipRealChallengeGen = NULL;
@@ -502,19 +502,6 @@ bool PVMFSMRTSPTUnicastNode::ProcessCommand(PVMFSMFSPBaseNodeCommand& aCmd)
         case PVMF_SMFSP_NODE_SET_DATASOURCE_RATE:
 
             break;
-        case PVMF_SMFSP_NODE_GETNODEMETADATAKEYS:
-        {
-            PVMFStatus status = DoGetMetadataKeys(aCmd);
-            if (status != PVMFPending)
-            {
-                CommandComplete(iInputCommands, aCmd, status);
-            }
-            else
-            {
-                MoveCmdToCurrentQueue(aCmd);
-            }
-        }
-        break;
         case PVMF_SMFSP_NODE_GETNODEMETADATAVALUES:
         {
             PVMFStatus status = DoGetMetadataValues(aCmd);
@@ -3288,19 +3275,6 @@ PVMFStatus PVMFSMRTSPTUnicastNode::SetMetadataClipIndex(uint32 aClipNum)
 }
 
 OSCL_EXPORT_REF
-uint32 PVMFSMRTSPTUnicastNode::GetNumMetadataKeys(char* aQueryKeyString)
-{
-    //Metadata is avaialable in three forms
-    //1. Metadata common to streaming of all type of payloads and FF specific metadata
-    //2. Streaming specific metadata
-    //3. CPM metadata
-    //First two types are avaiable in iAvailableMetaDatakeys vector
-    //Third type can be had from metadataextension interface
-    //base class considers count of all of these
-    return PVMFSMFSPBaseNode::GetNumMetadataKeysBase(aQueryKeyString);
-}
-
-OSCL_EXPORT_REF
 uint32 PVMFSMRTSPTUnicastNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
 {
     //Metadata is avaialable in three forms
@@ -3314,26 +3288,11 @@ uint32 PVMFSMRTSPTUnicastNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
 }
 
 OSCL_EXPORT_REF
-PVMFCommandId PVMFSMRTSPTUnicastNode::DoGetMetadataKeys(PVMFSMFSPBaseNodeCommand& aCmd)
-{
-    return DoGetMetadataKeysBase(aCmd);
-}
-
-OSCL_EXPORT_REF
 PVMFCommandId PVMFSMRTSPTUnicastNode::DoGetMetadataValues(PVMFSMFSPBaseNodeCommand& aCmd)
 {
     iNoOfValuesIteratedForValueVect = 0;
     iNoOfValuesPushedInValueVect = 0;
     return DoGetMetadataValuesBase(aCmd);
-}
-
-OSCL_EXPORT_REF
-PVMFStatus PVMFSMRTSPTUnicastNode::ReleaseNodeMetadataKeys(PVMFMetadataList& aKeyList,
-        uint32 aStartingKeyIndex,
-        uint32 aEndKeyIndex)
-{
-    //no allocation for any keys took in derived class so just calling base class release functions
-    return ReleaseNodeMetadataKeysBase(aKeyList, aStartingKeyIndex, aEndKeyIndex);
 }
 
 OSCL_EXPORT_REF
@@ -4171,7 +4130,6 @@ PVMFStatus PVMFSMRTSPTUnicastNode::InitMetaData()
 {
     // Clear out the existing key list
     iAvailableMetadataKeys.clear();
-    iCPMMetadataKeys.clear();
 
     // Get the SDP info
     SDPInfo* sdpInfo = iSdpInfo.GetRep();

@@ -516,19 +516,12 @@ void pvplayer_async_test_genericopenplaystop::Run()
         }
         break;
 
-        case STATE_GETMETADATAKEYLIST:
-        {
-            fprintf(iTestMsgOutputFile, "***GettingMetaDataKeyList...\n");
-            iMetadataKeyList.clear();
-            OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataKeys(iMetadataKeyList, 0, -1, NULL, (OsclAny*) & iContextObject));
-            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
         case STATE_GETMETADATAVALUELIST:
         {
             fprintf(iTestMsgOutputFile, "***GettingMetaDataValueList...\n");
             iMetadataValueList.clear();
+            iMetadataKeyList.clear();
+            iMetadataKeyList.push_back(OSCL_HeapString<OsclMemAllocator>("all"));
             iNumValues = 0;
             OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataValues(iMetadataKeyList, 0, -1, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -1001,21 +994,6 @@ void pvplayer_async_test_genericopenplaystop::CommandCompleted(const PVCmdRespon
             }
             break;
 
-        case STATE_GETMETADATAKEYLIST:
-            if (aResponse.GetCmdStatus() == PVMFSuccess)
-            {
-                iState = STATE_GETMETADATAVALUELIST;
-                RunIfNotReady();
-            }
-            else
-            {
-                // GetMetadataKeys failed
-                PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-            }
-            break;
-
         case STATE_GETMETADATAVALUELIST:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
@@ -1123,12 +1101,12 @@ void pvplayer_async_test_genericopenplaystop::CommandCompleted(const PVCmdRespon
                 if (iSleepInState && (iState == iSleepState))
                 {
                     fprintf(iTestMsgOutputFile, "\n***Delaying 55 seconds\n\n");
-                    iState = STATE_GETMETADATAKEYLIST;
+                    iState = STATE_GETMETADATAVALUELIST;
                     RunIfNotReady(55000000);
                 }
                 else
                 {
-                    iState = STATE_GETMETADATAKEYLIST;
+                    iState = STATE_GETMETADATAVALUELIST;
                     RunIfNotReady();
                 }
             }

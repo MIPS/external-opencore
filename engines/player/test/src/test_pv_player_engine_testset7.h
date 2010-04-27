@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,6 @@ class PvmiCapabilityAndConfig;
  *             -# CreatePlayer()
  *             -# AddDataSource()
  *             -# Init()
- *             -# GetMetadataKeys()
  *             -# GetMetadataValues()
  *             -# AddDataSink() (video)
  *             -# AddDataSink() (audio)
@@ -133,7 +132,6 @@ class pvplayer_async_test_mediaionode_openplaystop : public pvplayer_async_test_
             STATE_CREATE,
             STATE_ADDDATASOURCE,
             STATE_INIT,
-            STATE_GETMETADATAKEYLIST,
             STATE_GETMETADATAVALUELIST,
             STATE_ADDDATASINK_VIDEO,
             STATE_ADDDATASINK_AUDIO,

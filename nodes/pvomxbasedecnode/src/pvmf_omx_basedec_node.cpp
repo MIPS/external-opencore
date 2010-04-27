@@ -207,11 +207,6 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::HandleExtensionAPICommands()
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "%s::HandleExtensionAPICommands() In", iName.Str()));
     switch (iCurrentCommand.iCmd)
     {
-
-        case PVMF_GENERIC_NODE_GETNODEMETADATAKEYS:
-            status = DoGetNodeMetadataKey();
-            break;
-
         case PVMF_GENERIC_NODE_GETNODEMETADATAVALUES:
             status = DoGetNodeMetadataValue();
             break;
@@ -5772,16 +5767,6 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::verifyParametersSync(PvmiMIOSessi
 }
 
 /////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF PVMFCommandId PVMFOMXBaseDecNode::GetNodeMetadataKeys(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList, uint32 starting_index, int32 max_entries, char* query_key, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "%sCommand::GetNodeMetadataKeys() called", iName.Str()));
-
-    PVMFNodeCommand cmd;
-    cmd.PVMFNodeCommand::Construct(aSessionId, PVMF_GENERIC_NODE_GETNODEMETADATAKEYS, aKeyList, starting_index, max_entries, query_key, aContext);
-    return QueueCommandL(cmd);
-}
-
-/////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF PVMFCommandId PVMFOMXBaseDecNode::GetNodeMetadataValues(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, uint32 starting_index, int32 max_entries, const OsclAny* aContext)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "%sCommand::GetNodeMetadataValue() called", iName.Str()));
@@ -5796,13 +5781,6 @@ OSCL_EXPORT_REF PVMFCommandId PVMFOMXBaseDecNode::GetNodeMetadataValues(PVMFSess
 OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::SetMetadataClipIndex(uint32 aClipIndex)
 {
     return (aClipIndex == 0) ? PVMFSuccess : PVMFErrArgument;
-}
-
-OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::ReleaseNodeMetadataKeys(PVMFMetadataList& , uint32 , uint32)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "%s::ReleaseNodeMetadataKeys() called", iName.Str()));
-    //nothing needed-- there's no dynamic allocation in this node's key list
-    return PVMFSuccess;
 }
 
 // From PVMFMetadataExtensionInterface

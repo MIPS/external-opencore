@@ -143,7 +143,6 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
     iCPMMetaDataExtensionInterface = NULL;
     iCPMLicenseInterface             = NULL;
     iCPMLicenseInterfacePVI          = NULL;
-    iCPMGetMetaDataKeysCmdId       = 0;
     iCPMGetMetaDataValuesCmdId     = 0;
     iCPMGetLicenseInterfaceCmdId     = 0;
 
@@ -4516,8 +4515,6 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
                                 if (sampleEntriesCnt > 0)
                                 {
                                     uint32 encryptedDataLen = 0; //offset into buffer
-                                    //It would have saved mem if we could have allocated buffer for encrypted data only.
-                                    //So as to create buffer while initializing encryptedDataOffset let us bear some extra mem overhead. May optimize later...
                                     uint8* buffer = OSCL_ARRAY_NEW(uint8, payloadSize);
                                     //initialize encryptedDataOffset and create buffer with encrypted data
                                     for (uint32 ii = 0; ii < sampleEntriesCnt; ii++)
@@ -5879,7 +5876,6 @@ void PVMFMP4FFParserNode::RemoveAllCommands()
 
 void PVMFMP4FFParserNode::CleanupFileSource()
 {
-    iCPMMetadataKeys.clear();
     iVideoDimensionInfoVec.clear();
 
     if (iPlaybackParserObj)
@@ -7142,19 +7138,6 @@ void PVMFMP4FFParserNode::ResetCPM()
     iCPMResetCmdId = iCPM->Reset();
 }
 
-void PVMFMP4FFParserNode::GetCPMMetaDataKeys()
-{
-    if (iCPMMetaDataExtensionInterface != NULL)
-    {
-        iCPMMetadataKeys.clear();
-        iCPMGetMetaDataKeysCmdId =
-            iCPMMetaDataExtensionInterface->GetNodeMetadataKeys(iCPMSessionID,
-                    iCPMMetadataKeys,
-                    0,
-                    PVMF_MP4FFPARSERNODE_MAX_CPM_METADATA_KEYS);
-    }
-}
-
 PVMFStatus
 PVMFMP4FFParserNode::CheckCPMCommandCompleteStatus(PVMFCommandId aID,
         PVMFStatus aStatus)
@@ -7438,14 +7421,6 @@ void PVMFMP4FFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
             OSCL_ASSERT(iCurrentCommand.iCmd == PVMF_GENERIC_NODE_RESET);
             status = CompleteReset();
             CommandComplete(iCurrentCommand, status);
-        }
-        else if (id == iCPMGetMetaDataKeysCmdId)
-        {
-            PVMF_MP4FFPARSERNODE_LOGINFO((0, "PVMFMP4FFParserNode::CPMCommandCompleted -  CPM GetMetaDataKeys complete"));
-            /* End of GetNodeMetaDataKeys */
-            PVMFStatus status = CompleteGetMetadataKeys();
-            CommandComplete(iCurrentCommand,
-                            status);
         }
         else if (id == iCPMGetMetaDataValuesCmdId)
         {
@@ -8883,9 +8858,6 @@ PVMFStatus PVMFMP4FFParserNode::HandleExtensionAPICommands()
     PVMFStatus status = PVMFErrNotSupported;
     switch (iCurrentCommand.iCmd)
     {
-        case PVMF_GENERIC_NODE_GETNODEMETADATAKEYS:
-            status = DoGetNodeMetadataKeys();
-            break;
         case PVMF_GENERIC_NODE_GETNODEMETADATAVALUES:
             status = DoGetNodeMetadataValues();
             break;

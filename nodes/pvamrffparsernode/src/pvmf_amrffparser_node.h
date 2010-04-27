@@ -112,13 +112,9 @@ class PVMFAMRFFParserNode :  public PVMFNodeInterfaceImpl
         {
             return (aClipIndex == 0) ? PVMFSuccess : PVMFErrArgument;
         }
-        uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL);
         uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
-        PVMFCommandId GetNodeMetadataKeys(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList
-                                          , uint32 aStartingKeyIndex, int32 aMaxKeyEntries, char* aQueryKeyString = NULL, const OsclAny* aContextData = NULL);
         PVMFCommandId GetNodeMetadataValues(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList
                                             , Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, uint32 aStartingValueIndex, int32 aMaxValueEntries, const OsclAny* aContextData = NULL);
-        PVMFStatus ReleaseNodeMetadataKeys(PVMFMetadataList& aKeyList, uint32 aStartingKeyIndex, uint32 aEndKeyIndex);
         PVMFStatus ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, uint32 aStartingValueIndex, uint32 aEndValueIndex);
 
         // From PvmfDataSourcePlaybackControlInterface
@@ -194,13 +190,11 @@ class PVMFAMRFFParserNode :  public PVMFNodeInterfaceImpl
         void CompleteInit();
 
         // For metadata extention interface
-        PVMFStatus DoGetNodeMetadataKeys();
         PVMFStatus DoGetNodeMetadataValues();
         PVMFStatus InitMetaData();
 
         void CompleteGetMetaDataValues();
         int32 AddToValueList(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, PvmiKvp& aNewValue);
-        PVMFStatus CompleteGetMetadataKeys();
         void PushToAvailableMetadataKeysList(const char* aKeystr, char* aOptionalParam = NULL);
 
         // For data source position extension interface
@@ -222,7 +216,6 @@ class PVMFAMRFFParserNode :  public PVMFNodeInterfaceImpl
         void CleanupFileSource();
 
         Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> iAvailableMetadataKeys;
-        Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> iCPMMetadataKeys;
         uint32 iAMRParserNodeMetadataValueCount;
         int32 iPlayBackDirection;
 
@@ -259,7 +252,6 @@ class PVMFAMRFFParserNode :  public PVMFNodeInterfaceImpl
         void CloseCPMSession();
         void ResetCPM();
         void PopulateDRMInfo();
-        void GetCPMMetaDataKeys();
         void GetCPMMetaDataValues();
         void GetCPMLicenseInterface();
 
@@ -324,7 +316,6 @@ class PVMFAMRFFParserNode :  public PVMFNodeInterfaceImpl
         PVMFCommandId iCPMUsageCompleteCmdId;
         PVMFCommandId iCPMCloseSessionCmdId;
         PVMFCommandId iCPMResetCmdId;
-        PVMFCommandId iCPMGetMetaDataKeysCmdId;
         PVMFCommandId iCPMGetMetaDataValuesCmdId;
         PVMFCommandId iCPMGetLicenseInterfaceCmdId;
 

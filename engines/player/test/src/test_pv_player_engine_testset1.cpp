@@ -1362,7 +1362,7 @@ void pvplayer_async_test_cpmopenplaystopreset::HandleInformationalEvent(const PV
 #define METADATA_VAL_TRACKINFO_VIDEOHEIGHT0   144
 #define METADATA_VAL_TRACKINFO_VIDEOWIDTH0    176
 
-#define METADATA_GETMETADATAKEYS2_QUERYSTRING "codec-info/video"
+#define METADATA_GETMETADATAVALUES2_QUERYSTRING "codec-info/video"
 
 
 //==============================================================================
@@ -2139,17 +2139,11 @@ void pvplayer_async_test_metadata::Run()
         break;
 
         // Tests the Ability to get Metadata after the Init State
-        case STATE_GETMETADATAKEYS1:
-        {
-            iKeyList.clear();
-            OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataKeys(iKeyList, 0, -1, NULL, (OsclAny*) & iContextObject));
-            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
         case STATE_GETMETADATAVALUES1:
         {
             iValueList.clear();
+            iKeyList.clear();
+            iKeyList.push_back(OSCL_HeapString<OsclMemAllocator>("all"));
             iNumAvailableValues = 0;
             OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataValues(iKeyList, 0, -1, iNumAvailableValues, iValueList, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -2196,27 +2190,12 @@ void pvplayer_async_test_metadata::Run()
         break;
 
         // Check The Ability to return MetaData  At the prepared state
-        case STATE_GETMETADATAKEYS2:
-        {
-            iKeyList.clear();
-            iKeyQueryString = _STRLIT_CHAR(METADATA_GETMETADATAKEYS2_QUERYSTRING);
-            OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataKeys(iKeyList, 0, -1, iKeyQueryString.get_str(), (OsclAny*) & iContextObject));
-            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
         case STATE_GETMETADATAVALUES2:
         {
             iValueList.clear();
-            OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataValues(iKeyList, 0, -1, iNumAvailableValues, iValueList, (OsclAny*) & iContextObject));
-            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
-        case STATE_GETMETADATAKEYSSEG:
-        {
             iKeyList.clear();
-            OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataKeys(iKeyList, 0, -1, NULL, (OsclAny*) & iContextObject));
+            iKeyList.push_back(OSCL_HeapString<OsclMemAllocator>(METADATA_GETMETADATAVALUES2_QUERYSTRING));
+            OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataValues(iKeyList, 0, -1, iNumAvailableValues, iValueList, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;
@@ -2224,6 +2203,8 @@ void pvplayer_async_test_metadata::Run()
         case STATE_GETMETADATAVALUESSEG1:
         {
             iValueList.clear();
+            iKeyList.clear();
+            iKeyList.push_back(OSCL_HeapString<OsclMemAllocator>("all"));
             OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataValues(iKeyList, 0, -1, iNumAvailableValues, iValueList, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
@@ -2260,17 +2241,11 @@ void pvplayer_async_test_metadata::Run()
         break;
 
         // Check The Ability to return MetaData after Stop is called
-        case STATE_GETMETADATAKEYS3:
-        {
-            iKeyList.clear();
-            OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataKeys(iKeyList, 0, -1, NULL, (OsclAny*) & iContextObject));
-            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
         case STATE_GETMETADATAVALUES3:
         {
             iValueList.clear();
+            iKeyList.clear();
+            iKeyList.push_back(OSCL_HeapString<OsclMemAllocator>("all"));
             OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataValues(iKeyList, 0, -1, iNumAvailableValues, iValueList, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
@@ -2396,7 +2371,7 @@ void pvplayer_async_test_metadata::CommandCompleted(const PVCmdResponse& aRespon
         case STATE_INIT:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                iState = STATE_GETMETADATAKEYS1;
+                iState = STATE_GETMETADATAVALUES1;
                 RunIfNotReady();
             }
             else
@@ -2407,22 +2382,6 @@ void pvplayer_async_test_metadata::CommandCompleted(const PVCmdResponse& aRespon
                 RunIfNotReady();
             }
             break;
-
-        case STATE_GETMETADATAKEYS1:
-            if (aResponse.GetCmdStatus() == PVMFSuccess)
-            {
-                iState = STATE_GETMETADATAVALUES1;
-                RunIfNotReady();
-            }
-            else
-            {
-                // GetMetadataKeys failed
-                PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-            }
-            break;
-
 
         case STATE_GETMETADATAVALUES1:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
@@ -2498,27 +2457,12 @@ void pvplayer_async_test_metadata::CommandCompleted(const PVCmdResponse& aRespon
         case STATE_PREPARE:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                iState = STATE_GETMETADATAKEYS2;
-                RunIfNotReady();
-            }
-            else
-            {
-                // Prepare failed
-                PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-            }
-            break;
-
-        case STATE_GETMETADATAKEYS2:
-            if (aResponse.GetCmdStatus() == PVMFSuccess)
-            {
                 iState = STATE_GETMETADATAVALUES2;
                 RunIfNotReady();
             }
             else
             {
-                // GetMetadataKeys failed
+                // Prepare failed
                 PVPATB_TEST_IS_TRUE(false);
                 iState = STATE_CLEANUPANDCOMPLETE;
                 RunIfNotReady();
@@ -2553,28 +2497,13 @@ void pvplayer_async_test_metadata::CommandCompleted(const PVCmdResponse& aRespon
                     PVPATB_TEST_IS_TRUE(true);
                 }
 
-                iState = STATE_GETMETADATAKEYSSEG;
+                iState = STATE_GETMETADATAVALUESSEG1;
                 RunIfNotReady();
                 break;
             }
             else
             {
                 // GetMetadataValues failed
-                PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-            }
-            break;
-
-        case STATE_GETMETADATAKEYSSEG:
-            if (aResponse.GetCmdStatus() == PVMFSuccess)
-            {
-                iState = STATE_GETMETADATAVALUESSEG1;
-                RunIfNotReady();
-            }
-            else
-            {
-                // GetMetadataKeys failed
                 PVPATB_TEST_IS_TRUE(false);
                 iState = STATE_CLEANUPANDCOMPLETE;
                 RunIfNotReady();
@@ -2665,27 +2594,12 @@ void pvplayer_async_test_metadata::CommandCompleted(const PVCmdResponse& aRespon
         case STATE_STOP:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                iState = STATE_GETMETADATAKEYS3;
-                RunIfNotReady();
-            }
-            else
-            {
-                // Stop failed
-                PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-            }
-            break;
-
-        case STATE_GETMETADATAKEYS3:
-            if (aResponse.GetCmdStatus() == PVMFSuccess)
-            {
                 iState = STATE_GETMETADATAVALUES3;
                 RunIfNotReady();
             }
             else
             {
-                // GetMetadataKeys failed
+                // Stop failed
                 PVPATB_TEST_IS_TRUE(false);
                 iState = STATE_CLEANUPANDCOMPLETE;
                 RunIfNotReady();
@@ -17025,17 +16939,11 @@ void pvplayer_async_test_multipauseseekresume::Run()
         }
         break;
 
-        case STATE_GETMETADATAKEYLIST:
-        {
-            iMetadataKeyList.clear();
-            OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataKeys(iMetadataKeyList, 0, -1, NULL, (OsclAny*) & iContextObject));
-            OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
         case STATE_GETMETADATAVALUELIST:
         {
             iMetadataValueList.clear();
+            iMetadataKeyList.clear();
+            iMetadataKeyList.push_back(OSCL_HeapString<OsclMemAllocator>("all"));
             iNumValues = 0;
             OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataValues(iMetadataKeyList, 0, -1, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -17244,27 +17152,12 @@ void pvplayer_async_test_multipauseseekresume::CommandCompleted(const PVCmdRespo
         case STATE_INIT:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                iState = STATE_GETMETADATAKEYLIST;
-                RunIfNotReady();
-            }
-            else
-            {
-                // Init failed
-                PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-            }
-            break;
-
-        case STATE_GETMETADATAKEYLIST:
-            if (aResponse.GetCmdStatus() == PVMFSuccess)
-            {
                 iState = STATE_GETMETADATAVALUELIST;
                 RunIfNotReady();
             }
             else
             {
-                // GetMetadataKeys failed
+                // Init failed
                 PVPATB_TEST_IS_TRUE(false);
                 iState = STATE_CLEANUPANDCOMPLETE;
                 RunIfNotReady();
@@ -17775,17 +17668,11 @@ void pvplayer_async_test_multiple_instance::Run()
         }
         break;
 
-        case STATE_GETMETADATAKEYLIST:
-        {
-            iMetadataKeyList.clear();
-            OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataKeys(iMetadataKeyList, 0, 100, NULL, (OsclAny*) & iContextObject));
-            OSCL_FIRST_CATCH_ANY(error, MULTI_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
         case STATE_GETMETADATAVALUELIST:
         {
             iMetadataValueList.clear();
+            iMetadataKeyList.clear();
+            iMetadataKeyList.push_back(OSCL_HeapString<OsclMemAllocator>("all"));
             iNumValues = 0;
             OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataValues(iMetadataKeyList, 0, 100, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, MULTI_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -18041,27 +17928,12 @@ void pvplayer_async_test_multiple_instance::CommandCompleted(const PVCmdResponse
         case STATE_INIT:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                iState = STATE_GETMETADATAKEYLIST;
-                RunIfNotReady();
-            }
-            else
-            {
-                // Init failed
-                MULTI_TEST_IS_TRUE(false);
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-            }
-            break;
-
-        case STATE_GETMETADATAKEYLIST:
-            if (aResponse.GetCmdStatus() == PVMFSuccess || aResponse.GetCmdStatus() == PVMFErrArgument)
-            {
                 iState = STATE_GETMETADATAVALUELIST;
                 RunIfNotReady();
             }
             else
             {
-                // GetMetadataKeys failed
+                // Init failed
                 MULTI_TEST_IS_TRUE(false);
                 iState = STATE_CLEANUPANDCOMPLETE;
                 RunIfNotReady();
@@ -18513,17 +18385,11 @@ void pvplayer_async_test_multiple_thread::Run()
         }
         break;
 
-        case STATE_GETMETADATAKEYLIST:
-        {
-            iMetadataKeyList.clear();
-            OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataKeys(iMetadataKeyList, 0, 100, NULL, (OsclAny*) & iContextObject));
-            OSCL_FIRST_CATCH_ANY(error, MULTI_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
         case STATE_GETMETADATAVALUELIST:
         {
             iMetadataValueList.clear();
+            iMetadataKeyList.clear();
+            iMetadataKeyList.push_back(OSCL_HeapString<OsclMemAllocator>("all"));
             iNumValues = 0;
             OSCL_TRY(error, iCurrentCmdId = iPlayer->GetMetadataValues(iMetadataKeyList, 0, 100, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject, false));
             OSCL_FIRST_CATCH_ANY(error, MULTI_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -18860,27 +18726,12 @@ void pvplayer_async_test_multiple_thread::CommandCompleted(const PVCmdResponse& 
         case STATE_INIT:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                iState = STATE_GETMETADATAKEYLIST;
-                RunIfNotReady();
-            }
-            else
-            {
-                // Init failed
-                MULTI_TEST_IS_TRUE(false);
-                iState = STATE_WAIT_FOR_ERROR_HANDLING;
-                RunIfNotReady(5000000);
-            }
-            break;
-
-        case STATE_GETMETADATAKEYLIST:
-            if (aResponse.GetCmdStatus() == PVMFSuccess || aResponse.GetCmdStatus() == PVMFErrArgument)
-            {
                 iState = STATE_GETMETADATAVALUELIST;
                 RunIfNotReady();
             }
             else
             {
-                // GetMetadataKeys failed
+                // Init failed
                 MULTI_TEST_IS_TRUE(false);
                 iState = STATE_WAIT_FOR_ERROR_HANDLING;
                 RunIfNotReady(5000000);

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,100 @@
 
 #include "pvmf_errorinfomessage_extension.h"
 
+
+void pvframemetadata_async_test_base::SaveVideoFrame(Oscl_File& frameFile, uint8* frameBuffer, uint32 frameBufferSize)
+{
+    // Write the retrieved video frame data to file
+    frameFile.Write(frameBuffer, 1, frameBufferSize);
+    frameFile.Flush();
+}
+
+void pvframemetadata_async_test_base::SaveMetadataInfo(char* outputBuf, Oscl_Vector<PvmiKvp, OsclMemAllocator>& valueList, Oscl_File& metadataFile)
+{
+    uint32 i = 0;
+
+    oscl_snprintf(outputBuf, 512, "\nMetadata value list (count=%d):\n", valueList.size());
+    metadataFile.Write(outputBuf, sizeof(char), oscl_strlen(outputBuf));
+    metadataFile.Flush();
+
+    for (i = 0; i < valueList.size(); ++i)
+    {
+        oscl_snprintf(outputBuf, 512, "Value %d:\n   Key string: %s\n", (i + 1), valueList[i].key);
+        metadataFile.Write(outputBuf, sizeof(char), oscl_strlen(outputBuf));
+
+        switch (GetValTypeFromKeyString(valueList[i].key))
+        {
+            case PVMI_KVPVALTYPE_CHARPTR:
+                oscl_snprintf(outputBuf, 512, "   Value:%s\n", valueList[i].value.pChar_value);
+                metadataFile.Write(outputBuf, sizeof(char), oscl_strlen(outputBuf));
+                break;
+
+            case PVMI_KVPVALTYPE_WCHARPTR:
+            {
+                // Assume string is in UCS-2 encoding so convert to UTF-8
+                char tmpstr[65];
+                oscl_UnicodeToUTF8(valueList[i].value.pWChar_value,
+                                   oscl_strlen(valueList[i].value.pWChar_value), tmpstr, 65);
+                tmpstr[64] = 0;
+                oscl_snprintf(outputBuf, 512, "   Value(in UTF-8, first 64 chars):%s\n", tmpstr);
+                metadataFile.Write(outputBuf, sizeof(char), oscl_strlen(outputBuf));
+            }
+            break;
+
+            case PVMI_KVPVALTYPE_UINT32:
+                oscl_snprintf(outputBuf, 512, "   Value:%d\n", valueList[i].value.uint32_value);
+                metadataFile.Write(outputBuf, sizeof(char), oscl_strlen(outputBuf));
+                break;
+
+            case PVMI_KVPVALTYPE_INT32:
+                oscl_snprintf(outputBuf, 512, "   Value:%d\n", valueList[i].value.int32_value);
+                metadataFile.Write(outputBuf, sizeof(char), oscl_strlen(outputBuf));
+                break;
+
+            case PVMI_KVPVALTYPE_UINT8:
+                oscl_snprintf(outputBuf, 512, "   Value:%d\n", valueList[i].value.uint8_value);
+                metadataFile.Write(outputBuf, sizeof(char), oscl_strlen(outputBuf));
+                break;
+
+            case PVMI_KVPVALTYPE_FLOAT:
+                oscl_snprintf(outputBuf, 512, "   Value:%f\n", valueList[i].value.float_value);
+                metadataFile.Write(outputBuf, sizeof(char), oscl_strlen(outputBuf));
+                break;
+
+            case PVMI_KVPVALTYPE_DOUBLE:
+                oscl_snprintf(outputBuf, 512, "   Value:%f\n", valueList[i].value.double_value);
+                metadataFile.Write(outputBuf, sizeof(char), oscl_strlen(outputBuf));
+                break;
+
+            case PVMI_KVPVALTYPE_BOOL:
+                if (valueList[i].value.bool_value)
+                {
+                    oscl_snprintf(outputBuf, 512, "   Value:true(1)\n");
+                    metadataFile.Write(outputBuf, sizeof(char), oscl_strlen(outputBuf));
+                }
+                else
+                {
+                    oscl_snprintf(outputBuf, 512, "   Value:false(0)\n");
+                    metadataFile.Write(outputBuf, sizeof(char), oscl_strlen(outputBuf));
+
+                }
+                break;
+
+            default:
+                oscl_snprintf(outputBuf, 512, "   Value: UNKNOWN VALUE TYPE\n");
+                metadataFile.Write(outputBuf, sizeof(char), oscl_strlen(outputBuf));
+                break;
+        }
+
+        oscl_snprintf(outputBuf, 512, "   Length:%d  Capacity:%d\n", valueList[i].length, valueList[i].capacity);
+        metadataFile.Write(outputBuf, sizeof(char), oscl_strlen(outputBuf));
+        metadataFile.Flush();
+    }
+
+    oscl_snprintf(outputBuf, 512, "\n\n");
+    metadataFile.Write(outputBuf, sizeof(char), oscl_strlen(outputBuf));
+    metadataFile.Flush();
+}
 //
 // pvframemetadata_async_test_newdelete section
 //
@@ -206,22 +300,12 @@ void pvframemetadata_async_test_getmetadata::Run()
 
         break;
 
-        case STATE_GETMETADATAKEYS1:
-        {
-            // Retrieve all the available metadata keys
-            iMetadataKeyList.clear();
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                            (0, "PVFrameAndMetadataUtilityTest::GetMetadataKeys Issued Tick=%d", OsclTickCount::TickCount()));
-
-            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataKeys(iMetadataKeyList, 0, 50, NULL, (OsclAny*) & iContextObject));
-            OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
         case STATE_GETMETADATAVALUES1:
         {
             // Retrieve the values
             iMetadataValueList.clear();
+            iMetadataKeyList.clear();
+            iMetadataKeyList.push_back(OSCL_HeapString<OsclMemAllocator>("all"));
             iNumValues = 0;
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
                             (0, "PVFrameAndMetadataUtilityTest::GetMetadataValues Issued Tick=%d", OsclTickCount::TickCount()));
@@ -328,7 +412,7 @@ void pvframemetadata_async_test_getmetadata::CommandCompleted(const PVCmdRespons
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
                                 (0, "PVFrameAndMetadataUtilityTest::AddDataSource completed sucessfully Tick=%d", OsclTickCount::TickCount()));
 
-                iState = STATE_GETMETADATAKEYS1;
+                iState = STATE_GETMETADATAVALUES1;
                 RunIfNotReady();
             }
             else
@@ -343,33 +427,14 @@ void pvframemetadata_async_test_getmetadata::CommandCompleted(const PVCmdRespons
             }
             break;
 
-        case STATE_GETMETADATAKEYS1:
-            if (aResponse.GetCmdStatus() == PVMFSuccess)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                                (0, "PVFrameAndMetadataUtilityTest::GetMetaDataKeys completed sucessfully Tick=%d", OsclTickCount::TickCount()));
-                iState = STATE_GETMETADATAVALUES1;
-                RunIfNotReady();
-            }
-            else
-            {
-                // GetMetadataKeys failed
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                                (0, "PVFrameAndMetadataUtilityTest::GetMetadataKeys failed Tick=%d", OsclTickCount::TickCount()));
-                PVFMUATB_TEST_IS_TRUE(false);
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-            }
-            break;
-
         case STATE_GETMETADATAVALUES1:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
                                 (0, "PVFrameAndMetadataUtilityTest::GetMetaDataValues completed sucessfully Tick=%d", OsclTickCount::TickCount()));
-                oscl_snprintf(iTextOutputBuf, 512, "After AddDataSource():\n");
+                oscl_snprintf(iTextOutputBuf, 512, "After AddDataSource():, numvalues=%d\n", iNumValues);
                 iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                SaveMetadataInfo();
+                SaveMetadataInfo(iTextOutputBuf, iMetadataValueList, iMetadataFile);
                 if (iMode == 2)
                 {
                     iState = STATE_GETFRAME;
@@ -396,7 +461,7 @@ void pvframemetadata_async_test_getmetadata::CommandCompleted(const PVCmdRespons
             {
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
                                 (0, "PVFrameAndMetadataUtilityTest::GetFrame completed sucessfully Tick=%d", OsclTickCount::TickCount()));
-                SaveVideoFrame();
+                SaveVideoFrame(iFrameFile, iFrameBuffer, iFrameBufferSize);
                 iState = STATE_REMOVEDATASOURCE;
                 RunIfNotReady();
             }
@@ -466,108 +531,7 @@ void pvframemetadata_async_test_getmetadata::HandleInformationalEvent(const PVAs
 }
 
 
-void pvframemetadata_async_test_getmetadata::SaveMetadataInfo()
-{
-    uint32 i = 0;
 
-    oscl_snprintf(iTextOutputBuf, 512, "Metadata key list (count=%d):\n", iMetadataKeyList.size());
-    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-
-    for (i = 0; i < iMetadataKeyList.size(); ++i)
-    {
-        oscl_snprintf(iTextOutputBuf, 512, "Key %d: %s\n", (i + 1), iMetadataKeyList[i].get_cstr());
-        iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-    }
-
-    oscl_snprintf(iTextOutputBuf, 512, "\nMetadata value list (count=%d):\n", iMetadataValueList.size());
-    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-    iMetadataFile.Flush();
-
-    for (i = 0; i < iMetadataValueList.size(); ++i)
-    {
-        oscl_snprintf(iTextOutputBuf, 512, "Value %d:\n   Key string: %s\n", (i + 1), iMetadataValueList[i].key);
-        iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-
-        switch (GetValTypeFromKeyString(iMetadataValueList[i].key))
-        {
-            case PVMI_KVPVALTYPE_CHARPTR:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%s\n", iMetadataValueList[i].value.pChar_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_WCHARPTR:
-            {
-                // Assume string is in UCS-2 encoding so convert to UTF-8
-                char tmpstr[65];
-                oscl_UnicodeToUTF8(iMetadataValueList[i].value.pWChar_value,
-                                   oscl_strlen(iMetadataValueList[i].value.pWChar_value), tmpstr, 65);
-                tmpstr[64] = 0;
-                oscl_snprintf(iTextOutputBuf, 512, "   Value(in UTF-8, first 64 chars):%s\n", tmpstr);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-            }
-            break;
-
-            case PVMI_KVPVALTYPE_UINT32:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%d\n", iMetadataValueList[i].value.uint32_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_INT32:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%d\n", iMetadataValueList[i].value.int32_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_UINT8:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%d\n", iMetadataValueList[i].value.uint8_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_FLOAT:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%f\n", iMetadataValueList[i].value.float_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_DOUBLE:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%f\n", iMetadataValueList[i].value.double_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_BOOL:
-                if (iMetadataValueList[i].value.bool_value)
-                {
-                    oscl_snprintf(iTextOutputBuf, 512, "   Value:true(1)\n");
-                    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                }
-                else
-                {
-                    oscl_snprintf(iTextOutputBuf, 512, "   Value:false(0)\n");
-                    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-
-                }
-                break;
-
-            default:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value: UNKNOWN VALUE TYPE\n");
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-        }
-
-        oscl_snprintf(iTextOutputBuf, 512, "   Length:%d  Capacity:%d\n", iMetadataValueList[i].length, iMetadataValueList[i].capacity);
-        iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-        iMetadataFile.Flush();
-    }
-
-    oscl_snprintf(iTextOutputBuf, 512, "\n\n");
-    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-    iMetadataFile.Flush();
-}
-
-void pvframemetadata_async_test_getmetadata::SaveVideoFrame()
-{
-    // Write the retrieved video frame data to file
-    iFrameFile.Write(iFrameBuffer, 1, iFrameBufferSize);
-    iFrameFile.Flush();
-}
 
 //
 // pvframemetadata_async_test_getfirstframemetadata section
@@ -658,21 +622,14 @@ void pvframemetadata_async_test_getfirstframemetadata::Run()
 
         break;
 
-        case STATE_GETMETADATAKEYS1:
-        {
-            // Retrieve all the available metadata keys
-            iMetadataKeyList.clear();
-            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataKeys(iMetadataKeyList, 0, 50, NULL, (OsclAny*) & iContextObject));
-            OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
         case STATE_GETMETADATAVALUES1:
         {
             // Retrieve the values
             iMetadataValueList.clear();
+            iMetadataKeyList.clear();
+            iMetadataKeyList.push_back(OSCL_HeapString<OsclMemAllocator>("all"));
             iNumValues = 0;
-            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataValues(iMetadataKeyList, 0, 50, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
+            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataValues(iMetadataKeyList, 0, -1, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;
@@ -688,21 +645,14 @@ void pvframemetadata_async_test_getfirstframemetadata::Run()
         }
         break;
 
-        case STATE_GETMETADATAKEYS2:
-        {
-            // Retrieve all the available metadata keys
-            iMetadataKeyList.clear();
-            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataKeys(iMetadataKeyList, 0, 50, NULL, (OsclAny*) & iContextObject));
-            OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
         case STATE_GETMETADATAVALUES2:
         {
             // Retrieve the values
             iMetadataValueList.clear();
+            iMetadataKeyList.clear();
+            iMetadataKeyList.push_back(OSCL_HeapString<OsclMemAllocator>("all"));
             iNumValues = 0;
-            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataValues(iMetadataKeyList, 0, 50, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
+            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataValues(iMetadataKeyList, 0, -1, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;
@@ -777,7 +727,7 @@ void pvframemetadata_async_test_getfirstframemetadata::CommandCompleted(const PV
         case STATE_ADDDATASOURCE:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                iState = STATE_GETMETADATAKEYS1;
+                iState = STATE_GETMETADATAVALUES1;
                 RunIfNotReady();
             }
             else
@@ -789,27 +739,12 @@ void pvframemetadata_async_test_getfirstframemetadata::CommandCompleted(const PV
             }
             break;
 
-        case STATE_GETMETADATAKEYS1:
-            if (aResponse.GetCmdStatus() == PVMFSuccess)
-            {
-                iState = STATE_GETMETADATAVALUES1;
-                RunIfNotReady();
-            }
-            else
-            {
-                // GetMetadataKeys failed
-                PVFMUATB_TEST_IS_TRUE(false);
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-            }
-            break;
-
         case STATE_GETMETADATAVALUES1:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
                 oscl_snprintf(iTextOutputBuf, 512, "After AddDataSource():\n");
                 iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                SaveMetadataInfo();
+                SaveMetadataInfo(iTextOutputBuf, iMetadataValueList, iMetadataFile);
                 iState = STATE_GETFRAME;
                 RunIfNotReady();
             }
@@ -825,8 +760,8 @@ void pvframemetadata_async_test_getfirstframemetadata::CommandCompleted(const PV
         case STATE_GETFRAME:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                SaveVideoFrame();
-                iState = STATE_GETMETADATAKEYS2;
+                SaveVideoFrame(iFrameFile, iFrameBuffer, iFrameBufferSize);
+                iState = STATE_GETMETADATAVALUES2;
                 RunIfNotReady();
             }
             else
@@ -838,27 +773,12 @@ void pvframemetadata_async_test_getfirstframemetadata::CommandCompleted(const PV
             }
             break;
 
-        case STATE_GETMETADATAKEYS2:
-            if (aResponse.GetCmdStatus() == PVMFSuccess)
-            {
-                iState = STATE_GETMETADATAVALUES2;
-                RunIfNotReady();
-            }
-            else
-            {
-                // GetMetadataKeys failed
-                PVFMUATB_TEST_IS_TRUE(false);
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-            }
-            break;
-
         case STATE_GETMETADATAVALUES2:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
                 oscl_snprintf(iTextOutputBuf, 512, "After GetFrame():\n");
                 iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                SaveMetadataInfo();
+                SaveMetadataInfo(iTextOutputBuf, iMetadataValueList, iMetadataFile);
                 iState = STATE_REMOVEDATASOURCE;
                 RunIfNotReady();
             }
@@ -908,111 +828,6 @@ void pvframemetadata_async_test_getfirstframemetadata::HandleErrorEvent(const PV
 void pvframemetadata_async_test_getfirstframemetadata::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
 {
     OSCL_UNUSED_ARG(aEvent);
-}
-
-
-void pvframemetadata_async_test_getfirstframemetadata::SaveMetadataInfo()
-{
-    uint32 i = 0;
-
-    oscl_snprintf(iTextOutputBuf, 512, "Metadata key list (count=%d):\n", iMetadataKeyList.size());
-    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-
-    for (i = 0; i < iMetadataKeyList.size(); ++i)
-    {
-        oscl_snprintf(iTextOutputBuf, 512, "Key %d: %s\n", (i + 1), iMetadataKeyList[i].get_cstr());
-        iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-    }
-
-    oscl_snprintf(iTextOutputBuf, 512, "\nMetadata value list (count=%d):\n", iMetadataValueList.size());
-    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-    iMetadataFile.Flush();
-
-    for (i = 0; i < iMetadataValueList.size(); ++i)
-    {
-        oscl_snprintf(iTextOutputBuf, 512, "Value %d:\n   Key string: %s\n", (i + 1), iMetadataValueList[i].key);
-        iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-
-        switch (GetValTypeFromKeyString(iMetadataValueList[i].key))
-        {
-            case PVMI_KVPVALTYPE_CHARPTR:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%s\n", iMetadataValueList[i].value.pChar_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_WCHARPTR:
-            {
-                // Assume string is in UCS-2 encoding so convert to UTF-8
-                char tmpstr[65];
-                oscl_UnicodeToUTF8(iMetadataValueList[i].value.pWChar_value,
-                                   oscl_strlen(iMetadataValueList[i].value.pWChar_value), tmpstr, 65);
-                tmpstr[64] = 0;
-                oscl_snprintf(iTextOutputBuf, 512, "   Value(in UTF-8, first 64 chars):%s\n", tmpstr);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-            }
-            break;
-
-            case PVMI_KVPVALTYPE_UINT32:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%d\n", iMetadataValueList[i].value.uint32_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_INT32:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%d\n", iMetadataValueList[i].value.int32_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_UINT8:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%d\n", iMetadataValueList[i].value.uint8_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_FLOAT:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%f\n", iMetadataValueList[i].value.float_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_DOUBLE:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%f\n", iMetadataValueList[i].value.double_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_BOOL:
-                if (iMetadataValueList[i].value.bool_value)
-                {
-                    oscl_snprintf(iTextOutputBuf, 512, "   Value:true(1)\n");
-                    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                }
-                else
-                {
-                    oscl_snprintf(iTextOutputBuf, 512, "   Value:false(0)\n");
-                    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-
-                }
-                break;
-
-            default:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value: UNKNOWN VALUE TYPE\n");
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-        }
-
-        oscl_snprintf(iTextOutputBuf, 512, "   Length:%d  Capacity:%d\n", iMetadataValueList[i].length, iMetadataValueList[i].capacity);
-        iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-        iMetadataFile.Flush();
-    }
-
-    oscl_snprintf(iTextOutputBuf, 512, "\n\n");
-    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-    iMetadataFile.Flush();
-}
-
-
-void pvframemetadata_async_test_getfirstframemetadata::SaveVideoFrame()
-{
-    // Write the retrieved video frame data to file
-    iFrameFile.Write(iFrameBuffer, 1, iFrameBufferSize);
-    iFrameFile.Flush();
 }
 
 
@@ -1195,7 +1010,7 @@ void pvframemetadata_async_test_getfirstframeutilitybuffer::CommandCompleted(con
             if (aResponse.GetCmdStatus() == PVMFSuccess &&
                     iFrameBuffer != NULL && iFrameBufferSize > 0)
             {
-                SaveVideoFrame();
+                SaveVideoFrame(iFrameFile, iFrameBuffer, iFrameBufferSize);
                 iState = STATE_RETURNBUFFER;
                 RunIfNotReady();
             }
@@ -1260,14 +1075,6 @@ void pvframemetadata_async_test_getfirstframeutilitybuffer::HandleErrorEvent(con
 void pvframemetadata_async_test_getfirstframeutilitybuffer::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
 {
     OSCL_UNUSED_ARG(aEvent);
-}
-
-
-void pvframemetadata_async_test_getfirstframeutilitybuffer::SaveVideoFrame()
-{
-    // Write the retrieved video frame data to file
-    iFrameFile.Write(iFrameBuffer, 1, iFrameBufferSize);
-    iFrameFile.Flush();
 }
 
 
@@ -1440,7 +1247,7 @@ void pvframemetadata_async_test_get30thframe::CommandCompleted(const PVCmdRespon
         case STATE_GETFRAME:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                SaveVideoFrame();
+                SaveVideoFrame(iFrameFile, iFrameBuffer, iFrameBufferSize);
                 iState = STATE_REMOVEDATASOURCE;
                 RunIfNotReady();
             }
@@ -1490,14 +1297,6 @@ void pvframemetadata_async_test_get30thframe::HandleErrorEvent(const PVAsyncErro
 void pvframemetadata_async_test_get30thframe::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
 {
     OSCL_UNUSED_ARG(aEvent);
-}
-
-
-void pvframemetadata_async_test_get30thframe::SaveVideoFrame()
-{
-    // Write the retrieved video frame data to file
-    iFrameFile.Write(iFrameBuffer, 1, iFrameBufferSize);
-    iFrameFile.Flush();
 }
 
 
@@ -1670,7 +1469,7 @@ void pvframemetadata_async_test_get10secframe::CommandCompleted(const PVCmdRespo
         case STATE_GETFRAME:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                SaveVideoFrame();
+                SaveVideoFrame(iFrameFile, iFrameBuffer, iFrameBufferSize);
                 iState = STATE_REMOVEDATASOURCE;
                 RunIfNotReady();
             }
@@ -1732,14 +1531,6 @@ void pvframemetadata_async_test_get10secframe::HandleInformationalEvent(const PV
     }
 }
 
-void pvframemetadata_async_test_get10secframe::SaveVideoFrame()
-{
-    // Write the retrieved video frame data to file
-    iFrameFile.Write(iFrameBuffer, 1, iFrameBufferSize);
-    iFrameFile.Flush();
-}
-
-
 //
 // pvframemetadata_async_test_cancelcommand section
 //
@@ -1787,12 +1578,6 @@ void pvframemetadata_async_test_cancelcommand::Run()
             iDataSource->SetDataSourceFormatType(iFileType);
 
             OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->AddDataSource(*iDataSource, (OsclAny*) & iContextObject));
-            OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-            ++iPendingCmds;
-
-            // Retrieve all the available metadata keys
-            iMetadataKeyList.clear();
-            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataKeys(iMetadataKeyList, 0, 50, NULL, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
             ++iPendingCmds;
 
@@ -2028,21 +1813,14 @@ void pvframemetadata_async_test_multigetfirstframemetadata::Run()
 
         break;
 
-        case STATE_GETMETADATAKEYS1:
-        {
-            // Retrieve all the available metadata keys
-            iMetadataKeyList.clear();
-            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataKeys(iMetadataKeyList, 0, 50, NULL, (OsclAny*) & iContextObject));
-            OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
         case STATE_GETMETADATAVALUES1:
         {
             // Retrieve the values
             iMetadataValueList.clear();
+            iMetadataKeyList.clear();
+            iMetadataKeyList.push_back(OSCL_HeapString<OsclMemAllocator>("all"));
             iNumValues = 0;
-            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataValues(iMetadataKeyList, 0, 50, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
+            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataValues(iMetadataKeyList, 0, -1, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;
@@ -2078,21 +1856,14 @@ void pvframemetadata_async_test_multigetfirstframemetadata::Run()
 
         break;
 
-        case STATE_GETMETADATAKEYS2:
-        {
-            // Retrieve all the available metadata keys
-            iMetadataKeyList.clear();
-            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataKeys(iMetadataKeyList, 0, 50, NULL, (OsclAny*) & iContextObject));
-            OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
         case STATE_GETMETADATAVALUES2:
         {
             // Retrieve the values
             iMetadataValueList.clear();
+            iMetadataKeyList.clear();
+            iMetadataKeyList.push_back(OSCL_HeapString<OsclMemAllocator>("all"));
             iNumValues = 0;
-            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataValues(iMetadataKeyList, 0, 50, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
+            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataValues(iMetadataKeyList, 0, -1, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;
@@ -2126,21 +1897,14 @@ void pvframemetadata_async_test_multigetfirstframemetadata::Run()
         }
         break;
 
-        case STATE_GETMETADATAKEYS3:
-        {
-            // Retrieve all the available metadata keys
-            iMetadataKeyList.clear();
-            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataKeys(iMetadataKeyList, 0, 50, NULL, (OsclAny*) & iContextObject));
-            OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
         case STATE_GETMETADATAVALUES3:
         {
             // Retrieve the values
             iMetadataValueList.clear();
+            iMetadataKeyList.clear();
+            iMetadataKeyList.push_back(OSCL_HeapString<OsclMemAllocator>("all"));
             iNumValues = 0;
-            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataValues(iMetadataKeyList, 0, 50, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
+            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataValues(iMetadataKeyList, 0, -1, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;
@@ -2226,7 +1990,7 @@ void pvframemetadata_async_test_multigetfirstframemetadata::CommandCompleted(con
         case STATE_ADDDATASOURCE1:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                iState = STATE_GETMETADATAKEYS1;
+                iState = STATE_GETMETADATAVALUES1;
                 RunIfNotReady();
             }
             else
@@ -2238,27 +2002,12 @@ void pvframemetadata_async_test_multigetfirstframemetadata::CommandCompleted(con
             }
             break;
 
-        case STATE_GETMETADATAKEYS1:
-            if (aResponse.GetCmdStatus() == PVMFSuccess)
-            {
-                iState = STATE_GETMETADATAVALUES1;
-                RunIfNotReady();
-            }
-            else
-            {
-                // GetMetadataKeys failed
-                PVFMUATB_TEST_IS_TRUE(false);
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-            }
-            break;
-
         case STATE_GETMETADATAVALUES1:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
                 oscl_snprintf(iTextOutputBuf, 512, "METADATA FOR CLIP 1\n");
                 iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                SaveMetadataInfo();
+                SaveMetadataInfo(iTextOutputBuf, iMetadataValueList, iMetadataFile);
                 iState = STATE_GETFRAME1;
                 RunIfNotReady();
             }
@@ -2274,7 +2023,7 @@ void pvframemetadata_async_test_multigetfirstframemetadata::CommandCompleted(con
         case STATE_GETFRAME1:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                SaveVideoFrame();
+                SaveVideoFrame(iFrameFile, iFrameBuffer, iFrameBufferSize);
                 iState = STATE_REMOVEDATASOURCE1;
                 RunIfNotReady();
             }
@@ -2306,7 +2055,7 @@ void pvframemetadata_async_test_multigetfirstframemetadata::CommandCompleted(con
         case STATE_ADDDATASOURCE2:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                iState = STATE_GETMETADATAKEYS2;
+                iState = STATE_GETMETADATAVALUES2;
                 RunIfNotReady();
             }
             else
@@ -2318,27 +2067,12 @@ void pvframemetadata_async_test_multigetfirstframemetadata::CommandCompleted(con
             }
             break;
 
-        case STATE_GETMETADATAKEYS2:
-            if (aResponse.GetCmdStatus() == PVMFSuccess)
-            {
-                iState = STATE_GETMETADATAVALUES2;
-                RunIfNotReady();
-            }
-            else
-            {
-                // GetMetadataKeys failed
-                PVFMUATB_TEST_IS_TRUE(false);
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-            }
-            break;
-
         case STATE_GETMETADATAVALUES2:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
                 oscl_snprintf(iTextOutputBuf, 512, "METADATA FOR CLIP 2\n");
                 iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                SaveMetadataInfo();
+                SaveMetadataInfo(iTextOutputBuf, iMetadataValueList, iMetadataFile);
                 iState = STATE_GETFRAME2;
                 RunIfNotReady();
             }
@@ -2354,7 +2088,7 @@ void pvframemetadata_async_test_multigetfirstframemetadata::CommandCompleted(con
         case STATE_GETFRAME2:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                SaveVideoFrame();
+                SaveVideoFrame(iFrameFile, iFrameBuffer, iFrameBufferSize);
                 iState = STATE_REMOVEDATASOURCE2;
                 RunIfNotReady();
             }
@@ -2386,7 +2120,7 @@ void pvframemetadata_async_test_multigetfirstframemetadata::CommandCompleted(con
         case STATE_ADDDATASOURCE3:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                iState = STATE_GETMETADATAKEYS3;
+                iState = STATE_GETMETADATAVALUES3;
                 RunIfNotReady();
             }
             else
@@ -2398,27 +2132,12 @@ void pvframemetadata_async_test_multigetfirstframemetadata::CommandCompleted(con
             }
             break;
 
-        case STATE_GETMETADATAKEYS3:
-            if (aResponse.GetCmdStatus() == PVMFSuccess)
-            {
-                iState = STATE_GETMETADATAVALUES3;
-                RunIfNotReady();
-            }
-            else
-            {
-                // GetMetadataKeys failed
-                PVFMUATB_TEST_IS_TRUE(false);
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-            }
-            break;
-
         case STATE_GETMETADATAVALUES3:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
                 oscl_snprintf(iTextOutputBuf, 512, "METADATA FOR CLIP 3\n");
                 iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                SaveMetadataInfo();
+                SaveMetadataInfo(iTextOutputBuf, iMetadataValueList, iMetadataFile);
                 iState = STATE_GETFRAME3;
                 RunIfNotReady();
             }
@@ -2434,7 +2153,7 @@ void pvframemetadata_async_test_multigetfirstframemetadata::CommandCompleted(con
         case STATE_GETFRAME3:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                SaveVideoFrame();
+                SaveVideoFrame(iFrameFile, iFrameBuffer, iFrameBufferSize);
                 iState = STATE_REMOVEDATASOURCE3;
                 RunIfNotReady();
             }
@@ -2484,111 +2203,6 @@ void pvframemetadata_async_test_multigetfirstframemetadata::HandleErrorEvent(con
 void pvframemetadata_async_test_multigetfirstframemetadata::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
 {
     OSCL_UNUSED_ARG(aEvent);
-}
-
-
-void pvframemetadata_async_test_multigetfirstframemetadata::SaveMetadataInfo()
-{
-    uint32 i = 0;
-
-    oscl_snprintf(iTextOutputBuf, 512, "Metadata key list (count=%d):\n", iMetadataKeyList.size());
-    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-
-    for (i = 0; i < iMetadataKeyList.size(); ++i)
-    {
-        oscl_snprintf(iTextOutputBuf, 512, "Key %d: %s\n", (i + 1), iMetadataKeyList[i].get_cstr());
-        iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-    }
-
-    oscl_snprintf(iTextOutputBuf, 512, "\nMetadata value list (count=%d):\n", iMetadataValueList.size());
-    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-    iMetadataFile.Flush();
-
-    for (i = 0; i < iMetadataValueList.size(); ++i)
-    {
-        oscl_snprintf(iTextOutputBuf, 512, "Value %d:\n   Key string: %s\n", (i + 1), iMetadataValueList[i].key);
-        iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-
-        switch (GetValTypeFromKeyString(iMetadataValueList[i].key))
-        {
-            case PVMI_KVPVALTYPE_CHARPTR:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%s\n", iMetadataValueList[i].value.pChar_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_WCHARPTR:
-            {
-                // Assume string is in UCS-2 encoding so convert to UTF-8
-                char tmpstr[65];
-                oscl_UnicodeToUTF8(iMetadataValueList[i].value.pWChar_value,
-                                   oscl_strlen(iMetadataValueList[i].value.pWChar_value), tmpstr, 65);
-                tmpstr[64] = 0;
-                oscl_snprintf(iTextOutputBuf, 512, "   Value(in UTF-8, first 64 chars):%s\n", tmpstr);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-            }
-            break;
-
-            case PVMI_KVPVALTYPE_UINT32:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%d\n", iMetadataValueList[i].value.uint32_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_INT32:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%d\n", iMetadataValueList[i].value.int32_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_UINT8:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%d\n", iMetadataValueList[i].value.uint8_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_FLOAT:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%f\n", iMetadataValueList[i].value.float_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_DOUBLE:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%f\n", iMetadataValueList[i].value.double_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_BOOL:
-                if (iMetadataValueList[i].value.bool_value)
-                {
-                    oscl_snprintf(iTextOutputBuf, 512, "   Value:true(1)\n");
-                    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                }
-                else
-                {
-                    oscl_snprintf(iTextOutputBuf, 512, "   Value:false(0)\n");
-                    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-
-                }
-                break;
-
-            default:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value: UNKNOWN VALUE TYPE\n");
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-        }
-
-        oscl_snprintf(iTextOutputBuf, 512, "   Length:%d  Capacity:%d\n", iMetadataValueList[i].length, iMetadataValueList[i].capacity);
-        iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-        iMetadataFile.Flush();
-    }
-
-    oscl_snprintf(iTextOutputBuf, 512, "\n\n");
-    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-    iMetadataFile.Flush();
-}
-
-
-void pvframemetadata_async_test_multigetfirstframemetadata::SaveVideoFrame()
-{
-    // Write the retrieved video frame data to file
-    iFrameFile.Write(iFrameBuffer, 1, iFrameBufferSize);
-    iFrameFile.Flush();
 }
 
 
@@ -2805,7 +2419,7 @@ void pvframemetadata_async_test_multigetframe::CommandCompleted(const PVCmdRespo
         case STATE_GETFRAME1:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                SaveVideoFrame();
+                SaveVideoFrame(iFrameFile, iFrameBuffer, iFrameBufferSize);
                 iState = STATE_GETFRAME2;
                 RunIfNotReady();
             }
@@ -2821,7 +2435,7 @@ void pvframemetadata_async_test_multigetframe::CommandCompleted(const PVCmdRespo
         case STATE_GETFRAME2:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                SaveVideoFrame();
+                SaveVideoFrame(iFrameFile, iFrameBuffer, iFrameBufferSize);
                 iState = STATE_GETFRAME3;
                 RunIfNotReady();
             }
@@ -2837,7 +2451,7 @@ void pvframemetadata_async_test_multigetframe::CommandCompleted(const PVCmdRespo
         case STATE_GETFRAME3:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                SaveVideoFrame();
+                SaveVideoFrame(iFrameFile, iFrameBuffer, iFrameBufferSize);
                 iState = STATE_GETFRAME4;
                 RunIfNotReady();
             }
@@ -2853,7 +2467,7 @@ void pvframemetadata_async_test_multigetframe::CommandCompleted(const PVCmdRespo
         case STATE_GETFRAME4:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                SaveVideoFrame();
+                SaveVideoFrame(iFrameFile, iFrameBuffer, iFrameBufferSize);
                 iState = STATE_GETFRAME5;
                 RunIfNotReady();
             }
@@ -2869,7 +2483,7 @@ void pvframemetadata_async_test_multigetframe::CommandCompleted(const PVCmdRespo
         case STATE_GETFRAME5:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                SaveVideoFrame();
+                SaveVideoFrame(iFrameFile, iFrameBuffer, iFrameBufferSize);
                 iState = STATE_REMOVEDATASOURCE;
                 RunIfNotReady();
             }
@@ -2919,14 +2533,6 @@ void pvframemetadata_async_test_multigetframe::HandleErrorEvent(const PVAsyncErr
 void pvframemetadata_async_test_multigetframe::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
 {
     OSCL_UNUSED_ARG(aEvent);
-}
-
-
-void pvframemetadata_async_test_multigetframe::SaveVideoFrame()
-{
-    // Write the retrieved video frame data to file
-    iFrameFile.Write(iFrameBuffer, 1, iFrameBufferSize);
-    iFrameFile.Flush();
 }
 
 
@@ -3143,21 +2749,14 @@ void pvframemetadata_async_test_nogetframe::Run()
 
         break;
 
-        case STATE_GETMETADATAKEYS:
-        {
-            // Retrieve all the available metadata keys
-            iMetadataKeyList.clear();
-            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataKeys(iMetadataKeyList, 0, 50, NULL, (OsclAny*) & iContextObject));
-            OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
         case STATE_GETMETADATAVALUES:
         {
             // Retrieve the values
             iMetadataValueList.clear();
+            iMetadataKeyList.clear();
+            iMetadataKeyList.push_back(OSCL_HeapString<OsclMemAllocator>("all"));
             iNumValues = 0;
-            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataValues(iMetadataKeyList, 0, 50, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
+            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataValues(iMetadataKeyList, 0, -1, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;
@@ -3231,7 +2830,7 @@ void pvframemetadata_async_test_nogetframe::CommandCompleted(const PVCmdResponse
         case STATE_ADDDATASOURCE:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                iState = STATE_GETMETADATAKEYS;
+                iState = STATE_GETMETADATAVALUES;
                 RunIfNotReady();
             }
             else
@@ -3243,25 +2842,10 @@ void pvframemetadata_async_test_nogetframe::CommandCompleted(const PVCmdResponse
             }
             break;
 
-        case STATE_GETMETADATAKEYS:
-            if (aResponse.GetCmdStatus() == PVMFSuccess)
-            {
-                iState = STATE_GETMETADATAVALUES;
-                RunIfNotReady();
-            }
-            else
-            {
-                // GetMetadataKeys failed
-                PVFMUATB_TEST_IS_TRUE(false);
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-            }
-            break;
-
         case STATE_GETMETADATAVALUES:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                SaveMetadataInfo();
+                SaveMetadataInfo(iTextOutputBuf, iMetadataValueList, iMetadataFile);
                 iState = STATE_REMOVEDATASOURCE;
                 RunIfNotReady();
             }
@@ -3311,103 +2895,6 @@ void pvframemetadata_async_test_nogetframe::HandleErrorEvent(const PVAsyncErrorE
 void pvframemetadata_async_test_nogetframe::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
 {
     OSCL_UNUSED_ARG(aEvent);
-}
-
-
-void pvframemetadata_async_test_nogetframe::SaveMetadataInfo()
-{
-    uint32 i = 0;
-
-    oscl_snprintf(iTextOutputBuf, 512, "Metadata key list (count=%d):\n", iMetadataKeyList.size());
-    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-
-    for (i = 0; i < iMetadataKeyList.size(); ++i)
-    {
-        oscl_snprintf(iTextOutputBuf, 512, "Key %d: %s\n", (i + 1), iMetadataKeyList[i].get_cstr());
-        iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-    }
-
-    oscl_snprintf(iTextOutputBuf, 512, "\nMetadata value list (count=%d):\n", iMetadataValueList.size());
-    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-    iMetadataFile.Flush();
-
-    for (i = 0; i < iMetadataValueList.size(); ++i)
-    {
-        oscl_snprintf(iTextOutputBuf, 512, "Value %d:\n   Key string: %s\n", (i + 1), iMetadataValueList[i].key);
-        iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-
-        switch (GetValTypeFromKeyString(iMetadataValueList[i].key))
-        {
-            case PVMI_KVPVALTYPE_CHARPTR:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%s\n", iMetadataValueList[i].value.pChar_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_WCHARPTR:
-            {
-                // Assume string is in UCS-2 encoding so convert to UTF-8
-                char tmpstr[65];
-                oscl_UnicodeToUTF8(iMetadataValueList[i].value.pWChar_value,
-                                   oscl_strlen(iMetadataValueList[i].value.pWChar_value), tmpstr, 65);
-                tmpstr[64] = 0;
-                oscl_snprintf(iTextOutputBuf, 512, "   Value(in UTF-8, first 64 chars):%s\n", tmpstr);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-            }
-            break;
-
-            case PVMI_KVPVALTYPE_UINT32:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%d\n", iMetadataValueList[i].value.uint32_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_INT32:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%d\n", iMetadataValueList[i].value.int32_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_UINT8:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%d\n", iMetadataValueList[i].value.uint8_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_FLOAT:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%f\n", iMetadataValueList[i].value.float_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_DOUBLE:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%f\n", iMetadataValueList[i].value.double_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_BOOL:
-                if (iMetadataValueList[i].value.bool_value)
-                {
-                    oscl_snprintf(iTextOutputBuf, 512, "   Value:true(1)\n");
-                    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                }
-                else
-                {
-                    oscl_snprintf(iTextOutputBuf, 512, "   Value:false(0)\n");
-                    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-
-                }
-                break;
-
-            default:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value: UNKNOWN VALUE TYPE\n");
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-        }
-
-        oscl_snprintf(iTextOutputBuf, 512, "   Length:%d  Capacity:%d\n", iMetadataValueList[i].length, iMetadataValueList[i].capacity);
-        iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-        iMetadataFile.Flush();
-    }
-
-    oscl_snprintf(iTextOutputBuf, 512, "\n\n");
-    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-    iMetadataFile.Flush();
 }
 
 
@@ -3485,21 +2972,14 @@ void pvframemetadata_async_test_novideotrack::Run()
 
         break;
 
-        case STATE_GETMETADATAKEYS1:
-        {
-            // Retrieve all the available metadata keys
-            iMetadataKeyList.clear();
-            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataKeys(iMetadataKeyList, 0, 50, NULL, (OsclAny*) & iContextObject));
-            OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
         case STATE_GETMETADATAVALUES1:
         {
             // Retrieve the values
             iMetadataValueList.clear();
+            iMetadataKeyList.clear();
+            iMetadataKeyList.push_back(OSCL_HeapString<OsclMemAllocator>("all"));
             iNumValues = 0;
-            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataValues(iMetadataKeyList, 0, 50, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
+            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataValues(iMetadataKeyList, 0, -1, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;
@@ -3515,21 +2995,14 @@ void pvframemetadata_async_test_novideotrack::Run()
         }
         break;
 
-        case STATE_GETMETADATAKEYS2:
-        {
-            // Retrieve all the available metadata keys
-            iMetadataKeyList.clear();
-            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataKeys(iMetadataKeyList, 0, 50, NULL, (OsclAny*) & iContextObject));
-            OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
-        }
-        break;
-
         case STATE_GETMETADATAVALUES2:
         {
             // Retrieve the values
             iMetadataValueList.clear();
+            iMetadataKeyList.clear();
+            iMetadataKeyList.push_back(OSCL_HeapString<OsclMemAllocator>("all"));
             iNumValues = 0;
-            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataValues(iMetadataKeyList, 0, 50, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
+            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->GetMetadataValues(iMetadataKeyList, 0, -1, iNumValues, iMetadataValueList, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;
@@ -3603,7 +3076,7 @@ void pvframemetadata_async_test_novideotrack::CommandCompleted(const PVCmdRespon
         case STATE_ADDDATASOURCE:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                iState = STATE_GETMETADATAKEYS1;
+                iState = STATE_GETMETADATAVALUES1;
                 RunIfNotReady();
             }
             else
@@ -3615,27 +3088,12 @@ void pvframemetadata_async_test_novideotrack::CommandCompleted(const PVCmdRespon
             }
             break;
 
-        case STATE_GETMETADATAKEYS1:
-            if (aResponse.GetCmdStatus() == PVMFSuccess)
-            {
-                iState = STATE_GETMETADATAVALUES1;
-                RunIfNotReady();
-            }
-            else
-            {
-                // GetMetadataKeys failed
-                PVFMUATB_TEST_IS_TRUE(false);
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-            }
-            break;
-
         case STATE_GETMETADATAVALUES1:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
                 oscl_snprintf(iTextOutputBuf, 512, "After AddDataSource():\n");
                 iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                SaveMetadataInfo();
+                SaveMetadataInfo(iTextOutputBuf, iMetadataValueList, iMetadataFile);
                 iState = STATE_GETFRAME;
                 RunIfNotReady();
             }
@@ -3654,23 +3112,8 @@ void pvframemetadata_async_test_novideotrack::CommandCompleted(const PVCmdRespon
                 PVFMUATB_TEST_IS_TRUE(false);
             }
 
-            iState = STATE_GETMETADATAKEYS2;
+            iState = STATE_GETMETADATAVALUES2;
             RunIfNotReady();
-            break;
-
-        case STATE_GETMETADATAKEYS2:
-            if (aResponse.GetCmdStatus() == PVMFSuccess)
-            {
-                iState = STATE_GETMETADATAVALUES2;
-                RunIfNotReady();
-            }
-            else
-            {
-                // GetMetadataKeys failed
-                PVFMUATB_TEST_IS_TRUE(false);
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-            }
             break;
 
         case STATE_GETMETADATAVALUES2:
@@ -3678,7 +3121,7 @@ void pvframemetadata_async_test_novideotrack::CommandCompleted(const PVCmdRespon
             {
                 oscl_snprintf(iTextOutputBuf, 512, "After GetFrame():\n");
                 iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                SaveMetadataInfo();
+                SaveMetadataInfo(iTextOutputBuf, iMetadataValueList, iMetadataFile);
                 iState = STATE_REMOVEDATASOURCE;
                 RunIfNotReady();
             }
@@ -3729,104 +3172,6 @@ void pvframemetadata_async_test_novideotrack::HandleInformationalEvent(const PVA
 {
     OSCL_UNUSED_ARG(aEvent);
 }
-
-
-void pvframemetadata_async_test_novideotrack::SaveMetadataInfo()
-{
-    uint32 i = 0;
-
-    oscl_snprintf(iTextOutputBuf, 512, "Metadata key list (count=%d):\n", iMetadataKeyList.size());
-    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-
-    for (i = 0; i < iMetadataKeyList.size(); ++i)
-    {
-        oscl_snprintf(iTextOutputBuf, 512, "Key %d: %s\n", (i + 1), iMetadataKeyList[i].get_cstr());
-        iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-    }
-
-    oscl_snprintf(iTextOutputBuf, 512, "\nMetadata value list (count=%d):\n", iMetadataValueList.size());
-    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-    iMetadataFile.Flush();
-
-    for (i = 0; i < iMetadataValueList.size(); ++i)
-    {
-        oscl_snprintf(iTextOutputBuf, 512, "Value %d:\n   Key string: %s\n", (i + 1), iMetadataValueList[i].key);
-        iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-
-        switch (GetValTypeFromKeyString(iMetadataValueList[i].key))
-        {
-            case PVMI_KVPVALTYPE_CHARPTR:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%s\n", iMetadataValueList[i].value.pChar_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_WCHARPTR:
-            {
-                // Assume string is in UCS-2 encoding so convert to UTF-8
-                char tmpstr[65];
-                oscl_UnicodeToUTF8(iMetadataValueList[i].value.pWChar_value,
-                                   oscl_strlen(iMetadataValueList[i].value.pWChar_value), tmpstr, 65);
-                tmpstr[64] = 0;
-                oscl_snprintf(iTextOutputBuf, 512, "   Value(in UTF-8, first 64 chars):%s\n", tmpstr);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-            }
-            break;
-
-            case PVMI_KVPVALTYPE_UINT32:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%d\n", iMetadataValueList[i].value.uint32_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_INT32:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%d\n", iMetadataValueList[i].value.int32_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_UINT8:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%d\n", iMetadataValueList[i].value.uint8_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_FLOAT:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%f\n", iMetadataValueList[i].value.float_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_DOUBLE:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value:%f\n", iMetadataValueList[i].value.double_value);
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-
-            case PVMI_KVPVALTYPE_BOOL:
-                if (iMetadataValueList[i].value.bool_value)
-                {
-                    oscl_snprintf(iTextOutputBuf, 512, "   Value:true(1)\n");
-                    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                }
-                else
-                {
-                    oscl_snprintf(iTextOutputBuf, 512, "   Value:false(0)\n");
-                    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-
-                }
-                break;
-
-            default:
-                oscl_snprintf(iTextOutputBuf, 512, "   Value: UNKNOWN VALUE TYPE\n");
-                iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-                break;
-        }
-
-        oscl_snprintf(iTextOutputBuf, 512, "   Length:%d  Capacity:%d\n", iMetadataValueList[i].length, iMetadataValueList[i].capacity);
-        iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-        iMetadataFile.Flush();
-    }
-
-    oscl_snprintf(iTextOutputBuf, 512, "\n\n");
-    iMetadataFile.Write(iTextOutputBuf, sizeof(char), oscl_strlen(iTextOutputBuf));
-    iMetadataFile.Flush();
-}
-
 
 
 //
@@ -4086,7 +3431,7 @@ void pvframemetadata_async_test_settimeout_getframe::CommandCompleted(const PVCm
             // Expected result is PVMFErrTimeout
             if (aResponse.GetCmdStatus() == PVMFErrTimeout)
             {
-                SaveVideoFrame();
+                SaveVideoFrame(iFrameFile, iFrameBuffer, iFrameBufferSize);
                 iState = STATE_REMOVEDATASOURCE;
                 RunIfNotReady();
             }
@@ -4143,19 +3488,6 @@ void pvframemetadata_async_test_settimeout_getframe::HandleErrorEvent(const PVAs
 void pvframemetadata_async_test_settimeout_getframe::HandleInformationalEvent(const PVAsyncInformationalEvent& aEvent)
 {
     OSCL_UNUSED_ARG(aEvent);
-}
-
-
-void pvframemetadata_async_test_settimeout_getframe::SaveMetadataInfo()
-{
-
-}
-
-void pvframemetadata_async_test_settimeout_getframe::SaveVideoFrame()
-{
-    // Write the retrieved video frame data to file
-    iFrameFile.Write(iFrameBuffer, 1, iFrameBufferSize);
-    iFrameFile.Flush();
 }
 
 

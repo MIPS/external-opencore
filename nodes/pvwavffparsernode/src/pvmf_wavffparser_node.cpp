@@ -616,9 +616,6 @@ PVMFStatus PVMFWAVFFParserNode::HandleExtensionAPICommands()
         case PVMF_GENERIC_NODE_SET_DATASOURCE_RATE:
             status = DoSetDataSourceRate();
             break;
-        case PVMF_GENERIC_NODE_GETNODEMETADATAKEYS:
-            status = DoGetNodeMetadataKey();
-            break;
         case PVMF_GENERIC_NODE_GETNODEMETADATAVALUES:
             status = DoGetNodeMetadataValue();
             break;
@@ -1548,85 +1545,71 @@ bool PVMFWAVFFParserNode::MapWAVErrorCodeToEventCode(int32 aWAVErrCode, PVUuid& 
 }
 
 // Metadata handling
-uint32 PVMFWAVFFParserNode::GetNumMetadataKeys(char* aQueryKeyString)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::GetNumMetadataKeys() called"));
-
-    uint32 num_entries = 0;
-
-    if (aQueryKeyString == NULL)
-    {
-        // No query key so just return all the available keys
-        num_entries = iAvailableMetadataKeys.size();
-    }
-    else
-    {
-        // Determine the number of metadata keys based on the query key string provided
-        for (uint32 i = 0; i < iAvailableMetadataKeys.size(); i++)
-        {
-            // Check if the key matches the query key
-            if (pv_mime_strcmp(iAvailableMetadataKeys[i].get_cstr(), aQueryKeyString) >= 0)
-            {
-                num_entries++;
-            }
-        }
-    }
-
-    return num_entries;
-}
-
-
 uint32 PVMFWAVFFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::GetNumMetadataValues() called"));
 
-    uint32 numkeys = aKeyList.size();
-
-    if (iWAVParser == NULL || numkeys == 0)
+    if (iWAVParser == NULL || aKeyList.size() == 0)
     {
         return 0;
     }
 
+    PVMFMetadataList* keylistptr = &aKeyList;
+    //If numkeys is one, just check to see if the request
+    //is for ALL metadata
+    if (keylistptr->size() == 1)
+    {
+        if (oscl_strncmp((*keylistptr)[0].get_cstr(),
+                         PVWAVMETADATA_ALL_METADATA_KEY,
+                         oscl_strlen(PVWAVMETADATA_ALL_METADATA_KEY)) == 0)
+        {
+            //use the complete metadata key list
+            keylistptr = &iAvailableMetadataKeys;
+        }
+    }
+
+
+    uint32 numkeys = keylistptr->size();
     // Count the number of metadata value entries based on the key list provided
     uint32 numvalentries = 0;
     for (uint32 lcv = 0; lcv < numkeys; lcv++)
     {
-        if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVWAVMETADATA_DURATION_KEY) == 0 &&
+        if (oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVWAVMETADATA_DURATION_KEY) == 0 &&
                 wavinfo.NumSamples > 0 && wavinfo.SampleRate > 0)
         {
             // Duration
             ++numvalentries;
         }
-        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVWAVMETADATA_NUMTRACKS_KEY) == 0)
+        else if (oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVWAVMETADATA_NUMTRACKS_KEY) == 0)
         {
             // Number of tracks
             ++numvalentries;
         }
-        else if ((oscl_strcmp(aKeyList[lcv].get_cstr(), PVWAVMETADATA_TRACKINFO_BITRATE_KEY) == 0) &&
+        else if ((oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVWAVMETADATA_TRACKINFO_BITRATE_KEY) == 0) &&
                  wavinfo.BitsPerSample > 0 && wavinfo.SampleRate > 0)
         {
             // Bitrate
             ++numvalentries;
         }
-        else if ((oscl_strcmp(aKeyList[lcv].get_cstr(), PVWAVMETADATA_TRACKINFO_AUDIO_CHANNELS_KEY) == 0) &&
+        else if ((oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVWAVMETADATA_TRACKINFO_AUDIO_CHANNELS_KEY) == 0) &&
                  wavinfo.NumChannels > 0)
         {
             // Number of channels
             ++numvalentries;
         }
-        else if ((oscl_strcmp(aKeyList[lcv].get_cstr(), PVWAVMETADATA_TRACKINFO_SAMPLERATE_KEY) == 0) &&
+        else if ((oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVWAVMETADATA_TRACKINFO_SAMPLERATE_KEY) == 0) &&
                  wavinfo.SampleRate > 0)
         {
             // Sampling rate
             ++numvalentries;
         }
-        else if ((oscl_strcmp(aKeyList[lcv].get_cstr(), PVWAVMETADATA_TRACKINFO_AUDIO_BITSPERSAMPLE_KEY) == 0) &&
+        else if ((oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVWAVMETADATA_TRACKINFO_AUDIO_BITSPERSAMPLE_KEY) == 0) &&
                  wavinfo.BitsPerSample > 0)
         {
             // Bits per sample
             ++numvalentries;
         }
-        else if ((oscl_strcmp(aKeyList[lcv].get_cstr(), PVWAVMETADATA_TRACKINFO_AUDIO_FORMAT_KEY) == 0) &&
+        else if ((oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVWAVMETADATA_TRACKINFO_AUDIO_FORMAT_KEY) == 0) &&
                  wavinfo.AudioFormat != 0)
         {
             // Format
@@ -1638,16 +1621,6 @@ uint32 PVMFWAVFFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
 }
 
 
-PVMFCommandId PVMFWAVFFParserNode::GetNodeMetadataKeys(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList, uint32 starting_index, int32 max_entries, char* query_key, const OsclAny* aContext)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::GetNodeMetadataKeys() called"));
-
-    PVMFNodeCommand cmd;
-    cmd.PVMFNodeCommand::Construct(aSessionId, PVMF_GENERIC_NODE_GETNODEMETADATAKEYS, aKeyList, starting_index, max_entries, query_key, aContext);
-    return QueueCommandL(cmd);
-}
-
-
 PVMFCommandId PVMFWAVFFParserNode::GetNodeMetadataValues(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, uint32 starting_index, int32 max_entries, const OsclAny* aContext)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::GetNodeMetadataValue() called"));
@@ -1655,16 +1628,6 @@ PVMFCommandId PVMFWAVFFParserNode::GetNodeMetadataValues(PVMFSessionId aSessionI
     PVMFNodeCommand cmd;
     cmd.PVMFNodeCommand::Construct(aSessionId, PVMF_GENERIC_NODE_GETNODEMETADATAVALUES, aKeyList, aValueList, starting_index, max_entries, aContext);
     return QueueCommandL(cmd);
-}
-
-// From PVMFMetadataExtensionInterface
-PVMFStatus PVMFWAVFFParserNode::ReleaseNodeMetadataKeys(PVMFMetadataList& ,
-        uint32 ,
-        uint32)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::ReleaseNodeMetadataKeys() called"));
-    //nothing needed-- there's no dynamic allocation in this node's key list
-    return PVMFSuccess;
 }
 
 // From PVMFMetadataExtensionInterface
@@ -1724,82 +1687,6 @@ PVMFStatus PVMFWAVFFParserNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, O
 
     return PVMFSuccess;
 }
-
-PVMFStatus PVMFWAVFFParserNode::DoGetNodeMetadataKey()
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFWAVFFParserNode::DoGetNodeMetadataKey() In"));
-
-    PVMFMetadataList* keylistptr = NULL;
-    uint32 starting_index;
-    int32 max_entries;
-    char* query_key;
-
-    iCurrentCommand.PVMFNodeCommand::Parse(keylistptr, starting_index, max_entries, query_key);
-
-    // Check parameters
-    if (keylistptr == NULL)
-    {
-        // The list pointer is invalid
-        return PVMFErrArgument;
-    }
-
-    if ((starting_index > (iAvailableMetadataKeys.size() - 1)) || max_entries == 0)
-    {
-        // Invalid starting index and/or max entries
-        return PVMFErrArgument;
-    }
-
-    // Copy the requested keys
-    uint32 num_entries = 0;
-    int32 num_added = 0;
-
-    for (uint32 lcv = 0; lcv < iAvailableMetadataKeys.size(); lcv++)
-    {
-        if (query_key == NULL)
-        {
-            // No query key so this key is counted
-            ++num_entries;
-            if (num_entries > starting_index)
-            {
-                // Past the starting index so copy the key
-                PVMFStatus status = PushBackMetadataKeys(keylistptr, lcv);
-                if (PVMFErrNoMemory == status)
-                {
-                    return status;
-                }
-                num_added++;
-            }
-        }
-        else
-        {
-            // Check if the key matche the query key
-            if (pv_mime_strcmp(iAvailableMetadataKeys[lcv].get_cstr(), query_key) >= 0)
-            {
-                // This key is counted
-                ++num_entries;
-                if (num_entries > starting_index)
-                {
-                    // Past the starting index so copy the key
-                    PVMFStatus status = PushBackMetadataKeys(keylistptr, lcv);
-                    if (PVMFErrNoMemory == status)
-                    {
-                        return status;
-                    }
-                    num_added++;
-                }
-            }
-        }
-
-        // Check if max number of entries have been copied
-        if (max_entries > 0 && num_added >= max_entries)
-        {
-            break;
-        }
-    }
-    return PVMFSuccess;
-}
-
-
 
 PVMFStatus PVMFWAVFFParserNode::DoGetNodeMetadataValue()
 {
@@ -2375,15 +2262,6 @@ int32 PVMFWAVFFParserNode::PushBackKeyVal(Oscl_Vector<PvmiKvp, OsclMemAllocator>
     int32 leavecode = 0;
     OSCL_TRY(leavecode, (*aValueListPtr).push_back(aKeyVal));
     return leavecode;
-}
-
-PVMFStatus PVMFWAVFFParserNode::PushBackMetadataKeys(PVMFMetadataList *&aKeyListPtr, uint32 aLcv)
-{
-    int32 leavecode = 0;
-    OSCL_TRY(leavecode, aKeyListPtr->push_back(iAvailableMetadataKeys[aLcv]));
-    OSCL_FIRST_CATCH_ANY(leavecode, PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFRMFFParserNode::DoGetMetadataKeys() Memory allocation failure when copying metadata key")); return PVMFErrNoMemory);
-
-    return PVMFSuccess;
 }
 
 PVMFStatus PVMFWAVFFParserNode::CancelCurrentCommand()

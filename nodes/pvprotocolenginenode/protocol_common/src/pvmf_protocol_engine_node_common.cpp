@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -220,7 +220,7 @@ OSCL_EXPORT_REF void ProtocolContainer::sendSocketDisconnectCmd()
     }
 }
 
-void ProtocolContainer::startDataFlowByCommand(const bool needDoSocketReconnect)
+OSCL_EXPORT_REF void ProtocolContainer::startDataFlowByCommand(const bool needDoSocketReconnect)
 {
     // flush out existing data at this point
     checkEOSMsgFromInputPort();
@@ -914,7 +914,7 @@ OSCL_EXPORT_REF void PVMFProtocolEngineNodeTimer::cancel(const uint32 aTimerID)
     }
 }
 
-void PVMFProtocolEngineNodeTimer::clear()
+OSCL_EXPORT_REF void PVMFProtocolEngineNodeTimer::clear()
 {
     for (uint32 i = 0; i < iTimerVec.size(); i++)
     {

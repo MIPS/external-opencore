@@ -240,23 +240,6 @@ class PVFrameAndMetadataInterface
 
 
         /**
-         * This function returns the current state of pvFrameAndMetadata utility.
-         * Application may use this info for updating display or determine if the
-         * pvFrameAndMetadata is ready for the next request.
-         * This command request is asynchronous. PVCommandStatusObserver's CommandCompleted()
-         * callback handler will be called when this command request completes.
-         *
-         * @param aState
-         *         A reference to a PVFrameAndMetadataState. Upon successful completion of this command,
-         *         it will contain the current state of pvFrameAndMetadata utility.
-         * @param aContextData
-         *         Optional opaque data that will be passed back to the user with the command response
-         * @returns A unique command ID for asynchronous completion
-         **/
-        virtual PVCommandId GetState(PVFrameAndMetadataState& aState, const OsclAny* aContextData = NULL) = 0;
-
-
-        /**
          * This function returns the current state of pvFrameAndMetadata utility as a synchronous command.
          * Application may use this info for updating display or determine if the
          * pvFrameAndMetadata is ready for the next request.
@@ -287,36 +270,6 @@ class PVFrameAndMetadataInterface
          * @return A unique command ID for asynchronous completion
          */
         virtual PVCommandId AddDataSource(PVPlayerDataSource& aDataSource, const OsclAny* aContextData = NULL) = 0;
-
-
-        /**
-         * This function makes a request to return the list of all or segment of available metadata keys from the specified
-         * data source.
-         * The list can be used to retrieve the associated metadata values with GetMetadataValues function.
-         * This command request is asynchronous. PVCommandStatusObserver's CommandCompleted()
-         * callback handler will be called when this command request completes.
-         *
-         * @param aKeyList
-         *         Reference to a vector to place the metadata key list.
-         * @param aStartingIndex
-         *         Input parameter to specify the starting index for aKeyList. This parameter along with aMaxEntries
-         *         allows us to retrieve the metadata key list in segments.
-         * @param aMaxEntries
-         *         Input parameter to specify the maximum number of entries to be added to aKeyList. If there is no limit, set to -1.
-         * @param aQueryKey
-         *         Input parameter to narrow down the list of requested keys. For example,
-         *         "track-info/video" indicates all keys related to "track-info/video". for eg:
-         *         "track-info/video/width" "track-info/video/height". A NULL value indicates that all
-         *         keys are requested.
-         * @param aContextData
-         *         Optional opaque data that will be passed back to the user with the command response
-         * @leave This method can leave with one of the following error codes
-         *         OsclErrInvalidState if invoked in the incorrect state
-         *         OsclErrNoMemory if the utility failed to allocate memory during this operation
-         * @returns A unique command ID for asynchronous completion
-         **/
-        virtual PVCommandId GetMetadataKeys(PVPMetadataList& aKeyList, int32 aStartingIndex = 0, int32 aMaxEntries = -1,
-                                            char* aQueryKey = NULL, const OsclAny* aContextData = NULL) = 0;
 
 
         /**

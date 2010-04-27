@@ -184,44 +184,6 @@ class OSCL_IMPORT_REF PVMFSMFSPBaseNodeCommand : public PVMFSMFSPBaseNodeCommand
             aTimebase = (PVMFTimebase*)iParam2;
         }
 
-        /* Constructor and parser for GetNodeMetadataKeys */
-        void Construct(PVMFSessionId s,
-                       int32 cmd,
-                       PVMFMetadataList& aKeyList,
-                       int32 aStartingIndex,
-                       int32 aMaxEntries,
-                       char* aQueryKey,
-                       const OsclAny* aContext)
-        {
-            PVMFSMFSPBaseNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*) & aKeyList;
-            iParam2 = (OsclAny*)aStartingIndex;
-            iParam3 = (OsclAny*)aMaxEntries;
-            if (aQueryKey)
-            {
-                /*allocate a copy of the query key string */
-                Oscl_TAlloc<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> str;
-                iParam4 = str.ALLOC_AND_CONSTRUCT(aQueryKey);
-            }
-        }
-
-        void Parse(PVMFMetadataList*& MetaDataListPtr,
-                   uint32 &aStartingIndex,
-                   int32 &aMaxEntries,
-                   char*& aQueryKey)
-        {
-            MetaDataListPtr = (PVMFMetadataList*)iParam1;
-            aStartingIndex = (uint32)iParam2;
-            aMaxEntries = (int32)iParam3;
-            aQueryKey = NULL;
-            if (iParam4)
-            {
-                OSCL_HeapString<OsclMemAllocator>* keystring =
-                    (OSCL_HeapString<OsclMemAllocator>*)iParam4;
-                aQueryKey = keystring->get_str();
-            }
-        }
-
         /* Constructor and parser for GetNodeMetadataValue */
         void Construct(PVMFSessionId s,
                        int32 cmd,

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,6 @@ enum TPVMFCPMCommand
     PVMF_CPM_USAGE_COMPLETE,
     PVMF_CPM_CLOSE_SESSION,
     PVMF_CPM_RESET,
-    PVMF_CPM_GET_METADATA_KEYS,
     PVMF_CPM_GET_METADATA_VALUES,
     PVMF_CPM_COMMAND_LAST
 };
@@ -218,43 +217,6 @@ class PVMFCPMCommand : public PVMFCPMCommandBase
             aArg1 = iParam1;
         };
 
-        /* Constructor and parser for GetNodeMetadataKeys */
-        void Construct(PVMFSessionId s,
-                       int32 cmd,
-                       PVMFMetadataList& aKeyList,
-                       int32 aStartingIndex,
-                       int32 aMaxEntries,
-                       char* aQueryKey,
-                       const OsclAny* aContext)
-        {
-            PVMFCPMCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*) & aKeyList;
-            iParam2 = (OsclAny*)aStartingIndex;
-            iParam3 = (OsclAny*)aMaxEntries;
-            if (aQueryKey)
-            {
-                /* allocate a copy of the query key string. */
-                Oscl_TAlloc<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> str;
-                iParam4 = str.alloc_and_construct(aQueryKey);
-            }
-        }
-        void Parse(PVMFMetadataList*& MetaDataListPtr,
-                   int32 &aStartingIndex,
-                   int32 &aMaxEntries,
-                   char*& aQueryKey)
-        {
-            MetaDataListPtr = (PVMFMetadataList*)iParam1;
-            aStartingIndex = (int32)iParam2;
-            aMaxEntries = (int32)iParam3;
-            aQueryKey = NULL;
-            if (iParam4)
-            {
-                OSCL_HeapString<OsclMemAllocator>* keystring =
-                    (OSCL_HeapString<OsclMemAllocator>*)iParam4;
-                aQueryKey = keystring->get_str();
-            }
-        }
-
         /* Constructor and parser for GetNodeMetadataValue */
         void Construct(PVMFSessionId s,
                        int32 cmd,
@@ -344,10 +306,7 @@ class CPMPlugInParams
                 PVMF_CPM_DEFAULT_PLUGIN_AUTHORIZATION_TIMEOUT_IN_MS;
             iConnected = false;
             iAuthorized = false;
-            iNumMetaDataKeysAvailable = 0;
             iNumMetaDataValuesAvailable = 0;
-            iMetaDataKeyStartIndex = 0;
-            iMetaDataKeyEndIndex = 0;
             iMetaDataValueStartIndex = 0;
             iMetaDataValueEndIndex = 0;
             iActive = false;
@@ -374,11 +333,8 @@ class CPMPlugInParams
         uint32 iAuthorizationRequestTimeOut;
         bool iConnected;
         bool iAuthorized;
-        uint32 iNumMetaDataKeysAvailable;
         Oscl_Vector<OSCL_HeapString<OsclMemAllocator>, OsclMemAllocator> iAvailableMetadataKeys;
         uint32 iNumMetaDataValuesAvailable;
-        uint32 iMetaDataKeyStartIndex;
-        uint32 iMetaDataKeyEndIndex;
         uint32 iMetaDataValueStartIndex;
         uint32 iMetaDataValueEndIndex;
 
@@ -499,23 +455,13 @@ class PVMFCPMImpl
 
         /* From PVMFMetadataExtensionInterface */
         OSCL_IMPORT_REF PVMFStatus SetMetadataClipIndex(uint32 aClipNum);
-        OSCL_IMPORT_REF uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL);
         OSCL_IMPORT_REF uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
-        OSCL_IMPORT_REF PVMFCommandId GetNodeMetadataKeys(PVMFSessionId aSessionId,
-                PVMFMetadataList& aKeyList,
-                uint32 aStartingKeyIndex,
-                int32 aMaxKeyEntries,
-                char* aQueryKeyString = NULL,
-                const OsclAny* aContextData = NULL);
         OSCL_IMPORT_REF PVMFCommandId GetNodeMetadataValues(PVMFSessionId aSessionId,
                 PVMFMetadataList& aKeyList,
                 Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
                 uint32 aStartingValueIndex,
                 int32 aMaxValueEntries = -1,
                 const OsclAny* aContextData = NULL);
-        OSCL_IMPORT_REF PVMFStatus ReleaseNodeMetadataKeys(PVMFMetadataList& aKeyList,
-                uint32 aStartingKeyIndex,
-                uint32 aEndKeyIndex);
         OSCL_IMPORT_REF PVMFStatus ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
                 uint32 aStartingValueIndex,
                 uint32 aEndValueIndex);
@@ -592,8 +538,6 @@ class PVMFCPMImpl
         void DoApproveUsage(PVMFCPMCommand&);
         PVMFStatus RequestApprovalFromActivePlugIns(PVMFCPMCommand& aCmd);
         void CompleteApproveUsage(CPMContentUsageContext*);
-        PVMFStatus QueryForMetaDataKeys_P(PVMFCPMCommand& aParentCmd);
-        void CompleteGetMetaDataKeys(uint32);
 
         void DoUsageComplete(PVMFCPMCommand&);
         PVMFStatus SendUsageCompleteToRegisteredPlugIns_P(PVMFCPMUsageID);
@@ -605,9 +549,7 @@ class PVMFCPMImpl
         PVMFStatus ResetRegisteredPlugIns();
         void CompleteCPMReset();
 
-        PVMFStatus DoGetMetadataKeys_P(PVMFCPMCommand& aCmd);
         void DoGetMetadataValues(PVMFCPMCommand& aCmd);
-        PVMFStatus CompleteDoGetMetadataKeys(PVMFCPMCommand& aCmd);
         PVMFStatus SendGetMetaDataValuesToPlugIn_P(CPMPlugInParams*);
         void CompleteGetMetaDataValues(PVMFCPMCommandContext*);
 
@@ -638,7 +580,6 @@ class PVMFCPMImpl
         uint32 iNumRegisteredPlugInResetPending;
         uint32 iNumRegisteredPlugInResetComplete;
 
-        PVMFSessionId iGetMetaDataKeysSessionId;
         PVMFSessionId iGetMetaDataValuesSessionId;
 
         /* Metadata related */

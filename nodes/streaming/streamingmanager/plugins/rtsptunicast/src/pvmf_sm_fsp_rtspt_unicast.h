@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -208,13 +208,8 @@ class PVMFSMRTSPTUnicastNode: public PVMFSMFSPBaseNode
 
         /* From PVMFMetadataExtensionInterface */
         OSCL_IMPORT_REF PVMFStatus SetMetadataClipIndex(uint32 aClipNum);
-        OSCL_IMPORT_REF virtual uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL);
         OSCL_IMPORT_REF virtual uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
-        OSCL_IMPORT_REF PVMFCommandId DoGetMetadataKeys(PVMFSMFSPBaseNodeCommand& aCmd);
         OSCL_IMPORT_REF PVMFCommandId DoGetMetadataValues(PVMFSMFSPBaseNodeCommand& aCmd);
-        OSCL_IMPORT_REF virtual PVMFStatus ReleaseNodeMetadataKeys(PVMFMetadataList& aKeyList,
-                uint32 aStartingKeyIndex,
-                uint32 aEndKeyIndex);
         OSCL_IMPORT_REF virtual PVMFStatus ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
                 uint32 aStartingValueIndex,
                 uint32 aEndValueIndex);

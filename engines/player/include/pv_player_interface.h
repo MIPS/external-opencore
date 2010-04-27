@@ -348,37 +348,6 @@ class PVPlayerInterface
         virtual PVCommandId Init(const OsclAny* aContextData = NULL) = 0;
 
         /**
-         * This function makes a request to return the list of all or segment of available metadata keys in the current pvPlayer state.
-         * The metadata key list is dynamic and can change during the course of pvPlayer usage.
-         * The list can be used to retrieve the metadata values with GetMetadataValues function.
-         * This command request is asynchronous. PVCommandStatusObserver's CommandCompleted()
-         * callback handler will be called when this command request completes.
-         *
-         * @param aKeyList
-         *         Reference to a vector to place the metadata key list.
-         * @param aStartingIndex
-         *         Input parameter to specify the starting index for aKeyList. This parameter along with aMaxEntries
-         *         allows us to retrieve the metadata key list in segments.
-         * @param aMaxEntries
-         *         Input parameter to specify the maximum number of entries to be added to aKeyList. If there is no limit, set to -1.
-         * @param aQueryKey
-         *         Input parameter to narrow down the list of requested keys. For example,
-         *         "track-info/video" indicates all keys related to "track-info/video". for eg:
-         *         "track-info/video/width" "track-info/video/height". A NULL value indicates that all
-         *         keys are requested.
-         * @param aContextData
-         *         Optional opaque data that will be passed back to the user with the command response
-         * @param aClipIndex: an optional parameter for use with playlists to select the clip of interest.
-         * @leave This method can leave with one of the following error codes
-         *         OsclErrInvalidState if invoked in the incorrect state
-         *         OsclErrNoMemory if the SDK failed to allocate memory during this operation
-         * @returns A unique command id for asynchronous completion
-         **/
-        virtual PVCommandId GetMetadataKeys(PVPMetadataList& aKeyList, int32 aStartingIndex = 0, int32 aMaxEntries = -1,
-                                            char* aQueryKey = NULL, const OsclAny* aContextData = NULL,
-                                            uint32 aClipIndex = 0) = 0;
-
-        /**
          * The function makes a request to return the metadata value(s) specified by the passed in metadata key list.
          * If the requeted metadata value is unavailable or the metadata key is invalid, the returned list will not contain
          * a KVP entry for the key. Note that value indexed in the returned aValueList does not necessary match the same index into

@@ -158,7 +158,6 @@ enum TPVMFCPMPassThruPlugInOMA1Command
     , PVMF_CPM_PASSTHRU_PLUGIN_OMA1_USAGE_COMPLETE
     , PVMF_CPM_PASSTHRU_PLUGIN_OMA1_GET_LICENSE
     , PVMF_CPM_PASSTHRU_PLUGIN_OMA1_CANCEL_GET_LICENSE
-    , PVMF_CPM_PASSTHRU_PLUGIN_OMA1_METADATA_KEYS
     , PVMF_CPM_PASSTHRU_PLUGIN_OMA1_METADATA_VALUES
 };
 
@@ -267,23 +266,13 @@ class PVMFCPMPassThruPlugInOMA1 : public OsclActiveObject,
         OSCL_IMPORT_REF void SetObserver(PVMFCPMStatusObserver& aObserver);
         //From PVMFMetadataExtensionInterface
         OSCL_IMPORT_REF PVMFStatus SetMetadataClipIndex(uint32 aClipIndex);
-        OSCL_IMPORT_REF uint32 GetNumMetadataKeys(char* aQueryKeyString = NULL) ;
         OSCL_IMPORT_REF uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList) ;
-        OSCL_IMPORT_REF PVMFCommandId GetNodeMetadataKeys(PVMFSessionId aSessionId,
-                PVMFMetadataList& aKeyList,
-                uint32 aStartingKeyIndex,
-                int32 aMaxKeyEntries = -1,
-                char* aQueryKeyString = NULL,
-                const OsclAny* aContextData = NULL) ;
         OSCL_IMPORT_REF PVMFCommandId GetNodeMetadataValues(PVMFSessionId aSessionId,
                 PVMFMetadataList& aKeyList,
                 Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
                 uint32 aStartingValueIndex,
                 int32 aMaxValueEntries = -1,
                 const OsclAny* aContextData = NULL) ;
-        OSCL_IMPORT_REF PVMFStatus ReleaseNodeMetadataKeys(PVMFMetadataList& aKeyList,
-                uint32 aStartingKeyIndex,
-                uint32 aEndKeyIndex) ;
         OSCL_IMPORT_REF PVMFStatus ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList,
                 uint32 aStartingValueIndex,
                 uint32 aEndValueIndex) ;
@@ -320,7 +309,6 @@ class PVMFCPMPassThruPlugInOMA1 : public OsclActiveObject,
         void DoUsageComplete(PVMFCPMPassThruPlugInOMA1Command& aCmd);
         PVMFStatus DoGetLicense(PVMFCPMPassThruPlugInOMA1Command& aCmd);
         void DoCancelGetLicense(PVMFCPMPassThruPlugInOMA1Command& aCmd);
-        void DoMetadataKeys(PVMFCPMPassThruPlugInOMA1Command& aCmd);
         void DoMetadataValues(PVMFCPMPassThruPlugInOMA1Command& aCmd);
 
         PVLogger* iLogger;

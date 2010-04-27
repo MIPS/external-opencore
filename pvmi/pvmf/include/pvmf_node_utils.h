@@ -209,16 +209,15 @@ enum TPVMFGenericNodeCommand
     PVMF_GENERIC_NODE_QUERY_DATASOURCE_POSITION, // 13
     PVMF_GENERIC_NODE_SET_DATASOURCE_RATE, // 14
     //From PVMFMetadataExtensionInterface
-    PVMF_GENERIC_NODE_GETNODEMETADATAKEYS, // 15
-    PVMF_GENERIC_NODE_GETNODEMETADATAVALUES, // 16
+    PVMF_GENERIC_NODE_GETNODEMETADATAVALUES, // 15
     //From PvmfDataSourceDirectionControlInterface
-    PVMF_GENERIC_NODE_SET_DATASOURCE_DIRECTION, // 17
+    PVMF_GENERIC_NODE_SET_DATASOURCE_DIRECTION, // 16
     //From PVMFCPMPluginLicenseInterface
-    PVMF_GENERIC_NODE_GET_LICENSE_W, // 18
-    PVMF_GENERIC_NODE_GET_LICENSE, // 19
-    PVMF_GENERIC_NODE_CANCEL_GET_LICENSE, // 20
+    PVMF_GENERIC_NODE_GET_LICENSE_W, // 17
+    PVMF_GENERIC_NODE_GET_LICENSE, // 18
+    PVMF_GENERIC_NODE_CANCEL_GET_LICENSE, // 19
     //Node Private command
-    PVMF_GENERIC_NODE_CAPCONFIG_SETPARAMS, // 21
+    PVMF_GENERIC_NODE_CAPCONFIG_SETPARAMS, // 20
     PVMF_GENERIC_NODE_COMMAND_LAST //a placeholder for adding
     //node-specific commands to this list.
 };
@@ -352,6 +351,7 @@ class PVMFGenericNodeCommand
                 default:
                     break;
             }
+            iCmd = PVMF_GENERIC_NODE_COMMAND_INVALID;
         }
 
         //command copy.  derived class can override this to allocate

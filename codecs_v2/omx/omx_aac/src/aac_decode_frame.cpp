@@ -161,6 +161,8 @@ Int OmxAacDecoder::AacDecodeFrames(OMX_S16* aOutputBuffer,
         }
 
 
+        // record the number of channels (original, i.e. encoded) - the PCM side will always use 2 channels
+        aAudioAacParam->nChannels = iExt.encodedChannels;
         /*
          *  *aInBufSize -= iExt.inputBufferUsedLength;  should render *aInBufSize == 0,
          *  If the size of the audio config buffer exceeds the size of the audio config data
@@ -232,6 +234,8 @@ Int OmxAacDecoder::AacDecodeFrames(OMX_S16* aOutputBuffer,
 
             //Input Port Parameters
             aAudioAacParam->nSampleRate = iExt.samplingRate;
+            // record the number of channels (original, i.e. encoded) - the PCM side will always use 2 channels
+            aAudioAacParam->nChannels = iExt.encodedChannels;
 
             //Set the Resize flag to send the port settings changed callback
             *aResizeFlag = OMX_TRUE;

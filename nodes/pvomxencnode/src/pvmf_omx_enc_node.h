@@ -342,7 +342,6 @@ class PVMFOMXEncNodeCommand: public PVMFOMXEncNodeCommandBase
             PVOMXENC_NODE_CMD_RESET,
             PVOMXENC_NODE_CMD_CANCELALL,
             PVOMXENC_NODE_CMD_CANCELCMD,
-            PVOMXENC_NODE_CMD_GETNODEMETADATAKEY,
             PVOMXENC_NODE_CMD_GETNODEMETADATAVALUE,
             PVOMXENC_NODE_CMD_INVALID
         };
@@ -1008,13 +1007,9 @@ class PVMFOMXEncNode
         {
             return (aClipIndex == 0) ? PVMFSuccess : PVMFErrArgument;
         }
-        uint32 GetNumMetadataKeys(char* query_key = NULL);
         uint32 GetNumMetadataValues(PVMFMetadataList& aKeyList);
-        PVMFCommandId GetNodeMetadataKeys(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList, uint32 starting_index, int32 max_entries,
-                                          char* query_key = NULL, const OsclAny* aContextData = NULL);
         PVMFCommandId GetNodeMetadataValues(PVMFSessionId aSessionId, PVMFMetadataList& aKeyList,
                                             Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, uint32 starting_index, int32 max_entries, const OsclAny* aContextData = NULL);
-        PVMFStatus ReleaseNodeMetadataKeys(PVMFMetadataList& aKeyList, uint32 starting_index, uint32 end_index);
         PVMFStatus ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, OsclMemAllocator>& aValueList, uint32 starting_index, uint32 end_index);
         //**********End PVMFMetadataExtensionInterface
 
@@ -1154,7 +1149,6 @@ class PVMFOMXEncNode
         void DoPause(PVMFOMXEncNodeCommand&);
         void DoReset(PVMFOMXEncNodeCommand&);
         void DoFlush(PVMFOMXEncNodeCommand&);
-        PVMFStatus DoGetNodeMetadataKey(PVMFOMXEncNodeCommand&);
         PVMFStatus DoGetNodeMetadataValue(PVMFOMXEncNodeCommand&);
         void DoCancelAllCommands(PVMFOMXEncNodeCommand&);
         void DoCancelCommand(PVMFOMXEncNodeCommand&);

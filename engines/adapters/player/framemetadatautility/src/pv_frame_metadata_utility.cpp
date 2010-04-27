@@ -172,32 +172,15 @@ PVCommandId PVFrameAndMetadataUtility::CancelAllCommands(const OsclAny* aContext
 }
 
 
-PVCommandId PVFrameAndMetadataUtility::GetState(PVFrameAndMetadataState& aState, const OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::GetState()"));
-
-    Oscl_Vector<PVFMUtilityCommandParamUnion, OsclMemAllocator> paramvec;
-    paramvec.reserve(1);
-    paramvec.clear();
-    PVFMUtilityCommandParamUnion param;
-    param.pOsclAny_value = (OsclAny*) & aState;
-    paramvec.push_back(param);
-    return AddCommandToQueue(PVFM_UTILITY_COMMAND_GET_STATE, (OsclAny*)aContextData, &paramvec);
-}
-
-
 PVMFStatus PVFrameAndMetadataUtility::GetStateSync(PVFrameAndMetadataState& aState)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::GetStateSync()"));
 
-    Oscl_Vector<PVFMUtilityCommandParamUnion, OsclMemAllocator> paramvec;
-    paramvec.reserve(1);
-    paramvec.clear();
-    PVFMUtilityCommandParamUnion param;
-    param.pOsclAny_value = (OsclAny*) & aState;
-    paramvec.push_back(param);
-    PVFMUtilityCommand cmd(PVFM_UTILITY_COMMAND_GET_STATE, -1, NULL, &paramvec);
-    return DoGetState(cmd, true);
+    // Get current utility state using internal function
+    aState = GetUtilityState();
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoGetState() Out"));
+    return PVMFSuccess;
 }
 
 
@@ -214,29 +197,6 @@ PVCommandId PVFrameAndMetadataUtility::AddDataSource(PVPlayerDataSource& aDataSo
     param.pOsclAny_value = (OsclAny*) & aDataSource;
     paramvec.push_back(param);
     return AddCommandToQueue(PVFM_UTILITY_COMMAND_ADD_DATA_SOURCE, (OsclAny*)aContextData, &paramvec);
-}
-
-
-PVCommandId PVFrameAndMetadataUtility::GetMetadataKeys(PVPMetadataList& aKeyList, int32 aStartingIndex, int32 aMaxEntries,
-        char* aQueryKey, const OsclAny* aContextData)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::GetMetadataKeys()"));
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iPerfLogger, PVLOGMSG_NOTICE,
-                    (0, "PVFrameAndMetadataUtility::GetMetadataKeys called Tick=%d", OsclTickCount::TickCount()));
-
-    Oscl_Vector<PVFMUtilityCommandParamUnion, OsclMemAllocator> paramvec;
-    paramvec.reserve(4);
-    paramvec.clear();
-    PVFMUtilityCommandParamUnion param;
-    param.pOsclAny_value = (OsclAny*) & aKeyList;
-    paramvec.push_back(param);
-    param.int32_value = aStartingIndex;
-    paramvec.push_back(param);
-    param.int32_value = aMaxEntries;
-    paramvec.push_back(param);
-    param.pChar_value = aQueryKey;
-    paramvec.push_back(param);
-    return AddCommandToQueue(PVFM_UTILITY_COMMAND_GET_METADATA_KEYS, (OsclAny*)aContextData, &paramvec);
 }
 
 
@@ -507,16 +467,8 @@ void PVFrameAndMetadataUtility::Run()
                 cmdstatus = DoQueryInterface(cmd);
                 break;
 
-            case PVFM_UTILITY_COMMAND_GET_STATE:
-                cmdstatus = DoGetState(cmd, false);
-                break;
-
             case PVFM_UTILITY_COMMAND_ADD_DATA_SOURCE:
                 cmdstatus = DoAddDataSource(cmd);
-                break;
-
-            case PVFM_UTILITY_COMMAND_GET_METADATA_KEYS:
-                cmdstatus = DoGetMetadataKeys(cmd);
                 break;
 
             case PVFM_UTILITY_COMMAND_GET_METADATA_VALUES:
@@ -610,7 +562,6 @@ void PVFrameAndMetadataUtility::CommandCompleted(const PVCmdResponse& aResponse)
                 HandleDataSourceCommand(*context, aResponse);
                 break;
 
-            case PVFM_CMD_GetMetadataKeys:
             case PVFM_CMD_GetMetadataValues:
             case PVFM_CMD_PlayerSetParametersSync:
                 HandleCommandComplete2(*context, aResponse);
@@ -1049,7 +1000,6 @@ void PVFrameAndMetadataUtility::DoCancelCommandBeingProcessed()
     {
         case PVFM_UTILITY_COMMAND_QUERY_INTERFACE:
         case PVFM_UTILITY_COMMAND_ADD_DATA_SOURCE:
-        case PVFM_UTILITY_COMMAND_GET_METADATA_KEYS:
         case PVFM_UTILITY_COMMAND_GET_METADATA_VALUES:
         case PVFM_UTILITY_COMMAND_GET_FRAME_USER_BUFFER:
         case PVFM_UTILITY_COMMAND_GET_FRAME_UTILITY_BUFFER:
@@ -1075,12 +1025,6 @@ void PVFrameAndMetadataUtility::DoCancelCommandBeingProcessed()
                 iCmdToCancel.clear();
                 UtilityCommandCompleted(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext(), PVMFSuccess);
             }
-            break;
-
-        case PVFM_UTILITY_COMMAND_GET_STATE:
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoCancelCommandBeingProcessed() Should not need to cancel GetState() since it completes in one Run."));
-            // Complete the CancelAllCommands()
-            UtilityCommandCompleted(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext(), PVMFSuccess);
             break;
 
         case PVFM_UTILITY_COMMAND_CANCEL_ALL_COMMANDS:
@@ -1171,31 +1115,6 @@ PVMFStatus PVFrameAndMetadataUtility::DoPlayerQueryInterface(PVCommandId aCmdId,
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoPlayerQueryInterface() Out"));
     return PVMFSuccess;
 }
-
-
-PVMFStatus PVFrameAndMetadataUtility::DoGetState(PVFMUtilityCommand& aCmd, bool aSyncCmd)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoGetState() In"));
-
-    PVFrameAndMetadataState* state = (PVFrameAndMetadataState*)(aCmd.GetParam(0).pOsclAny_value);
-    if (state == NULL)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoGetState() Passed in parameter invalid."));
-        return PVMFErrArgument;
-    }
-
-    // Get current utility state using internal function
-    *state = GetUtilityState();
-
-    if (!aSyncCmd)
-    {
-        UtilityCommandCompleted(aCmd.GetCmdId(), aCmd.GetContext(), PVMFSuccess);
-    }
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoGetState() Out"));
-    return PVMFSuccess;
-}
-
 
 PVMFStatus PVFrameAndMetadataUtility::DoAddDataSource(PVFMUtilityCommand& aCmd)
 {
@@ -1294,39 +1213,6 @@ PVMFStatus PVFrameAndMetadataUtility::DoAddDataSource(PVFMUtilityCommand& aCmd)
     SetUtilityState(PVFM_UTILITY_STATE_INITIALIZING);
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoAddDataSource() Out"));
-    return PVMFSuccess;
-}
-
-PVMFStatus PVFrameAndMetadataUtility::DoGetMetadataKeys(PVFMUtilityCommand& aCmd)
-{
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoGetMetadataKeys() In"));
-
-    if (GetUtilityState() == PVFM_STATE_IDLE || GetUtilityState() == PVFM_STATE_ERROR)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoGetMetadataKeys() Wrong state."));
-        return PVMFErrInvalidState;
-    }
-
-    PVPMetadataList* keylist = (PVPMetadataList*)(aCmd.GetParam(0).pOsclAny_value);
-    int32 startingkeyindex = aCmd.GetParam(1).int32_value;
-    int32 maxkeyentries = aCmd.GetParam(2).int32_value;
-    char* querykey = aCmd.GetParam(3).pChar_value;
-
-    if (keylist == NULL || maxkeyentries < -1 || maxkeyentries == 0 || startingkeyindex < 0)
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVFrameAndMetadataUtility::DoGetMetadataKeys() Passed in parameter invalid."));
-        return PVMFErrArgument;
-    }
-
-    iUtilityContext.iCmdId = aCmd.GetCmdId();
-    iUtilityContext.iCmdContext = aCmd.GetContext();
-    iUtilityContext.iCmdType = PVFM_CMD_GetMetadataKeys;
-
-    OSCL_ASSERT(iPlayer != NULL);
-    iPlayer->GetMetadataKeys(*keylist, startingkeyindex, maxkeyentries, querykey, (const OsclAny*)&iUtilityContext);
-    iNumPendingPlayerCommands++;
-
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::DoGetMetadataKeys() Out"));
     return PVMFSuccess;
 }
 
