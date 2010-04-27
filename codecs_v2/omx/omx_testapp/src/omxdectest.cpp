@@ -1289,7 +1289,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameAvc()
                 }
                 else
                 {
-                    if ((Size = iRemainingFrameSize) < iInBufferSize)
+                    if ((Size = iRemainingFrameSize) <= iInBufferSize)
                     {
                         // this is the last piece of a broken up frame
                         iRemainingFrameSize = 0;
@@ -1630,7 +1630,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameMpeg4()
                 }
                 else
                 {
-                    if ((Size = iRemainingFrameSize) < (OMX_S32) iInBufferSize)
+                    if ((Size = iRemainingFrameSize) <= (OMX_S32) iInBufferSize)
                     {
                         iRemainingFrameSize = 0;
                         iDivideBuffer = OMX_FALSE;
@@ -1833,7 +1833,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameH263()
                 }
                 else
                 {
-                    if ((Size = iRemainingFrameSize) < (OMX_S32) iInBufferSize)
+                    if ((Size = iRemainingFrameSize) <= (OMX_S32) iInBufferSize)
                     {
                         // the last piece of a broken up frame
                         iRemainingFrameSize = 0;
@@ -2440,7 +2440,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameWmv()
                 }
                 else
                 {
-                    if ((Size = iRemainingFrameSize) < iInBufferSize)
+                    if ((Size = iRemainingFrameSize) <= iInBufferSize)
                     {
                         iRemainingFrameSize = 0;
                         iDivideBuffer = OMX_FALSE;
@@ -2672,7 +2672,7 @@ OMX_ERRORTYPE OmxComponentDecTest::GetInputFrameRvRa()
                 }
                 else
                 {
-                    if ((Size = iRemainingFrameSize) < iInBufferSize)
+                    if ((Size = iRemainingFrameSize) <= iInBufferSize)
                     {
                         iRemainingFrameSize = 0;
                         iDivideBuffer = OMX_FALSE;
