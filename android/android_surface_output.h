@@ -311,11 +311,25 @@ class AndroidSurfaceOutput :    public OsclTimerObject
         static const int kBufferCount = 2;
         int                         mFrameBufferIndex;
         sp<MemoryHeapBase>          mFrameHeap;
+        ISurface::BufferHeap        mBufferHeap;
         size_t                      mFrameBuffers[kBufferCount];
 
         void convertFrame(void* src, void* dst, size_t len);
         //This bool is set true when all necassary parameters have been received.
         bool iIsMIOConfigured;
+
+    /*
+     * The value of mNumberOfFramesToHold is decoder specific.
+     *
+     * Please make sure that the number of unique output buffers from the decoder
+     * (either hardware or software) is not less than 1 +  mNumberOfFramesToHold;
+     * otherwise, we will have starvation.
+     *
+     * On some platforms, mNumberOfFramesToHold needs to set to more than 1 (such as
+     * 2) in order to workaround a tearing issue from SF during video playback.
+     *
+     */
+    int mNumberOfFramesToHold;
 
 #ifdef PERFORMANCE_MEASUREMENTS_ENABLED
         PVProfile PVOmapVideoProfile;
