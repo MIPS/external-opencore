@@ -503,7 +503,12 @@ int local_main(FILE* filehandle, cmd_line* command_line)
                                                OutFileName, pRefFileName, ComponentName, Role,
                                                ComponentFormat, Channels));
 
+        const uint32 starttick = OsclTickCount::TickCount();   // get start time
+
         pTestSuite->run_test();     //Run the test
+
+        double time = OsclTickCount::TicksToMsec(OsclTickCount::TickCount()) - OsclTickCount::TicksToMsec(starttick);
+        fprintf(filehandle, "Total Execution time for file %s is : %f seconds", InFileName, time / 1000);
 
         //Create interpreter
         text_test_interpreter interp;
