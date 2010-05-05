@@ -26,7 +26,7 @@ menu modules_menu
     rmff_support
     flvlocal_support
     asflocal_support
-    janus_support
+    playready_support
     oma1_passthru_support
     wmdrmoemsettings_support
     pvdivxoemsettings_support
@@ -61,7 +61,7 @@ unless PV_HAS_SHOUTCAST_SUPPORT_ENABLED suppress BUILD_PLS_FF_REC
 default module_support from y
 default download_support from n
 default fasttrack_download_support from n
-default janus_support from n
+default playready_support from n
 default oma1_passthru_support from n
 default wmdrmoemsettings_support from n
 default pvdivxoemsettings_support from n
@@ -72,7 +72,7 @@ default mtp_config_support from n
 default mtp_drmmanagerplugin_support from n
 default usb_transport_support from n
 default dtcp_support from n
-require module_support==n implies download_support==n and fasttrack_download_support==n and janus_support==n and wmdrmoemsettings_support==n and pvdivxoemsettings_support==n and divxdrm_support==n and mtp_db_support==n and pvdb_config_support==n and mtp_config_support==n and mtp_drmmanagerplugin_support==n and usb_transport_support==n and dtcp_support==n
+require module_support==n implies download_support==n and fasttrack_download_support==n and playready_support==n and wmdrmoemsettings_support==n and pvdivxoemsettings_support==n and divxdrm_support==n and mtp_db_support==n and pvdb_config_support==n and mtp_config_support==n and mtp_drmmanagerplugin_support==n and usb_transport_support==n and dtcp_support==n
 
 menu pv_menu    # The main menu
     features_menu
@@ -407,7 +407,7 @@ derive pvrtsptunicastforrm_streaming_aggregate_libtype from rtsptunicastwithreal
 derive pvrtsptunicastforrm_streaming_link_type from "loaded"
 derive SOLIBS_pvrtsptunicastforrm_streaming from smrtsptrmplugininterface_m_lib.pvrtsptwithrealfsp_m_lib.realmedia_payload_parser_m_lib.rdt_parser_m_lib.pvrtsp_cli_eng_real_cloaking_node_m_lib.realaudio_deinterleaver_m_lib
 derive AGGREGATE_LIBDIRS_pvrtsptunicastforrm_streaming from smrtsptrmplugininterface_m_mk.pvrtsptwithrealfsp_m_mk.realmedia_payload_parser_m_mk.rdt_parser_m_mk.pvrtsp_cli_eng_real_cloaking_node_m_mk.realaudio_deinterleaver_m_mk
-derive MODS_pvrtsptunicastforrm_streaming from "-lopencore_net_support -lopencore_player -lopencore_common -lpvrtsptunicast_streaming -lopencore_rtsp -lopencore_streaming -lpvwmdrm -lpvrealsupportcommon" 
+derive MODS_pvrtsptunicastforrm_streaming from "-lopencore_net_support -lopencore_player -lopencore_common -lpvrtsptunicast_streaming -lopencore_rtsp -lopencore_streaming -lpvwmdrmmd -lpvrealsupportcommon" 
 
 derive pvrtsptunicastforrm_streamingreg_so_name from rtsptunicastwithreal_support==m ? "pvrtsptunicastforrm_streamingreg" : ""
 derive pvrtsptunicastforrm_streamingreg_aggregate_libtype from rtsptunicastwithreal_support==m ? "shared":"static"
@@ -471,14 +471,14 @@ derive AGGREGATE_LIBDIRS_pvfileplaybackwithpvr_streamingreg from pvrfileplayback
 derive MODS_pvfileplaybackwithpvr_streamingreg from "-lopencore_common -lopencore_streaming"
 #########################################################################################################################
 
-derive pvwmdrm_so_name from janus_support==y or mtp_db_support==y ? "pvwmdrm" : ""
-derive pvwmdrm_aggregate_libtype from janus_support==y or mtp_db_support==y ? "shared":"static"
-derive SOLIBS_pvwmdrm from pvwmdrm_m_lib.csprng_m_lib.pvcrypto_m_lib.pventropysrc_m_lib.secure_data_format_m_lib
-derive AGGREGATE_LIBDIRS_pvwmdrm from pvwmdrm_m_mk.csprng_m_mk.pvcrypto_m_mk.pventropysrc_m_mk.secure_data_format_m_mk
-derive MODS_pvwmdrm from "-lopencore_common"
+derive pvwmdrmmd_so_name from playready_support==y or mtp_db_support==y ? "pvwmdrmmd" : ""
+derive pvwmdrmmd_aggregate_libtype from playready_support==y or mtp_db_support==y ? "shared":"static"
+derive SOLIBS_pvwmdrmmd from pvwmdrmmd_m_lib.csprng_m_lib.pvcrypto_m_lib.pventropysrc_m_lib.secure_data_format_m_lib
+derive AGGREGATE_LIBDIRS_pvwmdrmmd from pvwmdrmmd_m_mk.csprng_m_mk.pvcrypto_m_mk.pventropysrc_m_mk.secure_data_format_m_mk
+derive MODS_pvwmdrmmd from "-lopencore_common"
 
-derive pvwmdrmoemsettings_so_name from janus_support==y or mtp_db_support==y ? "pvwmdrmoemsettings" : ""
-derive pvwmdrmoemsettings_aggregate_libtype from janus_support==y or mtp_db_support==y ? "shared":"static"
+derive pvwmdrmoemsettings_so_name from playready_support==y or mtp_db_support==y ? "pvwmdrmoemsettings" : ""
+derive pvwmdrmoemsettings_aggregate_libtype from playready_support==y or mtp_db_support==y ? "shared":"static"
 derive pvwmdrmoemsettings_link_type from "loaded"
 derive SOLIBS_pvwmdrmoemsettings from pvwmdrmoemsettingsinterface_m_lib
 derive AGGREGATE_LIBDIRS_pvwmdrmoemsettings from pvwmdrmoemsettingsinterface_m_mk
@@ -498,12 +498,12 @@ derive SOLIBS_pvdivxdrm from pvdivxdrm_m_lib.pvdivxdrmplugin_m_lib.pvdivxdrmplug
 derive AGGREGATE_LIBDIRS_pvdivxdrm from pvdivxdrm_m_mk.pvdivxdrmplugin_m_mk.pvdivxdrmplugininterface_m_mk
 derive MODS_pvdivxdrm from "-lopencore_common"
 
-derive pvjanus_so_name from janus_support==y ? "pvjanus" : ""
-derive pvjanus_aggregate_libtype from janus_support==y ? "shared":"static"
-derive pvjanus_link_type from "loaded"
-derive SOLIBS_pvjanus from pvjanusplugin_m_lib.pvjanusplugininterface_m_lib
-derive AGGREGATE_LIBDIRS_pvjanus from pvjanusplugin_m_mk.pvjanusplugininterface_m_mk
-derive MODS_pvjanus from "-lopencore_common -lpvwmdrm" 
+derive pvplayready_so_name from playready_support==y ? "pvplayready" : ""
+derive pvplayready_aggregate_libtype from playready_support==y ? "shared":"static"
+derive pvplayready_link_type from "loaded"
+derive SOLIBS_pvplayready from pvplayreadyplugin_m_lib.pvplayreadyplugininterface_m_lib
+derive AGGREGATE_LIBDIRS_pvplayready from pvplayreadyplugin_m_mk.pvplayreadyplugininterface_m_mk
+derive MODS_pvplayready from "-lopencore_common -lpvwmdrmmd" 
 
 derive pvsqlite_so_name from mtp_db_support==y ? "pvsqlite" : ""
 derive pvsqlite_aggregate_libtype from mtp_db_support==y ? "shared":"static"
@@ -720,7 +720,7 @@ derive AGGREGATE_LIBDIRS_omx_aacenc_sharedlibrary from omx_aacenc_component_m_mk
 derive MODS_omx_aacenc_sharedlibrary from "-lomx_sharedlibrary -lopencore_common "
 
 
-#derive pvwmdrmoemsettings_so_name from janus_support==y or mtp_db_support==y ? "pvwmdrmoemsettings" : ""
+#derive pvwmdrmoemsettings_so_name from playready_support==y or mtp_db_support==y ? "pvwmdrmoemsettings" : ""
 #derive SOLIBS_pvwmdrmoemsettings from pvwmdrmoemsettingsinterface_m_lib
 #derive AGGREGATE_LIBDIRS_pvwmdrmoemsettings from pvwmdrmoemsettingsinterface_m_mk
 #derive MODS_pvwmdrmoemsettings from "-lopencore_common"
@@ -744,7 +744,7 @@ derive pvmtpdrmmanagerplugin_aggregate_libtype from mtp_db_support==y ? "shared"
 derive pvmtpdrmmanagerplugin_link_type from "loaded"
 derive SOLIBS_pvmtpdrmmanagerplugin from pvmtpdrmmanagerplugin_m_lib
 derive AGGREGATE_LIBDIRS_pvmtpdrmmanagerplugin from pvmtpdrmmanagerplugin_m_mk
-derive MODS_pvmtpdrmmanagerplugin from "-lopencore_common -lpvwmdrm"
+derive MODS_pvmtpdrmmanagerplugin from "-lopencore_common -lpvwmdrmmd"
 
 derive pvdtcp_mbds_so_name from dtcp_support==y ? "pvdtcp_mbds" : ""
 derive pvdtcp_mbds_aggregate_libtype from dtcp_support==y ? "shared":"static"
@@ -785,8 +785,8 @@ derive TARGET_aggregate from (pv_so_name.opencore_common_so_name.
                            opencore_mp4localreg_so_name.opencore_mp4local_so_name.
                            pvdivx_recognizer_so_name.pvdivxparser_node_so_name.
                            pvrmff_recognizer_so_name.pvrmffparser_node_so_name.
-                           pvwmdrm_so_name.pvwmdrmoemsettings_so_name.
-                           pvdivxoemsettings_so_name.pvdivxdrm_so_name.pvsqlite_so_name.pvdb_so_name.pvmtp_so_name.pvmtpip_so_name.pvjanus_so_name.pvoma1passthru_so_name.pvdbconfigclass_so_name.pvmtpconfigclass_so_name.pvmtpdrmmanagerplugin_so_name.pvdb_recovery_utility_so_name.pviptransport_so_name.
+                           pvwmdrmmd_so_name.pvwmdrmoemsettings_so_name.
+                           pvdivxoemsettings_so_name.pvdivxdrm_so_name.pvsqlite_so_name.pvdb_so_name.pvmtp_so_name.pvmtpip_so_name.pvplayready_so_name.pvoma1passthru_so_name.pvdbconfigclass_so_name.pvmtpconfigclass_so_name.pvmtpdrmmanagerplugin_so_name.pvdb_recovery_utility_so_name.pviptransport_so_name.
                            pvflv_recognizer_so_name.pvflvparser_node_so_name.
                            opencore_rtsp_so_name.pvrtspunicast_streaming_so_name.pvrtspunicast_streamingreg_so_name.
                            pvrtsptunicast_streaming_so_name.pvrtsptunicast_streamingregreg_so_name.

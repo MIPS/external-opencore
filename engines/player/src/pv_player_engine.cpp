@@ -4996,6 +4996,7 @@ PVMFStatus PVPlayerEngine::DoGetMetadataValue(PVPlayerEngineCommand& aCmd)
     uint32 nodestartindex = 0;
     while (i < iMetadataIFList.size())
     {
+        iMetadataIFList[i].iInterface->SetMetadataClipIndex(iGetMetadataValuesParam.iClipIndex);
         int32 numvalue = iMetadataIFList[i].iInterface->GetNumMetadataValues(*(iGetMetadataValuesParam.iKeyList));
         if (iGetMetadataValuesParam.iStartingValueIndex < (totalnumvalue + numvalue))
         {
@@ -5633,9 +5634,15 @@ PVMFStatus PVPlayerEngine::DoSetPlaybackRange(PVPlayerEngineCommand& aCmd)
     }
     else
     {
-        // For a datasource with multiple clips, it is expected that
-        // the iPlayElementIndex is provided.
-        iClipsCompleted = iCurrentBeginPosition.iPlayElementIndex;
+        if (iCurrentBeginPosition.iPosUnit == PVPPBPOSUNIT_PLAYLIST)
+        {
+            // For a datasource with multiple clips, it is expected that
+            // the iPlayElementIndex is provided.
+            // reposition to a track is taking place. reset number of corrupted clips
+            // also update number of completed clips
+            iClipsCompleted = iCurrentBeginPosition.iPlayElementIndex;
+            iClipsCorrupted = 0;
+        }
     }
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoSetPlaybackRange() Out"));
@@ -13180,7 +13187,7 @@ void PVPlayerEngine::HandleSourceNodeQueryDataSourcePositionDuringPlayback(PVPla
         PVMFStatus retval = DoSourceNodeSetDataSourcePositionDuringPlayback(aNodeContext.iCmdId, aNodeContext.iCmdContext);
         if (retval != PVMFSuccess)
         {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeQueryDataSourcePositionDuringPlayback() SetDataSourcePosition failed. Playback position change has been cancelled"));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeQueryDataSourcePositionDuringPlayback() SetDataSourcePosition failed. Playback position change has been cancelled retVal = %d", retval));
             PVUuid puuid = PVPlayerErrorInfoEventTypesUUID;
             PVMFBasicErrorInfoMessage* errmsg = OSCL_NEW(PVMFBasicErrorInfoMessage, (PVPlayerErrSource, puuid, NULL));
 
@@ -13292,7 +13299,7 @@ void PVPlayerEngine::HandleSourceNodeSetDataSourcePositionDuringPlayback(PVPlaye
 
     if (aNodeResp.GetCmdStatus() != PVMFSuccess)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeSetDataSourcePositionDuringPlayback() SetDataSourcePosition failed. Playback position change has been cancelled"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleSourceNodeQueryDataSourcePositionDuringPlayback() SetDataSourcePosition failed. Playback position change has been cancelled retVal = %d", aNodeResp.GetCmdStatus()));
 
         if (aNodeResp.GetCmdStatus() == PVMFErrNotSupported || aNodeResp.GetCmdStatus() == PVMFErrArgument)
         {
@@ -13495,7 +13502,6 @@ void PVPlayerEngine::HandleSinkNodeSkipMediaDataDuringPlayback(PVPlayerEngineCon
     }
 
     --iNumPendingSkipCompleteEvent;
-
     --iNumPendingNodeCmd;
 
     if (iNumPendingNodeCmd == 0)
@@ -14478,6 +14484,7 @@ void PVPlayerEngine::HandleDatapathResume(PVPlayerEngineContext& aDatapathContex
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVPlayerEngine::HandleDatapathResume() - %d pending datapath commands", iNumPendingDatapathCmd));
     }
+
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleDatapathResume() Out"));
 }
 
@@ -15153,6 +15160,9 @@ void PVPlayerEngine::HandleSourceNodeInfoEvent(const PVMFAsyncEvent& aEvent)
         break;
         case PVMFInfoClipCorrupted:
         {
+            // if the clip which is being processed is corrupt, reset the current clip index
+            // the current clip index would be set again upon receival of ClipStarted event.
+            iCurrentPlaybackClipId = 0xFFFFFFFF;
             iClipsCorrupted++;
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVPlayerEngine::HandleSourceNodeInfoEvent() Corrupted clip encountered Info %d", event));
@@ -15340,7 +15350,7 @@ void PVPlayerEngine::HandleSinkNodeInfoEvent(const PVMFAsyncEvent& aEvent, int32
 
                     // scenarios where playlist playback is considered complete.
                     // If sum of number of clips played back and corrupted clips in list equates to total clips queued to Source Node.
-                    if ((iNumClipsQueued == iClipsCompleted + iClipsCorrupted))
+                    if (iNumClipsQueued == iClipsCompleted + iClipsCorrupted)
                     {
                         if (iState != PVP_ENGINE_STATE_PAUSING)
                         {
@@ -16007,6 +16017,7 @@ void PVPlayerEngine::ResetReposVariables(bool aResetAll)
         iCurrentEndPosition.iIndeterminate = true;
         iQueuedBeginPosition.iIndeterminate = true;
         iQueuedEndPosition.iIndeterminate = true;
+        iCurrentPlaybackClipId = 0xFFFFFFFF;
     }
     if (iWatchDogTimer != NULL)
     {

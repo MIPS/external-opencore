@@ -2095,7 +2095,7 @@ uint32 MP3Parser::SeekPointFromTimestamp(uint32 &timestamp)
     {
         // seek to the reposition point location
         MP3Utils::SeektoOffset(fp, seekPoint + StartOffset, Oscl_File::SEEKSET);
-        uint32 retVal = mp3FindSync(seekPoint + StartOffset, seekOffset, fp);
+        MP3ErrorType retVal = mp3FindSync(seekPoint + StartOffset, seekOffset, fp);
 
         if (retVal == MP3_SUCCESS)
         {

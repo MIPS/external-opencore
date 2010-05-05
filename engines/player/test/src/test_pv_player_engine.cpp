@@ -3900,6 +3900,10 @@ void pvplayer_engine_test::test()
                 fprintf(file, "Janus CPM tests not enabled\n");
                 break;
 
+            case DLA_TryAcquireLicense_PlayReadyContentCPMTest:
+                fprintf(file, "Janus CPM tests not enabled\n");
+                break;
+
             case DLA_LicenseCapture_JanusCPMTest:
                 fprintf(file, "Janus CPM tests not enabled\n");
                 break;

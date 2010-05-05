@@ -164,6 +164,7 @@ class TrackFragmentAtom : public Atom
         MP4_ERROR_CODE getTimestampForSampleNumber(uint32 sampleNumber, uint64& aTimeStamp) const;
         uint64 getCurrentTrafDuration();
         int32 getOffsetByTime(uint32 id, uint64 ts, TOsclFileOffset* sampleFileOffset);
+        void resetPeekwithGet();
         void resetPlayback();
         uint64 resetPlayback(uint64 time);
         uint64 resetPlayback(uint64 time, uint32 trun_number, uint32 sample_num);

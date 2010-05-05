@@ -1415,3 +1415,10 @@ OMX_BOOL OpenmaxAvcAO::DetectStartCodeLength(OMX_U8* aBitstream, OMX_U8** aNalUn
         }
     }
 }
+
+void OpenmaxAvcAO::CalculateBufferParameters(OMX_U32 PortIndex)
+{
+    ipAvcDec->CalculateBufferParameters(&ipPorts[PortIndex]->PortParam);
+
+    return ;
+}

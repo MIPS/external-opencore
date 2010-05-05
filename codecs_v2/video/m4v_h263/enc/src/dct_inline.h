@@ -147,9 +147,8 @@ __inline int32 sum_abs(int32 k0, int32 k1, int32 k2, int32 k3,
 
     return abs_sum;
 }
-#else/*#else for #if (PV_CPU_ARCH_VERSION>=4 && PV_COMPILER==EPV_ARM_RVCT) */
+#else
 /*C Equivalent code*/
-#include "oscl_base_macros.h"
 
 __inline int32 mla724(int32 op1, int32 op2, int32 op3)
 {
@@ -230,6 +229,6 @@ __inline int32 sum_abs(int32 k0, int32 k1, int32 k2, int32 k3,
 
     return abs_sum;
 }
-#endif /*#endif for (PV_CPU_ARCH_VERSION>=4 && PV_COMPILER==EPV_ARM_RVCT) */
+#endif
 
 #endif //_DCT_INLINE_H_

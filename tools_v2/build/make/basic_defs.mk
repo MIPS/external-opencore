@@ -67,6 +67,13 @@ else
    DEFAULT_LIBMODE := debug
 endif
 
+ifeq ($(strip $(OPEN)),1)
+  $(info Open flag set for documentation generation)
+   DEFAULT_DOCMODE := open
+else
+   DEFAULT_DOCMODE := closed
+endif
+
 
 # Function to remove two levels of directories
 define strip_two_levels_up

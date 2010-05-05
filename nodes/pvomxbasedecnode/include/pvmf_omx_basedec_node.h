@@ -51,14 +51,6 @@
 #ifndef PVMF_OMX_BASEDEC_CALLBACKS_H_INCLUDED
 #include "pvmf_omx_basedec_callbacks.h"
 #endif
-#ifndef __MEDIA_CLOCK_CONVERTER_H
-#include "media_clock_converter.h"
-#endif
-#if (PVLOGGER_INST_LEVEL >= PVLOGMSG_INST_REL)
-#ifndef PVMF_MEDIA_CLOCK_H_INCLUDED
-#include "pvmf_media_clock.h"
-#endif
-#endif
 #ifndef PVMF_FIXEDSIZE_BUFFER_ALLOC_H_INCLUDED
 #include "pvmf_fixedsize_buffer_alloc.h"
 #endif
@@ -700,10 +692,11 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         uint32 iInTimeScale;
         uint32 iOutTimeScale;
         uint32 iTimeScale;
-        MediaClockConverter iInputTimestampClock;
+        uint32 iInputTimestampClock_LH; // lower 32bits of the input timestamp
+        uint32 iInputTimestampClock_UH; // upper 32 bits of the input timestamp
         OMX_TICKS iOMXTicksTimestamp;
         uint32 iTimestampDeltaForMemFragment;
-        OSCL_IMPORT_REF OMX_TICKS ConvertTimestampIntoOMXTicks(const MediaClockConverter &src);
+        OSCL_IMPORT_REF OMX_TICKS ConvertInputTimestampIntoOMXTicks(const uint32 new_ts);
         OSCL_IMPORT_REF uint32 ConvertOMXTicksIntoTimestamp(const OMX_TICKS &src);
 
         uint8 iAACConfigData[4];

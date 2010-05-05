@@ -220,7 +220,7 @@ __inline int32 coeff_dequant_mpeg_intra(int32 q_value, int32 tmp)
     return out;
 }
 
-#else/*#else for ((PV_CPU_ARCH_VERSION>=4) && (PV_COMPILER==EPV_ARM_RVCT)) */
+#else
 /*C Equivalent Code*/
 __inline int32 aan_scale(int32 q_value, int32 coeff, int32 round, int32 QPdiv2)
 {
@@ -360,6 +360,6 @@ __inline int32 coeff_dequant_mpeg_intra(int32 q_value, int32 tmp)
 
     return q_value;
 }
-#endif /*#endif for((PV_CPU_ARCH_VERSION>=4) && (PV_COMPILER==EPV_ARM_RVCT))*/
+#endif
 
 #endif //_FASTQUANT_INLINE_H_

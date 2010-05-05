@@ -571,7 +571,8 @@ bool PVMFOMXAudioDecNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDataPathLogger, PVLOGMSG_INFO,
                             (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: iTSOfFirstDataMsgAfterBOS = %d", msg->getTimestamp()));
             iTSOfFirstDataMsgAfterBOS = msg->getTimestamp();
-            iInputTimestampClock.set_clock(iTSOfFirstDataMsgAfterBOS, 0);
+            iInputTimestampClock_LH = iTSOfFirstDataMsgAfterBOS;
+            iInputTimestampClock_UH = 0;
         }
         convertToPVMFMediaData(iDataIn, msg);
         ((PVMFOMXDecPort*)aPort)->iNumFramesConsumed++;
@@ -1195,11 +1196,18 @@ bool PVMFOMXAudioDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
         if (aInputs.iMimeType == PVMF_MIME_MPEG4_AUDIO ||
                 aInputs.iMimeType == PVMF_MIME_ASF_MPEG4_AUDIO)
         {
-            // Get the duration of one AAC frame in millisec
-            MediaClockConverter mcc(iPCMSamplingRate, iSamplesPerFrame);
+            // Convert the duration of one AAC frame (based on sampling rate & num samples per frame) in microseconds
+            // (this is similar to doing get_converted_ts on mediaclockconverter object)
             // calculate the timestamp update in OMX_TICKS (microseconds). This value
             // will be added directly to the OMX_TICKS timestamp
-            iTimestampDeltaForMemFragment = mcc.get_converted_ts(iTimeScale); // this is 1000000 microsecond timescale
+            OSCL_ASSERT(iPCMSamplingRate != 0);
+            if (iPCMSamplingRate != 0)
+            {
+                uint64 value = ((uint64(iSamplesPerFrame)) * uint64(iTimeScale) + uint64(iPCMSamplingRate - 1)) / uint64(iPCMSamplingRate);
+                iTimestampDeltaForMemFragment = ((uint32) value);
+            }
+
+
         }
     }
 

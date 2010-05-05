@@ -1809,6 +1809,12 @@ class pvplayer_engine_test
              */
             CleanDataStoreMeasurement_JanusCPMTest,//1170
 
+            //Janus Tests playing PlayReady Content
+            /**
+             * @test (1171) DLA_TryAcquireLicense_PlayReadyContentCPMTest
+             */
+            DLA_TryAcquireLicense_PlayReadyContentCPMTest, //1171
+
             //this range RESERVED for future Janus tests.
 
             /**

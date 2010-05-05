@@ -2639,9 +2639,21 @@ bool PVMp4FFComposerNode::IsH263KeyFrame(Oscl_Vector <OsclMemoryFragment, OsclMe
 {
     OsclMemoryFragment aFrag = aList[0];
     bool oRet = false;
-    //we need atleast 5 bytes, 22 bits for PSC, 8 bits for TR
-    //and 13 bits for PTYPE. Bit 9 of PTYPE is Coding Type,
-    //0 for Intra and 1 for Inter. So 39th bit from start.
+    // For H263 short header we need atleast 5 bytes:
+    //   22 bits for PSC
+    //   8 bits for TR
+    //   13 bits for PTYPE
+    //   - Bit 9 of PTYPE is Coding Type. Value "0" for Intra and "1" for Inter.
+    //   This is the 39th bit from start.
+
+    // For H263 extended PTYPE header, we need between 6 bytes and 8 bytes:
+    //   22 bits for PSC
+    //   8 bits for TR
+    //   8 bits to determine if it is an extended PTYPE.
+    //   3 bits for Update Full Extended PTYPE (UFEP).
+    //   If the UFEP is 001 need to add 18 bits for the Optional Part of PLUSPTYPE (OPPTYPE)
+    //   9 bits for the Mandatory part of PLUSPTYPE (MPPTYPE)
+    //   - Bits 1-3 indicate the Picture Type Code. Value "000"(binary) means INTRA.
     uint8 INTRA = 0;
     //do not delete these commented lines
     //uint8 INTER = 1;
@@ -2649,7 +2661,39 @@ bool PVMp4FFComposerNode::IsH263KeyFrame(Oscl_Vector <OsclMemoryFragment, OsclMe
     {
         uint8* buf = (uint8*)(aFrag.ptr);
         uint8 byte = buf[4];
-        if ((byte & 0x02) == INTRA)
+        // Check for an extended ptype (PLUSPTYPE)
+        if (byte & 0x1C)
+        {
+            // Extended ptype format found.
+            // Check the UFEP for the OPPTYPE
+            if (aFrag.len >= 6)
+            {
+                byte = buf[5];
+                if (!(byte & 0x80) && ((byte & 0x70) == INTRA))
+                {
+                    // Optional OPPTYPE format NOT found
+                    // First three bits of the MPPTYPE are zeros.
+                    // This is an INTRA frame.
+                    oRet = true;
+                }
+
+                if ((aFrag.len >= 8) && (byte & 0x80))
+                {
+                    // Optional OPPTYPE format was found.  Skip past it.
+                    byte = buf[7];
+                    if ((byte & 0x1C) == INTRA)
+                    {
+
+                        // Optional OPPTYPE format was found.  Skipped past it.
+                        // First three bits of the MPPTYPE are zeros.
+                        // This is an INTRA frame.
+                        oRet = true;
+                    }
+                }
+            }
+        }
+        // Extended PTYPE not found.  Check bit 9 of the PTYPE for the "Picture Coding Type"
+        else if ((byte & 0x02) == INTRA)
         {
             oRet = true;
         }

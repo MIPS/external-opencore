@@ -120,7 +120,7 @@ __inline  Int zero_run_search(UInt *bitmapzz, Short *dataBlock, RunLevelBlock *R
     return idx;
 }
 
-#else/*#else for ((PV_CPU_ARCH_VERSION>=4) && (PV_COMPILER==EPV_ARM_RVCT))*/
+#else
 /*C Equivalent code*/
 __inline  Int zero_run_search(UInt *bitmapzz, Short *dataBlock, RunLevelBlock *RLB, Int nc)
 {
@@ -211,7 +211,7 @@ __inline  Int zero_run_search(UInt *bitmapzz, Short *dataBlock, RunLevelBlock *R
 }
 
 
-#endif/*#endif for ((PV_CPU_ARCH_VERSION>=4) && (PV_COMPILER==EPV_ARM_RVCT))*/
+#endif
 
 #endif // _VLC_ENCODE_INLINE_H_
 

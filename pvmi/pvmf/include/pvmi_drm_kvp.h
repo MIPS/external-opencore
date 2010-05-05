@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,12 +132,6 @@
  */
 #define PVMF_DRM_INFO_LICENSE_ISSUER_QUERY "dla/license-issuer"
 #define PVMF_DRM_INFO_LICENSE_ISSUER_VALUE "dla/license-issuer;valtype=char*"
-
-/*
- * Redirect times
- */
-#define PVMF_DRM_INFO_REDIRECT_TIMES_QUERY "dla/num-redirect"
-#define PVMF_DRM_INFO_REDIRECT_TIMES_VALUE "dla/num-redirect;valtype=uint32"
 
 /*
  * Content header

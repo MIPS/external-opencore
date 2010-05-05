@@ -117,10 +117,9 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
     numLyricist = 0;
     numComposer = 0;
     numVersion = 0;
-    iTotalMoofAtmsCnt = 0; //Zero is a chosen to be sentinal because 0 is invalid value if mvex atom is present.
+    iTotalMoofAtmsCnt = 0xFFFFFFFF;
+
     // Create miscellaneous vector of atoms
-
-
     PV_MP4_FF_NEW(fp->auditCB, trackAtomVecType, (), _pTrackAtomVec);
     PV_MP4_FF_NEW(fp->auditCB, movieFragmentAtomVecType, (), _pMovieFragmentAtomVec);
     PV_MP4_FF_NEW(fp->auditCB, movieFragmentOffsetVecType, (), _pMoofOffsetVec);
@@ -4389,6 +4388,10 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
             }
             else
                 return ret;
+
+            // Align the peek to the get indexes
+            _peekMovieFragmentIdx[moofIdx] = _movieFragmentIdx[moofIdx];
+            _peekMovieFragmentSeqIdx[moofIdx] = _movieFragmentSeqIdx[moofIdx];
 
             if (_parsing_mode == 0)
             {

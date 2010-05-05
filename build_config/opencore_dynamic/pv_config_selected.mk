@@ -25,7 +25,7 @@ divxlocal_support=n
 rmff_support=n
 flvlocal_support=n
 asflocal_support=n
-janus_support=n
+playready_support=n
 oma1_passthru_support=y
 wmdrmoemsettings_support=n
 pvdivxoemsettings_support=n
@@ -335,7 +335,6 @@ pvflvffrecognizer_lib=n
 #
 cpm_lib=m
 oma1_passthru_plugin_lib=m
-pvjanusplugin_lib=n
 cpm_headers_lib=m
 pvoma1lockstream_lib=n
 pvplayreadyplugin_lib=n
@@ -448,12 +447,6 @@ pvmtp_engine_lib=n
 pvmtpip_engine_lib=n
 pviptransport_lib=n
 pvsqlite_lib=n
-
-#
-# Menu for configuring Janus wmdrm
-#
-pvwmdrm_lib=n
-
 
 #
 # Menu for configuring PlayReady wmdrm

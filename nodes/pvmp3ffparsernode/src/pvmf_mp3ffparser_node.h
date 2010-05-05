@@ -581,6 +581,7 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
         int32 iPlaybackClipIndex;
         bool iPlaylistRepositioning;
         int32 iClipIndexForMetadata;
+        int32 iLastPlayingClipIndex;
         bool iSourceURLSet;
         bool iInitNextClip;
         int32 iNextInitializedClipIndex;

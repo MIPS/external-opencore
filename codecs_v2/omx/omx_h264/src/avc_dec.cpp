@@ -584,3 +584,26 @@ void AvcDecoder_OMX::ReleaseReferenceBuffers()
         UnbindBuffer_OMX((void*) this, (int32) i);
     }
 }
+
+void AvcDecoder_OMX::CalculateBufferParameters(OMX_PARAM_PORTDEFINITIONTYPE* aPortParam)
+{
+    // If decoder has decoded the parameters, retain the updated values from the decoder
+    // and do not recalculate
+    if (OMX_FALSE == iAvcActiveFlag)
+    {
+        OMX_VIDEO_PORTDEFINITIONTYPE *pVideoformat = &(aPortParam->format.video);
+
+        // check if stride needs to be adjusted - stride should be at least the 16 byte aligned width
+        OMX_U32 MinStride = ((pVideoformat->nFrameWidth + 15) & (~15));
+        OMX_U32 MinSliceHeight = ((pVideoformat->nFrameHeight + 15) & (~15));
+
+        pVideoformat->nStride = MinStride;
+        pVideoformat->nSliceHeight = MinSliceHeight;
+
+        // finally, compute the new minimum buffer size
+        aPortParam->nBufferSize = (pVideoformat->nSliceHeight * pVideoformat->nStride * 3) >> 1;
+    }
+
+    return ;
+}
+

@@ -2422,6 +2422,7 @@ PVMFStatus PVMFMP4FFParserNode::DoStop()
     iParseVideoOnly = false;
     iDataRate = NORMAL_PLAYRATE;
     iInitNextClip = false;
+    iFirstValidClipIndex = -1;
 
     // Reset the MP4 FF to beginning
     if (iPlaybackParserObj)
@@ -2510,6 +2511,7 @@ PVMFStatus PVMFMP4FFParserNode::DoReset()
     iParseAudioDuringREW = false;
     iParseVideoOnly = false;
     iDataRate = NORMAL_PLAYRATE;
+    iFirstValidClipIndex = -1;
 
     PVMFStatus status = PVMFSuccess;
 
@@ -9150,6 +9152,9 @@ PVMFStatus PVMFMP4FFParserNode::ConstructMP4FileParser(PVMFStatus* aStatus, int3
                 return PVMFFailure;
             }
         }
+
+        // Init the moof count in case of smooth streaming
+        mp4ParserObj->SetMoofAtomsCnt(iTotalMoofFrags);
 
         iClipInfoList[aClipIndex].iParserObj = mp4ParserObj;
     }

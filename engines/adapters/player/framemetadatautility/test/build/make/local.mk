@@ -115,7 +115,7 @@ LIBS :=  pvframemetadatautility \
         wmavoicedecoder \
         pvasfffparsernode \
         pvasfff \
-        pvjanusplugin \
+        pvplayreadyplugin \
         pvmfrecognizer \
         pvasfffrecognizer \
         pvmp4ffrecognizer \
@@ -139,7 +139,7 @@ LIBS :=  pvframemetadatautility \
         realaudio_deinterleaver \
         pvid3parcom \
         pvgendatastruct \
-        pvwmdrmlib \
+        pvwmdrmmdlib \
         csprng\
 	secure_data_format \
         pvcrypto \
