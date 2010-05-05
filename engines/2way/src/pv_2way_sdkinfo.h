@@ -21,7 +21,7 @@
 // This header file is automatically generated at build-time
 // *** OFFICIAL RELEASE INFO -- Will not auto update
 
-#define PV2WAY_ENGINE_SDKINFO_LABEL "1406269"
-#define PV2WAY_ENGINE_SDKINFO_DATE 0x20100428
+#define PV2WAY_ENGINE_SDKINFO_LABEL "1407590"
+#define PV2WAY_ENGINE_SDKINFO_DATE 0x20100429
 
 #endif //PV_2WAY_SDKINFO_H_INCLUDED
