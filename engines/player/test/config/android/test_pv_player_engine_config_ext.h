@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@
 // this sub-section is for opencore_dynamic configuration only and
 // is typically used to explicitly disable value-add features.
 # define DIVX_IS_LOADABLE_MODULE 0
-# define JANUS_IS_LOADABLE_MODULE 0
+# define PLAYREADY_IS_LOADABLE_MODULE 0
 # define ONLY_3GPP_STREAMING_FORMAT
 # define RUN_APP_TRACK_SELECTION_TESTCASES 0
 # define RUN_ASFFILE_TESTCASES 0
@@ -63,7 +63,7 @@
 // this sub-section is for opencore_value_add only and is typically
 // used to explicitly enable value-add features.
 # define DIVX_IS_LOADABLE_MODULE 1
-# define JANUS_IS_LOADABLE_MODULE 1
+# define PLAYREADY_IS_LOADABLE_MODULE 1
 # undef  ONLY_3GPP_STREAMING_FORMAT
 # define RUN_APP_TRACK_SELECTION_TESTCASES 1
 # define RUN_ASFFILE_TESTCASES 1
