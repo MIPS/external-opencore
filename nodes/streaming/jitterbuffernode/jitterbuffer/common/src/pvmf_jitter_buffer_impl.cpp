@@ -809,13 +809,7 @@ PVMFJitterBufferRegisterMediaMsgStatus PVMFJitterBufferImpl::AddPacket(PVMFShare
                 seqLockTimeStamp = my_ssrc[first_ssrc_index][3];
             }
             // iFirstSeqNum must be initialized when we come here
-            PVMF_JB_LOGDATATRAFFIC_IN((0, "PVMFJitterBufferImpl::addPacket: Setting first sequence number added to = %d", iFirstSeqNum));
             iJitterBuffer->setFirstSeqNumAdded(iFirstSeqNum);
-            // Update the read offset to iFirstSeqNum.
-            // Since we use iFirstSeqNum, it should automatically be set to
-            // the sequence number in the RTP-Info line (if present).
-            // If not, it would be set to the first arriving RTP packet's sequence number.
-            iJitterBuffer->SetReadOffset(iFirstSeqNum);
             CheckForRTPTimeAndRTPSeqNumberBase();
         }
         // 3.throw away the pkt not belong to current session and register packets

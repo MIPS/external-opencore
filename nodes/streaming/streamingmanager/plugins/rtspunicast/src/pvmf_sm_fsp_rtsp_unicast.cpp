@@ -5413,14 +5413,11 @@ PVMFStatus PVMFSMRTSPUnicastNode::SetRTSPPlaybackRange()
     rtspRange.npt_start.npt_sec.sec = iRepositionRequestedStartNPTInMS / 1000;
     rtspRange.npt_start.npt_sec.milli_sec =
         (iRepositionRequestedStartNPTInMS - ((iRepositionRequestedStartNPTInMS / 1000) * 1000));
-    rtspRange.end_is_set = iSessionStopTimeAvailable;
-    if (iSessionStopTimeAvailable == true)
-    {
-        rtspRange.npt_end.npt_format = NptTimeFormat::NPT_SEC;
-        rtspRange.npt_end.npt_sec.sec = iSessionStopTime / 1000;
-        rtspRange.npt_end.npt_sec.milli_sec =
-            (iSessionStopTime - ((iSessionStopTime / 1000) * 1000));
-    }
+    rtspRange.end_is_set = true;
+    rtspRange.npt_end.npt_format = NptTimeFormat::NPT_SEC;
+    rtspRange.npt_end.npt_sec.sec = iSessionStopTime / 1000;
+    rtspRange.npt_end.npt_sec.milli_sec =
+        (iSessionStopTime - ((iSessionStopTime / 1000) * 1000));
 
     status = rtspExtIntf->SetRequestPlayRange(rtspRange);
     if (PVMFSuccess != status)
