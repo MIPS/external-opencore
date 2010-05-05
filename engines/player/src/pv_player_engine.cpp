@@ -14479,11 +14479,6 @@ void PVPlayerEngine::HandleDatapathResume(PVPlayerEngineContext& aDatapathContex
                 RunIfNotReady();
             }
         }
-        if (!iCurrentCmd.empty())
-        {
-            // there's a pending command which needs to be processed.
-            RunIfNotReady();
-        }
     }
     else
     {
