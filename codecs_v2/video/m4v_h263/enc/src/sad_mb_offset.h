@@ -23,7 +23,6 @@
 
 #include "oscl_base_macros.h"// has integer values of PV_COMPILER
 
-/* ARM GNU COMPILER  */
 #if   ((PV_CPU_ARCH_VERSION >=4) && (PV_COMPILER == EPV_ARM_GNUC))/* ARM GNU COMPILER  */
 
 #if (NUMBER==3)
@@ -121,7 +120,7 @@ LOOP_SAD1:
 }
 
 
-#else/*#else for ((PV_CPU_ARCH_VERSION>=4) && (PV_COMPILER==EPV_ARM_RVCT))*/
+#else
 /*C Equivalent code*/
 #if (NUMBER==3)
 __inline int32 sad_mb_offset3(UChar *ref, UChar *blk, Int lx, Int dmin)
@@ -223,4 +222,4 @@ goto         LOOP_SAD1;
 
     return ((uint32)x10 >> 16);
 }
-#endif/*#endif for ((PV_CPU_ARCH_VERSION>=4) && (PV_COMPILER==EPV_ARM_RVCT))*/
+#endif

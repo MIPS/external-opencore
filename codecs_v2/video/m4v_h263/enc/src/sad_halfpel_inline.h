@@ -74,7 +74,7 @@ extern "C"
     }
 
 
-#else/*#else for ((PV_CPU_ARCH_VERSION>=4) && (PV_COMPILER==EPV_ARM_RVCT))*/
+#else
     /*C equivalent code*/
     __inline int32 INTERP1_SUB_SAD(int32 sad, int32 tmp, int32 tmp2)
     {
@@ -95,7 +95,7 @@ extern "C"
     }
 
 
-#endif /*#endif for ((PV_CPU_ARCH_VERSION>=4) && (PV_COMPILER==EPV_ARM_RVCT))*/
+#endif
 
 
 

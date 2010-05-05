@@ -166,7 +166,7 @@ SadMBOffset1:
         return sad_mb_offset1(ref, blk, lx, dmin);
     }
 
-#else/*#else for ((PV_CPU_ARCH_VERSION>=4) && (PV_COMPILER==EPV_ARM_RVCT)) */
+#else/*C Code*/
     __inline int32 SUB_SAD(int32 sad, int32 tmp, int32 tmp2)
     {
         tmp = tmp - tmp2;
@@ -309,7 +309,7 @@ SadMBOffset1:
 
     }
 
-#endif/*#endif for ((PV_CPU_ARCH_VERSION>=4) && (PV_COMPILER==EPV_ARM_RVCT)) */
+#endif
 
 #ifdef __cplusplus
 }

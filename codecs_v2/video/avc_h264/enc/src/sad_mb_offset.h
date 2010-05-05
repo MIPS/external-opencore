@@ -114,8 +114,8 @@ __asm__ volatile("LDR   %0, [%1], #16": "=&r"(x12), "=r"(blk));
     return ((uint32)x10 >> 16);
 }
 
-#else/*#else for ((PV_CPU_ARCH_VERSION>=4) && (PV_COMPILER==EPV_ARM_RVCT)) */
-
+#else
+/*C Code*/
 #if (NUMBER==3)
 __inline int32 sad_mb_offset3(uint8 *ref, uint8 *blk, int lx, int dmin)
 #elif (NUMBER==2)
@@ -218,5 +218,5 @@ goto         LOOP_SAD1;
 }
 
 
-#endif/*#endif for ((PV_CPU_ARCH_VERSION>=4) && (PV_COMPILER==EPV_ARM_RVCT)) */
+#endif
 
