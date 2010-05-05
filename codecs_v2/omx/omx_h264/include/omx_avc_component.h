@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,8 @@ class OpenmaxAvcAO : public OmxComponentVideo
                                        OMX_U8** aNalUnit,
                                        OMX_U32 aBufSize,
                                        OMX_U32* aSCSize);
+
+        void CalculateBufferParameters(OMX_U32 PortIndex);
 
         // ipOutputBuffer is fed to the decoder which may keep it as a reference
         // The decoder "spits" out another output buffer for rendering

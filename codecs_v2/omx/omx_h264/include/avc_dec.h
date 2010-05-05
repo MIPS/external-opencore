@@ -138,6 +138,8 @@ class AvcDecoder_OMX
 
         void ReleaseReferenceBuffers();
 
+        void CalculateBufferParameters(OMX_PARAM_PORTDEFINITIONTYPE* aPortParam);
+
         OMX_BUFFERHEADERTYPE *pCurrentBufferHdr;
         OmxComponentBase *ipOMXComponent;
 };
