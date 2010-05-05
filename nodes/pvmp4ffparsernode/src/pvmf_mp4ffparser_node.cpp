@@ -2422,6 +2422,7 @@ PVMFStatus PVMFMP4FFParserNode::DoStop()
     iParseVideoOnly = false;
     iDataRate = NORMAL_PLAYRATE;
     iInitNextClip = false;
+    iFirstValidClipIndex = -1;
 
     // Reset the MP4 FF to beginning
     if (iPlaybackParserObj)
@@ -2510,6 +2511,7 @@ PVMFStatus PVMFMP4FFParserNode::DoReset()
     iParseAudioDuringREW = false;
     iParseVideoOnly = false;
     iDataRate = NORMAL_PLAYRATE;
+    iFirstValidClipIndex = -1;
 
     PVMFStatus status = PVMFSuccess;
 
