@@ -1238,10 +1238,16 @@ TrackFragmentAtom::peekNextBundledAccessUnits(uint32 *n, uint32 totalSampleRead,
         MediaMetaInfo *mInfo)
 {
     int32 nReturn = -1;
+    // always make sure peek and get indexes are aligned
+    resetPeekwithGet();
     nReturn = peekNextNSamples(_peekPlaybackSampleNumber, n, totalSampleRead , mInfo);
     return nReturn;
 }
 
+void TrackFragmentAtom::resetPeekwithGet()
+{
+    _peekPlaybackSampleNumber = _currentTrackFragmentRunSampleNumber;
+}
 
 uint64 TrackFragmentAtom::resetPlayback(uint64 time, uint32 trun_number, uint32 sample_num)
 {

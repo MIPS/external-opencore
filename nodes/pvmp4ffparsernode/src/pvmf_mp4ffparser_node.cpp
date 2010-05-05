@@ -9151,6 +9151,9 @@ PVMFStatus PVMFMP4FFParserNode::ConstructMP4FileParser(PVMFStatus* aStatus, int3
             }
         }
 
+        // Init the moof count in case of smooth streaming
+        mp4ParserObj->SetMoofAtomsCnt(iTotalMoofFrags);
+
         iClipInfoList[aClipIndex].iParserObj = mp4ParserObj;
     }
     else
