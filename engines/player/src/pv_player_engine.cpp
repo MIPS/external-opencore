@@ -15162,7 +15162,7 @@ void PVPlayerEngine::HandleSourceNodeInfoEvent(const PVMFAsyncEvent& aEvent)
         {
             // if the clip which is being processed is corrupt, reset the current clip index
             // the current clip index would be set again upon receival of ClipStarted event.
-            iCurrentPlaybackClipId = -1;
+            iCurrentPlaybackClipId = 0xFFFFFFFF;
             iClipsCorrupted++;
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVPlayerEngine::HandleSourceNodeInfoEvent() Corrupted clip encountered Info %d", event));
