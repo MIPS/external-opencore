@@ -365,7 +365,6 @@ OSCL_EXPORT_REF PVMFOMXBaseDecNode::PVMFOMXBaseDecNode(int32 aPriority, const ch
     iOutTimeScale = 1000;
 
 
-    iInputTimestampClock.set_timescale(iInTimeScale); // keep the timescale set to input timestamp
 
 
     // counts output frames (for logging)
@@ -821,7 +820,8 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::ProcessIncomingMsg(PVMFPortInterface* a
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDataPathLogger, PVLOGMSG_INFO,
                     (0, "%s::ProcessIncomingMsg: iTSOfFirstDataMsgAfterBOS = %d", iName.Str(), msg->getTimestamp()));
         iTSOfFirstDataMsgAfterBOS = msg->getTimestamp();
-        iInputTimestampClock.set_clock(iTSOfFirstDataMsgAfterBOS, 0);
+        iInputTimestampClock_LH = iTSOfFirstDataMsgAfterBOS;
+        iInputTimestampClock_UH = 0;
     }
 
     iCurrFragNum = 0; // for new message, reset the fragment counter
@@ -1574,9 +1574,9 @@ bool PVMFOMXBaseDecNode::SendEOSBufferToOMXComponent()
     input_buf->pBufHdr->nFilledLen = 0;
     input_buf->pBufHdr->nOffset = 0;
 
-    iInputTimestampClock.update_clock(iEndOfDataTimestamp); // this will also take into consideration the rollover
     // convert TS in input timescale into OMX_TICKS
-    iOMXTicksTimestamp = ConvertTimestampIntoOMXTicks(iInputTimestampClock);
+    // this will also take into consideration the rollover bw or fw
+    iOMXTicksTimestamp = ConvertInputTimestampIntoOMXTicks(iEndOfDataTimestamp);
     input_buf->pBufHdr->nTimeStamp = iOMXTicksTimestamp;
 
     // set ptr to input_buf structure for Context (for when the buffer is returned)
@@ -2060,11 +2060,11 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::SendInputBufferToOMXComponent()
             iInPacketSeqNum = iDataIn->getSeqNum(); // remember input sequence number
             iInTimestamp = iDataIn->getTimestamp();
 
-            // do the conversion into OMX_TICKS
-            iInputTimestampClock.update_clock(iInTimestamp); // this will also take into consideration the timestamp rollover
 
             // convert TS in input timescale into OMX_TICKS
-            iOMXTicksTimestamp = ConvertTimestampIntoOMXTicks(iInputTimestampClock);
+            // this will also take into consideration the timestamp rollover fw or bw
+
+            iOMXTicksTimestamp = ConvertInputTimestampIntoOMXTicks(iInTimestamp);
 
             iInDuration = iDataIn->getDuration();
             iInNumFrags = iDataIn->getNumFragments();
@@ -2847,8 +2847,8 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::SendConfigBufferToOMXComponent(ui
     // set buffer fields (this is the same regardless of whether the input is movable or not
     input_buf->pBufHdr->nOffset = 0;
 
-    iInputTimestampClock.update_clock(iInTimestamp); // this will also take into consideration the timestamp rollover
-    iOMXTicksTimestamp = ConvertTimestampIntoOMXTicks(iInputTimestampClock); // make a conversion into OMX ticks
+    // Convert into OMXTicks - this will also take into consideration the timestamp rollover bw or fw
+    iOMXTicksTimestamp = ConvertInputTimestampIntoOMXTicks(iInTimestamp);
     input_buf->pBufHdr->nTimeStamp = iOMXTicksTimestamp;
 
     // set ptr to input_buf structure for Context (for when the buffer is returned)
@@ -5653,14 +5653,35 @@ bool PVMFOMXBaseDecNode::HandleRepositioning()
     return false;
 
 }
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF OMX_TICKS PVMFOMXBaseDecNode::ConvertTimestampIntoOMXTicks(const MediaClockConverter& src)
+OSCL_EXPORT_REF OMX_TICKS PVMFOMXBaseDecNode::ConvertInputTimestampIntoOMXTicks(const uint32 new_ts)
 {
-    // This is similar to mediaclockconverter set_value method - except without using the modulo for upper part of 64 bits
+    // This method combines update_clock + set_value of mediaclock converter
+    // (except without using the modulo for upper part of 64 bits and the ability to move the timestamp
+    // both backwards and forward)
+
+
+    // this method has to take into account B-frame (decode order) timestamps that may
+    // come "out of rendering order". In this case, the method has to detect whether to
+    // do a wrap-around and update the upper 32-bits of the timestamp or not.
+
+    // Update of the UH of the timestap needs to happen when there's a wrap forward i.e.
+    // when ((int32) new_ts) > 0 && ((int32) iCurrentInputTimestamp_LH < 0)
+    // or when there is a wrap backwards ((int32) new_ts <0) && ((int32) iCurrentInputTs_LH>0)
+
+    // Update timestamp:
+    if ((new_ts >> 31) ^(iInputTimestampClock_LH >> 31)) // if the "signs" of current and new ts differ, there was a wraparound
+    {
+        iInputTimestampClock_UH -= (2 * (new_ts >> 31)); // this is 0 for wrap fw, -2 for wrap bw
+        iInputTimestampClock_UH += 1; // this is +1 for wrap fw, or -1 for wrap bw
+    }
+
+    iInputTimestampClock_LH = new_ts;
 
     // Timescale value cannot be zero
-    OSCL_ASSERT(src.get_timescale() != 0);
-    if (src.get_timescale() == 0)
+    OSCL_ASSERT(iInTimeScale != 0);
+    if (iInTimeScale == 0)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
                         (0, "%s::ConvertTimestampIntoOMXTicks Input timescale is 0", iName.Str()));
@@ -5681,10 +5702,12 @@ OSCL_EXPORT_REF OMX_TICKS PVMFOMXBaseDecNode::ConvertTimestampIntoOMXTicks(const
         return (OMX_TICKS) 0;
     }
 
-    uint64 value = (uint64(src.get_wrap_count())) << 32;
-    value += src.get_current_timestamp();
+
+    uint64 value = (uint64(iInputTimestampClock_UH)) << 32;
+    value += iInputTimestampClock_LH;
     // rounding up
-    value = (uint64(value) * iTimeScale + uint64(src.get_timescale() - 1)) / src.get_timescale();
+    value = (uint64(value) * iTimeScale + uint64(iInTimeScale - 1)) / iInTimeScale;
+
     return (OMX_TICKS) value;
 
 
@@ -5720,12 +5743,14 @@ OSCL_EXPORT_REF uint32 PVMFOMXBaseDecNode::ConvertOMXTicksIntoTimestamp(const OM
 
     uint32 current_ts;
 
+
     uint64 value = (uint64) src;
 
     // rounding up
     value = (uint64(value) * iOutTimeScale + uint64(iTimeScale - 1)) / iTimeScale;
 
     current_ts = (uint32)(value & 0xFFFFFFFF);
+
     return (uint32) current_ts;
 
 }
