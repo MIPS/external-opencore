@@ -761,6 +761,24 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
         return false;
     }
 
+
+    //After setting the parameters, do GetParameter once again to confirm whether the parameters have been set properly or not
+    iParamPort.nPortIndex = iInputPortIndex;
+    CONFIG_SIZE_AND_VERSION(iParamPort);
+    Err = OMX_GetParameter(iOMXDecoder, OMX_IndexParamPortDefinition, &iParamPort);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() Problem negotiating with input port %d ", iInputPortIndex));
+        return false;
+    }
+
+    //If the component has not taken the updated value, we can go back to the number of buffers that the component suggested
+    if (iNumInputBuffers != iParamPort.nBufferCountActual)
+    {
+        iNumInputBuffers = iParamPort.nBufferCountActual;
+    }
+
     //Port 1 for output port
     iParamPort.nPortIndex = iOutputPortIndex;
     CONFIG_SIZE_AND_VERSION(iParamPort);
@@ -1083,6 +1101,7 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
     int numKvp = 0;
     PvmiKeyType aIdentifier = (PvmiKeyType)PVMF_BUFFER_ALLOCATOR_KEY;
     int32 err, err1;
+
     if (ipExternalOutputBufferAllocatorInterface)
     {
         ipExternalOutputBufferAllocatorInterface->removeRef();
@@ -1164,6 +1183,35 @@ bool PVMFOMXVideoDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
                         (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() Problem setting parameters in output port %d ", iOutputPortIndex));
         return false;
     }
+
+
+    //After setting the parameters, do GetParameter once again to confirm whether the parameters have been set properly or not
+    iParamPort.nPortIndex = iOutputPortIndex;
+    CONFIG_SIZE_AND_VERSION(iParamPort);
+    Err = OMX_GetParameter(iOMXDecoder, OMX_IndexParamPortDefinition, &iParamPort);
+    if (Err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                        (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() Output Port parameters not set properly in the component"));
+        return false;
+    }
+
+    //If the component has not taken the updated value,
+    //we can go back to the number of buffers that the component suggested only if External Output Buffer Allocator is not supported
+    if (iNumOutputBuffers != iParamPort.nBufferCountActual)
+    {
+        if ((NULL != ipExternalOutputBufferAllocatorInterface) || (iNumOutputBuffers > NUMBER_OUTPUT_BUFFER))
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXVideoDecNode::NegotiateComponentParameters() Output Port parameters not set properly in the component"));
+            return false;
+        }
+        else
+        {
+            iNumOutputBuffers = iParamPort.nBufferCountActual;
+        }
+    }
+
 
     //Set input video format
     //This is need it since a single component could handle differents roles
