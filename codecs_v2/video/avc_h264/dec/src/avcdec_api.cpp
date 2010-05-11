@@ -529,8 +529,8 @@ OSCL_EXPORT_REF AVCDec_Status PVAVCDecodeSlice(AVCHandle *avcHandle, uint8 *buff
 
         if (video->nal_unit_type == AVC_NALTYPE_IDR)
         {
-            video->prevFrameNum = 0;
-            video->PrevRefFrameNum = 0;
+            video->prevFrameNum = video->sliceHdr->frame_num; // =0 for compliant IDR
+            video->PrevRefFrameNum = video->sliceHdr->frame_num;
         }
 
         if (!video->currSeqParams->gaps_in_frame_num_value_allowed_flag)
@@ -679,7 +679,10 @@ OSCL_EXPORT_REF AVCDec_Status PVAVCDecodeSlice(AVCHandle *avcHandle, uint8 *buff
 
         if (video->mem_mgr_ctrl_eq_5)
         {
-            video->PrevRefFrameNum = 0;
+            if (video->nal_unit_type == AVC_NALTYPE_IDR) // not a real mmco 5
+                video->PrevRefFrameNum = video->sliceHdr->frame_num; // in case IDR frame_num!=0
+            else
+                video->PrevRefFrameNum = 0; // required for a real mmco 5
             video->prevFrameNum = 0;
             video->prevPicOrderCntMsb = 0;
             video->prevPicOrderCntLsb = video->TopFieldOrderCnt;

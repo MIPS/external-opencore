@@ -2,8 +2,8 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
-	src/avc_dec.cpp \
- 	src/omx_avc_component.cpp
+	src/omx_avc_component.cpp \
+ 	src/avc_dec.cpp
 
 
 LOCAL_MODULE := libomx_avc_component_lib
@@ -27,7 +27,7 @@ LOCAL_C_INCLUDES := \
 LOCAL_COPY_HEADERS_TO := $(PV_COPY_HEADERS_TO)
 
 LOCAL_COPY_HEADERS := \
-	include/avc_dec.h \
- 	include/omx_avc_component.h
+	include/omx_avc_component.h \
+ 	include/avc_dec.h
 
 include $(BUILD_STATIC_LIBRARY)

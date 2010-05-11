@@ -96,7 +96,7 @@ derive pv_aggregate_libtype from pv_so==y ? "shared":"static"
 derive SOLIBS_pv from (LIBS_oscl_shared.
                        pvra8decoder_m_lib.pv_aac_dec_m_lib.pvmp3_m_lib.wmadecoder_m_lib.wmavoicedecoder_m_lib.
                        pvdecoder_gsmamr_m_lib.pvencoder_gsmamr_m_lib.pv_amr_nb_common_lib_m_lib.pvamrwbdecoder_m_lib.
-                       pvavcdecoder_m_lib.pv_avc_common_lib_m_lib.pvavch264enc_m_lib.
+                       pvavcdecoder_m_lib.pv_avc_mp_decoder_m_lib.pv_avc_common_lib_m_lib.pvavch264enc_m_lib.
                        rvdecoder_m_lib.pvmp4decoder_m_lib.pvm4vencoder_m_lib.wmvdecoder_m_lib.pv_aac_enc_m_lib.
                        getactualaacconfig_m_lib.getaacaudioinfo_m_lib.colorconvert_m_lib.m4v_config_m_lib.pv_config_parser_m_lib.
                        LIBS_omxdec_shared.LIBS_omxjoint_shared.
@@ -123,7 +123,7 @@ derive SOLIBS_pv from (LIBS_oscl_shared.
 derive AGGREGATE_LIBDIRS_pv from (LIBDIR_oscl_shared.
                        pvra8decoder_m_mk.pv_aac_dec_m_mk.pvmp3_m_mk.wmadecoder_m_mk.wmavoicedecoder_m_mk.
                        pvdecoder_gsmamr_m_mk.pvencoder_gsmamr_m_mk.pv_amr_nb_common_lib_m_mk.pvamrwbdecoder_m_mk.
-                       pvavcdecoder_m_mk.pv_avc_common_lib_m_mk.pvavch264enc_m_mk.
+                       pvavcdecoder_m_mk.pv_avc_mp_decoder_m_mk.pv_avc_common_lib_m_mk.pvavch264enc_m_mk.
                        rvdecoder_m_mk.pvmp4decoder_m_mk.pvm4vencoder_m_mk.wmvdecoder_m_mk.pv_aac_enc_m_mk.
                        getactualaacconfig_m_mk.getaacaudioinfo_m_mk.colorconvert_m_mk.m4v_config_m_mk.pv_config_parser_m_mk.
                        LIBDIR_omxdec_shared.LIBDIR_omxjoint_shared.
@@ -224,7 +224,7 @@ derive opencore_common_aggregate_libtype from pvsplit_so==y ? "shared":"static"
 derive opencore_common_link_type from "linked"
 derive SOLIBS_opencore_common from (LIBS_oscl_shared.
                        LIBS_omxjointimp_shared.
-                       pvdecoder_gsmamr_imp_m_lib.pvavcdecoder_imp_m_lib. 
+                       pvdecoder_gsmamr_imp_m_lib.pvavcdecoder_imp_m_lib.pv_avc_mp_decoder_imp_m_lib.
                        omx_avc_component_imp_m_lib.omx_m4v_component_imp_m_lib.
                        omx_wmv_component_imp_m_lib.omx_rv_component_imp_m_lib.
                        omx_aac_component_imp_m_lib.omx_amr_component_imp_m_lib.
@@ -246,7 +246,7 @@ derive SOLIBS_opencore_common from (LIBS_oscl_shared.
                        pvwav_m_lib.pvfileparserutils_m_lib.scsp_m_lib)
 derive AGGREGATE_LIBDIRS_opencore_common from (LIBDIR_oscl_shared.
                        LIBDIR_omxjointimp_shared.
-                       pvdecoder_gsmamr_imp_m_mk.pvavcdecoder_imp_m_mk.
+                       pvdecoder_gsmamr_imp_m_mk.pvavcdecoder_imp_m_mk.pv_avc_mp_decoder_imp_m_mk.
                        omx_avc_component_imp_m_mk.omx_m4v_component_imp_m_mk.
                        omx_wmv_component_imp_m_mk.omx_rv_component_imp_m_mk.
                        omx_aac_component_imp_m_mk.omx_amr_component_imp_m_mk.
@@ -629,8 +629,8 @@ derive MODS_omx_sharedlibrary from "-lopencore_common"
 derive omx_avcdec_sharedlibrary_so_name from omx_avc_component_lib==m ? "omx_avcdec_sharedlibrary" : ""
 derive omx_avcdec_sharedlibrary_aggregate_libtype from omx_avc_component_lib==m ? "shared":"static"
 derive omx_avcdec_sharedlibrary_link_type from "loaded"
-derive SOLIBS_omx_avcdec_sharedlibrary from omx_avc_component_m_lib.pvavcdecoder_m_lib
-derive AGGREGATE_LIBDIRS_omx_avcdec_sharedlibrary from omx_avc_component_m_mk.pvavcdecoder_m_mk
+derive SOLIBS_omx_avcdec_sharedlibrary from omx_avc_component_m_lib.pvavcdecoder_m_lib.pv_avc_mp_decoder_m_lib
+derive AGGREGATE_LIBDIRS_omx_avcdec_sharedlibrary from omx_avc_component_m_mk.pvavcdecoder_m_mk.pv_avc_mp_decoder_m_mk
 derive MODS_omx_avcdec_sharedlibrary from "-lomx_sharedlibrary -lopencore_common"
 
 derive omx_m4vdec_sharedlibrary_so_name from omx_m4v_component_lib==m ? "omx_m4vdec_sharedlibrary" : ""

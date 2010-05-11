@@ -128,7 +128,7 @@ const int32 PVLOGGER_LEVEL_UNINTIALIZED = -1;
 #ifndef PVLOGGER_INST_LEVEL
 #if (OSCL_RELEASE_BUILD)
 /* Release mode-- Profile logging */
-#define PVLOGGER_INST_LEVEL 2
+#define PVLOGGER_INST_LEVEL 1
 #else
 /* Debug mode-- Complete logging */
 #define PVLOGGER_INST_LEVEL 5

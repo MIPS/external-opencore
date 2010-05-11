@@ -56,7 +56,7 @@
 #ifndef PVLOGGER_INST_LEVEL
 #if (OSCL_RELEASE_BUILD)
 //Release mode logging - should be kept minimum
-#define PVLOGGER_INST_LEVEL 2
+#define PVLOGGER_INST_LEVEL 1
 #else
 //full logging
 #define PVLOGGER_INST_LEVEL 5

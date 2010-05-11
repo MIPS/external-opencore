@@ -30,7 +30,8 @@
 
 #ifndef AVC_DEC_H_INCLUDED
 #include "avc_dec.h"
-#endif
+#endif // AVC_DEC_H_INCLUDED
+
 
 #if (defined(TEST_FULL_AVC_FRAME_MODE) || defined(TEST_FULL_AVC_FRAME_MODE_SC) || defined(TEST_FULL_AVC_FRAME_MODE_I2BNS) || defined(TEST_FULL_AVC_FRAME_MODE_I4BNS))
 #define INPUT_BUFFER_SIZE_AVC (2000 * MAX_NAL_PER_FRAME)
@@ -91,7 +92,8 @@ class OpenmaxAvcAO : public OmxComponentVideo
 
     private:
 
-        AvcDecoder_OMX* ipAvcDec;
+        AvcDecoder_OMX   *ipAvcDec;
+
         OMX_BOOL        iDecodeReturn;
         OMX_BOOL        iFlushOutputStatus;
 

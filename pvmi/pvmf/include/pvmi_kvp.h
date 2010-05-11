@@ -565,6 +565,10 @@ class PvmfAssetInfo3GPPLocationStruct
 #define PVSMOOTHSTREAMING_TOTAL_NUM_MOOFS_KEY _STRLIT_CHAR("x-pvmf/net/ms-smooth-streaming-total-number-of-movie-fragments;valtype=uint32")
 #define PVSMOOTHSTREAMING_MOOF_MFRA_INFO_UPDATE_KEY _STRLIT_CHAR("x-pvmf/net/ms-smooth-streaming-moof-info-update;valtype=key_specific_value")
 
+// Key for Apple HTTP streaming
+#define PVAPPLEHTTPSTREAMING_TOTAL_SESSION_DURATION_KEY _STRLIT_CHAR("x-pvmf/net/apple-http-streaming-total-session-duration;valtype=uint32")
+
+
 // Keys for media output components -- Video
 //
 //video format strings as defined in pvmf_format_type.h

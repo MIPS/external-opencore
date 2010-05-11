@@ -377,6 +377,7 @@ OMX_ERRORTYPE OpenmaxAvcAO::ConstructComponent(OMX_PTR pAppData, OMX_PTR pProxy)
     }
 
     ipAvcDec = OSCL_NEW(AvcDecoder_OMX, (this));
+
     if (ipAvcDec == NULL)
     {
         return OMX_ErrorInsufficientResources;

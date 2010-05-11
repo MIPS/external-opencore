@@ -213,7 +213,6 @@ class AndroidSurfaceOutput :    public OsclTimerObject
         void Reschedule();
 
         void Cleanup();
-        void ResetData();
 
         PvmiMediaTransfer* iPeer;
 

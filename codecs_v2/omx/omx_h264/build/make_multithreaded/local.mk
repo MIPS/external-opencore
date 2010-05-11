@@ -8,19 +8,14 @@ include $(MK)/clear.mk
 TARGET := omx_avc_component_lib
 
 XINCDIRS += ../../../../../extern_libs_v2/khronos/openmax/include \
-            ../../../../omx/omx_baseclass/include \
-            ../../../../video/avc_h264/dec/src \
-            ../../../../video/avc_h264/dec/include
+            ../../../../omx/omx_baseclass/include
 
 SRCDIR := ../../src
 INCSRCDIR := ../../include
 
-SRCS := avc_dec.cpp \
-	omx_avc_component.cpp 
+SRCS := omx_avc_component.cpp
 
-
-HDRS := avc_dec.h \
-	omx_avc_component.h
+HDRS := omx_avc_component.h
 
 
 include $(MK)/library.mk
