@@ -75,18 +75,6 @@ void AndroidSurfaceOutput::initData()
     iIsMIOConfigured = false;
 }
 
-void AndroidSurfaceOutput::ResetData()
-//reset all data from this session.
-{
-    Cleanup();
-
-    //reset all the received media parameters.
-    iVideoFormatString = "";
-    iVideoFormat = PVMF_MIME_FORMAT_UNKNOWN;
-    resetVideoParameterFlags();
-    iIsMIOConfigured = false;
-}
-
 void AndroidSurfaceOutput::resetVideoParameterFlags()
 {
     iVideoParameterFlags = VIDEO_PARAMETERS_INVALID;
@@ -250,7 +238,13 @@ PVMFCommandId AndroidSurfaceOutput:: Init(const OsclAny* aContext)
 
 PVMFCommandId AndroidSurfaceOutput::Reset(const OsclAny* aContext)
 {
-    ResetData();
+
+    Cleanup();
+    //reset all the received media parameters.
+    iVideoFormatString = "";
+    iVideoFormat = PVMF_MIME_FORMAT_UNKNOWN;
+    resetVideoParameterFlags();
+    iIsMIOConfigured = false;
     PVMFCommandId cmdid = iCommandCounter++;
     CommandResponse resp(PVMFSuccess, cmdid, aContext);
     QueueCommandResponse(resp);
