@@ -84,7 +84,7 @@
 #define OSCL_PACKED_STRUCT_END __attribute__((packed))
 
 #if (OSCL_RELEASE_BUILD)
-#define PVLOGGER_INST_LEVEL 2
+#define PVLOGGER_INST_LEVEL 1
 #else
 //full logging
 #define PVLOGGER_INST_LEVEL 5
