@@ -1506,6 +1506,8 @@ void energy_estimation_LC(Int32 *aBufR,
     if (nrg_h < 0)
     {
         nrg_h = 0x7fffffff;
+        nrg_h <<= 32;
+        nrg_h  |= 0xffffffff;
     }
 
 
@@ -2124,6 +2126,8 @@ void energy_estimation(Int32 *aBufR,
     if (nrg_h < 0)
     {
         nrg_h = 0x7fffffff;
+        nrg_h <<= 32;
+        nrg_h  |= 0xffffffff;
     }
 
     if (nrg_h)
