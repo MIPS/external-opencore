@@ -226,7 +226,7 @@ PVMFStatus PVMFOMXVideoDecNode::HandlePortReEnable()
         iSliceHeight = iParamPort.format.video.nSliceHeight;
 
         // This should not happen. If it does, it is a bug in the OMX component.
-        OSCL_ASSERT((iStride >= iParamPort.format.video.nFrameWidth) || (iSliceHeight >= iParamPort.format.video.nFrameHeight));
+        OSCL_ASSERT((iStride >= iParamPort.format.video.nFrameWidth) && (iSliceHeight >= iParamPort.format.video.nFrameHeight));
         if (iStride < iParamPort.format.video.nFrameWidth)
         {
             iStride = iParamPort.format.video.nFrameWidth;
