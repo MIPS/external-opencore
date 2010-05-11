@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -652,10 +652,6 @@ AVCDec_Status DecodeSliceHeader(AVCDecObject *decvid, AVCCommonObj *video, AVCDe
 
     if (video->nal_unit_type == AVC_NALTYPE_IDR)
     {
-        if (sliceHdr->frame_num != 0)
-        {
-            return AVCDEC_FAIL;
-        }
         ue_v(stream, &idr_pic_id);
     }
 
