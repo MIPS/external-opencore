@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -334,6 +334,8 @@ OMX_ERRORTYPE OmxDecTestBase::EventHandler(OMX_OUT OMX_HANDLETYPE aComponent,
         if (StateDecodeHeader == iState || StateExecuting == iState)
         {
             iState = StateDisablePort;
+            iDisableRun = OMX_FALSE;
+            iFlagDisablePort = OMX_FALSE;
             RunIfNotReady();
 
         }

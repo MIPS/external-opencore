@@ -156,6 +156,7 @@ pvg726decoder_lib=n
 #
 pv_avc_common_lib=m
 pvavcdecoder_lib=m
+pv_avc_mp_decoder_lib=n
 wmvdecoder_lib=n
 pvmp4decoder_lib=m
 M4VDEC_FLV_SUPPORT=n
@@ -186,6 +187,7 @@ CC_RGB=y
 CC_BGR=n
 
 
+ENABLE_UNALIGNED_MEM_ACCESS_FLAG=n
 
 
 #
