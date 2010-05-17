@@ -1,8 +1,9 @@
 symbols
 pv_menu			'PV Code Base Configuration System'
 features_menu		'Menu for selecting supported features'
-modules_menu		'Menu for configuring runtime loadable modules'
-module_support		'Enable runtime loadable modules'
+modules_menu		'Menu for configuring modules'
+module_support		'Enable dynamic modules'
+dynamic_loading_support   'Enable runtime loadable modules'
 download_support	'Enable Download Support'
 fasttrack_download_support	'Enable fasttrack download Support'
 mp4local_support	'Enable MP4 local playback Support'
@@ -118,5 +119,9 @@ No module is linked with this module
 pvsplit_so		'Support for player-common split Support' text
 List of libraries which would be linked with the libpvplayer and lopencore_common modules are the same as above
 .
+pvplayerservice_so 'Module for libpvplayerservice' text
+List of libraries which would be linked to form libpvplayerservice on Android
+.
+
 
 

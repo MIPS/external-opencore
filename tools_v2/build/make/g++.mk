@@ -16,7 +16,7 @@ SYSLIBS = -lc -lm -ldl -lstdc++ -lpthread -lrt
 SHARED_CFLAGS ?= -fPIC
 SHARED_CXXFLAGS ?= -fPIC
 SHARED_PRE_LDFLAGS ?= -shared -Wl,-Bsymbolic -Wl,--allow-multiple-definition -Wl,--whole-archive
-SHARED_POST_LDFLAGS ?= -Wl,-no-whole-archive -Wl,--no-undefined $(SYSLIBS)
+SHARED_POST_LDFLAGS ?= -Wl,-no-whole-archive -Wl,--no-undefined
 SONAME_ARG := -Wl,-h,
 
 BINDING := -Wl,-rpath-link=$(BUILD_ROOT)/installed_lib/$(HOST_ARCH)
@@ -129,7 +129,7 @@ endef
 #########################################################
 
 define generate_shared_lib
-  $(quiet) $(SHARED_LINK) $(SHARED_PRE_LDFLAGS) $(SONAME_ARG)$(notdir $1) -o $1 $2 $4 $(SHARED_POST_LDFLAGS)
+  $(quiet) $(SHARED_LINK) $(SHARED_PRE_LDFLAGS) $(if $(strip $(SONAME_ARG)),$(SONAME_ARG)$(notdir $1)) -o $1 $(filter-out $5,$2) $(SHARED_POST_LDFLAGS) $4 $5 $(ANDROID_LDFLAGS) $(SYSLIBS)
   $(if $(filter release,$(strip $(DEFAULT_LIBMODE))),$(call strip_binary,$1))
 endef
 

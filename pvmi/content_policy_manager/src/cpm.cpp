@@ -91,7 +91,7 @@ static void _RemovePluginInstance(CPMPluginRegistry* aRegistry, PVMFCPMPluginFac
     }
 }
 
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
 #include "oscl_shared_library.h"
 #include "osclconfig_lib.h"
 
@@ -263,7 +263,7 @@ static CPMPluginRegistry* PopulateCPMPluginRegistry()
             }
             cli.Close();
         }
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
         //Add plugins from loadable modules.
         _AddLoadablePlugins(pRegistry);
 #endif
@@ -275,7 +275,7 @@ static void DePopulateCPMPluginRegistry(CPMPluginRegistry* aRegistry)
 {
     if (aRegistry)
     {
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
         //Remove dynamically loaded plugins
         _RemoveLoadablePlugins(aRegistry);
 #endif
@@ -2525,7 +2525,7 @@ OSCL_EXPORT_REF CPMPluginRegistryImpl::CPMPluginRegistryImpl()
     iSharedLibList = NULL;
 }
 
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
 #include "oscl_shared_library.h"
 #endif
 
@@ -2538,7 +2538,7 @@ OSCL_EXPORT_REF CPMPluginRegistryImpl::~CPMPluginRegistryImpl()
         if (container)
             OSCL_DELETE(container);
     }
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
     if (iSharedLibList)
         OSCL_DELETE(iSharedLibList);
 #endif

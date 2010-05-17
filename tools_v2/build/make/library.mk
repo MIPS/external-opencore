@@ -68,12 +68,16 @@ $(TARGET)_libmode ?= $(DEFAULT_LIBMODE)
 $(TARGET)_libtype ?= $(DEFAULT_LIBTYPE)
 
 $(TARGET)_asm_flags ?= $(DEFAULT_CPP_ASM_FLAGS)
-XCPPFLAGS += $($(TARGET)_asm_flags)
+XCPPFLAGS += $($(TARGET)_asm_flags) 
 
 # $(info target = $(TARGET), libtype = $($(TARGET)_libtype))
 
+
+# Add the target name to the cumulative target in case this is
+# an aggregate library
+CUMULATIVE_TARGET_LIST := $(CUMULATIVE_TARGET_LIST) $(TARGET)
+
 ifeq ($($(TARGET)_libtype),shared-archive)
-  CUMULATIVE_TARGET_LIST := $(CUMULATIVE_TARGET_LIST) $(TARGET)
   LIB_EXT:=$(SHARED_ARCHIVE_LIB_EXT)
   OBJSUBDIR:=shared
   XCXXFLAGS+=$(SHARED_CXXFLAGS)

@@ -99,7 +99,7 @@
 #if BUILD_FLV_FF_REC
 #include "pvflvffrec_factory.h"
 #endif
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
 #include "oscl_shared_library.h"
 
 #include "pvmf_node_shared_lib_interface.h"

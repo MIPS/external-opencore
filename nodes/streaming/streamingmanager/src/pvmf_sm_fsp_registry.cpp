@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@
 #include "pvmf_sm_fsp_registry_populator_interface.h"
 #endif
 
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
 #include "oscl_shared_library.h"
 #include "oscl_library_list.h"
 #include "oscl_configfile_list.h"
@@ -107,7 +107,7 @@
 
 PVMFSMFSPRegistry::PVMFSMFSPRegistry()
 {
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
     iMayLoadPluginsDynamically = true;
 #else
     iMayLoadPluginsDynamically = false;
@@ -302,7 +302,7 @@ bool PVMFSMFSPRegistry::CheckPluginAvailability(PVMFFormatType& aInputType, Oscl
 void PVMFSMFSPRegistry::AddLoadableModules()
 {
 
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
     OsclConfigFileList aCfgList;
     // collects all config files from the project specified directory
     if (NULL != PV_DYNAMIC_LOADING_CONFIG_FILE_PATH)
@@ -352,7 +352,7 @@ void PVMFSMFSPRegistry::AddLoadableModules()
 void PVMFSMFSPRegistry::RemoveLoadableModules()
 {
 
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
     // remove all dynamic nodes now
     // unregister node one by one
     while (!iFSPLibInfoList.empty())

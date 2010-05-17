@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@
 #endif
 
 
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
 #include "oscl_shared_library.h"
 #include "oscl_library_list.h"
 #include "oscl_configfile_list.h"
@@ -221,7 +221,7 @@ void PVMFProtocolEngineNodeRegistry::AddLoadableModules()
 {
     LOGINFO((0, "PVMFProtocolEngineNodeRegistry::AddLoadableModules() IN"));
 
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
 
     OsclConfigFileList aCfgList;
     // collects all config files from the project specified directory
@@ -273,7 +273,7 @@ void PVMFProtocolEngineNodeRegistry::RemoveLoadableModules()
 {
     LOGINFO((0, "PVMFProtocolEngineNodeRegistry::RemoveLoadableModules() IN"));
 
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
     // remove all dynamic nodes now
     // unregister node one by one
     while (!iNodeLibInfoList.empty())
