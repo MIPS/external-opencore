@@ -3290,17 +3290,6 @@ void pvplayer_async_test_playlist_seek_skip::HandleInformationalEvent(const PVAs
         break;
         case PVMFInfoPositionStatus:
         {
-            PVPlayerState pstate;
-            iPlayer->GetPVPlayerStateSync(pstate);
-            if (pstate != PVP_STATE_STARTED)
-            {
-                fprintf(iTestMsgOutputFile, "---Playback status recived in Wrong Engine State\n");
-                PVPATB_TEST_IS_TRUE(false);
-                iState = STATE_CLEANUPANDCOMPLETE;
-                RunIfNotReady();
-                return;
-            }
-
             PVInterface* iface = (PVInterface*)(aEvent.GetEventExtensionInterface());
             if (NULL == iface)
             {
