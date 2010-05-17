@@ -305,13 +305,13 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
                        uint32& aFirstSeqNumAfterChange, OsclAny* aContext)
         {
             PVMFNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*) aNPTInMS;
+            iParam1 = (OsclAny*) & aNPTInMS;
             iParam2 = (OsclAny*) & aFirstSeqNumAfterChange;
         }
 
         void Parse(uint64& aNPTInMS, uint32*& aFirstSeqNumAfterChange)
         {
-            aNPTInMS = (uint64)iParam1;
+            aNPTInMS = *((uint64*)iParam1);
             aFirstSeqNumAfterChange = (uint32*)iParam2;
         }
 

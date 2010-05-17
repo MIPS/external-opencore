@@ -516,7 +516,7 @@ OSCL_EXPORT_REF bool ProtocolContainer::releaseMemFrag(OsclRefCounterMemFrag* aF
     return iNodeOutput->releaseMemFrag(aFrag);
 }
 
-void ProtocolContainer::requestResumeNotification(const uint32 currentNPTReadPosition, bool& aDownloadComplete, bool& aNeedSendUnderflowEvent)
+OSCL_EXPORT_REF void ProtocolContainer::requestResumeNotification(const uint32 currentNPTReadPosition, bool& aDownloadComplete, bool& aNeedSendUnderflowEvent)
 {
     if (iDownloadControl) iDownloadControl->requestResumeNotification(currentNPTReadPosition, aDownloadComplete, aNeedSendUnderflowEvent);
 }
