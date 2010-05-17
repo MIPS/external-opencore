@@ -155,6 +155,7 @@ OSCL_EXPORT_REF void DownloadContainer::setHttpExtensionHeaderField(OSCL_String 
         const HttpMethod aMethod,
         const bool aPurgeOnRedirect)
 {
+    if (!iCfgFileContainer->getCfgFile().GetRep()) return;
     iCfgFileContainer->getCfgFile()->SetExtensionHeaderKey(aFieldKey);
     iCfgFileContainer->getCfgFile()->SetExtensionHeaderValue(aFieldValue);
     iCfgFileContainer->getCfgFile()->SetHTTPMethodMaskForExtensionHeader(getBitMaskForHTTPMethod(aMethod));
