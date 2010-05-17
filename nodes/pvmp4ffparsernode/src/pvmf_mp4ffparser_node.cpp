@@ -6214,6 +6214,11 @@ void PVMFMP4FFParserNode::playResumeNotification(bool aDownloadComplete)
                                 return;
                             }
                         }
+                        else
+                        {
+                            CompleteInit(iCurrentCommand, status);
+                            return;
+                        }
                     }
                 }
                 CompleteInit(iCurrentCommand);
@@ -7331,7 +7336,11 @@ void PVMFMP4FFParserNode::CPMCommandCompleted(const PVMFCmdResp& aResponse)
                                 CompleteInit(iCurrentCommand, status);
                             }
                         }
-
+                    }
+                    else
+                    {
+                        CompleteInit(iCurrentCommand, status);
+                        return;
                     }
                 }
             }
