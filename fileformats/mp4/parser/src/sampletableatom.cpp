@@ -1718,7 +1718,7 @@ uint64 SampleTableAtom::resetTrackByTime(uint64 time, bool oDependsOn)
     {
         _currentPlaybackSampleNumber = 0;
         _currentPlaybackSampleTimestamp = 0;
-        _currChunkOffset  = 0;
+        _currChunkOffset = 0;
         trueTS = 0;
         _ptimeToSampleAtom->ResetStateVariables();
         if (NULL != _pcompositionOffsetAtom)
@@ -1801,12 +1801,13 @@ uint64 SampleTableAtom::resetTrackByTime(uint64 time, bool oDependsOn)
                     // ZERO SYNC SAMPLE ENTRIES - ERROR CONDITION - RESET TO THR BEGINNING OF THE
                     // CLIP
                     _currentPlaybackSampleNumber = 0;
+                    _currentPlaybackSampleTimestamp = 0;
+                    _currChunkOffset = 0;
                     trueTS = 0;
                     retValA = _ptimeToSampleAtom->ResetStateVariables(_currentPlaybackSampleNumber);
                     if (retValA == DEFAULT_ERROR)
                     {
                         _currentPlaybackSampleNumber = 0;
-                        _currentPlaybackSampleTimestamp = 0;
                         _ptimeToSampleAtom->ResetStateVariables();
                         return 0;
                     }
@@ -1815,7 +1816,6 @@ uint64 SampleTableAtom::resetTrackByTime(uint64 time, bool oDependsOn)
                     if (retValB == DEFAULT_ERROR)
                     {
                         _currentPlaybackSampleNumber = 0;
-                        _currentPlaybackSampleTimestamp = 0;
                         _psampleToChunkAtom->resetStateVariables();
                         return 0;
                     }
@@ -1826,7 +1826,6 @@ uint64 SampleTableAtom::resetTrackByTime(uint64 time, bool oDependsOn)
                         if (DEFAULT_ERROR == retValC)
                         {
                             _currentPlaybackSampleNumber = 0;
-                            _currentPlaybackSampleTimestamp = 0;
                             _pcompositionOffsetAtom->ResetStateVariables();
                             return 0;
                         }
@@ -1839,6 +1838,8 @@ uint64 SampleTableAtom::resetTrackByTime(uint64 time, bool oDependsOn)
                 // NO SYNC SAMPLE ATOM - ERROR CONDITION - RESET TO THR BEGINNING OF THE
                 // CLIP
                 _currentPlaybackSampleNumber = 0;
+                _currentPlaybackSampleTimestamp = 0;
+                _currChunkOffset = 0;
                 trueTS = 0;
                 _ptimeToSampleAtom->ResetStateVariables();
                 if (NULL != _pcompositionOffsetAtom)
