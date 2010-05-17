@@ -13577,6 +13577,7 @@ void PVPlayerEngine::HandleSinkNodeSkipMediaDataDuringPlayback(PVPlayerEngineCon
         infomsg->removeRef();
 
         // Complete SetPlaybackRange() or SetPlaybackRate()
+        SendPositionStatusUpdate();
         EngineCommandCompleted(aNodeContext.iCmdId, aNodeContext.iCmdContext, PVMFSuccess);
     }
 
