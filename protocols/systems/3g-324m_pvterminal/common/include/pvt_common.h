@@ -351,7 +351,7 @@ class CPVTrackInfo
 
 OSCL_IMPORT_REF bool operator==(CPVTrackInfo &a, CPVTrackInfo &b);
 
-class CPvtMediaCapability
+class CPvtMediaCapability: public HeapBase
 {
     public:
         CPvtMediaCapability(PVMFFormatType format_type, uint32 bitrate = 0, bool aMandatory = false)
@@ -373,6 +373,14 @@ class CPvtMediaCapability
         PVMFFormatType iFormatType;
         uint32 iBitrate;
         bool iMandatory;
+};
+
+class CPvtUserInputCapability : public CPvtMediaCapability
+{
+    public:
+        CPvtUserInputCapability(PVMFFormatType format_type, uint32 bitrate = 0, bool aMandatory = false)
+                : CPvtMediaCapability(format_type, bitrate, aMandatory) {}
+        ~CPvtUserInputCapability() {}
 };
 
 class CPvtAudioCapability : public CPvtMediaCapability

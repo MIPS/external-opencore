@@ -370,6 +370,18 @@ OSCL_EXPORT_REF PVMFFormatType PVCodecTypeToPVMFFormatType(PVCodecType_t aCodecT
         case PV_VID_TYPE_H264:
             aFormatType = PVMF_MIME_H264_VIDEO_RAW;
             break;
+        case PV_UI_BASIC_STRING:
+            aFormatType = PVMF_MIME_USERINPUT_BASIC_STRING;
+            break;
+        case PV_UI_IA5_STRING:
+            aFormatType = PVMF_MIME_USERINPUT_IA5_STRING;
+            break;
+        case PV_UI_GENERAL_STRING:
+            aFormatType = PVMF_MIME_USERINPUT_GENERAL_STRING;
+            break;
+        case PV_UI_DTMF:
+            aFormatType = PVMF_MIME_USERINPUT_DTMF;
+            break;
         default:
             break;
     }

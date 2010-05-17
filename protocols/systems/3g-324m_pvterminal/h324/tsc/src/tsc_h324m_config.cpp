@@ -1078,11 +1078,11 @@ void H324MConfig::UserInputReceived(CPVUserInput* apUserInput)
     SendAsyncEvent(event);
 }
 
-void H324MConfig::UserInputCapability(int formats)
+void H324MConfig::UserInputCapabilityReceived(CPVUserInputCapability* apUserInputCapability)
 {
-    PVMFAsyncEvent event(PVMFInfoEvent, PV_INDICATION_USER_INPUT_CAPABILITY, NULL, NULL);
-    oscl_memset(event.GetLocalBuffer(), 0, PVMF_ASYNC_EVENT_LOCAL_BUF_SIZE);
-    event.GetLocalBuffer()[0] = (uint8)(formats & 0xFF);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "H324MConfig::UserInputCapabilityReceived\n"));
+
+    PVMFAsyncEvent event(PVMFInfoEvent, PV_INDICATION_USER_INPUT_CAPABILITY, NULL, apUserInputCapability, NULL);
     SendAsyncEvent(event);
 }
 
