@@ -128,7 +128,7 @@ ifeq ($(run_$(TARGET)_SOURCE_DIR), )
 run_$(TARGET)_SOURCE_DIR := $(LOCAL_PATH)
 endif
 
-ifneq ($(DISABLE_BUILDING_TARGET), 1)
+ifneq ($(DISABLE_MAKE_BUILD), 1)
 run_$(TARGET): $(REALTARGET)
 endif
 
