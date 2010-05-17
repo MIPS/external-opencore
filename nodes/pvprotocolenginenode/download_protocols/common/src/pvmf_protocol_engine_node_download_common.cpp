@@ -203,11 +203,11 @@ OSCL_EXPORT_REF bool DownloadContainer::isStreamingPlayback()
             (uint32)PVMFSourceContextDataDownloadHTTP::ENoSaveToFile);
 }
 
-OSCL_EXPORT_REF int32 DownloadContainer::initNodeOutput()
+OSCL_EXPORT_REF int32 DownloadContainer::initNodeOutput(PVMFProtocolEngineNodeOutput *aNodeOutput)
 {
     // pass objects to node output object
-    iNodeOutput->setOutputObject((OsclAny*)iPortInForData);
-    iNodeOutput->setOutputObject((OsclAny*)iInterfacingObjectContainer->getDataStreamFactory(), NodeOutputType_DataStreamFactory);
+    aNodeOutput->setOutputObject((OsclAny*)iPortInForData);
+    aNodeOutput->setOutputObject((OsclAny*)iInterfacingObjectContainer->getDataStreamFactory(), NodeOutputType_DataStreamFactory);
     iInterfacingObjectContainer->setOutputPortConnect();  // for sending disconnect after download complete
 
     OsclSharedPtr<PVDlCfgFile> aCfgFile = iCfgFileContainer->getCfgFile();
@@ -221,10 +221,10 @@ OSCL_EXPORT_REF int32 DownloadContainer::initNodeOutput()
         config.isNeedOpenDataStream = true;
     }
 
-    return iNodeOutput->initialize((OsclAny*)(&config));
+    return aNodeOutput->initialize((OsclAny*)(&config));
 }
 
-OSCL_EXPORT_REF bool DownloadContainer::initProtocol_SetConfigInfo()
+OSCL_EXPORT_REF bool DownloadContainer::initProtocol_SetConfigInfo(HttpBasedProtocol *aProtocol)
 {
     OsclSharedPtr<PVDlCfgFile> aCfgFile = iCfgFileContainer->getCfgFile();
     if (iUserAgentField)
@@ -233,7 +233,7 @@ OSCL_EXPORT_REF bool DownloadContainer::initProtocol_SetConfigInfo()
         if (!iUserAgentField->getUserAgent(aUserAgent)) return false;
         aCfgFile->SetUserAgent(aUserAgent);
     }
-    iProtocol->setConfigInfo((OsclAny*)(&aCfgFile));
+    aProtocol->setConfigInfo((OsclAny*)(&aCfgFile));
     return true;
 }
 
@@ -519,8 +519,8 @@ OSCL_EXPORT_REF void pvDownloadControl::clearBody()
 // requst resume notification, implementation of PVMFDownloadProgressInterface API
 OSCL_EXPORT_REF void pvDownloadControl::requestResumeNotification(const uint32 currentNPTReadPosition, bool& aDownloadComplete, bool& aNeedSendUnderflowEvent)
 {
-    LOGINFODATAPATH((0, "pvDownloadControl::requestResumeNotification() IN, iPlaybackUnderflow=%d, iRequestResumeNotification=%d, iDownloadComplete=%d",
-                     (uint32)iPlaybackUnderflow, (uint32)iRequestResumeNotification, (uint32)iDownloadComplete));
+    LOGINFODATAPATH((0, "pvDownloadControl::requestResumeNotification() IN, iPlaybackUnderflow=%d, iRequestResumeNotification=%d, iDownloadComplete=%d, MBDS write capacity=%d",
+                     (uint32)iPlaybackUnderflow, (uint32)iRequestResumeNotification, (uint32)iDownloadComplete, iNodeOutput->getAvailableOutputSize()));
 
     if (iFirstResumeNotificationSent) aNeedSendUnderflowEvent = !iRequestResumeNotification;
     else aNeedSendUnderflowEvent = false;
@@ -633,7 +633,7 @@ OSCL_EXPORT_REF int32 pvDownloadControl::checkResumeNotification(const bool aDow
 
     // check if need to resume playback
     if (iPlaybackUnderflow &&
-            isResumePlayback(iProtocol->getDownloadRate(),
+            isResumePlayback(getDownloadRate(),
                              iNodeOutput->getCurrentOutputSize(),
                              iFileSize))
     {
@@ -708,6 +708,9 @@ OSCL_EXPORT_REF void pvDownloadControl::sendDownloadCompleteNotification()
 {
     if (!iProgDownloadSI || iSendDownloadCompleteNotification) return;
 
+    // Flush data and make sure data is written to data stream before sending download complete notification to parser node
+    iNodeOutput->flushData();
+
     // send download complete notification
     LOGINFODATAPATH((0, "pvDownloadControl::sendDownloadCompleteNotification() - Notify download complete"));
     iProgDownloadSI->notifyDownloadComplete();
@@ -720,7 +723,7 @@ OSCL_EXPORT_REF void pvDownloadControl::createDownloadClock()
     // create shared PVMFMediaClock
     PVDlSharedPtrAlloc<PVMFMediaClock> alloc;
     PVMFMediaClock* myClock = alloc.allocate();
-    OsclRefCounterSA< PVDlSharedPtrAlloc<PVMFMediaClock> > *refcnt = new OsclRefCounterSA< PVDlSharedPtrAlloc<PVMFMediaClock> >(myClock);
+    OsclRefCounterSA< PVDlSharedPtrAlloc<PVMFMediaClock> > *refcnt = OSCL_NEW(OsclRefCounterSA< PVDlSharedPtrAlloc<PVMFMediaClock> >, (myClock));
     OsclSharedPtr<PVMFMediaClock> myHandle(myClock, refcnt);
     iDlProgressClock = myHandle;
 
@@ -738,6 +741,10 @@ OSCL_EXPORT_REF bool pvDownloadControl::isResumePlayback(const uint32 aDownloadR
         const uint32 aFileSize)
 {
     // check download complete, for download complete, no need to run the following algorithm
+    uint32 writeCapacity = iNodeOutput->getAvailableOutputSize();
+    LOGINFODATAPATH((0, "pvDownloadControl::isResumePlayback() IN, MBDS write capacity=%d", writeCapacity));
+    OSCL_UNUSED_ARG(writeCapacity);
+
     if (iDownloadComplete || isOutputBufferOverflow())
     {
         if (!iDownloadComplete)

@@ -68,8 +68,8 @@ class OSCL_IMPORT_REF DownloadContainer : public ProtocolContainer
         virtual void checkSendResumeNotification();
 
     protected:
-        virtual int32 initNodeOutput();
-        virtual bool initProtocol_SetConfigInfo();
+        virtual int32 initNodeOutput(PVMFProtocolEngineNodeOutput *aNodeOutput);
+        virtual bool initProtocol_SetConfigInfo(HttpBasedProtocol *aProtocol);
         virtual void initDownloadControl();
         virtual void updateDownloadControl(const bool isDownloadComplete = false);
         virtual bool isDownloadComplete(const uint32 downloadStatus) const
@@ -213,7 +213,7 @@ class OSCL_IMPORT_REF pvDownloadControl : public DownloadControlInterface
 
         // simple routine to focus on sending resume notification only
         virtual void sendResumeNotification(const bool aDownloadComplete);
-        void sendDownloadCompleteNotification();
+        virtual void sendDownloadCompleteNotification();
 
         // auto-resume playback decision
         bool isResumePlayback(const uint32 aDownloadRate, const uint32 aCurrDownloadSize, const uint32 aFileSize);
@@ -310,6 +310,10 @@ class OSCL_IMPORT_REF pvDownloadControl : public DownloadControlInterface
         virtual void setProtocolInfo()
         {
             ;
+        }
+        virtual uint32 getDownloadRate()
+        {
+            return iProtocol->getDownloadRate();
         }
 
     private:

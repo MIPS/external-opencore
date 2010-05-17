@@ -177,6 +177,26 @@ class PVMFProtocolEngineNodeExtensionInterface : public PVInterface
         virtual uint32 GetMaxTotalClipBitrate() = 0;
 
         /**
+          * Retrieve maximum video track bitrate if there is, otherwise return 0
+          * @param aStreamIndex, stream index from manifest file, if no video, then aStreamIndex=0xffffffff
+          */
+        virtual uint32 GetMaxVideoTrackBitrate(uint32& aStreamIndex) = 0;
+
+        /**
+         * Retrieve maximum audio track bitrate if there is, otherwise return 0
+         * @param aStreamIndex, stream index from manifest file, if no video, then aStreamIndex=0xffffffff
+         */
+        virtual uint32 GetMaxAudioTrackBitrate(uint32& aStreamIndex) = 0;
+
+        /**
+         * Retrieve actual NPT given the targetNPT, used in MS smooth streaming
+         * @param aTargetNPT, seek time from upper layers(i.e. download manager node, engine etc.)
+         * @return the actualNPT, which is the timestamp of the moof offset from the manifest file
+         */
+        virtual PVMFTimestamp GetActualNPT(const PVMFTimestamp aTargetNPT) = 0;
+
+
+        /**
          * Set the byte-seek param inside the PE node from the DM node.
          *
          * @param aByteSeekEnable, specifies the byte-seek param.

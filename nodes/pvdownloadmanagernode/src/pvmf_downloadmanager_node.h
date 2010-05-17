@@ -129,28 +129,30 @@ class PVMFDownloadManagerSubNodeContainerBase
             , EInit = 9
             , ERequestPort = 10
             , EReleasePort = 11
-            , EPrepare = 12
-            , EStop = 13
-            , EStart = 14
-            , EPause = 15
-            , EFlush = 16
-            , EReset = 17
-            , EGetMetadataValue = 18
-            , ESetFFProgDownloadSupport = 19
-            , ESetDataSourcePosition = 20
-            , EQueryDataSourcePosition = 21
-            , EParserCreate = 22
+            , ERequestPort2 = 12
+            , EReleasePort2 = 13
+            , EPrepare = 14
+            , EStop = 15
+            , EStart = 16
+            , EPause = 17
+            , EFlush = 18
+            , EReset = 19
+            , EGetMetadataValue = 20
+            , ESetFFProgDownloadSupport = 21
+            , ESetDataSourcePosition = 22
+            , EQueryDataSourcePosition = 23
+            , EParserCreate = 24
             //Recognizer module commands
-            , ERecognizerStart = 23
-            , ERecognizerClose = 24
+            , ERecognizerStart = 25
+            , ERecognizerClose = 26
             //CPM commands.
-            , ECPMInit = 25
-            , ECPMOpenSession = 26
-            , ECPMRegisterContent = 27
-            , ECPMApproveUsage = 28
-            , ECPMSetDecryptInterface = 29
-            , ECPMUsageComplete = 30
-            , ECPMReset = 31
+            , ECPMInit = 27
+            , ECPMOpenSession = 28
+            , ECPMRegisterContent = 29
+            , ECPMApproveUsage = 30
+            , ECPMSetDecryptInterface = 31
+            , ECPMUsageComplete = 32
+            , ECPMReset = 33
         };
 
         // Each subnode has a pointer to its container, which is the DLMGR node
@@ -540,6 +542,8 @@ class PVMFDownloadManagerNode
         uint32 getItemLen(char *ptrItemStart, char *ptrItemEnd);
 
         bool IsDownloadExtensionHeaderValid(PvmiKvp &);
+        bool ConfigSocketNodeMemoryPoolAndMBDS();
+        bool ConfigSocketNodeMemoryPoolAndMBDSPerTrack(const uint32 aTrackMaxBitRate, const uint32 aSocketNodeBufSize, const bool isAudioTrack = true, const bool aSetBufferInfo = true);
 
         bool iDebugMode;
 
@@ -646,8 +650,8 @@ class PVMFDownloadManagerNode
         OSCL_HeapString<OsclMemAllocator> iServerAddr;
 
         // Ports for the protocol node and the socket node
-        PVMFPortInterface* iProtocolEngineNodePort;
-        PVMFPortInterface* iSocketNodePort;
+        PVMFPortInterface *iProtocolEngineNodePort, *iProtocolEngineNodePort2;
+        PVMFPortInterface *iSocketNodePort, *iSocketNodePort2;
 
         //The sub-node command vec contains all the sub-node commands needed for a single node command.
         class CmdElem
@@ -684,6 +688,19 @@ class PVMFDownloadManagerNode
         PVMFSourceContextData* iPLSSessionContextData;
 #endif //PVMF_DOWNLOADMANAGER_SUPPORT_PPB
 
+        // smooth streaming related
+        uint32 iMaxVideoTrackBitrate;
+        uint32 iMaxAudioTrackBitrate;
+        uint32 iVideoStreamIndex;
+        uint32 iAudioStreamIndex;
+        uint32 iNumBufForSocketNodeAudioPort;
+        uint32 iNumBufForSocketNodeVideoPort;
+        PVMFMemoryBufferDataStream* iMemoryBufferDatastreamFactory2;
+        PVMFDataStreamFactory* iReadFactory2;
+        PVMFDataStreamFactory* iWriteFactory2;
+        PVMFTimestamp iActualNPT;
+
+
         friend class PVMFDownloadManagerCPMContainer;
         PVMFDownloadManagerCPMContainer iCPMNode;
 };
@@ -716,6 +733,10 @@ struct DownloadManagerKeyStringData
 #define PVMF_DOWNLOADMANAGER_TCP_BUFFER_NOT_AVAILABLE   2
 #define PVMF_DOWNLOADMANAGER_TCP_BUFFER_OVERHEAD        64
 #define PVMF_DOWNLOADMANAGER_TCP_AVG_SMALL_PACKET_SIZE  250
+#define PVMF_DOWNLOADMANAGER_SS_BUFFERING_TIME              4 // 4sec
+#define PVMF_DOWNLOADMANAGER_TCP_BUFFER_SIZE_FOR_SS    6400
+#define PVMF_DOWNLOADMANAGER_MIN_TCP_BUFFERS_FOR_SS    80
+
 
 
 

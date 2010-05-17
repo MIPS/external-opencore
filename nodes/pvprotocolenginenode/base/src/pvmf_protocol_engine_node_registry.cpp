@@ -44,9 +44,6 @@
 #include "pvmf_protocol_engine_node_rtmp_streaming_container_factory.h"
 #endif
 
-#if(BUILD_SMOOTHSTREAMING_PLUGIN)
-#include "pvmf_protocol_engine_node_smooth_streaming_container_factory.h"
-#endif
 
 
 #if USE_LOADABLE_MODULES
@@ -120,13 +117,6 @@ PVMFProtocolEngineNodeRegistry::PVMFProtocolEngineNodeRegistry() : iTypeVecIndex
     iTypeVec.push_back(aContainerInfo);
 #endif
 
-#if(BUILD_SMOOTHSTREAMING_PLUGIN)
-    aContainerInfo.iSourceType = PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL;
-    aContainerInfo.iProtocolEngineContainerUUID = KPVMFProtocolEngineNodeSmoothStreamingUuid;
-    aContainerInfo.iProtocolEngineContainerCreateFunc = PVMFProtocolEngineNodeSmoothStreamingContainerFactory::Create;
-    aContainerInfo.iProtocolEngineContainerReleaseFunc = PVMFProtocolEngineNodeSmoothStreamingContainerFactory::Delete;
-    iTypeVec.push_back(aContainerInfo);
-#endif
 
     iLogger = PVLogger::GetLoggerObject("PVMFProtocolEngineNode");;
 }

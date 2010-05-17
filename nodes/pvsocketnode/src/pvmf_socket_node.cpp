@@ -768,10 +768,8 @@ OSCL_EXPORT_REF PVMFStatus PVMFSocketNode::SetMaxTCPRecvBufferCount(uint32 aCoun
                 iMaxTCPRecvBufferCntToConfigure = aCount;
             }
         }
-        if (0 == iPortVector.size())
-        {
-            iMaxTCPRecvBufferCntToConfigure = aCount;
-        }
+
+        iMaxTCPRecvBufferCntToConfigure = aCount;
         status =  PVMFSuccess;
     }
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFSocketNode::SetMaxTCPRecvBufferCount status --- [%d]", status));

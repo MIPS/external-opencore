@@ -82,6 +82,9 @@
 #ifndef PVMI_KVP_H_INCLUDED
 #include "pvmi_kvp.h"
 #endif
+#ifndef PVMF_PROTOCOL_ENGINE_DEFS_H_INCLUDED
+#include "pvmf_protocol_engine_defs.h"
+#endif
 
 
 //#define PVMF_PROTOCOL_ENGINE_LOG_MS_STREAMING_OUTPUT
@@ -191,9 +194,12 @@ class OsclSharedLibrary;
 enum NodeObjectType
 {
     NodeObjectType_InputPortForData = 0,
+    NodeObjectType_InputPortForAudioData,
+    NodeObjectType_InputPortForVideoData,
     NodeObjectType_InputPortForLogging,
     NodeObjectType_OutPort,
     NodeObjectType_InternalEventQueue,
+    NodeObjectType_PortDataQueue,
 
     NodeObjectType_Protocol,
     NodeObjectType_Output,
@@ -204,7 +210,8 @@ enum NodeObjectType
     NodeObjectType_DataSourceContainer,
     NodeObjectType_Timer,
     NodeObjectType_InterfacingObjectContainer,
-    NodeObjectType_UseAgentField
+    NodeObjectType_UseAgentField,
+    NodeObjectType_EnginePlaybackClock
 };
 
 class ProtocolContainerObserver
@@ -267,7 +274,7 @@ class OSCL_IMPORT_REF ProtocolContainer
             return true;
         }
         virtual PVMFStatus doStop();
-        virtual bool doEOS(const bool isTrueEOS = true);
+        virtual bool doEOS(const bool isTrueEOS, const uint32 aProtocolObjectId);
         virtual bool doInfoUpdate(const uint32 downloadStatus)
         {
             OSCL_UNUSED_ARG(downloadStatus);    // for now, used for download only, report event and update download control
@@ -331,6 +338,7 @@ class OSCL_IMPORT_REF ProtocolContainer
 
         virtual void handleTimeout(const int32 timerID);
         virtual bool handleProtocolStateComplete(PVProtocolEngineNodeInternalEvent &aEvent, PVProtocolEngineNodeInternalEventHandler *aEventHandler);
+        virtual void requestResumeNotification(const uint32 currentNPTReadPosition, bool& aDownloadComplete, bool& aNeedSendUnderflowEvent);
 
         // for fasttrack only
         virtual PVMFStatus getMediaPresentationInfo(PVMFMediaPresentationInfo& aInfo)
@@ -415,6 +423,7 @@ class OSCL_IMPORT_REF ProtocolContainer
             iOsclSharedLibrary = aPtr;
         }
 
+
         /**
          * Retrieves shared library pointer
          * @returns Pointer to the shared library.
@@ -429,20 +438,74 @@ class OSCL_IMPORT_REF ProtocolContainer
             OSCL_UNUSED_ARG(aForceSocketReconnect);
         }
 
-        virtual bool getBufferForRequest(PVMFSharedMediaDataPtr &aMediaData);
-        virtual void protocolRequestAvailable(uint32 aRequestType);
+        virtual bool getBufferForRequest(PVMFSharedMediaDataPtr &aMediaData, const uint32 aProtocolObjectId);
+        virtual void protocolRequestAvailable(uint32 aRequestType, const uint32 aProtocolObjectId);
         virtual uint32 getMaxTotalClipBitrate()
         {
+            return 0;
+        }
+        virtual uint32 getMaxVideoTrackBitrate(uint32& aStreamIndex)
+        {
+            aStreamIndex = 0xffffffff;
+            return 0;
+        }
+        virtual uint32 getMaxAudioTrackBitrate(uint32& aStreamIndex)
+        {
+            aStreamIndex = 0xffffffff;
             return 0;
         }
 
         virtual bool handleFirstPacketAvailable(PVProtocolEngineNodeInternalEvent &aEvent, PVProtocolEngineNodeInternalEventHandler *aEventHandler);
 
+        virtual INPUT_DATA_QUEUE* getPortDataQueue(PVMFPortInterface* aPort)
+        {
+            OSCL_UNUSED_ARG(aPort);
+            return iDataQueue;
+        }
+        virtual uint32 getDataPathId() const
+        {
+            return (uint32)(PVMF_PROTOCOLENGINENODE_PORT_TYPE_INPUT + 1);
+        }
+        virtual PVMFProtocolEngineNodeOutput* getOutputOject(const uint32 protocolObjectId)
+        {
+            OSCL_UNUSED_ARG(protocolObjectId);
+            return iNodeOutput;
+        }
+        virtual HttpBasedProtocol* getProtocolOject(const uint32 protocolObjectId)
+        {
+            OSCL_UNUSED_ARG(protocolObjectId);
+            return iProtocol;
+        }
+        virtual INPUT_DATA_QUEUE* getPortDataQueueOject(const uint32 protocolObjectId)
+        {
+            OSCL_UNUSED_ARG(protocolObjectId);
+            return iDataQueue;
+        }
+        virtual PVMFProtocolEnginePort* getPortOject(const uint32 protocolObjectId)
+        {
+            OSCL_UNUSED_ARG(protocolObjectId);
+            return iPortInForData;
+        }
+
+        virtual bool haltProtocolRunning(const uint32 protocolObjectId)
+        {
+            OSCL_UNUSED_ARG(protocolObjectId);
+            return false;
+        }
+
+        virtual bool releaseMemFrag(OsclRefCounterMemFrag* aFrag);
+
+        virtual uint32 getActualNPT(const uint32 aTargetNPT)
+        {
+            OSCL_UNUSED_ARG(aTargetNPT);
+            return 0xffffffff;
+        }
+
     protected:
         virtual PVMFStatus initImpl();
-        virtual int32 initNodeOutput() = 0;
-        bool initProtocol();
-        virtual bool initProtocol_SetConfigInfo() = 0;
+        virtual int32 initNodeOutput(PVMFProtocolEngineNodeOutput *aNodeOutput) = 0;
+        bool initProtocol(HttpBasedProtocol *aProtocol);
+        virtual bool initProtocol_SetConfigInfo(HttpBasedProtocol *aProtocol) = 0;
         virtual void initDownloadControl()
         {
             ;
@@ -460,10 +523,11 @@ class OSCL_IMPORT_REF ProtocolContainer
             return false;
         }
         // called by doStop()
-        virtual void sendSocketDisconnectCmd();
+        virtual void sendSocketDisconnectCmd(PVMFProtocolEnginePort* aPort);
         // called by handleTimeout()
         virtual bool ignoreThisTimeout(const int32 timerID);
         virtual void clear();
+        virtual void checkEOSMsgFromInputPort();
 
     private:
         //called by createProtocolObjects()
@@ -472,8 +536,6 @@ class OSCL_IMPORT_REF ProtocolContainer
         // called by handleTimeout()
         bool handleTimeoutErr(const int32 timerID);
 
-        // called by startDataFlowByCommand()
-        void checkEOSMsgFromInputPort();
         // called by doClear or doCancelClear()
         void clearInternalEventQueue();
 
@@ -493,9 +555,10 @@ class OSCL_IMPORT_REF ProtocolContainer
         PVMFProtocolEngineNodeTimer *iNodeTimer;
         InterfacingObjectContainer *iInterfacingObjectContainer;
         UserAgentField *iUserAgentField;
+        INPUT_DATA_QUEUE* iDataQueue;
 
         // pass-in node objects
-        PVMFProtocolEnginePort *iPortInForData, *iPortInForLogging, *iPortOut;
+        PVMFProtocolEnginePort *iPortInForData, *iPortInForAudioData, *iPortInForVideoData, *iPortInForLogging, *iPortOut;
         Oscl_Vector<PVProtocolEngineNodeInternalEvent, PVMFProtocolEngineNodeAllocator> *iInternalEventQueue;
 
         OsclSharedLibrary* iOsclSharedLibrary;
@@ -555,58 +618,66 @@ enum PVProtocolEngineNodeInternalEventType
     PVProtocolEngineNodeInternalEventType_OutputDataReady,
     PVProtocolEngineNodeInternalEventType_StartDataflowByCommand,
     PVProtocolEngineNodeInternalEventType_StartDataflowByBufferAvailability,
-    PVProtocolEngineNodeInternalEventType_StartDataflowBySendRequestAction,
-    PVProtocolEngineNodeInternalEventType_StartDataflowByPortOutgoingQueueReady
+    PVProtocolEngineNodeInternalEventType_StartDataflowBySendRequestAction
 };
 
 struct PVProtocolEngineNodeInternalEvent
 {
     PVProtocolEngineNodeInternalEventType iEventId;
     OsclAny *iEventInfo; // any other side info except the actual data, such as error code, sequence number(http streaming), seek offset(fasttrack)
+    OsclAny *iEventInfo1; // new side info to check the protocol object id or data path object id
     OsclAny *iEventData; // actual data for the event
 
     // default constructor
-    PVProtocolEngineNodeInternalEvent() : iEventId(PVProtocolEngineNodeInternalEventType_HttpHeaderAvailable), iEventInfo(NULL), iEventData(NULL)
+    PVProtocolEngineNodeInternalEvent() : iEventId(PVProtocolEngineNodeInternalEventType_HttpHeaderAvailable),
+            iEventInfo(NULL), iEventInfo1(NULL), iEventData(NULL)
     {
         ;
     }
 
     // constructor with parameters
-    PVProtocolEngineNodeInternalEvent(PVProtocolEngineNodeInternalEventType aEventId, OsclAny *aEventInfo, OsclAny *aEventData = NULL)
+    PVProtocolEngineNodeInternalEvent(PVProtocolEngineNodeInternalEventType aEventId, OsclAny *aEventInfo, OsclAny *aEventInfo1 = NULL, OsclAny *aEventData = NULL)
     {
-        iEventId   = aEventId;
-        iEventInfo = aEventInfo;
-        iEventData = aEventData;
+        iEventId    = aEventId;
+        iEventInfo  = aEventInfo;
+        iEventInfo1 = aEventInfo1;
+        iEventData  = aEventData;
     }
 
-    PVProtocolEngineNodeInternalEvent(const ProtocolEngineOutputDataSideInfo &aSideInfo, const OsclAny *aData = NULL)
+    PVProtocolEngineNodeInternalEvent(const ProtocolEngineOutputDataSideInfo &aSideInfo, const OsclAny *aData = NULL, uint32 aProtocolObjectId = 0)
     {
         ProtocolEngineOutputDataSideInfo sideInfo = (ProtocolEngineOutputDataSideInfo&) aSideInfo;
         iEventId   = (PVProtocolEngineNodeInternalEventType)((uint32)sideInfo.iDataType);
         iEventInfo = (OsclAny *)sideInfo.iData;
+        iEventInfo1 = (OsclAny *)aProtocolObjectId;
         iEventData = (OsclAny *)aData;
     }
-    PVProtocolEngineNodeInternalEvent(PVProtocolEngineNodeInternalEventType aEventId, int32 aInfoCode = 0)
+
+    PVProtocolEngineNodeInternalEvent(PVProtocolEngineNodeInternalEventType aEventId, int32 aInfoCode = 0, uint32 aProtocolObjectId = 0)
     {
-        iEventId   = aEventId;
-        iEventInfo = (OsclAny *)aInfoCode;
-        iEventData = NULL;
+        iEventId    = aEventId;
+        iEventInfo  = (OsclAny *)aInfoCode;
+        iEventInfo1 = (OsclAny *)aProtocolObjectId;
+        iEventData  = NULL;
     }
+
 
     // copy constructor
     PVProtocolEngineNodeInternalEvent(const PVProtocolEngineNodeInternalEvent &x)
     {
-        iEventId   = x.iEventId;
-        iEventInfo = x.iEventInfo;
-        iEventData = x.iEventData;
+        iEventId    = x.iEventId;
+        iEventInfo  = x.iEventInfo;
+        iEventInfo1 = x.iEventInfo1;
+        iEventData  = x.iEventData;
     }
 
     // operator "="
     PVProtocolEngineNodeInternalEvent &operator=(const PVProtocolEngineNodeInternalEvent& x)
     {
-        iEventId   = x.iEventId;
-        iEventInfo = x.iEventInfo;
-        iEventData = x.iEventData;
+        iEventId    = x.iEventId;
+        iEventInfo  = x.iEventInfo;
+        iEventInfo1 = x.iEventInfo1;
+        iEventData  = x.iEventData;
         return *this;
     }
 };
@@ -752,7 +823,6 @@ class ProtocolStateErrorHandler : public PVProtocolEngineNodeInternalEventHandle
         int32 checkRedirectHandling(const int32 aErrorCode);
         bool handleRedirect();
         bool NeedHandleContentRangeUnmatch(const int32 aErrorCode);
-        bool handleContentRangeUnmatch();
         bool needCompletePendingCommandAtThisRound(PVProtocolEngineNodeInternalEvent &aEvent);
 
     private:
@@ -773,7 +843,11 @@ class HttpHeaderAvailableHandler : public PVProtocolEngineNodeInternalEventHandl
 
     private:
         bool Handle1xxResponse();
+        void getObjects(const uint32 protocolObjectId);
 
+    private:
+        HttpBasedProtocol *iProtocol;
+        PVMFProtocolEngineNodeOutput *iNodeOutput;
 };
 
 class FirstPacketAvailableHandler : public PVProtocolEngineNodeInternalEventHandler
@@ -841,12 +915,17 @@ class MainDataFlowHandler : public PVProtocolEngineNodeInternalEventHandler
         void clear()
         {
             iSendSocketReconnect = false;
+            iProtocolObjectId = 0;
+            iProtocol   = NULL;
+            iNodeOutput = NULL;
+            iDataQueue  = NULL;
+            iPortIn     = NULL;
         }
 
         // constructor
-        MainDataFlowHandler(PVMFProtocolEngineNode *aNode) : PVProtocolEngineNodeInternalEventHandler(aNode), iSendSocketReconnect(false)
+        MainDataFlowHandler(PVMFProtocolEngineNode *aNode) : PVProtocolEngineNodeInternalEventHandler(aNode)
         {
-            ;
+            clear();
         }
 
     private:
@@ -856,9 +935,16 @@ class MainDataFlowHandler : public PVProtocolEngineNodeInternalEventHandler
         bool handleEndOfProcessing(const int32 aStatus);
         bool dataFlowContinue(const int32 aStatus);
         inline bool isReadyGotoNextState(const int32 aStatus); // called by dataFlowContinueOrStop
+        void getObjects(const uint32 protocolObjectId);
 
     private:
         bool iSendSocketReconnect;
+
+        uint32 iProtocolObjectId;
+        HttpBasedProtocol* iProtocol;
+        PVMFProtocolEngineNodeOutput* iNodeOutput;
+        INPUT_DATA_QUEUE* iDataQueue;
+        PVMFProtocolEnginePort* iPortIn;
 };
 
 class EndOfDataProcessingHandler : public PVProtocolEngineNodeInternalEventHandler
@@ -1074,7 +1160,6 @@ class PVMFProtocolEngineNodeOutput
 
         PVLogger* iLogger;
         PVLogger* iDataPathLogger;
-        PVLogger* iClockLogger;
 };
 
 
@@ -1092,7 +1177,9 @@ enum DownloadControlSupportObjectType
     DownloadControlSupportObjectType_DownloadProgress,
     DownloadControlSupportObjectType_OutputObject,
     DownloadControlSupportObjectType_MetaDataObject,
-    DownloadControlSupportObjectType_ManifestFileContainer
+    DownloadControlSupportObjectType_ManifestFileContainer,
+    DownloadControlSupportObjectType_AudioDataPath,
+    DownloadControlSupportObjectType_VideoDataPath
 };
 
 // The intent of introducing this download ocntrol interface is to make streaming counterpart as a NULL object,
@@ -1300,6 +1387,20 @@ class InterfacingObjectContainer
             return iDownloadURI;
         }
 
+        // set and get url
+        void setURI2(OSCL_String &aUri, const bool aRedirectUri = false)
+        {
+            iDownloadURI2.setURI(aUri, aRedirectUri);
+        }
+        void setURI2(OSCL_wString &aUri, const bool aRedirectUri = false)
+        {
+            iDownloadURI2.setURI(aUri, aRedirectUri);
+        }
+        INetURI &getURIObject2()
+        {
+            return iDownloadURI2;
+        }
+
         void setLoggingURI(OSCL_String &aUri)
         {
             iLoggingURI.setURI(aUri);
@@ -1321,6 +1422,14 @@ class InterfacingObjectContainer
         PVMFDataStreamFactory *getDataStreamFactory()
         {
             return iDataStreamFactory;
+        }
+        void setDataStreamFactory2(const PVMFDataStreamFactory *aDataStreamFactory)
+        {
+            iDataStreamFactory2 = (PVMFDataStreamFactory *)aDataStreamFactory;
+        }
+        PVMFDataStreamFactory *getDataStreamFactory2()
+        {
+            return iDataStreamFactory2;
         }
 
         // set and get stream parameters in http streaming
@@ -1572,6 +1681,22 @@ class InterfacingObjectContainer
         {
             return iTruncatedForLimitSize;
         }
+        uint32 getAudioStreamIndex() const
+        {
+            return iAudioStreamIndex;
+        }
+        void setAudioStreamIndex(const uint32 aAudioStreamIndex)
+        {
+            iAudioStreamIndex = aAudioStreamIndex;
+        }
+        uint32 getVideoStreamIndex() const
+        {
+            return iVideoStreamIndex;
+        }
+        void setVideoStreamIndex(const uint32 aVideoStreamIndex)
+        {
+            iVideoStreamIndex = aVideoStreamIndex;
+        }
 
         // constructor
         InterfacingObjectContainer();
@@ -1601,11 +1726,11 @@ class InterfacingObjectContainer
     private:
         PVMFFormatType  iDownloadFormat;
         // set by SetSourceInitializationData()
-        INetURI iDownloadURI;
+        INetURI iDownloadURI, iDownloadURI2;
         // set by SetLoggingURL
         INetURI iLoggingURI;
         // set by PassDatastreamFactory()
-        PVMFDataStreamFactory *iDataStreamFactory;
+        PVMFDataStreamFactory *iDataStreamFactory, *iDataStreamFactory2;
         // set by SetStreamParams()
         PVProtocolEngineMSHttpStreamingParams iStreamParams;
         // set by SetMediaMsgAllocatorNumBuffers()
@@ -1658,6 +1783,10 @@ class InterfacingObjectContainer
         // true : data reached limitation
         // false: data don't reach limitation
         bool iTruncatedForLimitSize;
+
+        // for smooth streaming only
+        uint32 iAudioStreamIndex;
+        uint32 iVideoStreamIndex;
 };
 
 

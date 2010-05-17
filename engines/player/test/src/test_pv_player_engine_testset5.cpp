@@ -4899,6 +4899,11 @@ void pvplayer_async_test_ppb_normal::CreateDataSource()
             fprintf(file, "Setting source to %s\n", DEFAULT_RTMPSTREAMING_URL);
             url = DEFAULT_RTMPSTREAMING_URL;
         }
+        else if (iFileType == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL)
+        {
+            fprintf(file, "Setting source to %s\n", DEFAULT_SMOOTHSTREAMING_URL);
+            url = DEFAULT_SMOOTHSTREAMING_URL;
+        }
         else
         {
             // progressive playback
@@ -4943,6 +4948,10 @@ void pvplayer_async_test_ppb_normal::CreateDataSource()
         else if (iFileType == PVMF_MIME_DATA_SOURCE_RTMP_STREAMING_URL)
         {
             iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_RTMP_STREAMING_URL);
+        }
+        else if (iFileType == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL)
+        {
+            iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL);
         }
         else
         {

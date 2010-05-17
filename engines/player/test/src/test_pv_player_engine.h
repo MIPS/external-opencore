@@ -927,6 +927,47 @@ class pvplayer_engine_test
             LastProgressivePlaybackTest, //placeholder
 
             /**
+            * @test (170) Smooth Streaming Until EOS test in Progressive Playback mode
+            * Input Smooth Streaming http url to a progressively downloadable MP4 MOOF file.
+            * Default url is an http url to an MP4 file.
+            * Output YUV and PCM data files from Playback.
+            */
+            SmoothStreamingProgPlaybackMP4UntilEOSTest = 170,
+
+            /**
+            * @test (171) Smooth Streaming Play-Stop-Play test in Progressive Playback mode
+            * Input Smooth Streaming http url to a progressively downloadable MP4 MOOF file.
+            * Default url is an http url to an MP4 file.
+            * Output YUV and PCM data files from Playback.
+            */
+            SmoothStreamingProgPlaybackPlayStopPlayTest,    //171
+
+            /*
+            * @test (172) Smooth Streaming Progressive Playback EOS Stop Play Again Test
+            * Input http url to a progressively downloadable MP4, ASF or MP3 file.
+            * Default url is an http url to an MP4 file.
+            * Output YUV and PCM data files from Playback.
+            */
+            SmoothStreamingProgPlaybackMP4EOSStopPlayAgainTest, //172
+
+            /**
+            * @test (173) Smooth Streaming Progressive Playback Start-Pause-Seek-Resume-Twice Test
+            * Input http url to a progressively downloadable MP4, ASF or MP3 file.
+            * Default url is an http url to an MP4 file.
+            * Output YUV and PCM data files from Playback.
+            */
+            SmoothStreamingProgPlaybackMP4StartPauseSeekResumeTwiceTest, //173
+
+            /**
+            * @test (174) Smooth Streaming Progressive Playback Seek-Forward-Step-Loop Test
+            * Input http url to a progressively downloadable MP4, ASF or MP3 file.
+            * Default url is an http url to an MP4 file.
+            * Output YUV and PCM data files from Playback.
+            */
+            SmoothStreamingProgPlaybackMP4SeekForwardStepLoopTest, //174
+
+
+            /**
             * @test (180) Shoutcast Playback 5 Minute Test
             * Input http url to a Shoutcast url
             * Default url is a Shoutcast url to an MP3 station.

@@ -3632,6 +3632,26 @@ void pvplayer_engine_test::test()
                 fprintf(file, "RTMP streaming tests not enabled\n");
                 break;
 
+            case SmoothStreamingProgPlaybackMP4UntilEOSTest:
+                fprintf(file, "Smooth streaming progressive playback tests not enabled\n");
+                break;
+
+            case SmoothStreamingProgPlaybackPlayStopPlayTest:
+                fprintf(file, "Smooth streaming progressive playback tests not enabled\n");
+                break;
+
+            case SmoothStreamingProgPlaybackMP4EOSStopPlayAgainTest:
+                fprintf(file, "Smooth streaming progressive playback tests not enabled\n");
+                break;
+
+            case SmoothStreamingProgPlaybackMP4SeekForwardStepLoopTest:
+                fprintf(file, "Smooth Streaming progressive playback tests not enabled\n");
+                break;
+
+            case SmoothStreamingProgPlaybackMP4StartPauseSeekResumeTwiceTest:
+                fprintf(file, "Smooth Streaming progressive playback tests not enabled\n");
+                break;
+
             case FTDownloadOpenPlayUntilEOSTest:
                 fprintf(file, "Download tests not enabled\n");
                 break;

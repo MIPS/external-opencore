@@ -23,6 +23,9 @@ else
         cpm \
         pvaacffparsernode \
         pvwavffparsernode \
+        pv_smooth_streaming \
+        pvtinyxml \
+        pvmp4ffcomposer \
         pvmp4ff \
         pvmp3ff \
         pvwav \

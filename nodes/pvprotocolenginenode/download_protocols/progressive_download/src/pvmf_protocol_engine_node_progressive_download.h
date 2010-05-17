@@ -55,7 +55,7 @@ class ProgressiveDownloadContainer : public DownloadContainer
 
     protected:
         OSCL_IMPORT_REF virtual PVMFStatus initImpl();
-        OSCL_IMPORT_REF bool initProtocol_SetConfigInfo();
+        OSCL_IMPORT_REF bool initProtocol_SetConfigInfo(HttpBasedProtocol *aProtocol);
 
     protected:
         uint32 iNumCheckExtraDataComeIn;

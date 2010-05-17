@@ -212,7 +212,7 @@ OSCL_EXPORT_REF bool ProgressiveStreamingContainer::doPause()
     if (iProtocol->getByteSeekMode() == BYTE_SEEK_SUPPORTED)
     {
         // Disconnection caused with the server
-        ProtocolContainer::sendSocketDisconnectCmd();
+        if (iPortInForData) sendSocketDisconnectCmd(iPortInForData);
 
         iStartAfterPause = true;
     }
@@ -273,7 +273,7 @@ OSCL_EXPORT_REF int32 pvProgressiveStreamingOutput::flushData(const uint32 aOutp
         uint32 res = writeToDataStream(iOutputFramesQueue[0], iPendingOutputDataQueue);
         if (0xFFFFFFFF == res) return PROCESS_OUTPUT_TO_DATA_STREAM_FAILURE; // This is the error case.
         else if (0 == res) break; //This is not the error case. Just we didn't have enough space to write. No need to error out. Just break.
-        LOGINFODATAPATH((0, "pvProgressiveStreamingOutput::flushData: Erasing form iOutputFramesQueue"));
+        //LOGINFODATAPATH((0, "pvProgressiveStreamingOutput::flushData: Erasing form iOutputFramesQueue"));
         iOutputFramesQueue.erase(iOutputFramesQueue.begin());
     }
     return PROCESS_SUCCESS;
@@ -310,13 +310,13 @@ uint32 pvProgressiveStreamingOutput::writeToDataStream(OUTPUT_DATA_QUEUE &aOutpu
             return 0xFFFFFFFF;
         }
     }
-    LOGINFODATAPATH((0, "pvProgressiveStreamingOutput::writeToDataStream() SIZE= %d , SEQNUM=%d", totalFragSize, iCounter++));
+    LOGINFODATAPATH((0, "pvProgressiveStreamingOutput::writeToDataStream() SIZE= %d , SEQNUM=%d, iCurrTotalOutputSize=%d, port=0x%x",
+                     totalFragSize, iCounter++, iCurrTotalOutputSize, iPortIn));
     return totalFragSize;
 }
 
 PvmiDataStreamStatus pvProgressiveStreamingOutput::PassToDataStream(OsclRefCounterMemFrag* aFrag, uint32 fragSize)
 {
-
     PvmiDataStreamStatus status = iDataStream->Write(iSessionID, aFrag, fragSize);
     if (PVDS_PENDING == status)
     {

@@ -39,6 +39,7 @@
 
 #include "oscl_string_utils.h"
 
+
 #define PVMF_MP4_MIME_FORMAT_AUDIO_UNKNOWN  "x-pvmf/audio/unknown"
 #define PVMF_MP4_MIME_FORMAT_VIDEO_UNKNOWN  "x-pvmf/video/unknown"
 #define PVMF_MP4_MIME_FORMAT_UNKNOWN        "x-pvmf/unknown-media/unknown"
@@ -131,8 +132,6 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
     iDownloadComplete          = false;
     iProgressivelyPlayable  = false;
     iFastTrackSession          = false;
-    iSmoothStreamingSession = false;
-
     iLastNPTCalcInConvertSizeToTime = 0;
     iFileSizeLastConvertedToTime = 0;
 
@@ -509,12 +508,6 @@ PVMFStatus PVMFMP4FFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
         iFastTrackSession = true;
         inputFormatType = PVMF_MIME_MPEG4FF;
     }
-    else if (aSourceFormat == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL)
-    {
-        iSmoothStreamingSession = true;
-        inputFormatType = PVMF_MIME_MPEG4FF;
-    }
-
     info.SetFormatType(inputFormatType);
 
     if (inputFormatType == PVMF_MIME_MPEG4FF ||
@@ -616,6 +609,13 @@ PVMFStatus PVMFMP4FFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
             }
             else
             {
+                // first check download context data
+                PVUuid uuid(PVMF_SOURCE_CONTEXT_DATA_DOWNLOAD_HTTP_UUID);
+                PVInterface* temp = NULL;
+                if (pvInterface->queryInterface(uuid, temp))
+                {
+                }
+
                 PVInterface* sourceDataContext = NULL;
                 PVInterface* commonDataContext = NULL;
                 PVUuid sourceContextUuid(PVMF_SOURCE_CONTEXT_DATA_UUID);
@@ -2783,11 +2783,8 @@ PVMFStatus PVMFMP4FFParserNode::SetPlaybackStartupTime(uint32& aTargetNPT,
         return PVMFFailure;
     }
 
-    // if progressive streaming, reset download complete flag
-    if ((NULL != iDataStreamInterface) && (0 != iDataStreamInterface->QueryBufferingCapacity()))
-    {
-        iDownloadComplete = false;
-    }
+    // reset download complete flag
+    iDownloadComplete = false;
 
     /* Check for repositioning request support in case of PPB.
        In PPB, Seek is not permitted in case when byte-seek is disabled. */
@@ -3950,6 +3947,10 @@ bool PVMFMP4FFParserNode::RetrieveTrackConfigInfoAndFirstSample(uint32 aTrackId,
 
         if ((retval == EVERYTHING_FINE || END_OF_TRACK == retval) && numSamples > 0)
         {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0,
+                            "PVMFMP4FFParserNode::RetrieveTrackConfigInfoAndFirstSample: retval=%d, numSamples=%d, len=%d",
+                            retval, numSamples, info.len));
+
             uint32 sampleSize = info.len;
             if (sampleSize > 0)
             {
@@ -5942,7 +5943,6 @@ void PVMFMP4FFParserNode::CleanupFileSource()
     iProgressivelyPlayable = false;
     iCPMSequenceInProgress = false;
     iFastTrackSession = false;
-    iSmoothStreamingSession = false;
     iProtectedFile = false;
     iExternalDownload = false;
     iThumbNailMode = false;
@@ -7748,7 +7748,6 @@ void PVMFMP4FFParserNode::PassDatastreamFactory(PVMFDataStreamFactory& aFactory,
 {
     OSCL_UNUSED_ARG(aFactoryTag);
     OSCL_UNUSED_ARG(aFactoryConfig);
-
     // Fasttrack download does not use data streams
     if (iFastTrackSession)
         return;
@@ -7782,7 +7781,8 @@ PVMFStatus PVMFMP4FFParserNode::CheckForMP4HeaderAvailability()
 {
     // this method is called to check the number of downloaded bytes
     // this always return success for local playback
-    if (iFastTrackSession == true || iSmoothStreamingSession == true) return PVMFSuccess;
+    if (iFastTrackSession == true
+       ) return PVMFSuccess;
 
     if (iDataStreamInterface != NULL)
     {
@@ -9000,6 +9000,8 @@ bool PVMFMP4FFParserNode::setProtocolInfo(Oscl_Vector<PvmiKvp*, OsclMemAllocator
         return false;
     }
 
+// to get around the build issue, we extract this part from the following long for loop within OSCL_TRY block
+
     int32 err = 0;
     // catch the vector push_back() exception
     OSCL_TRY(err,
@@ -9043,7 +9045,6 @@ bool PVMFMP4FFParserNode::setProtocolInfo(Oscl_Vector<PvmiKvp*, OsclMemAllocator
     return true;
 }
 
-
 void PVMFMP4FFParserNode::AudioSinkEvent(PVMFStatus aEvent, uint32 aClipIndex)
 {
     if (aEvent == PVMFInfoEndOfData)
@@ -9079,13 +9080,15 @@ PVMFStatus PVMFMP4FFParserNode::ConstructMP4FileParser(PVMFStatus* aStatus, int3
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVMFMP4FFParserNode::ConstructMP4FileParser() In ClipIndex[%d]", aClipIndex));
 
-    // only CommandComplee for the first clip in a playlist
-
-    IMpeg4File* mp4ParserObj = IMpeg4File::readMP4File(iClipInfoList[aClipIndex].iClipInfo.GetSourceURL(),
-                               aCPMFactory,
-                               iClipInfoList[aClipIndex].iClipInfo.GetFileHandle(),
-                               iParsingMode, &iFileServer,
-                               iOpenFileOncePerTrack);
+    IMpeg4File* mp4ParserObj = NULL;
+    {
+        // only CommandComplee for the first clip in a playlist
+        mp4ParserObj = IMpeg4File::readMP4File(iClipInfoList[aClipIndex].iClipInfo.GetSourceURL(),
+                                               aCPMFactory,
+                                               iClipInfoList[aClipIndex].iClipInfo.GetFileHandle(),
+                                               iParsingMode, &iFileServer,
+                                               iOpenFileOncePerTrack);
+    }
 
     if (mp4ParserObj == NULL)
     {

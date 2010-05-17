@@ -77,7 +77,7 @@ class pvProgressiveStreamingOutput : public pvHttpDownloadOutput,
         }
         OSCL_IMPORT_REF bool releaseMemFrag(OsclRefCounterMemFrag* aFrag);
         // for new data stream APIs
-        OSCL_IMPORT_REF void setContentLength(uint32 aLength);
+        OSCL_IMPORT_REF virtual void setContentLength(uint32 aLength);
 
         /* pure virtual functions of PvmiDataStreamObserver */
         /* This function is the call back function from Write data stream. After the successful registration for
@@ -118,6 +118,7 @@ class pvProgressiveStreamingOutput : public pvHttpDownloadOutput,
 
     protected:
         PvmiDataStreamRequestObserver* iSourceRequestObserver;
+
 };
 
 
