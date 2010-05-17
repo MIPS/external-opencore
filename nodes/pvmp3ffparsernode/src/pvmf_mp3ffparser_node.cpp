@@ -2338,6 +2338,15 @@ PVMFStatus PVMFMP3FFParserNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, O
         return PVMFFailure;
     }
 
+    if (iCPMContainer.iCPMMetaDataExtensionInterface != NULL)
+    {
+        PVMFStatus status = iCPMContainer.iCPMMetaDataExtensionInterface->ReleaseNodeMetadataValues(aValueList, start, end);
+        if (status != PVMFSuccess)
+        {
+            return status;
+        }
+    }
+
     end = OSCL_MIN(aValueList.size(), iMP3ParserNodeMetadataValueCount);
 
     if (start > end || aValueList.size() == 0)

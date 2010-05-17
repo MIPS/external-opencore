@@ -114,6 +114,15 @@ PVMFStatus PVMFMP4FFParserNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, O
         return PVMFFailure;
     }
 
+    if (iCPMMetaDataExtensionInterface != NULL)
+    {
+        PVMFStatus status = iCPMMetaDataExtensionInterface->ReleaseNodeMetadataValues(aValueList, start, end);
+        if (status != PVMFSuccess)
+        {
+            return status;
+        }
+    }
+
     end = OSCL_MIN(aValueList.size(), iClipInfoList[iClipIndexForMetadata].iMetadataValueCount);
 
     if (start > end || aValueList.size() == 0)
