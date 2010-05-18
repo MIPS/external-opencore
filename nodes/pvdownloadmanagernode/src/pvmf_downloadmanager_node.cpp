@@ -18,6 +18,7 @@
 #include "pvmf_downloadmanager_node.h"
 #include "pvmf_download_data_source.h"
 #include "pvmf_protocol_engine_factory.h"
+#include "pvmf_protocol_engine_defs.h"
 #include "pvmf_socket_factory.h"
 #include "pvmf_socket_node.h"
 #include "pvmi_datastreamuser_interface.h"
@@ -109,8 +110,8 @@ void PVMFDownloadManagerNode::ConstructL()
 
     iInitFailedLicenseRequired = false;
 
-    iProtocolEngineNodePort = NULL;
-    iSocketNodePort = NULL;
+    iProtocolEngineNodePort = iProtocolEngineNodePort2 = NULL;
+    iSocketNodePort = iSocketNodePort2 = NULL;
     iPlayerNodeRegistry = NULL;
 
     //create the sub-node command queue.  Use a reserve to avoid dynamic memory failure later.
@@ -160,6 +161,17 @@ void PVMFDownloadManagerNode::ConstructL()
     iSocketNode.iNode = PVMFSocketNodeFactory::CreatePVMFSocketNode(OsclActiveObject::EPriorityNominal);
     OsclError::LeaveIfNull(iSocketNode.iNode);
     iSocketNode.Connect();
+
+    iMaxVideoTrackBitrate = 0;
+    iMaxAudioTrackBitrate = 0;
+    iVideoStreamIndex = 0xffffffff;
+    iAudioStreamIndex = 0xffffffff;
+    iNumBufForSocketNodeAudioPort = 0;
+    iNumBufForSocketNodeVideoPort = 0;
+    iMemoryBufferDatastreamFactory2 = NULL;
+    iReadFactory2 = NULL;
+    iWriteFactory2 = NULL;
+    iActualNPT = 0xffffffff;
 }
 
 PVMFDownloadManagerNode::~PVMFDownloadManagerNode()
@@ -233,6 +245,11 @@ PVMFDownloadManagerNode::~PVMFDownloadManagerNode()
         PVMF_BASE_NODE_DELETE(iMemoryBufferDatastreamFactory);
         iMemoryBufferDatastreamFactory = NULL;
     }
+    if (iMemoryBufferDatastreamFactory2)
+    {
+        PVMF_BASE_NODE_DELETE(iMemoryBufferDatastreamFactory2);
+        iMemoryBufferDatastreamFactory2 = NULL;
+    }
     if (iPLSSessionContextData != NULL)
     {
         OSCL_DELETE(iPLSSessionContextData);
@@ -281,6 +298,7 @@ PVMFStatus PVMFDownloadManagerNode::ThreadLogoff()
 
     if (status != PVMFSuccess)
         return status;
+
 
     return PVMFSuccess;
 }
@@ -653,7 +671,9 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
 
 #if(PVMF_DOWNLOADMANAGER_SUPPORT_PPB)
     int32 leavecode;
-    //Configure the MBDS
+    //Configure the MBDS, for smooth streaming PPB, config MBDS later
+    if (iPlaybackMode == EPlaybackOnly && iSourceFormat == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL) return PVMFSuccess;
+
     if (iPlaybackMode == EPlaybackOnly)
     {
         // make sure we have enough TCP buffers for PPB and shoutcast
@@ -1461,6 +1481,12 @@ PVMFStatus PVMFDownloadManagerNode::ScheduleSubNodeCommands()
                 Push(iProtocolEngineNode, PVMFDownloadManagerSubNodeContainerBase::ERequestPort);
                 // The two ports will be connected in CommandDone, when the 2nd port request completes.
                 // After the ports are connected, the datastream factory is passed to the protocol engine node.
+                if (iSourceFormat == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL)
+                {
+                    // create 2nd ports between protocol engine node and socket node, and connect them, if needed
+                    Push(iSocketNode, PVMFDownloadManagerSubNodeContainerBase::ERequestPort2);
+                    Push(iProtocolEngineNode, PVMFDownloadManagerSubNodeContainerBase::ERequestPort2);
+                }
                 Push(iSocketNode, PVMFDownloadManagerSubNodeContainerBase::EPrepare);
                 Push(iSocketNode, PVMFDownloadManagerSubNodeContainerBase::EStart);
                 Push(iProtocolEngineNode, PVMFDownloadManagerSubNodeContainerBase::EPrepare);
@@ -1658,6 +1684,70 @@ void PVMFDownloadManagerNode::Push(PVMFDownloadManagerSubNodeContainerBase& n, P
     elem.iCmd = c;
     elem.iNC = &n;
     iSubNodeCmdVec.push_back(elem);
+}
+
+bool PVMFDownloadManagerNode::ConfigSocketNodeMemoryPoolAndMBDS()
+{
+    iMaxAudioTrackBitrate = (iProtocolEngineNode.ProtocolEngineExtension())->GetMaxAudioTrackBitrate(iAudioStreamIndex);
+    iMaxVideoTrackBitrate = (iProtocolEngineNode.ProtocolEngineExtension())->GetMaxVideoTrackBitrate(iVideoStreamIndex);
+    if (iMaxAudioTrackBitrate == 0 && iMaxVideoTrackBitrate == 0) return false;
+
+    if (!ConfigSocketNodeMemoryPoolAndMBDSPerTrack(iMaxAudioTrackBitrate, (uint32)PVMF_DOWNLOADMANAGER_TCP_BUFFER_SIZE_FOR_SS)) return false;
+    return ConfigSocketNodeMemoryPoolAndMBDSPerTrack(iMaxVideoTrackBitrate, (uint32)PVMF_DOWNLOADMANAGER_TCP_BUFFER_SIZE_FOR_SS, false, true);
+}
+
+bool PVMFDownloadManagerNode::ConfigSocketNodeMemoryPoolAndMBDSPerTrack(const uint32 aTrackMaxBitRate, const uint32 aSocketNodeBufSize, const bool isAudioTrack, const bool aSetBufferInfo)
+{
+    if (aTrackMaxBitRate == 0) return true;
+
+    uint32 bufSize = aSocketNodeBufSize;
+    uint32 numBuf = aTrackMaxBitRate * PVMF_DOWNLOADMANAGER_SS_BUFFERING_TIME / (bufSize << 3);
+    if (isAudioTrack) iNumBufForSocketNodeAudioPort = numBuf;
+    else iNumBufForSocketNodeVideoPort = numBuf;
+    if (iSocketNode.iNode && aSetBufferInfo)
+    {
+        PVMFStatus status = ((PVMFSocketNode*)iSocketNode.iNode)->SetMaxTCPRecvBufferCount(numBuf);
+        if (PVMFSuccess != status)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR, (0,
+                            "PVMFDownloadManagerNode:ConfigSocketNodeMemoryPoolAndMBDS() SetMaxTCPRecvBufferCount(%d) failed",
+                            numBuf));
+            return status;
+        }
+
+        // set buffer size
+        ((PVMFSocketNode*)iSocketNode.iNode)->SetMaxTCPRecvBufferSize(bufSize);
+    }
+
+    // MBDS cache size calculation
+    // TCP buffer size is 64000 (the default), assume worst case that the average packet size is 250 bytes
+    // Packet overhead is 64 bytes per packet
+    // 8 buffers will yield a cache of 305500, 13 buffers will yield a cache of 560500
+    uint32 totalPoolSizeMinusTwoBuffers = (numBuf - PVMF_DOWNLOADMANAGER_TCP_BUFFER_NOT_AVAILABLE) * bufSize;
+    uint32 numPacketsToFitInPool = totalPoolSizeMinusTwoBuffers / (PVMF_DOWNLOADMANAGER_TCP_AVG_SMALL_PACKET_SIZE + PVMF_DOWNLOADMANAGER_TCP_BUFFER_OVERHEAD);
+    uint32 maxDataMinusOverheadInPool = numPacketsToFitInPool * PVMF_DOWNLOADMANAGER_TCP_AVG_SMALL_PACKET_SIZE;
+
+    if (isAudioTrack)
+    {
+        int32 leavecode = 0;
+        OSCL_TRY(leavecode, iMemoryBufferDatastreamFactory = PVMF_BASE_NODE_NEW(PVMFMemoryBufferDataStream, (iSourceFormat, maxDataMinusOverheadInPool)));
+        OSCL_FIRST_CATCH_ANY(leavecode, return false);
+
+        OSCL_ASSERT(iMemoryBufferDatastreamFactory != NULL);
+        iReadFactory  = iMemoryBufferDatastreamFactory->GetReadDataStreamFactoryPtr();
+        iWriteFactory = iMemoryBufferDatastreamFactory->GetWriteDataStreamFactoryPtr();
+    }
+    else
+    {
+        int32 leavecode = 0;
+        OSCL_TRY(leavecode, iMemoryBufferDatastreamFactory2 = PVMF_BASE_NODE_NEW(PVMFMemoryBufferDataStream, (iSourceFormat, maxDataMinusOverheadInPool)));
+        OSCL_FIRST_CATCH_ANY(leavecode, return false);
+
+        OSCL_ASSERT(iMemoryBufferDatastreamFactory2 != NULL);
+        iReadFactory2  = iMemoryBufferDatastreamFactory2->GetReadDataStreamFactoryPtr();
+        iWriteFactory2 = iMemoryBufferDatastreamFactory2->GetWriteDataStreamFactoryPtr();
+    }
+    return true;
 }
 
 //
@@ -1864,11 +1954,10 @@ PVMFStatus PVMFDownloadManagerSubNodeContainer::IssueCommand(int32 aCmd)
                     }
                     else if (iContainer->iSourceFormat == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL)
                     {
-                        // let the parser know this is PVX format.
-                        PVMFFormatType fmt = PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL;
+                        // let the parser know this is smooth streaming format.
                         (DataSourceInit())->SetSourceInitializationData(iContainer->iDownloadFileName
-                                , fmt
-                                , (OsclAny*)&iContainer->iLocalDataSource
+                                , iContainer->iSourceFormat
+                                , (OsclAny*)iContainer->iSourceData
                                 , 0);
                     }
                     else if (iContainer->iSourceFormat == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
@@ -1898,7 +1987,8 @@ PVMFStatus PVMFDownloadManagerSubNodeContainer::IssueCommand(int32 aCmd)
                     }
 
                     //Pass datastream data.
-                    (DatastreamUser())->PassDatastreamFactory(*(iContainer->iReadFactory), (int32)0);
+                    int32 factoryTag = (!iContainer->iReadFactory2 ? (int32)0 : (int32)iContainer->iAudioStreamIndex);
+                    (DatastreamUser())->PassDatastreamFactory(*(iContainer->iReadFactory), factoryTag);
                     PVMFFileBufferDataStreamWriteDataStreamFactoryImpl* wdsfactory =
                         OSCL_STATIC_CAST(PVMFFileBufferDataStreamWriteDataStreamFactoryImpl*, iContainer->iWriteFactory);
                     int32 leavecode = 0;
@@ -1909,6 +1999,20 @@ PVMFStatus PVMFDownloadManagerSubNodeContainer::IssueCommand(int32 aCmd)
                     OSCL_FIRST_CATCH_ANY(leavecode,
                                          LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s PassDatastreamReadCapacityObserver not supported", GETNODESTR));
                                         );
+
+                    if (iContainer->iReadFactory2 && iContainer->iWriteFactory2)  // 2nd factory
+                    {
+                        (DatastreamUser())->PassDatastreamFactory(*(iContainer->iReadFactory2), (int32)iContainer->iVideoStreamIndex);
+                        PVMFFileBufferDataStreamWriteDataStreamFactoryImpl* wdsfactory2 =
+                            OSCL_STATIC_CAST(PVMFFileBufferDataStreamWriteDataStreamFactoryImpl*, iContainer->iWriteFactory2);
+                        OSCL_TRY(leavecode,
+                                 PVMFDataStreamReadCapacityObserver* obs2 =
+                                     OSCL_STATIC_CAST(PVMFDataStreamReadCapacityObserver*, wdsfactory2);
+                                 (DatastreamUser())->PassDatastreamReadCapacityObserver(obs2));
+                        OSCL_FIRST_CATCH_ANY(leavecode,
+                                             LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s PassDatastreamReadCapacityObserver not supported", GETNODESTR));
+                                            );
+                    }
                 }
 
                 LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s Calling Init ", GETNODESTR));
@@ -1935,7 +2039,16 @@ PVMFStatus PVMFDownloadManagerSubNodeContainer::IssueCommand(int32 aCmd)
                     LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s Calling RequestPort ", GETNODESTR));
                     iCmdState = EBusy;
                     // For protocol engine port request, we don't need port tag or config info because it's the only port we ask it for.
-                    iCmdId = iNode->RequestPort(iSessionId, (int32)0);
+                    if (iContainer->iMaxAudioTrackBitrate > 0 && iContainer->iMaxVideoTrackBitrate > 0)
+                    {
+                        // two ports to be requested
+                        iCmdId = iNode->RequestPort(iSessionId, (int32)PVMF_PROTOCOLENGINENODE_PORT_TYPE_AUDIO_INPUT);
+                    }
+                    else
+                    {
+                        // only port we ask it for
+                        iCmdId = iNode->RequestPort(iSessionId, (int32)0);
+                    }
                     LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s CmdId %d ", GETNODESTR, iCmdId));
                     return PVMFPending;
 
@@ -1960,6 +2073,39 @@ PVMFStatus PVMFDownloadManagerSubNodeContainer::IssueCommand(int32 aCmd)
                         iCmdState = EBusy;
                         iCmdId = iNode->RequestPort(iSessionId, aPortTag, aMimetype);
                     }
+                    LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s CmdId %d ", GETNODESTR, iCmdId));
+                    return PVMFPending;
+
+                default:
+                    OSCL_ASSERT(false);
+                    return PVMFFailure;
+            }
+
+        case ERequestPort2:
+            OSCL_ASSERT(iNode != NULL);
+            if (iContainer->iMaxAudioTrackBitrate == 0 || iContainer->iMaxVideoTrackBitrate == 0) return PVMFSuccess;
+            // The parameters to RequestPort vary depending on which node we're getting a port from, so we switch on it.
+            switch (iType)
+            {
+                case EProtocolEngine:
+                    LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s Calling RequestPort2 ", GETNODESTR));
+                    iCmdState = EBusy;
+                    // For protocol engine port request, we don't need port tag or config info because it's the only port we ask it for.
+                    iCmdId = iNode->RequestPort(iSessionId, (int32)PVMF_PROTOCOLENGINENODE_PORT_TYPE_VIDEO_INPUT);
+                    LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s CmdId %d ", GETNODESTR, iCmdId));
+                    return PVMFPending;
+
+                case ESocket:
+                    LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s Calling RequestPort2 with port config %s", GETNODESTR, iContainer->iServerAddr.get_cstr()));
+                    iCmdState = EBusy;
+                    if (iContainer->iNumBufForSocketNodeVideoPort > 0)
+                    {
+                        ((PVMFSocketNode*)iContainer->iSocketNode.iNode)->SetMaxTCPRecvBufferCount(iContainer->iNumBufForSocketNodeVideoPort);
+                    }
+
+                    //append a mimestring to the port for socket node logging
+                    //iContainer->iServerAddr += ";mime=download";
+                    iCmdId = iNode->RequestPort(iSessionId, PVMF_SOCKET_NODE_PORT_TYPE_PASSTHRU, &iContainer->iServerAddr);
                     LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s CmdId %d ", GETNODESTR, iCmdId));
                     return PVMFPending;
 
@@ -2098,6 +2244,9 @@ PVMFStatus PVMFDownloadManagerSubNodeContainer::IssueCommand(int32 aCmd)
                 nodeCmd->Parse(aTargetNPT, aActualNPT, aActualMediaDataTS, aJump, streamID);
                 OSCL_ASSERT(aActualNPT != NULL);
                 OSCL_ASSERT(aActualMediaDataTS != NULL);
+
+                // get actualNPT from PE node and save it for command completion
+                iContainer->iActualNPT = (iContainer->iProtocolEngineNode.ProtocolEngineExtension())->GetActualNPT(aTargetNPT);
 
                 LOGSUBCMD((0, "PVMFDownloadManagerSubNodeContainer::IssueCommand %s Calling SetDataSourcePosition", GETNODESTR));
                 iCmdState = EBusy;
@@ -2685,6 +2834,17 @@ void PVMFDownloadManagerSubNodeContainerBase::CommandDone(PVMFStatus aStatus, PV
         iContainer->iFormatParserNode.iNode->QueryInterfaceSync(iContainer->iFormatParserNode.iSessionId, PVMFCPMPluginLicenseInterfaceUuid, iContainer->iFormatParserNode.iLicenseInterface);
     }
 
+    // check PE node init complete
+    if (iContainer->iSourceFormat == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL &&
+            iContainer->iPlaybackMode == PVMFDownloadManagerNode::EPlaybackOnly && iType == EProtocolEngine && iCmd == EInit && status == PVMFSuccess)
+    {
+        // configure socket node port memory pool and the first MBDS
+        bool status = iContainer->ConfigSocketNodeMemoryPoolAndMBDS();
+        OSCL_ASSERT(status);
+        OSCL_UNUSED_ARG(status);
+    }
+
+
     // Watch for the request port command completion from the protocol node, because we need to save the port pointer
     if (iType == EProtocolEngine && iCmd == ERequestPort && status == PVMFSuccess)
     {
@@ -2697,7 +2857,8 @@ void PVMFDownloadManagerSubNodeContainerBase::CommandDone(PVMFStatus aStatus, PV
             // The ports are connected, so now we pass the datastream factory to the protocol node via the extension interface, if it's available.
             if (iContainer->iProtocolEngineNode.iDatastreamUser)
             {
-                ((PVMIDatastreamuserInterface*)iContainer->iProtocolEngineNode.iDatastreamUser)->PassDatastreamFactory(*(iContainer->iWriteFactory), (int32)0);
+                int32 tag = ((iContainer->iMaxAudioTrackBitrate > 0 && iContainer->iMaxVideoTrackBitrate > 0) ? iContainer->iAudioStreamIndex : 0);
+                ((PVMIDatastreamuserInterface*)iContainer->iProtocolEngineNode.iDatastreamUser)->PassDatastreamFactory(*(iContainer->iWriteFactory), tag);
             }
         }
     }
@@ -2707,6 +2868,56 @@ void PVMFDownloadManagerSubNodeContainerBase::CommandDone(PVMFStatus aStatus, PV
     {
         iContainer->iSocketNodePort = (PVMFPortInterface*)aEventData;
     }
+
+    // Watch for the request port command completion from the protocol node, because we need to save the port pointer
+    if (iType == EProtocolEngine && iCmd == ERequestPort2 && status == PVMFSuccess)
+    {
+        iContainer->iProtocolEngineNodePort2 = (PVMFPortInterface*)aEventData;
+        // If both ports are non-null, connect them.
+        if (iContainer->iSocketNodePort2 && iContainer->iProtocolEngineNodePort2)
+        {
+            iContainer->iSocketNodePort2->Connect(iContainer->iProtocolEngineNodePort2);
+
+            // The ports are connected, so now we pass the datastream factory to the protocol node via the extension interface, if it's available.
+            if (iContainer->iProtocolEngineNode.iDatastreamUser)
+            {
+                int32 tag = (int32)iContainer->iVideoStreamIndex;
+                ((PVMIDatastreamuserInterface*)iContainer->iProtocolEngineNode.iDatastreamUser)->PassDatastreamFactory(*(iContainer->iWriteFactory2), tag);
+            }
+
+            // reset the port buffer count
+            if (iContainer->iSocketNodePort)
+            {
+                if (iContainer->iNumBufForSocketNodeAudioPort > 0)
+                {
+                    ((PVMFSocketNode*)iContainer->iSocketNode.iNode)->SetMaxTCPRecvBufferCount(iContainer->iNumBufForSocketNodeAudioPort, iContainer->iSocketNodePort);
+                }
+            }
+        }
+    }
+
+    // Watch for the request port command completion from the socket node, because we need to save the port pointer
+    if (iType == ESocket && iCmd == ERequestPort2 && status == PVMFSuccess)
+    {
+        iContainer->iSocketNodePort2 = (PVMFPortInterface*)aEventData;
+    }
+
+
+    // Watch for SetDataSourcePosition command completion from the parser node, and we need to update the actualNPT from protocol engine node
+    if (iType == EFormatParser && iCmd == ESetDataSourcePosition && status == PVMFSuccess)
+    {
+        PVMFNodeCommand* nodeCmd = &iContainer->iCurrentCommand;
+        OSCL_ASSERT(nodeCmd->iCmd == PVMF_GENERIC_NODE_SET_DATASOURCE_POSITION);
+        PVMFTimestamp aTargetNPT;
+        PVMFTimestamp* aActualNPT;
+        PVMFTimestamp* aActualMediaDataTS;
+        uint32 streamID = 0;
+        bool aJump;
+        nodeCmd->Parse(aTargetNPT, aActualNPT, aActualMediaDataTS, aJump, streamID);
+        OSCL_ASSERT(aActualNPT != NULL);
+        if (iContainer->iActualNPT != 0xffffffff) *aActualNPT = iContainer->iActualNPT;
+    }
+
 
     // Watch for the query track selection interface completion from the protocol engine node.
     if (iType == EProtocolEngine && iCmd == EQueryTrackSelection)

@@ -238,11 +238,6 @@ void TSC_324m::ExtractTcsParameters(PS_TerminalCapabilitySet pTcs)
     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "TSC_324m::ExtractTcsParameters"));
 
-    iTSCcapability.ResetCapability();
-    Oscl_Vector<CPvtMediaCapability*, OsclMemAllocator> capabilityItems;
-    uint32 userInputCapabilities = 0;
-    struct _UserInputCapability *userInputCapability = NULL;
-
     iTSCcomponent->ExtractTcsParameters(pTcs);
     if (pTcs->option_of_multiplexCapability)
     {
@@ -311,21 +306,39 @@ void TSC_324m::ExtractTcsParameters(PS_TerminalCapabilitySet pTcs)
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                         (0, "TSC_324m: Remote video caps Option of Capability Table is ON, size(%d)\n",
                          pTcs->size_of_capabilityTable));
+
+        CPVUserInputCapability* pUserInputCapability = OSCL_NEW(CPVUserInputCapability, ());
+        OSCL_TRAPSTACK_PUSH(pUserInputCapability);
+
         for (i = 0; i < pTcs->size_of_capabilityTable; ++i)
         {
             pCapEntry = pTcs->capabilityTable + i;
+            CPvtMediaCapability* pMediaCapability = NULL;
             if (pCapEntry->option_of_capability)
             {
-                iTSCcapability.ParseTcsCapabilities(pCapEntry->capability, capabilityItems, userInputCapabilities, userInputCapability);
+                pMediaCapability = iTSCcapability.ParseTcsCapabilities(pCapEntry->capability);
+                if (pMediaCapability)
+                {
+                    OSCL_TRAPSTACK_PUSH(pMediaCapability);
+                }
+
+                iTSCcapability.SetRemoteCapability(pCapEntry->capabilityTableEntryNumber, pMediaCapability);
+
+                if (pMediaCapability)
+                {
+                    OSCL_TRAPSTACK_POP(); //pMediaCapability
+                    pUserInputCapability->AddCapability(pMediaCapability->GetFormatType());
+                }
             }
-
         }
-    }
-    iTSCcapability.CreateNewCapability(capabilityItems);
 
-    if (iTSC_324mObserver && userInputCapabilities)
-    {
-        iTSC_324mObserver->UserInputCapability(userInputCapabilities);
+        if (iTSC_324mObserver && pUserInputCapability->HasUserInputCapability())
+        {
+            iTSC_324mObserver->UserInputCapabilityReceived(pUserInputCapability);
+        }
+        OSCL_TRAPSTACK_POP(); //pUserInputCapability
+        pUserInputCapability->removeRef();
+
     }
 }
 

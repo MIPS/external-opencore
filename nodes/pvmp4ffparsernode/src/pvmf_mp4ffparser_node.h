@@ -158,6 +158,7 @@ class PVLogger;
 class PVMFMediaClock;
 class PVMFSourceClipInfo;
 
+
 /*structure to store clip information and associated parser object with it*/
 typedef struct
 {
@@ -620,8 +621,6 @@ class PVMFMP4FFParserNode
         uint32 iLastNPTCalcInConvertSizeToTime;
         TOsclFileOffset iFileSizeLastConvertedToTime;
         bool iFastTrackSession;
-        bool iSmoothStreamingSession;
-
         /* External PseudoStreaming related */
         bool iExternalDownload;
 

@@ -75,6 +75,7 @@
 #ifndef PVLOGGER_H_INCLUDED
 #include "pvlogger.h"
 #endif
+
 #include "pvmf_video.h"
 
 #include "tsc.h"
@@ -153,7 +154,16 @@ class TSC_324mObserver
         virtual ~TSC_324mObserver() {};
         virtual void IncomingVendorId(TPVH245Vendor* vendor, const uint8* pn, uint16 pn_len, const uint8* vn, uint16 vn_len) = 0;
         virtual void UserInputReceived(CPVUserInput* apUserInput) = 0;
-        virtual void UserInputCapability(int formats) = 0;
+
+        /**
+          * A callback for user input capability
+          *
+          * @param apUserInputCapability PVInterface class that has infomation about supported
+          *                              user input capablities defined inside TCS message.
+          * @returns void
+          **/
+        virtual void UserInputCapabilityReceived(CPVUserInputCapability* apUserInputCapability) = 0;
+
         virtual void VideoSpatialTemporalTradeoffCommandReceived(CPVVideoSpatialTemporalTradeoff* apVideoSpatial) = 0;
         virtual void VideoSpatialTemporalTradeoffIndicationReceived(CPVVideoSpatialTemporalTradeoff* apVideoSpatial) = 0;
         virtual void LogicalChannelActiveIndicationReceived(CPVLogicalChannelIndication* apLCIndication) = 0;

@@ -198,6 +198,174 @@ class PVH223Al3Config : public PVH223AlConfig
 };
 
 /**
+ * CPVUserInputCapability class
+ * User Input message capabilities
+ **/
+class CPVUserInputCapability: public HeapBase, public PVInterface
+{
+    public:
+        /**
+         * Constructor of CPVUserInputCapability class.
+         *
+         **/
+        OSCL_IMPORT_REF CPVUserInputCapability(): iRefCounter(1) {};
+
+        /**
+         * Virtual destructor
+         **/
+        virtual ~CPVUserInputCapability() {};
+
+        /**
+         * Function to return basic string capability
+         *
+         * @return true if basic string is supported
+         **/
+        bool HasBasicString()
+        {
+            return iBasicString;
+        }
+
+        /**
+         * Function to return IA5 string capability
+         *
+         * @return true if A5 string is supported
+         **/
+        bool HasIa5String()
+        {
+            return iIa5String;
+        }
+
+        /**
+         * Function to return general string capability
+         *
+         * @return true if general string is supported
+         **/
+        bool HasGeneralString()
+        {
+            return iGeneralString;
+        }
+
+        /**
+         * Function to return DTMF capability
+         *
+         * @return true if DTMF is supported
+         **/
+        bool HasDtmf()
+        {
+            return iDtmf;
+        }
+
+        /**
+         * Function to return any user input capability
+         *
+         * @return true if any user input capability is supported
+         **/
+        bool HasUserInputCapability()
+        {
+            if (iBasicString || iIa5String || iGeneralString || iDtmf)
+            {
+                return true;
+            }
+            return false;
+        }
+
+
+        /**
+         * Function to set basic string capability
+         *
+         * @param aBasicString basic string capability
+         **/
+        void SetBasicString(bool aBasicString)
+        {
+            iBasicString = aBasicString;
+        }
+
+        /**
+         * Function to return IA5 string capability
+         *
+         * @param aIa5String IA5 string capability
+         **/
+        void SetIa5String(bool aIa5String)
+        {
+            iIa5String = aIa5String;
+        }
+
+        /**
+         * Function to set general string capability
+         *
+         * @param aGeneralString general string capability
+         **/
+        void SetGeneralString(bool aGeneralString)
+        {
+            iGeneralString = aGeneralString;
+        }
+
+        /**
+         * Function to set DTMF capability
+         *
+         * @param aDtmf DTMF capability
+         **/
+        void SetDtmf(bool aDtmf)
+        {
+            iDtmf = aDtmf;
+        }
+
+        /**
+         * Function to add capability
+         *
+         * @param aFormatType format type capability
+         **/
+        void AddCapability(PVMFFormatType aFormatType)
+        {
+            if (aFormatType == PVMF_MIME_USERINPUT_BASIC_STRING)
+            {
+                iBasicString = true;
+            }
+            else if (aFormatType == PVMF_MIME_USERINPUT_IA5_STRING)
+            {
+                iIa5String = true;
+            }
+            else if (aFormatType == PVMF_MIME_USERINPUT_GENERAL_STRING)
+            {
+                iGeneralString = true;
+            }
+            else if (aFormatType == PVMF_MIME_USERINPUT_DTMF)
+            {
+                iDtmf = true;
+            }
+        }
+
+        // from PVInterface
+        void addRef()
+        {
+            iRefCounter++;
+        }
+
+        void removeRef()
+        {
+            --iRefCounter;
+            if (iRefCounter == 0)
+                OSCL_DELETE(this);
+        }
+
+    private:
+
+        virtual bool queryInterface(const PVUuid& arUuid, PVInterface*& aprInterface)
+        {
+            OSCL_UNUSED_ARG(arUuid);
+            OSCL_UNUSED_ARG(aprInterface);
+            return false;
+        }
+
+        uint32 iRefCounter;
+
+        bool iBasicString;
+        bool iIa5String;
+        bool iGeneralString;
+        bool iDtmf;
+};
+
+/**
  * UserInputType enum
  * Enumeration of user input types
  **/

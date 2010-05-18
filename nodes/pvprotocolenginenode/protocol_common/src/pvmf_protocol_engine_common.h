@@ -494,11 +494,11 @@ class ProtocolObserver
     public:
         virtual ~ProtocolObserver() {}
 
-        virtual void ProtocolStateComplete(const ProtocolStateCompleteInfo &aInfo) = 0;
-        virtual void OutputDataAvailable(OUTPUT_DATA_QUEUE &aOutputQueue, ProtocolEngineOutputDataSideInfo &aSideInfo) = 0;
-        virtual void ProtocolStateError(int32 aErrorCode) = 0; // server response error or other internal fatal error
-        virtual bool GetBufferForRequest(PVMFSharedMediaDataPtr &aMediaData) = 0; // to contruct HTTP request
-        virtual void ProtocolRequestAvailable(uint32 aRequestType = ProtocolRequestType_Normaldata) = 0; // need to send to port
+        virtual void ProtocolStateComplete(const ProtocolStateCompleteInfo &aInfo, const uint32 aProtocolObjectId) = 0;
+        virtual void OutputDataAvailable(OUTPUT_DATA_QUEUE &aOutputQueue, ProtocolEngineOutputDataSideInfo &aSideInfo, const uint32 aProtocolObjectId) = 0;
+        virtual void ProtocolStateError(int32 aErrorCode, const uint32 aProtocolObjectId) = 0; // server response error or other internal fatal error
+        virtual bool GetBufferForRequest(PVMFSharedMediaDataPtr &aMediaData, const uint32 aProtocolObjectId) = 0; // to contruct HTTP request
+        virtual void ProtocolRequestAvailable(uint32 aRequestType, const uint32 aProtocolObjectId) = 0; // need to send to port
 };
 
 // Any http-based protocol(progressive download, fasttrack, ms http streaming and real http cloaking)
@@ -508,8 +508,9 @@ class HttpBasedProtocol : public ProtocolStateObserver,
 {
     public:
         // each http based protocol must implment this interface
-        virtual int32 runStateMachine(INPUT_DATA_QUEUE &aDataQueue)
+        virtual int32 runStateMachine(INPUT_DATA_QUEUE &aDataQueue, const uint32 aProtocolObjectId = 0)
         {
+            iProtocolObjectId = aProtocolObjectId;
             return iCurrState->processMicroState(aDataQueue);
         }
 
@@ -517,25 +518,25 @@ class HttpBasedProtocol : public ProtocolStateObserver,
         virtual void ProtocolStateComplete(const ProtocolStateCompleteInfo &aInfo)
         {
             // change to the next protocol state and notify the user that data processing at the current state is completely done
-            if (iObserver) iObserver->ProtocolStateComplete(aInfo);
+            if (iObserver) iObserver->ProtocolStateComplete(aInfo, iProtocolObjectId);
         }
         virtual void OutputDataAvailable(OUTPUT_DATA_QUEUE &aOutputQueue, ProtocolEngineOutputDataSideInfo &aSideInfo)
         {
-            if (iObserver) iObserver->OutputDataAvailable(aOutputQueue, aSideInfo);
+            if (iObserver) iObserver->OutputDataAvailable(aOutputQueue, aSideInfo, iProtocolObjectId);
         }
         virtual void ProtocolStateError(int32 aErrorCode)
         {
-            if (iObserver) iObserver->ProtocolStateError(aErrorCode);
+            if (iObserver) iObserver->ProtocolStateError(aErrorCode, iProtocolObjectId);
         }
 
         virtual bool GetBufferForRequest(PVMFSharedMediaDataPtr &aMediaData)
         {
-            return iObserver->GetBufferForRequest(aMediaData);
+            return iObserver->GetBufferForRequest(aMediaData, iProtocolObjectId);
         }
 
-        virtual void ProtocolRequestAvailable(uint32 aRequestType = ProtocolRequestType_Normaldata)
+        virtual void ProtocolRequestAvailable(uint32 aRequestType)
         {
-            if (iObserver) iObserver->ProtocolRequestAvailable(aRequestType);
+            if (iObserver) iObserver->ProtocolRequestAvailable(aRequestType, iProtocolObjectId);
         }
 
         // initialize means passing protocol owned objects down to state objects
@@ -729,7 +730,8 @@ class HttpBasedProtocol : public ProtocolStateObserver,
         }
 
         // constructor
-        HttpBasedProtocol() : iCurrState(NULL),
+        HttpBasedProtocol() : iProtocolObjectId(0),
+                iCurrState(NULL),
                 iObserver(NULL),
                 iComposer(NULL),
                 iParser(NULL)
@@ -771,6 +773,7 @@ class HttpBasedProtocol : public ProtocolStateObserver,
         virtual ProtocolState* getNextState() = 0;
 
     protected:
+        uint32 iProtocolObjectId;
         ProtocolState *iCurrState;
         ProtocolObserver *iObserver;
         HTTPComposer *iComposer;

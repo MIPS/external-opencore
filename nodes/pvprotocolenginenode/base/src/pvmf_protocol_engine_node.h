@@ -188,6 +188,23 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterfaceImpl,
             else return BYTE_SEEK_NOTSET;
         }
 
+        uint32 GetMaxVideoTrackBitrate(uint32& aStreamIndex)
+        {
+            uint32 bitrate = iProtocolContainer->getMaxVideoTrackBitrate(aStreamIndex);
+            iInterfacingObjectContainer->setVideoStreamIndex(aStreamIndex);
+            return bitrate;
+        }
+
+        uint32 GetMaxAudioTrackBitrate(uint32& aStreamIndex)
+        {
+            uint32 bitrate = iProtocolContainer->getMaxAudioTrackBitrate(aStreamIndex);
+            iInterfacingObjectContainer->setAudioStreamIndex(aStreamIndex);
+            return bitrate;
+        }
+
+        PVMFTimestamp GetActualNPT(const PVMFTimestamp aTargetNPT);
+
+
         bool GetASFHeader(Oscl_Vector<OsclRefCounterMemFrag, OsclMemAllocator> &aHeader)
         {
             return iProtocol->getHeader(aHeader);
@@ -288,6 +305,8 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterfaceImpl,
 
         // Port processing
         bool ProcessPortActivity();
+        void ProcessPortActivity_ProcessInputPort(uint32& aReadyForInput);
+        void ProcessPortActivity_CreateIncomingMsgReadyEvent(const uint32 aReadyForInput);
         PVMFStatus ProcessIncomingMsg(PVMFPortInterface* aPort);
         PVMFStatus ProcessOutgoingMsg(PVMFPortInterface* aPort);
         PVMFStatus PostProcessForMsgSentSuccess(PVMFPortInterface* aPort, PVMFSharedMediaMsgPtr &aMsg);
@@ -299,14 +318,25 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterfaceImpl,
         {
             return (iPortInForData && iPortInForData->IncomingMsgQueueSize() > 0);
         }
+        bool ReadyToProcessInputAudioPort()
+        {
+            return (iPortInForAudioData && iPortInForAudioData->IncomingMsgQueueSize() > 0);
+        }
+        bool ReadyToProcessInputVideoPort()
+        {
+            return (iPortInForVideoData && iPortInForVideoData->IncomingMsgQueueSize() > 0);
+        }
         bool ReadyToProcessInputLoggingPort()
         {
             return (iPortInForLogging && iPortInForLogging->IncomingMsgQueueSize() > 0);
         }
-        inline bool ReadyToProcessInputData();
+        inline bool ReadyToProcessInputData(const uint32 aReadyForInput);
         void UpdateTimersInProcessIncomingMsg(const bool aEOSMsg, PVMFPortInterface* aPort);
         void UpdateTimersInProcessOutgoingMsg(const bool isMediaData, PVMFPortInterface* aPort);
         PVMFStatus RetrieveIncomingMsg(INPUT_DATA_QUEUE* aDataQueue, PVMFPortInterface* aPort);
+
+        bool DoRequestPort_ValidateTag(const int32 aTag);
+        PVMFProtocolEnginePort* DoRequestPort_CreatePort(const int32 aTag);
 
         //Command processing
         void CommandComplete(PVMFNodeCommand&,
@@ -340,7 +370,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterfaceImpl,
         PVMFStatus HandleExtensionAPICommands();
 
         bool CheckAvailabilityOfDoStart(); // called in DoStart() only
-        inline bool IsDataFlowEventAlreadyInQueue();
+        inline bool IsDataFlowEventAlreadyInQueue(const uint32 aProtocolObjectId = 0);
         void PassInObjects(); // called by DoInit()
 
         // Run decomposition
@@ -354,11 +384,11 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterfaceImpl,
         void TimeoutOccurred(int32 timerID, int32 timeoutInfo);
 
         // From ProtocolObserver
-        void ProtocolStateComplete(const ProtocolStateCompleteInfo &aInfo);
-        void OutputDataAvailable(OUTPUT_DATA_QUEUE &aOutputQueue, ProtocolEngineOutputDataSideInfo &aSideInfo);
-        void ProtocolStateError(int32 aErrorCode); // server response error or other internal fatal error
-        bool GetBufferForRequest(PVMFSharedMediaDataPtr &aMediaData);   // to contruct HTTP request
-        void ProtocolRequestAvailable(uint32 aRequestType = ProtocolRequestType_Normaldata); // need to send to port
+        void ProtocolStateComplete(const ProtocolStateCompleteInfo &aInfo, const uint32 aProtocolObjectId);
+        void OutputDataAvailable(OUTPUT_DATA_QUEUE &aOutputQueue, ProtocolEngineOutputDataSideInfo &aSideInfo, const uint32 aProtocolObjectId);
+        void ProtocolStateError(int32 aErrorCode, const uint32 aProtocolObjectId); // server response error or other internal fatal error
+        bool GetBufferForRequest(PVMFSharedMediaDataPtr &aMediaData, const uint32 aProtocolObjectId);   // to contruct HTTP request
+        void ProtocolRequestAvailable(uint32 aRequestType, const uint32 aProtocolObjectId); // need to send to port
 
         // From PVMFProtocolEngineNodeOutputObserver
         void OutputBufferAvailable();
@@ -389,7 +419,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterfaceImpl,
         bool DispatchInternalEvent(PVProtocolEngineNodeInternalEvent *aLatestEvent = NULL);
         void LogIncomingMessage(PVMFSharedMediaMsgPtr &aMsg, bool isEOS, PVMFPortInterface* aPort);
         bool IgnoreCurrentInputData(PVMFPortInterface* aPort, const bool isEOS, PVMFSharedMediaMsgPtr &aMsg);
-        bool CheckEndOfProcessingInIgoreData(const bool isEOS, const bool isDataPort = true);
+        bool CheckEndOfProcessingInIgoreData(const bool isEOS);
         // support GetSocketConfig and GetSocketConfigForLogging
         bool GetSocketConfigImp(const INetURI &aURI, OSCL_String &aPortConfig);
         bool ComposeSocketConfig(OSCL_String &aServerAddr, const uint32 aPortNum, OSCL_String &aPortConfig);
@@ -414,10 +444,21 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterfaceImpl,
         void StopClear();
         void CancelClear();
         void GetObjects();
+        bool IsInputDataPortType(PVMFPortInterface* aPort)
+        {
+            return (aPort->GetPortTag() == PVMF_PROTOCOLENGINENODE_PORT_TYPE_INPUT ||
+                    aPort->GetPortTag() == PVMF_PROTOCOLENGINENODE_PORT_TYPE_AUDIO_INPUT ||
+                    aPort->GetPortTag() == PVMF_PROTOCOLENGINENODE_PORT_TYPE_VIDEO_INPUT);
+        }
+        bool IsInputPortType(PVMFPortInterface* aPort)
+        {
+            return (aPort->GetPortTag() == PVMF_PROTOCOLENGINENODE_PORT_TYPE_INPUT ||
+                    aPort->GetPortTag() == PVMF_PROTOCOLENGINENODE_PORT_TYPE_AUDIO_INPUT ||
+                    aPort->GetPortTag() == PVMF_PROTOCOLENGINENODE_PORT_TYPE_VIDEO_INPUT ||
+                    aPort->GetPortTag() == PVMF_PROTOCOLENGINENODE_PORT_TYPE_FEEDBACK);
+        }
 
     private:
-        uint64 iNPTInMS;
-
         int32 iStatusCode; // work as a global variable
         PVProtocolEngineNodePrcoessingState iProcessingState;
 
@@ -479,7 +520,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterfaceImpl,
 
         // Vector of ports contained in this node
         PVMFPortVector<PVMFProtocolEnginePort, PVMFProtocolEngineNodeAllocator> iPortVector;
-        PVMFProtocolEnginePort *iPortInForData, *iPortInForData2, *iPortInForLogging, *iPortOut;
+        PVMFProtocolEnginePort *iPortInForData, *iPortInForAudioData, *iPortInForVideoData, *iPortInForLogging, *iPortOut;
         friend class PVMFProtocolEnginePort;
 
         PVMFCommandId iCurrentCmdId;
@@ -487,7 +528,6 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterfaceImpl,
 
         PVLogger* iLogger;
         PVLogger* iDataPathLogger;
-        PVLogger* iClockLogger;
 
         PvmiDataStreamCommandId iCurrentDataStreamCmdId;
 };

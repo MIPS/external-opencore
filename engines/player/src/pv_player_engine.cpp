@@ -1334,32 +1334,7 @@ void PVPlayerEngine::Run()
                 EngineCommandCompleted(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext(), cmdstatus);
             }
         }
-        else if (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_RESUME)
-        {
-            PVMFStatus cmdstatus = DoResume(iCurrentCmd[0]);
-
-            if (cmdstatus != PVMFSuccess && cmdstatus != PVMFPending)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::Run() Command failed CmdId %d Status %d",
-                                iCurrentCmd[0].GetCmdId(), cmdstatus));
-                EngineCommandCompleted(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext(), cmdstatus);
-            }
-        }
-        else if (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_SET_PLAYBACK_RANGE)
-        {
-            PVMFStatus cmdstatus = DoSetPlaybackRange(iCurrentCmd[0]);
-
-            if (cmdstatus != PVMFSuccess && cmdstatus != PVMFPending)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::Run() Command failed CmdId %d Status %d",
-                                iCurrentCmd[0].GetCmdId(), cmdstatus));
-                EngineCommandCompleted(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext(), cmdstatus);
-            }
-        }
-        else if ((iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_PAUSE)
-                 || (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_PAUSE_DUE_TO_SET_PLAYBACK_RANGE)
-                 || (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_PAUSE_DUE_TO_ENDTIME_REACHED)
-                 || (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_PAUSE_DUE_TO_ENDOFCLIP))
+        else if (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_PAUSE_DUE_TO_SET_PLAYBACK_RANGE)
         {
             PVMFStatus cmdstatus = DoPause(iCurrentCmd[0]);
 
@@ -5560,13 +5535,6 @@ PVMFStatus PVPlayerEngine::DoSetPlaybackRange(PVPlayerEngineCommand& aCmd)
         return PVMFErrInvalidState;
     }
 
-    if (((iNumPVMFInfoStartOfDataPending > 0) || (iNumPendingDatapathCmd > 0))
-            && ((iState == PVP_ENGINE_STATE_PAUSED) || (iState == PVP_ENGINE_STATE_STARTED)))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVPlayerEngine::DoSetPlaybackRange() Pending PVMFInfoStartOfData events or datapath commands"));
-        return PVMFPending;
-    }
-
     if (aCmd.GetParam(2).bool_value)
     {
         // Queueing of playback range is not supported yet
@@ -8638,13 +8606,23 @@ PVMFStatus PVPlayerEngine::DoPause(PVPlayerEngineCommand& aCmd)
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoPause() In"));
 
+    if (((aCmd.GetCmdType() == PVP_ENGINE_COMMAND_PAUSE_DUE_TO_SET_PLAYBACK_RANGE)) && ((iNumPendingDatapathCmd != 0) || (iNumPVMFInfoStartOfDataPending != 0)))
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iReposLogger, PVLOGMSG_INFO,
+                        (0, "PVPlayerEngine::DoPause - Node commands(%d) or StarOfData events(%d) are pending", iNumPendingDatapathCmd, iNumPVMFInfoStartOfDataPending));
+        return PVMFPending;
+    }
+
     // Check engine state
     switch (GetPVPlayerState())
     {
         case PVP_STATE_PAUSED :
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoPause() Engine already in Paused State"));
-            EngineCommandCompleted(aCmd.GetCmdId(), aCmd.GetContext(), PVMFSuccess);
-            return PVMFSuccess;
+            if (aCmd.GetCmdType() != PVP_ENGINE_COMMAND_PAUSE_DUE_TO_SET_PLAYBACK_RANGE)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoPause() Engine already in Paused State"));
+                EngineCommandCompleted(aCmd.GetCmdId(), aCmd.GetContext(), PVMFSuccess);
+                return PVMFSuccess;
+            }
 
         case PVP_STATE_STARTED :
             break;
@@ -8680,7 +8658,6 @@ PVMFStatus PVPlayerEngine::DoPause(PVPlayerEngineCommand& aCmd)
                             (0, "PVPlayerEngine::DoPause - Pause after setplayback, Cancelling Watchdog timer, iNumPVMFInfoStartOfDataPending=%d", iNumPVMFInfoStartOfDataPending));
             iWatchDogTimer->Cancel();
         }
-        return PVMFPending;
     }
 
     // Pause the clock and notify sinks if not auto-paused
@@ -8813,12 +8790,6 @@ PVMFStatus PVPlayerEngine::DoResume(PVPlayerEngineCommand& aCmd)
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoResume() Currently paused due to EOS so not allowed!"));
         return PVMFErrInvalidState;
-    }
-
-    if ((iNumPVMFInfoStartOfDataPending > 0) || (iNumPendingDatapathCmd > 0))
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVPlayerEngine::DoResume() Pending PVMFInfoStartOfData events"));
-        return PVMFPending;
     }
 
     PVMFStatus retval;
@@ -13577,7 +13548,14 @@ void PVPlayerEngine::HandleSinkNodeSkipMediaDataDuringPlayback(PVPlayerEngineCon
         infomsg->removeRef();
 
         // Complete SetPlaybackRange() or SetPlaybackRate()
+        SendPositionStatusUpdate();
         EngineCommandCompleted(aNodeContext.iCmdId, aNodeContext.iCmdContext, PVMFSuccess);
+        if (GetPVPlayerState() == PVP_STATE_PAUSED)
+        {
+            // You would reach here while doing a SetPlaybackRange() during Paused state
+            // Queue in the internal-pause that will be executed after the SinkNode finishes its start.
+            AddCommandToQueue(PVP_ENGINE_COMMAND_PAUSE_DUE_TO_SET_PLAYBACK_RANGE, NULL, NULL, NULL, false);
+        }
     }
 
     if ((iNumPendingSkipCompleteEvent == 0) && (iNumPVMFInfoStartOfDataPending == 0))
@@ -14479,6 +14457,17 @@ void PVPlayerEngine::HandleDatapathResume(PVPlayerEngineContext& aDatapathContex
                 RunIfNotReady();
             }
         }
+        else if (!iCurrentCmd.empty())
+        {
+            if (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_PAUSE_DUE_TO_SET_PLAYBACK_RANGE)
+            {
+                // If we are here, it means that the HandleDatapathResume
+                // was part of the SetPlaybackRange command, and the StartOfData
+                // events have already reached the engine. And, the command has already been
+                // attempted to process before.
+                RunIfNotReady();
+            }
+        }
     }
     else
     {
@@ -15284,32 +15273,9 @@ void PVPlayerEngine::HandleSinkNodeInfoEvent(const PVMFAsyncEvent& aEvent, int32
                         // start the clock only if engine is in started state
                         StartPlaybackClock();
                         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iReposLogger, PVLOGMSG_INFO, (0, "PVPlayerEngine::HandleSinkNodeInfoEvent() - PlayClock Started"));
-                        // Process any pending command
-                        RunIfNotReady();
                     }
-                    else if (iState == PVP_ENGINE_STATE_PAUSED)
-                    {
-                        if (iNumPendingDatapathCmd == 0)
-                        {
-                            // Skip is complete and data is ready
-                            // Now, pause the nodes
-                            // @TODO - Check if there is a resume command already queued in.
-                            //         If so, complete the current SetPlaybackRange command,
-                            //         and in DoResume() ignore the "invalid state".
-                            PVMFStatus retval =  DoPauseDatapath(iCurrentCmd[0].GetCmdId(), iCurrentCmd[0].GetContext());
-                            if (retval != PVMFSuccess)
-                            {
-                                AddErrorHandlingCmd(PVP_ENGINE_COMMAND_ERROR_HANDLING_SET_PLAYBACK_RANGE, retval, NULL);
-                            }
-                        }
-                        else
-                        {
-                            // The StartOfData has reached the engine even before the nodes have
-                            // completed the Start() command. Wait for Start() to finish, and then
-                            // pause the nodes.
-                            AddCommandToQueue(PVP_ENGINE_COMMAND_PAUSE_DUE_TO_SET_PLAYBACK_RANGE, NULL, NULL, NULL, false);
-                        }
-                    }
+                    // Process any pending command
+                    RunIfNotReady();
                 }
             }
             //else it could mean duplicate or old PVMFInfoStartOfData, ignore both

@@ -5,16 +5,16 @@ $(call add-prebuilt-files, ETC,  pvplayer.cfg)
 include $(CLEAR_VARS)
 
 LOCAL_WHOLE_STATIC_LIBRARIES := \
-	libosclbase \
- 	libosclerror \
- 	libosclmemory \
+	liboscllib \
+ 	libpvlogger \
+ 	libosclregcli \
+ 	libosclregserv \
  	libosclutil \
  	libosclproc \
  	libosclio \
- 	libosclregserv \
- 	libosclregcli \
- 	libpvlogger \
- 	liboscllib \
+ 	libosclmemory \
+ 	libosclerror \
+ 	libosclbase \
  	libomx_mastercore_lib \
  	libpvgsmamrparser \
  	libgetactualaacconfig \
@@ -48,16 +48,16 @@ LOCAL_MODULE := libopencore_common
 LOCAL_SHARED_LIBRARIES +=   
 
 include $(BUILD_SHARED_LIBRARY)
-include   $(PV_TOP)/oscl/oscl/osclbase/Android.mk
-include   $(PV_TOP)/oscl/oscl/osclerror/Android.mk
-include   $(PV_TOP)/oscl/oscl/osclmemory/Android.mk
+include   $(PV_TOP)/oscl/oscl/oscllib/Android.mk
+include   $(PV_TOP)/oscl/pvlogger/Android.mk
+include   $(PV_TOP)/oscl/oscl/osclregcli/Android.mk
+include   $(PV_TOP)/oscl/oscl/osclregserv/Android.mk
 include   $(PV_TOP)/oscl/oscl/osclutil/Android.mk
 include   $(PV_TOP)/oscl/oscl/osclproc/Android.mk
 include   $(PV_TOP)/oscl/oscl/osclio/Android.mk
-include   $(PV_TOP)/oscl/oscl/osclregserv/Android.mk
-include   $(PV_TOP)/oscl/oscl/osclregcli/Android.mk
-include   $(PV_TOP)/oscl/pvlogger/Android.mk
-include   $(PV_TOP)/oscl/oscl/oscllib/Android.mk
+include   $(PV_TOP)/oscl/oscl/osclmemory/Android.mk
+include   $(PV_TOP)/oscl/oscl/osclerror/Android.mk
+include   $(PV_TOP)/oscl/oscl/osclbase/Android.mk
 include   $(PV_TOP)/codecs_v2/omx/omx_mastercore/Android.mk
 include   $(PV_TOP)/codecs_v2/audio/gsm_amr/common/dec/Android.mk
 include   $(PV_TOP)/fileformats/rawgsmamr/parser/Android.mk

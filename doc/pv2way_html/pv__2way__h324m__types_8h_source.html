@@ -131,145 +131,252 @@
 <a name="l00180"></a><a class="code" href="classPVH223Al3Config.html#a0ef44d0025f07336ec6451675eb0263d">00180</a>         uint32 <a class="code" href="classPVH223Al3Config.html#a0ef44d0025f07336ec6451675eb0263d">iSendBufferSize</a>;
 <a name="l00181"></a>00181 };
 <a name="l00182"></a>00182 
-<a name="l00187"></a><a class="code" href="pv__2way__h324m__types_8h.html#a416822560d15da695105a04426a4f2b6">00187</a> <span class="keyword">typedef</span> <span class="keyword">enum</span> <a class="code" href="pv__2way__h324m__types_8h.html#a416822560d15da695105a04426a4f2b6">UserInputType</a>
+<a name="l00187"></a><a class="code" href="classCPVUserInputCapability.html">00187</a> <span class="keyword">class </span><a class="code" href="classCPVUserInputCapability.html">CPVUserInputCapability</a>: <span class="keyword">public</span> HeapBase, <span class="keyword">public</span> PVInterface
 <a name="l00188"></a>00188 {
-<a name="l00189"></a><a class="code" href="pv__2way__h324m__types_8h.html#a416822560d15da695105a04426a4f2b6acf1c6e4bd522ced7585d36a704dc988f">00189</a>     <a class="code" href="pv__2way__h324m__types_8h.html#a416822560d15da695105a04426a4f2b6acf1c6e4bd522ced7585d36a704dc988f">PV_ALPHANUMERIC</a> = 0,
-<a name="l00190"></a><a class="code" href="pv__2way__h324m__types_8h.html#a416822560d15da695105a04426a4f2b6ab6b3974b1f4f14bf316d993a8502332b">00190</a>     <a class="code" href="pv__2way__h324m__types_8h.html#a416822560d15da695105a04426a4f2b6ab6b3974b1f4f14bf316d993a8502332b">PV_DTMF</a>
-<a name="l00191"></a>00191 } <a class="code" href="pv__2way__h324m__types_8h.html#af5f88d26becc61f93f23d5022152fe39">PV2WayUserInputType</a>;
-<a name="l00192"></a>00192 
-<a name="l00193"></a>00193 
-<a name="l00198"></a><a class="code" href="classCPVUserInput.html">00198</a> <span class="keyword">class </span><a class="code" href="classCPVUserInput.html">CPVUserInput</a>: <span class="keyword">public</span> HeapBase, <span class="keyword">public</span> PVInterface
-<a name="l00199"></a>00199 {
-<a name="l00200"></a>00200     <span class="keyword">public</span>:
-<a name="l00205"></a>00205         OSCL_IMPORT_REF <a class="code" href="classCPVUserInput.html#afd1758e36b71b8bb5c1f80c2f0596be6">CPVUserInput</a>();
-<a name="l00206"></a>00206 
-<a name="l00210"></a><a class="code" href="classCPVUserInput.html#acb818f2382738e694535d623165d89ce">00210</a>         <span class="keyword">virtual</span> <a class="code" href="classCPVUserInput.html#acb818f2382738e694535d623165d89ce">~CPVUserInput</a>() {};
-<a name="l00214"></a>00214         <span class="keyword">virtual</span> <a class="code" href="pv__2way__h324m__types_8h.html#af5f88d26becc61f93f23d5022152fe39">PV2WayUserInputType</a> <a class="code" href="classCPVUserInput.html#a2d9ffe661e7f9a2308b937a7d96e8a85">GetType</a>() = 0;
-<a name="l00215"></a>00215 
-<a name="l00216"></a>00216         <span class="comment">// from PVInterface</span>
-<a name="l00217"></a><a class="code" href="classCPVUserInput.html#abed0c6477fcf7de86c71645c9ec53196">00217</a>         <span class="keywordtype">void</span> <a class="code" href="classCPVUserInput.html#abed0c6477fcf7de86c71645c9ec53196">addRef</a>()
-<a name="l00218"></a>00218         {
-<a name="l00219"></a>00219             iRefCounter++;
-<a name="l00220"></a>00220         }
-<a name="l00221"></a>00221 
-<a name="l00222"></a><a class="code" href="classCPVUserInput.html#afec97ca6221597e2263fd5ef4871529a">00222</a>         <span class="keywordtype">void</span> <a class="code" href="classCPVUserInput.html#afec97ca6221597e2263fd5ef4871529a">removeRef</a>()
-<a name="l00223"></a>00223         {
-<a name="l00224"></a>00224             --iRefCounter;
-<a name="l00225"></a>00225             <span class="keywordflow">if</span> (iRefCounter == 0)
-<a name="l00226"></a>00226                 OSCL_DELETE(<span class="keyword">this</span>);
-<a name="l00227"></a>00227         }
-<a name="l00228"></a>00228 
-<a name="l00229"></a>00229     <span class="keyword">private</span>:
+<a name="l00189"></a>00189     <span class="keyword">public</span>:
+<a name="l00194"></a><a class="code" href="classCPVUserInputCapability.html#abfd2a9502f1e6e0e297b14f60c42f724">00194</a>         OSCL_IMPORT_REF <a class="code" href="classCPVUserInputCapability.html#abfd2a9502f1e6e0e297b14f60c42f724">CPVUserInputCapability</a>(): iRefCounter(1) {};
+<a name="l00195"></a>00195 
+<a name="l00199"></a><a class="code" href="classCPVUserInputCapability.html#a456f851c456563cc9c01edb3f18f65a5">00199</a>         <span class="keyword">virtual</span> <a class="code" href="classCPVUserInputCapability.html#a456f851c456563cc9c01edb3f18f65a5">~CPVUserInputCapability</a>() {};
+<a name="l00200"></a>00200 
+<a name="l00206"></a><a class="code" href="classCPVUserInputCapability.html#a0083c5da86c15e5a5ba1824fff7d2a96">00206</a>         <span class="keywordtype">bool</span> <a class="code" href="classCPVUserInputCapability.html#a0083c5da86c15e5a5ba1824fff7d2a96">HasBasicString</a>()
+<a name="l00207"></a>00207         {
+<a name="l00208"></a>00208             <span class="keywordflow">return</span> iBasicString;
+<a name="l00209"></a>00209         }
+<a name="l00210"></a>00210 
+<a name="l00216"></a><a class="code" href="classCPVUserInputCapability.html#a4901d06fdf315f2aca128d83a8471eb7">00216</a>         <span class="keywordtype">bool</span> <a class="code" href="classCPVUserInputCapability.html#a4901d06fdf315f2aca128d83a8471eb7">HasIa5String</a>()
+<a name="l00217"></a>00217         {
+<a name="l00218"></a>00218             <span class="keywordflow">return</span> iIa5String;
+<a name="l00219"></a>00219         }
+<a name="l00220"></a>00220 
+<a name="l00226"></a><a class="code" href="classCPVUserInputCapability.html#ae7aae1fb653982b88c5c444de2bedfad">00226</a>         <span class="keywordtype">bool</span> <a class="code" href="classCPVUserInputCapability.html#ae7aae1fb653982b88c5c444de2bedfad">HasGeneralString</a>()
+<a name="l00227"></a>00227         {
+<a name="l00228"></a>00228             <span class="keywordflow">return</span> iGeneralString;
+<a name="l00229"></a>00229         }
 <a name="l00230"></a>00230 
-<a name="l00231"></a>00231         <span class="keyword">virtual</span> <span class="keywordtype">bool</span> queryInterface(<span class="keyword">const</span> PVUuid&amp; arUuid, PVInterface*&amp; aprInterface)
-<a name="l00232"></a>00232         {
-<a name="l00233"></a>00233             OSCL_UNUSED_ARG(arUuid);
-<a name="l00234"></a>00234             OSCL_UNUSED_ARG(aprInterface);
-<a name="l00235"></a>00235             <span class="keywordflow">return</span> <span class="keyword">false</span>;
-<a name="l00236"></a>00236         }
-<a name="l00237"></a>00237 
-<a name="l00238"></a>00238         uint32 iRefCounter;
-<a name="l00239"></a>00239 
-<a name="l00240"></a>00240 };
-<a name="l00241"></a>00241 
-<a name="l00248"></a><a class="code" href="classCPVUserInputDtmf.html">00248</a> <span class="keyword">class </span><a class="code" href="classCPVUserInputDtmf.html">CPVUserInputDtmf</a> : <span class="keyword">public</span> <a class="code" href="classCPVUserInput.html">CPVUserInput</a>
-<a name="l00249"></a>00249 {
-<a name="l00250"></a>00250     <span class="keyword">public</span>:
-<a name="l00264"></a>00264         OSCL_IMPORT_REF <a class="code" href="classCPVUserInputDtmf.html#ad290ec76caddd6ee11b01fd6712754d6">CPVUserInputDtmf</a>(uint8 aInput, <span class="keywordtype">bool</span> aUpdate, uint16 aDuration = 0);
+<a name="l00236"></a><a class="code" href="classCPVUserInputCapability.html#a8b88507c7adfeefff93f77173f86fb68">00236</a>         <span class="keywordtype">bool</span> <a class="code" href="classCPVUserInputCapability.html#a8b88507c7adfeefff93f77173f86fb68">HasDtmf</a>()
+<a name="l00237"></a>00237         {
+<a name="l00238"></a>00238             <span class="keywordflow">return</span> iDtmf;
+<a name="l00239"></a>00239         }
+<a name="l00240"></a>00240 
+<a name="l00246"></a><a class="code" href="classCPVUserInputCapability.html#ab9d7d26104d17d6a05cc62f8ab291dd6">00246</a>         <span class="keywordtype">bool</span> <a class="code" href="classCPVUserInputCapability.html#ab9d7d26104d17d6a05cc62f8ab291dd6">HasUserInputCapability</a>()
+<a name="l00247"></a>00247         {
+<a name="l00248"></a>00248             <span class="keywordflow">if</span> (iBasicString || iIa5String || iGeneralString || iDtmf)
+<a name="l00249"></a>00249             {
+<a name="l00250"></a>00250                 <span class="keywordflow">return</span> <span class="keyword">true</span>;
+<a name="l00251"></a>00251             }
+<a name="l00252"></a>00252             <span class="keywordflow">return</span> <span class="keyword">false</span>;
+<a name="l00253"></a>00253         }
+<a name="l00254"></a>00254 
+<a name="l00255"></a>00255 
+<a name="l00261"></a><a class="code" href="classCPVUserInputCapability.html#a445934b9610a8998b2828211f39586e2">00261</a>         <span class="keywordtype">void</span> <a class="code" href="classCPVUserInputCapability.html#a445934b9610a8998b2828211f39586e2">SetBasicString</a>(<span class="keywordtype">bool</span> aBasicString)
+<a name="l00262"></a>00262         {
+<a name="l00263"></a>00263             iBasicString = aBasicString;
+<a name="l00264"></a>00264         }
 <a name="l00265"></a>00265 
-<a name="l00269"></a>00269         <span class="comment">//OSCL_IMPORT_REF ~CPVUserInputDtmf() {};</span>
-<a name="l00270"></a>00270         OSCL_IMPORT_REF <a class="code" href="classCPVUserInputDtmf.html#a8c69586eaef99d318417dd98420ea58e">~CPVUserInputDtmf</a>();
-<a name="l00271"></a>00271 
-<a name="l00272"></a>00272         <span class="comment">// from CPVUserInput</span>
-<a name="l00273"></a>00273         OSCL_IMPORT_REF <a class="code" href="pv__2way__h324m__types_8h.html#af5f88d26becc61f93f23d5022152fe39">PV2WayUserInputType</a> <a class="code" href="classCPVUserInputDtmf.html#ae45d362581462c169063f68db2ed10b9">GetType</a>();
-<a name="l00274"></a>00274 
-<a name="l00280"></a>00280         OSCL_IMPORT_REF uint8 <a class="code" href="classCPVUserInputDtmf.html#ad2a4385443f6e13cc1c910a57ac2cc23">GetInput</a>();
-<a name="l00281"></a>00281 
-<a name="l00287"></a>00287         OSCL_IMPORT_REF <span class="keywordtype">bool</span> <a class="code" href="classCPVUserInputDtmf.html#a144596e586e27b41c82c841f02d5d53c">IsUpdate</a>();
-<a name="l00288"></a>00288 
-<a name="l00294"></a>00294         OSCL_IMPORT_REF uint16 <a class="code" href="classCPVUserInputDtmf.html#a7f70d31216f04562d991a7ec7896cef1">GetDuration</a>();
+<a name="l00271"></a><a class="code" href="classCPVUserInputCapability.html#a0824f2dbf96c753020cc10aebbdf9ca6">00271</a>         <span class="keywordtype">void</span> <a class="code" href="classCPVUserInputCapability.html#a0824f2dbf96c753020cc10aebbdf9ca6">SetIa5String</a>(<span class="keywordtype">bool</span> aIa5String)
+<a name="l00272"></a>00272         {
+<a name="l00273"></a>00273             iIa5String = aIa5String;
+<a name="l00274"></a>00274         }
+<a name="l00275"></a>00275 
+<a name="l00281"></a><a class="code" href="classCPVUserInputCapability.html#a52938d43b5856e044955b57a171375c9">00281</a>         <span class="keywordtype">void</span> <a class="code" href="classCPVUserInputCapability.html#a52938d43b5856e044955b57a171375c9">SetGeneralString</a>(<span class="keywordtype">bool</span> aGeneralString)
+<a name="l00282"></a>00282         {
+<a name="l00283"></a>00283             iGeneralString = aGeneralString;
+<a name="l00284"></a>00284         }
+<a name="l00285"></a>00285 
+<a name="l00291"></a><a class="code" href="classCPVUserInputCapability.html#a2a0e03a53056adbf4ad7535cafdec608">00291</a>         <span class="keywordtype">void</span> <a class="code" href="classCPVUserInputCapability.html#a2a0e03a53056adbf4ad7535cafdec608">SetDtmf</a>(<span class="keywordtype">bool</span> aDtmf)
+<a name="l00292"></a>00292         {
+<a name="l00293"></a>00293             iDtmf = aDtmf;
+<a name="l00294"></a>00294         }
 <a name="l00295"></a>00295 
-<a name="l00296"></a>00296     <span class="keyword">private</span>:
-<a name="l00307"></a>00307         uint8 iInput;
-<a name="l00308"></a>00308         <span class="keywordtype">bool</span> iIsUpdate;
-<a name="l00309"></a>00309         uint16 iDuration;
-<a name="l00310"></a>00310 };
-<a name="l00311"></a>00311 
-<a name="l00318"></a><a class="code" href="classCPVUserInputAlphanumeric.html">00318</a> <span class="keyword">class </span><a class="code" href="classCPVUserInputAlphanumeric.html">CPVUserInputAlphanumeric</a> : <span class="keyword">public</span> <a class="code" href="classCPVUserInput.html">CPVUserInput</a>
-<a name="l00319"></a>00319 {
-<a name="l00320"></a>00320     <span class="keyword">public</span>:
-<a name="l00330"></a>00330         OSCL_IMPORT_REF <a class="code" href="classCPVUserInputAlphanumeric.html#ab2e4a42d6e9c85541b032fcf8e6f0dec">CPVUserInputAlphanumeric</a>(uint8* apInput, uint16 aLen);
-<a name="l00331"></a>00331 
-<a name="l00335"></a>00335         OSCL_IMPORT_REF <a class="code" href="classCPVUserInputAlphanumeric.html#adc8c3baf8fb5f88a571a352f109aa946">~CPVUserInputAlphanumeric</a>();
-<a name="l00336"></a>00336 
-<a name="l00337"></a>00337         <span class="comment">// from CPVUserInput</span>
-<a name="l00338"></a>00338         OSCL_IMPORT_REF <a class="code" href="pv__2way__h324m__types_8h.html#af5f88d26becc61f93f23d5022152fe39">PV2WayUserInputType</a> <a class="code" href="classCPVUserInputAlphanumeric.html#a3912fc48f28d82a8df1cd181281d0e39">GetType</a>();
-<a name="l00339"></a>00339 
-<a name="l00345"></a>00345         OSCL_IMPORT_REF uint8* <a class="code" href="classCPVUserInputAlphanumeric.html#a56161f55b7274afe7d97a497be9fdad3">GetInput</a>();
-<a name="l00346"></a>00346 
-<a name="l00352"></a>00352         OSCL_IMPORT_REF uint16 <a class="code" href="classCPVUserInputAlphanumeric.html#af871061eef0398650323f4d32e56aa89">GetLength</a>();
-<a name="l00353"></a>00353 
-<a name="l00354"></a>00354     <span class="keyword">protected</span>:
-<a name="l00358"></a><a class="code" href="classCPVUserInputAlphanumeric.html#a5097735233f248b9f36ffb1836cee73b">00358</a>         uint8* <a class="code" href="classCPVUserInputAlphanumeric.html#a5097735233f248b9f36ffb1836cee73b">ipInput</a>;  <span class="comment">/* We own the memory*/</span>
-<a name="l00359"></a><a class="code" href="classCPVUserInputAlphanumeric.html#a899a13a57447430abe31ea8d806ee621">00359</a>         uint16 <a class="code" href="classCPVUserInputAlphanumeric.html#a899a13a57447430abe31ea8d806ee621">iLength</a>; <span class="comment">/* length of the string */</span>
-<a name="l00360"></a>00360 };
+<a name="l00301"></a><a class="code" href="classCPVUserInputCapability.html#ac7bb902f605668572b8d9d7f9e2b34a4">00301</a>         <span class="keywordtype">void</span> <a class="code" href="classCPVUserInputCapability.html#ac7bb902f605668572b8d9d7f9e2b34a4">AddCapability</a>(PVMFFormatType aFormatType)
+<a name="l00302"></a>00302         {
+<a name="l00303"></a>00303             <span class="keywordflow">if</span> (aFormatType == PVMF_MIME_USERINPUT_BASIC_STRING)
+<a name="l00304"></a>00304             {
+<a name="l00305"></a>00305                 iBasicString = <span class="keyword">true</span>;
+<a name="l00306"></a>00306             }
+<a name="l00307"></a>00307             <span class="keywordflow">else</span> <span class="keywordflow">if</span> (aFormatType == PVMF_MIME_USERINPUT_IA5_STRING)
+<a name="l00308"></a>00308             {
+<a name="l00309"></a>00309                 iIa5String = <span class="keyword">true</span>;
+<a name="l00310"></a>00310             }
+<a name="l00311"></a>00311             <span class="keywordflow">else</span> <span class="keywordflow">if</span> (aFormatType == PVMF_MIME_USERINPUT_GENERAL_STRING)
+<a name="l00312"></a>00312             {
+<a name="l00313"></a>00313                 iGeneralString = <span class="keyword">true</span>;
+<a name="l00314"></a>00314             }
+<a name="l00315"></a>00315             <span class="keywordflow">else</span> <span class="keywordflow">if</span> (aFormatType == PVMF_MIME_USERINPUT_DTMF)
+<a name="l00316"></a>00316             {
+<a name="l00317"></a>00317                 iDtmf = <span class="keyword">true</span>;
+<a name="l00318"></a>00318             }
+<a name="l00319"></a>00319         }
+<a name="l00320"></a>00320 
+<a name="l00321"></a>00321         <span class="comment">// from PVInterface</span>
+<a name="l00322"></a><a class="code" href="classCPVUserInputCapability.html#aab66dfc765ea6a9a454a84be0dc12337">00322</a>         <span class="keywordtype">void</span> <a class="code" href="classCPVUserInputCapability.html#aab66dfc765ea6a9a454a84be0dc12337">addRef</a>()
+<a name="l00323"></a>00323         {
+<a name="l00324"></a>00324             iRefCounter++;
+<a name="l00325"></a>00325         }
+<a name="l00326"></a>00326 
+<a name="l00327"></a><a class="code" href="classCPVUserInputCapability.html#a32c989bc9ff5d071c3f98d697f2216bb">00327</a>         <span class="keywordtype">void</span> <a class="code" href="classCPVUserInputCapability.html#a32c989bc9ff5d071c3f98d697f2216bb">removeRef</a>()
+<a name="l00328"></a>00328         {
+<a name="l00329"></a>00329             --iRefCounter;
+<a name="l00330"></a>00330             <span class="keywordflow">if</span> (iRefCounter == 0)
+<a name="l00331"></a>00331                 OSCL_DELETE(<span class="keyword">this</span>);
+<a name="l00332"></a>00332         }
+<a name="l00333"></a>00333 
+<a name="l00334"></a>00334     <span class="keyword">private</span>:
+<a name="l00335"></a>00335 
+<a name="l00336"></a>00336         <span class="keyword">virtual</span> <span class="keywordtype">bool</span> queryInterface(<span class="keyword">const</span> PVUuid&amp; arUuid, PVInterface*&amp; aprInterface)
+<a name="l00337"></a>00337         {
+<a name="l00338"></a>00338             OSCL_UNUSED_ARG(arUuid);
+<a name="l00339"></a>00339             OSCL_UNUSED_ARG(aprInterface);
+<a name="l00340"></a>00340             <span class="keywordflow">return</span> <span class="keyword">false</span>;
+<a name="l00341"></a>00341         }
+<a name="l00342"></a>00342 
+<a name="l00343"></a>00343         uint32 iRefCounter;
+<a name="l00344"></a>00344 
+<a name="l00345"></a>00345         <span class="keywordtype">bool</span> iBasicString;
+<a name="l00346"></a>00346         <span class="keywordtype">bool</span> iIa5String;
+<a name="l00347"></a>00347         <span class="keywordtype">bool</span> iGeneralString;
+<a name="l00348"></a>00348         <span class="keywordtype">bool</span> iDtmf;
+<a name="l00349"></a>00349 };
+<a name="l00350"></a>00350 
+<a name="l00355"></a><a class="code" href="pv__2way__h324m__types_8h.html#a416822560d15da695105a04426a4f2b6">00355</a> <span class="keyword">typedef</span> <span class="keyword">enum</span> <a class="code" href="pv__2way__h324m__types_8h.html#a416822560d15da695105a04426a4f2b6">UserInputType</a>
+<a name="l00356"></a>00356 {
+<a name="l00357"></a><a class="code" href="pv__2way__h324m__types_8h.html#a416822560d15da695105a04426a4f2b6acf1c6e4bd522ced7585d36a704dc988f">00357</a>     <a class="code" href="pv__2way__h324m__types_8h.html#a416822560d15da695105a04426a4f2b6acf1c6e4bd522ced7585d36a704dc988f">PV_ALPHANUMERIC</a> = 0,
+<a name="l00358"></a><a class="code" href="pv__2way__h324m__types_8h.html#a416822560d15da695105a04426a4f2b6ab6b3974b1f4f14bf316d993a8502332b">00358</a>     <a class="code" href="pv__2way__h324m__types_8h.html#a416822560d15da695105a04426a4f2b6ab6b3974b1f4f14bf316d993a8502332b">PV_DTMF</a>
+<a name="l00359"></a>00359 } <a class="code" href="pv__2way__h324m__types_8h.html#af5f88d26becc61f93f23d5022152fe39">PV2WayUserInputType</a>;
+<a name="l00360"></a>00360 
 <a name="l00361"></a>00361 
-<a name="l00362"></a><a class="code" href="classCPVLogicalChannelIndication.html">00362</a> <span class="keyword">class </span><a class="code" href="classCPVLogicalChannelIndication.html">CPVLogicalChannelIndication</a> : <span class="keyword">public</span> HeapBase, <span class="keyword">public</span> PVInterface
-<a name="l00363"></a>00363 {
-<a name="l00364"></a>00364     <span class="keyword">public</span>:
-<a name="l00365"></a>00365         OSCL_IMPORT_REF <a class="code" href="classCPVLogicalChannelIndication.html#a46cb010f379de0bbe4138276e80b351b">CPVLogicalChannelIndication</a>(TPVChannelId channelId);
-<a name="l00366"></a>00366         OSCL_IMPORT_REF <a class="code" href="classCPVLogicalChannelIndication.html#a17302b7096212f2012f370359fc13b2a">~CPVLogicalChannelIndication</a>();
-<a name="l00367"></a>00367         OSCL_IMPORT_REF TPVChannelId <a class="code" href="classCPVLogicalChannelIndication.html#a54a3c27bc12081e5a14db058f6a02a85">GetChannelId</a>();
-<a name="l00368"></a>00368 
-<a name="l00369"></a>00369         <span class="comment">// from PVInterface</span>
-<a name="l00370"></a>00370         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classCPVLogicalChannelIndication.html#a4a98a71b8907f14d840ed675a2bc3fb6">addRef</a>();
-<a name="l00371"></a>00371 
-<a name="l00372"></a>00372         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classCPVLogicalChannelIndication.html#ad9761c4a4425a5486091f203ce6685be">removeRef</a>();
-<a name="l00373"></a>00373 
-<a name="l00374"></a>00374     <span class="keyword">private</span>:
-<a name="l00375"></a>00375 
-<a name="l00376"></a>00376         <span class="keyword">virtual</span> <span class="keywordtype">bool</span> queryInterface(<span class="keyword">const</span> PVUuid&amp; arUuid, PVInterface*&amp; aprInterface)
-<a name="l00377"></a>00377         {
-<a name="l00378"></a>00378             OSCL_UNUSED_ARG(arUuid);
-<a name="l00379"></a>00379             OSCL_UNUSED_ARG(aprInterface);
-<a name="l00380"></a>00380             <span class="keywordflow">return</span> <span class="keyword">false</span>;
-<a name="l00381"></a>00381         }
-<a name="l00382"></a>00382 
-<a name="l00383"></a>00383         uint32 iRefCounter;
-<a name="l00384"></a>00384         TPVChannelId iChannelId;
-<a name="l00385"></a>00385 };
-<a name="l00386"></a>00386 
-<a name="l00387"></a><a class="code" href="classCPVVideoSpatialTemporalTradeoff.html">00387</a> <span class="keyword">class </span><a class="code" href="classCPVVideoSpatialTemporalTradeoff.html">CPVVideoSpatialTemporalTradeoff</a> : <span class="keyword">public</span> HeapBase, <span class="keyword">public</span> PVInterface
-<a name="l00388"></a>00388 {
-<a name="l00389"></a>00389     <span class="keyword">public</span>:
-<a name="l00390"></a>00390         OSCL_IMPORT_REF <a class="code" href="classCPVVideoSpatialTemporalTradeoff.html#ac59ceea55b261972fb8689bfcd1587e3">CPVVideoSpatialTemporalTradeoff</a>(TPVChannelId aChannelId, uint8 aTradeoff);
-<a name="l00391"></a>00391         OSCL_IMPORT_REF <a class="code" href="classCPVVideoSpatialTemporalTradeoff.html#a8ec873b7d0bf86b0a001211c5fb6d5c9">~CPVVideoSpatialTemporalTradeoff</a>();
-<a name="l00392"></a>00392         OSCL_IMPORT_REF TPVChannelId <a class="code" href="classCPVVideoSpatialTemporalTradeoff.html#adaae06216bd3ee1553c4031b6893e2d8">GetChannelId</a>();
-<a name="l00393"></a>00393         OSCL_IMPORT_REF uint8 <a class="code" href="classCPVVideoSpatialTemporalTradeoff.html#ad2b38b42460083a843543fd9a417bdcf">GetTradeoff</a>();
-<a name="l00394"></a>00394 
-<a name="l00395"></a>00395         <span class="comment">// from PVInterface</span>
-<a name="l00396"></a>00396         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classCPVVideoSpatialTemporalTradeoff.html#aa14a3794992a41def74f18192405f9a7">addRef</a>();
-<a name="l00397"></a>00397 
-<a name="l00398"></a>00398         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classCPVVideoSpatialTemporalTradeoff.html#ae86667feb9542c871ed7e166c028adab">removeRef</a>();
-<a name="l00399"></a>00399 
-<a name="l00400"></a>00400     <span class="keyword">private</span>:
-<a name="l00401"></a>00401 
-<a name="l00402"></a>00402         <span class="keyword">virtual</span> <span class="keywordtype">bool</span> queryInterface(<span class="keyword">const</span> PVUuid&amp; arUuid, PVInterface*&amp; aprInterface)
-<a name="l00403"></a>00403         {
-<a name="l00404"></a>00404             OSCL_UNUSED_ARG(arUuid);
-<a name="l00405"></a>00405             OSCL_UNUSED_ARG(aprInterface);
-<a name="l00406"></a>00406             <span class="keywordflow">return</span> <span class="keyword">false</span>;
-<a name="l00407"></a>00407         }
-<a name="l00408"></a>00408 
-<a name="l00409"></a>00409         uint32 iRefCounter;
-<a name="l00410"></a>00410         TPVChannelId iChannelId;
-<a name="l00411"></a>00411         uint8 iTradeoff;
-<a name="l00412"></a>00412 };
-<a name="l00413"></a>00413 
-<a name="l00414"></a>00414 <span class="preprocessor">#endif</span>
+<a name="l00366"></a><a class="code" href="classCPVUserInput.html">00366</a> <span class="keyword">class </span><a class="code" href="classCPVUserInput.html">CPVUserInput</a>: <span class="keyword">public</span> HeapBase, <span class="keyword">public</span> PVInterface
+<a name="l00367"></a>00367 {
+<a name="l00368"></a>00368     <span class="keyword">public</span>:
+<a name="l00373"></a>00373         OSCL_IMPORT_REF <a class="code" href="classCPVUserInput.html#afd1758e36b71b8bb5c1f80c2f0596be6">CPVUserInput</a>();
+<a name="l00374"></a>00374 
+<a name="l00378"></a><a class="code" href="classCPVUserInput.html#acb818f2382738e694535d623165d89ce">00378</a>         <span class="keyword">virtual</span> <a class="code" href="classCPVUserInput.html#acb818f2382738e694535d623165d89ce">~CPVUserInput</a>() {};
+<a name="l00382"></a>00382         <span class="keyword">virtual</span> <a class="code" href="pv__2way__h324m__types_8h.html#af5f88d26becc61f93f23d5022152fe39">PV2WayUserInputType</a> <a class="code" href="classCPVUserInput.html#a2d9ffe661e7f9a2308b937a7d96e8a85">GetType</a>() = 0;
+<a name="l00383"></a>00383 
+<a name="l00384"></a>00384         <span class="comment">// from PVInterface</span>
+<a name="l00385"></a><a class="code" href="classCPVUserInput.html#abed0c6477fcf7de86c71645c9ec53196">00385</a>         <span class="keywordtype">void</span> <a class="code" href="classCPVUserInput.html#abed0c6477fcf7de86c71645c9ec53196">addRef</a>()
+<a name="l00386"></a>00386         {
+<a name="l00387"></a>00387             iRefCounter++;
+<a name="l00388"></a>00388         }
+<a name="l00389"></a>00389 
+<a name="l00390"></a><a class="code" href="classCPVUserInput.html#afec97ca6221597e2263fd5ef4871529a">00390</a>         <span class="keywordtype">void</span> <a class="code" href="classCPVUserInput.html#afec97ca6221597e2263fd5ef4871529a">removeRef</a>()
+<a name="l00391"></a>00391         {
+<a name="l00392"></a>00392             --iRefCounter;
+<a name="l00393"></a>00393             <span class="keywordflow">if</span> (iRefCounter == 0)
+<a name="l00394"></a>00394                 OSCL_DELETE(<span class="keyword">this</span>);
+<a name="l00395"></a>00395         }
+<a name="l00396"></a>00396 
+<a name="l00397"></a>00397     <span class="keyword">private</span>:
+<a name="l00398"></a>00398 
+<a name="l00399"></a>00399         <span class="keyword">virtual</span> <span class="keywordtype">bool</span> queryInterface(<span class="keyword">const</span> PVUuid&amp; arUuid, PVInterface*&amp; aprInterface)
+<a name="l00400"></a>00400         {
+<a name="l00401"></a>00401             OSCL_UNUSED_ARG(arUuid);
+<a name="l00402"></a>00402             OSCL_UNUSED_ARG(aprInterface);
+<a name="l00403"></a>00403             <span class="keywordflow">return</span> <span class="keyword">false</span>;
+<a name="l00404"></a>00404         }
+<a name="l00405"></a>00405 
+<a name="l00406"></a>00406         uint32 iRefCounter;
+<a name="l00407"></a>00407 
+<a name="l00408"></a>00408 };
+<a name="l00409"></a>00409 
+<a name="l00416"></a><a class="code" href="classCPVUserInputDtmf.html">00416</a> <span class="keyword">class </span><a class="code" href="classCPVUserInputDtmf.html">CPVUserInputDtmf</a> : <span class="keyword">public</span> <a class="code" href="classCPVUserInput.html">CPVUserInput</a>
+<a name="l00417"></a>00417 {
+<a name="l00418"></a>00418     <span class="keyword">public</span>:
+<a name="l00432"></a>00432         OSCL_IMPORT_REF <a class="code" href="classCPVUserInputDtmf.html#ad290ec76caddd6ee11b01fd6712754d6">CPVUserInputDtmf</a>(uint8 aInput, <span class="keywordtype">bool</span> aUpdate, uint16 aDuration = 0);
+<a name="l00433"></a>00433 
+<a name="l00437"></a>00437         <span class="comment">//OSCL_IMPORT_REF ~CPVUserInputDtmf() {};</span>
+<a name="l00438"></a>00438         OSCL_IMPORT_REF <a class="code" href="classCPVUserInputDtmf.html#a8c69586eaef99d318417dd98420ea58e">~CPVUserInputDtmf</a>();
+<a name="l00439"></a>00439 
+<a name="l00440"></a>00440         <span class="comment">// from CPVUserInput</span>
+<a name="l00441"></a>00441         OSCL_IMPORT_REF <a class="code" href="pv__2way__h324m__types_8h.html#af5f88d26becc61f93f23d5022152fe39">PV2WayUserInputType</a> <a class="code" href="classCPVUserInputDtmf.html#ae45d362581462c169063f68db2ed10b9">GetType</a>();
+<a name="l00442"></a>00442 
+<a name="l00448"></a>00448         OSCL_IMPORT_REF uint8 <a class="code" href="classCPVUserInputDtmf.html#ad2a4385443f6e13cc1c910a57ac2cc23">GetInput</a>();
+<a name="l00449"></a>00449 
+<a name="l00455"></a>00455         OSCL_IMPORT_REF <span class="keywordtype">bool</span> <a class="code" href="classCPVUserInputDtmf.html#a144596e586e27b41c82c841f02d5d53c">IsUpdate</a>();
+<a name="l00456"></a>00456 
+<a name="l00462"></a>00462         OSCL_IMPORT_REF uint16 <a class="code" href="classCPVUserInputDtmf.html#a7f70d31216f04562d991a7ec7896cef1">GetDuration</a>();
+<a name="l00463"></a>00463 
+<a name="l00464"></a>00464     <span class="keyword">private</span>:
+<a name="l00475"></a>00475         uint8 iInput;
+<a name="l00476"></a>00476         <span class="keywordtype">bool</span> iIsUpdate;
+<a name="l00477"></a>00477         uint16 iDuration;
+<a name="l00478"></a>00478 };
+<a name="l00479"></a>00479 
+<a name="l00486"></a><a class="code" href="classCPVUserInputAlphanumeric.html">00486</a> <span class="keyword">class </span><a class="code" href="classCPVUserInputAlphanumeric.html">CPVUserInputAlphanumeric</a> : <span class="keyword">public</span> <a class="code" href="classCPVUserInput.html">CPVUserInput</a>
+<a name="l00487"></a>00487 {
+<a name="l00488"></a>00488     <span class="keyword">public</span>:
+<a name="l00498"></a>00498         OSCL_IMPORT_REF <a class="code" href="classCPVUserInputAlphanumeric.html#ab2e4a42d6e9c85541b032fcf8e6f0dec">CPVUserInputAlphanumeric</a>(uint8* apInput, uint16 aLen);
+<a name="l00499"></a>00499 
+<a name="l00503"></a>00503         OSCL_IMPORT_REF <a class="code" href="classCPVUserInputAlphanumeric.html#adc8c3baf8fb5f88a571a352f109aa946">~CPVUserInputAlphanumeric</a>();
+<a name="l00504"></a>00504 
+<a name="l00505"></a>00505         <span class="comment">// from CPVUserInput</span>
+<a name="l00506"></a>00506         OSCL_IMPORT_REF <a class="code" href="pv__2way__h324m__types_8h.html#af5f88d26becc61f93f23d5022152fe39">PV2WayUserInputType</a> <a class="code" href="classCPVUserInputAlphanumeric.html#a3912fc48f28d82a8df1cd181281d0e39">GetType</a>();
+<a name="l00507"></a>00507 
+<a name="l00513"></a>00513         OSCL_IMPORT_REF uint8* <a class="code" href="classCPVUserInputAlphanumeric.html#a56161f55b7274afe7d97a497be9fdad3">GetInput</a>();
+<a name="l00514"></a>00514 
+<a name="l00520"></a>00520         OSCL_IMPORT_REF uint16 <a class="code" href="classCPVUserInputAlphanumeric.html#af871061eef0398650323f4d32e56aa89">GetLength</a>();
+<a name="l00521"></a>00521 
+<a name="l00522"></a>00522     <span class="keyword">protected</span>:
+<a name="l00526"></a><a class="code" href="classCPVUserInputAlphanumeric.html#a5097735233f248b9f36ffb1836cee73b">00526</a>         uint8* <a class="code" href="classCPVUserInputAlphanumeric.html#a5097735233f248b9f36ffb1836cee73b">ipInput</a>;  <span class="comment">/* We own the memory*/</span>
+<a name="l00527"></a><a class="code" href="classCPVUserInputAlphanumeric.html#a899a13a57447430abe31ea8d806ee621">00527</a>         uint16 <a class="code" href="classCPVUserInputAlphanumeric.html#a899a13a57447430abe31ea8d806ee621">iLength</a>; <span class="comment">/* length of the string */</span>
+<a name="l00528"></a>00528 };
+<a name="l00529"></a>00529 
+<a name="l00530"></a><a class="code" href="classCPVLogicalChannelIndication.html">00530</a> <span class="keyword">class </span><a class="code" href="classCPVLogicalChannelIndication.html">CPVLogicalChannelIndication</a> : <span class="keyword">public</span> HeapBase, <span class="keyword">public</span> PVInterface
+<a name="l00531"></a>00531 {
+<a name="l00532"></a>00532     <span class="keyword">public</span>:
+<a name="l00533"></a>00533         OSCL_IMPORT_REF <a class="code" href="classCPVLogicalChannelIndication.html#a46cb010f379de0bbe4138276e80b351b">CPVLogicalChannelIndication</a>(TPVChannelId channelId);
+<a name="l00534"></a>00534         OSCL_IMPORT_REF <a class="code" href="classCPVLogicalChannelIndication.html#a17302b7096212f2012f370359fc13b2a">~CPVLogicalChannelIndication</a>();
+<a name="l00535"></a>00535         OSCL_IMPORT_REF TPVChannelId <a class="code" href="classCPVLogicalChannelIndication.html#a54a3c27bc12081e5a14db058f6a02a85">GetChannelId</a>();
+<a name="l00536"></a>00536 
+<a name="l00537"></a>00537         <span class="comment">// from PVInterface</span>
+<a name="l00538"></a>00538         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classCPVLogicalChannelIndication.html#a4a98a71b8907f14d840ed675a2bc3fb6">addRef</a>();
+<a name="l00539"></a>00539 
+<a name="l00540"></a>00540         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classCPVLogicalChannelIndication.html#ad9761c4a4425a5486091f203ce6685be">removeRef</a>();
+<a name="l00541"></a>00541 
+<a name="l00542"></a>00542     <span class="keyword">private</span>:
+<a name="l00543"></a>00543 
+<a name="l00544"></a>00544         <span class="keyword">virtual</span> <span class="keywordtype">bool</span> queryInterface(<span class="keyword">const</span> PVUuid&amp; arUuid, PVInterface*&amp; aprInterface)
+<a name="l00545"></a>00545         {
+<a name="l00546"></a>00546             OSCL_UNUSED_ARG(arUuid);
+<a name="l00547"></a>00547             OSCL_UNUSED_ARG(aprInterface);
+<a name="l00548"></a>00548             <span class="keywordflow">return</span> <span class="keyword">false</span>;
+<a name="l00549"></a>00549         }
+<a name="l00550"></a>00550 
+<a name="l00551"></a>00551         uint32 iRefCounter;
+<a name="l00552"></a>00552         TPVChannelId iChannelId;
+<a name="l00553"></a>00553 };
+<a name="l00554"></a>00554 
+<a name="l00555"></a><a class="code" href="classCPVVideoSpatialTemporalTradeoff.html">00555</a> <span class="keyword">class </span><a class="code" href="classCPVVideoSpatialTemporalTradeoff.html">CPVVideoSpatialTemporalTradeoff</a> : <span class="keyword">public</span> HeapBase, <span class="keyword">public</span> PVInterface
+<a name="l00556"></a>00556 {
+<a name="l00557"></a>00557     <span class="keyword">public</span>:
+<a name="l00558"></a>00558         OSCL_IMPORT_REF <a class="code" href="classCPVVideoSpatialTemporalTradeoff.html#ac59ceea55b261972fb8689bfcd1587e3">CPVVideoSpatialTemporalTradeoff</a>(TPVChannelId aChannelId, uint8 aTradeoff);
+<a name="l00559"></a>00559         OSCL_IMPORT_REF <a class="code" href="classCPVVideoSpatialTemporalTradeoff.html#a8ec873b7d0bf86b0a001211c5fb6d5c9">~CPVVideoSpatialTemporalTradeoff</a>();
+<a name="l00560"></a>00560         OSCL_IMPORT_REF TPVChannelId <a class="code" href="classCPVVideoSpatialTemporalTradeoff.html#adaae06216bd3ee1553c4031b6893e2d8">GetChannelId</a>();
+<a name="l00561"></a>00561         OSCL_IMPORT_REF uint8 <a class="code" href="classCPVVideoSpatialTemporalTradeoff.html#ad2b38b42460083a843543fd9a417bdcf">GetTradeoff</a>();
+<a name="l00562"></a>00562 
+<a name="l00563"></a>00563         <span class="comment">// from PVInterface</span>
+<a name="l00564"></a>00564         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classCPVVideoSpatialTemporalTradeoff.html#aa14a3794992a41def74f18192405f9a7">addRef</a>();
+<a name="l00565"></a>00565 
+<a name="l00566"></a>00566         OSCL_IMPORT_REF <span class="keywordtype">void</span> <a class="code" href="classCPVVideoSpatialTemporalTradeoff.html#ae86667feb9542c871ed7e166c028adab">removeRef</a>();
+<a name="l00567"></a>00567 
+<a name="l00568"></a>00568     <span class="keyword">private</span>:
+<a name="l00569"></a>00569 
+<a name="l00570"></a>00570         <span class="keyword">virtual</span> <span class="keywordtype">bool</span> queryInterface(<span class="keyword">const</span> PVUuid&amp; arUuid, PVInterface*&amp; aprInterface)
+<a name="l00571"></a>00571         {
+<a name="l00572"></a>00572             OSCL_UNUSED_ARG(arUuid);
+<a name="l00573"></a>00573             OSCL_UNUSED_ARG(aprInterface);
+<a name="l00574"></a>00574             <span class="keywordflow">return</span> <span class="keyword">false</span>;
+<a name="l00575"></a>00575         }
+<a name="l00576"></a>00576 
+<a name="l00577"></a>00577         uint32 iRefCounter;
+<a name="l00578"></a>00578         TPVChannelId iChannelId;
+<a name="l00579"></a>00579         uint8 iTradeoff;
+<a name="l00580"></a>00580 };
+<a name="l00581"></a>00581 
+<a name="l00582"></a>00582 <span class="preprocessor">#endif</span>
 </pre></div></div>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>PV2Way Engine</small>
-<address style="align: left;"><small>Posting Version: CORE_9.000.1.1_RC2 </small>
+<address style="align: left;"><small>Posting Version: CORE_9.000.1.1_RC3 </small>
 </small></address>
 </body>
 </html>

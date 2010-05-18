@@ -78,11 +78,11 @@ OSCL_EXPORT_REF PVMFStatus ProgressiveDownloadContainer::initImpl()
     }
 
     // initialize output object
-    int32 status = initNodeOutput();
+    int32 status = initNodeOutput(iNodeOutput);
     if (status != PVMFSuccess) return status;
 
     // initialize protocol object
-    if (!initProtocol()) return PVMFFailure;
+    if (!initProtocol(iProtocol)) return PVMFFailure;
 
     // initialize download control object
     initDownloadControl();
@@ -90,12 +90,12 @@ OSCL_EXPORT_REF PVMFStatus ProgressiveDownloadContainer::initImpl()
     return PVMFSuccess;
 }
 
-OSCL_EXPORT_REF bool ProgressiveDownloadContainer::initProtocol_SetConfigInfo()
+OSCL_EXPORT_REF bool ProgressiveDownloadContainer::initProtocol_SetConfigInfo(HttpBasedProtocol *aProtocol)
 {
     OsclSharedPtr<PVDlCfgFile> aCfgFile = iCfgFileContainer->getCfgFile();
     if (aCfgFile.GetRep() == NULL) return false;
     aCfgFile->setHttpHeadRequestDisabled(iInterfacingObjectContainer->getHttpHeadRequestDisabled());
-    return DownloadContainer::initProtocol_SetConfigInfo();
+    return DownloadContainer::initProtocol_SetConfigInfo(aProtocol);
 }
 
 

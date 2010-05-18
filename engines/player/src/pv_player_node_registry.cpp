@@ -19,7 +19,7 @@
 
 #include "pvmi_datastreamsyncinterface_ref_factory.h"
 
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
 #include "oscl_shared_library.h"
 #include "oscl_library_list.h"
 #include "oscl_configfile_list.h"
@@ -30,12 +30,14 @@
 
 #endif //USE_LOADABLE_MODULES
 
+#if BUILD_OMX_VIDEO_DEC_NODE
 #include "pvmf_omx_videodec_factory.h"
+#endif
 
 void PVPlayerRegistryPopulator::Populate(PVPlayerNodeRegistry& aNode, PVPlayerRecognizerRegistry& aRec)
 {
 
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
     //add loadable modules
 
     OsclConfigFileList aCfgList;
@@ -87,7 +89,7 @@ PVPlayerNodeRegistry::~PVPlayerNodeRegistry()
 void PVPlayerNodeRegistry::AddLoadableModules(const OSCL_String& aConfigFilePath)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerNodeRegistry::AddLoadableModules() IN"));
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
 
     OsclLibraryList libList;
     libList.Populate(PV_NODE_REGISTRY_POPULATOR_INTERFACE, aConfigFilePath);
@@ -141,7 +143,7 @@ void PVPlayerNodeRegistry::AddLoadableModules(const OSCL_String& aConfigFilePath
 void PVPlayerNodeRegistry::RemoveLoadableModules()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerNodeRegistry::RemoveLoadableModules() IN"));
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
     // remove all dynamic nodes now
     // unregister node one by one
     while (!iNodeLibInfoList.empty())
@@ -253,11 +255,13 @@ PVMFNodeInterface* PVPlayerNodeRegistry::CreateNode(PVUuid& aUuid)
         PVMFNodeInterface* nodeInterface = NULL;
 
 #if VIDEO_DEC_NODE_LOW_PRIORITY
+#if BUILD_OMX_VIDEO_DEC_NODE
         //Call the appropriate Node creation function & return Node pointer
         if (KPVMFOMXVideoDecNodeUuid == aUuid)
         {
             priority = OsclActiveObject::EPriorityLow;
         }
+#endif
 #endif
         if (NULL != nodeInfo->iNodeCreateFunc)
         {
@@ -348,7 +352,7 @@ PVPlayerRecognizerRegistry::~PVPlayerRecognizerRegistry()
 void PVPlayerRecognizerRegistry::AddLoadableModules(const OSCL_String& aConfigFilePath)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerRecognizerRegistry::AddLoadableModules() IN"));
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
     OsclLibraryList libList;
     libList.Populate(PV_RECOGNIZER_POPULATOR_INTERFACE, aConfigFilePath);
 
@@ -390,7 +394,7 @@ void PVPlayerRecognizerRegistry::AddLoadableModules(const OSCL_String& aConfigFi
 void PVPlayerRecognizerRegistry::RemoveLoadableModules()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerRecognizerRegistry::RemoveLoadableModules() IN"));
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
     // remove all the dynamic plugins now
     // unregister the plugins one by one
     while (!iRecognizerLibInfoList.empty())

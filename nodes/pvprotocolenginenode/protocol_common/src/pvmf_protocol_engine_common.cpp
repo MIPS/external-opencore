@@ -686,6 +686,9 @@ OSCL_EXPORT_REF int32 ProtocolState::processMicroStateSendRequest()
     if (status != PROCESS_SUCCESS) return status;
     mediaData->setMediaFragFilledLen(0, iComposer->getCurrentRequestLength(iURI.isUseAbsoluteURI())); // don't count NULL
 
+    LOGINFODATAPATH((0, "ProtocolState::processMicroStateSendRequest() HTTP GET :\n------------\n%s\n-----------\n",
+                     (char*)memFrag.ptr));
+
     // send to port
     iObserver->ProtocolRequestAvailable(getProtocolRequestType());
 
@@ -796,10 +799,15 @@ OSCL_EXPORT_REF uint32 ProtocolState::getDownloadRate()
     int32 deltaMilliSec0 = deltaTimeVal.to_msec();
 
     int32 deltaMilliSec = iParser->getLatestMediaDataTimestamp() - (uint32)iStartTime.to_msec();
+    LOGINFODATAPATH((0, "ProtocolState::getDownloadRate(), deltaMilliSec=%d, downloadSize=%d",
+                     deltaMilliSec, getDownloadSize()));
     if (deltaMilliSec <= 0) return 0;
 
     BandwidthEstimationInfo *pBWEstInfo = iParser->getBandwidthEstimationInfo();
     int32 deltaMilliSec1 = pBWEstInfo->iLatestMediaDataTimestamp - pBWEstInfo->iFirstMediaDataTsPerRequest;
+    LOGINFODATAPATH((0, "ProtocolState::getDownloadRate(), deltaMilliSec1=%d, downloadSize=%d",
+                     deltaMilliSec1, getDownloadSize()));
+
     if (deltaMilliSec1 <= 0) return 0;
 
     OsclFloat downloadRate0 = ((OsclFloat)getDownloadSize() / (OsclFloat)deltaMilliSec0) * (OsclFloat)1000.0; // try to avoid overflow problem for 32-bit interger multiplication

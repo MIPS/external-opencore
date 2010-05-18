@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -241,15 +241,17 @@ UnitTest_XMLWriter::escape(_STRING value)
     unsigned num_escape_bytes;
     if (!unit_test_str_need_escape_xml(value.c_str(), num_escape_bytes))
     {
-        // assert
+        // Trigger an assert.
         int var = 0;
         var = 1 / var;
     }
     if (num_escape_bytes > 0)
     {
-        _STRING old(value);
-        value = _STRING("", num_escape_bytes);
-        unit_test_str_escape_xml(old.c_str(), (char *)value.c_str(), value.size());
+        char* buffer = new char[num_escape_bytes + 1];
+        unit_test_str_escape_xml(value.c_str(), buffer, num_escape_bytes);
+        buffer[num_escape_bytes] = '\0';
+        value = buffer;
+        delete [] buffer;
     }
     return value;
 }

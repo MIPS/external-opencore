@@ -71,6 +71,10 @@
 
 #define PV_MBDS_TEMP_CACHE_TRIM_MARGIN_PS                   64000
 #define PV_MBDS_TEMP_CACHE_TRIM_THRESHOLD_PS(capacity)              (capacity * 2) / 3
+
+#define PV_MBDS_TEMP_CACHE_TRIM_MARGIN_PS_NO_REPOS                   32000
+#define PV_MBDS_TEMP_CACHE_TRIM_THRESHOLD_PS_NO_REPOS(capacity)     (capacity * 1) / 8
+
 // for shoutcast
 #define PV_MBDS_TEMP_CACHE_TRIM_MARGIN_SC                   4096
 #define PV_MBDS_TEMP_CACHE_TRIM_THRESHOLD_SC(capacity)                          capacity / 6
@@ -109,7 +113,8 @@ typedef enum
     MBDS_STREAM_FORMAT_PROGRESSIVE_PLAYBACK,
     MBDS_STREAM_FORMAT_SHOUTCAST,
     MBDS_STREAM_FORMAT_RTMPSTREAMING,
-    MBDS_STREAM_FORMAT_DTCP
+    MBDS_STREAM_FORMAT_DTCP,
+    MBDS_STREAM_FORMAT_SMOOTH_STREAMING
 } MBDSStreamFormat;
 
 typedef enum

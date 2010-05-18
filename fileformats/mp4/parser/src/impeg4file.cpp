@@ -667,16 +667,6 @@ IMpeg4File::GetMetaDataSize(PVMFCPMPluginAccessInterfaceFactory* aCPMAccessFacto
 
 OSCL_EXPORT_REF void IMpeg4File::DestroyMP4FileObject(IMpeg4File* aMP4FileObject)
 {
-    Mpeg4File* ptr = OSCL_STATIC_CAST(Mpeg4File*, aMP4FileObject);
-
-    if (ptr)
-    {
-        MP4_FF_FILE * fp = ptr->_fp;
-        if (fp)
-        {
-            if (fp->IsOpen())
-                AtomUtils::CloseMP4File(fp);
-        }
-    }
-    PV_MP4_FF_DELETE(NULL, Mpeg4File, ptr);
+    // Destructor of IMpeg4File is virtual
+    PV_MP4_FF_DELETE(NULL, IMpeg4File, aMP4FileObject);
 }

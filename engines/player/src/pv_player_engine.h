@@ -523,6 +523,8 @@ class PVPlayerEngineCommandCompareLess
                     return 4;
                 case PVP_ENGINE_COMMAND_PAUSE_DUE_TO_ENDOFCLIP:
                     return 4;
+                case PVP_ENGINE_COMMAND_PAUSE_DUE_TO_SET_PLAYBACK_RANGE:
+                    return 4;
                 case PVP_ENGINE_COMMAND_PAUSE_DUE_TO_BUFFER_UNDERFLOW:
                     return 5;
                 case PVP_ENGINE_COMMAND_RESUME_DUE_TO_BUFFER_DATAREADY:

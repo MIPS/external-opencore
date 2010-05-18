@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 
 #include "pvmi_datastreamsyncinterface_ref_factory.h"
 
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
 #include "oscl_shared_library.h"
 #include "oscl_library_list.h"
 #include "oscl_configfile_list.h"
@@ -33,7 +33,7 @@
 void PVMERegistryPopulator::Populate(PVMENodeRegistry& aNode, PVMERecognizerRegistry& aRec)
 {
 
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
     //add loadable modules
 
     OsclConfigFileList aCfgList;
@@ -85,7 +85,7 @@ PVMENodeRegistry::~PVMENodeRegistry()
 void PVMENodeRegistry::AddLoadableModules(const OSCL_String& aConfigFilePath)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVMENodeRegistry::AddLoadableModules() IN"));
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
 
     OsclLibraryList libList;
     libList.Populate(PV_NODE_REGISTRY_POPULATOR_INTERFACE, aConfigFilePath);
@@ -135,7 +135,7 @@ void PVMENodeRegistry::AddLoadableModules(const OSCL_String& aConfigFilePath)
 void PVMENodeRegistry::RemoveLoadableModules()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVMENodeRegistry::RemoveLoadableModules() IN"));
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
     // remove all dynamic nodes now
     // unregister node one by one
     while (!iNodeLibInfoList.empty())
@@ -335,7 +335,7 @@ PVMERecognizerRegistry::~PVMERecognizerRegistry()
 void PVMERecognizerRegistry::AddLoadableModules(const OSCL_String& aConfigFilePath)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVMERecognizerRegistry::AddLoadableModules() IN"));
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
     OsclLibraryList libList;
     libList.Populate(PV_RECOGNIZER_POPULATOR_INTERFACE, aConfigFilePath);
 
@@ -377,7 +377,7 @@ void PVMERecognizerRegistry::AddLoadableModules(const OSCL_String& aConfigFilePa
 void PVMERecognizerRegistry::RemoveLoadableModules()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVMERecognizerRegistry::RemoveLoadableModules() IN"));
-#ifdef USE_LOADABLE_MODULES
+#if USE_LOADABLE_MODULES
     // remove all the dynamic plugins now
     // unregister the plugins one by one
     while (!iRecognizerLibInfoList.empty())

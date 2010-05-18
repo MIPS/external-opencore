@@ -631,7 +631,7 @@ int32 AACBitstreamObject::getFileInfo(int32& fileSize, TAACFormat& format, uint8
                     numProgConfigElem = (pBuffer[16] & 0x1E) >> 1;
 
                     // get bitrate (max for variable rate bitstream)
-                    iBitrate = bitRate = ((pBuffer[13] & 0xF0) << 15) |
+                    iBitrate = bitRate = ((pBuffer[13] & 0x0F) << 19) |
                                          (pBuffer[14] << 11) |
                                          (pBuffer[15] << 3)  |
                                          ((pBuffer[16] & 0xE0) >> 5);
@@ -984,7 +984,8 @@ int32 AACBitstreamObject::getFileInfo(int32& fileSize, TAACFormat& format, uint8
                     numProgConfigElem = (pBuffer[7] & 0x1E) >> 1;
 
                     // get bitrate (max for variable rate bitstream)
-                    iBitrate  = bitRate = ((pBuffer[4] & 0xF0) << 15) |
+
+                    iBitrate  = bitRate = ((pBuffer[4] & 0x0F) << 19) |
                                           (pBuffer[5] << 11) |
                                           (pBuffer[6] << 3)  |
                                           ((pBuffer[7] & 0xE0) >> 5);

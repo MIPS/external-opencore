@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,14 +148,15 @@ class PvmiCapabilityAndConfig: public PVInterface
          * have been previously queried using the getParametersSync API.
          *
          * @param aSession                  The Opaque session ID
-         * @param aParameters               An array of key-value pairs that should be used to set the parametres
+         * @param aParameters               An array of key-value pairs that should be used to set the parameters.
          * @param num_elements              Number of the elements in the array of parameters.
          * @param aRet_kvp                  ret_kvp is an output parameter to be used in case of errors.
-         *                                  It points to the first input key-value pair that caused an error
-         * @returns                         The function can leave with the following error codes
-         *                                  PVMFErrArgument if invalid arguments are passed.
-         *                                  In this case, Ret_kvp output argument is set to point to
-         *                                  the argument that caused the error.
+         *                                  It points to the first input key-value pair that caused an error.
+         *                                  The user is to note that the key-value pairs that exist in the input
+         *                                  array after the error key-value pair are not processed. So, the user
+         *                                  is expected to resend the list of key-value pairs after the error
+         *                                  key-value pair.
+         * @returns                         None.
          */
         virtual void setParametersSync(PvmiMIOSession aSession,
                                        PvmiKvp* aParameters,
@@ -171,7 +172,11 @@ class PvmiCapabilityAndConfig: public PVInterface
          * @param aParameters               An array of key-value pairs that should be used to set the parametres
          * @param num_elements              Number of the elements in the array of parameters.
          * @param aRet_kvp                  ret_kvp is an output parameter to be used in case of errors.
-         *                                  It points to the first input key-value pair that caused an error
+         *                                  It points to the first input key-value pair that caused an error.
+         *                                  The user is to note that the key-value pairs that exist in the input
+         *                                  array after the error key-value pair are not processed. So, the user
+         *                                  is expected to resend the list of key-value pairs after the error
+         *                                  key-value pair.
          * @returns                         TBD. PVMFSuccess if the operation was succesful, PVMFFailure otherwise
          */
         virtual PVMFCommandId setParametersAsync(PvmiMIOSession aSession,

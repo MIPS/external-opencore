@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,8 +59,7 @@ int32  ColorConvertYUV420SEMI::SetYuvFullRange(bool range)
 
 int32 ColorConvertYUV420SEMI::SetMode(int32 nMode)  //iMode : 0 Off, 1 On
 {
-    OSCL_UNUSED_ARG(nMode);
-    OSCL_ASSERT(_mInitialized == true);
+    _mState = nMode;
     return 1;
 }
 

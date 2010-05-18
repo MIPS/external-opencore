@@ -1098,31 +1098,8 @@ uint32 TSC_324m::CheckAltCapSet(PS_AlternativeCapabilitySet pAltCapSet,
     return(false);
 }
 
-
-CPvtTerminalCapability* TSC_324m::GetRemoteCapability()
+CPvtMediaCapability* TSC_324m::GetRemoteCodecCapability(FormatCapabilityInfo aFormatCapabilityInfo)
 {
-    return iTSCcapability.GetRemoteCapability();
-}
-
-OSCL_EXPORT_REF CPvtMediaCapability* TSC_324m::GetRemoteCodecCapability(FormatCapabilityInfo aFormatCapabilityInfo)
-{
-    CPvtMediaCapability* pMediaCapability = NULL;
-    CPvtTerminalCapability* pRemoteCaps = GetRemoteCapability();
-
-    if (pRemoteCaps)
-    {
-        for (uint16 i = 0; i < pRemoteCaps->GetNumCapabilityItems(); i++)
-        {
-            pMediaCapability =
-                pRemoteCaps->GetCapabilityItem(i);
-            if (pMediaCapability->GetFormatType() == aFormatCapabilityInfo.format)
-            {
-                return pMediaCapability;
-                break;
-            }
-        }
-    }
-
-    return NULL;
+    return iTSCcapability.GetRemoteCapability(PVMFFormatTypeToPVCodecType(aFormatCapabilityInfo.format));
 }
 

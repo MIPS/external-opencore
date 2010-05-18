@@ -31,11 +31,18 @@
 
 #define OMX_HALFRANGE_THRESHOLD 0x7FFFFFFF
 
-#define AAC_MONO_SILENCE_FRAME_SIZE 6
-#define AAC_STEREO_SILENCE_FRAME_SIZE 8
+#define AAC_MONO_SILENCE_FRAME_SIZE 7
+#define AAC_STEREO_SILENCE_FRAME_SIZE 9
 
-static const OMX_U8 AAC_MONO_SILENCE_FRAME[]   = {0x01, 0x40, 0x20, 0x06, 0x1D, 0x0E};      // 6 bytes
-static const OMX_U8 AAC_STEREO_SILENCE_FRAME[] = {0x21, 0x10, 0x05, 0x00, 0xA0, 0x18, 0x74, 0x38}; // 8 bytes)
+static const OMX_U8 AAC_MONO_SILENCE_FRAME[]   =
+{
+    0x01, 0x40, 0x20, 0x06, 0x2D, 0x00, 0x0E
+}; // 7 bytes
+
+static const OMX_U8 AAC_STEREO_SILENCE_FRAME[] =
+{
+    0x21, 0x10, 0x05, 0x00, 0xA0, 0x18, 0xb4, 0x00, 0x38
+}; // 9 bytes)
 
 OSCL_DLL_ENTRY_POINT_DEFAULT()
 

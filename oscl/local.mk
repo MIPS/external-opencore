@@ -4,21 +4,20 @@ LOCAL_PATH := $(call get_makefile_dir)
 # by other includes
 #SRC_ROOT := $(LOCAL_PATH)
 
+ifeq ($(USE_LOADABLE_MODULES),1)
+  LOCAL_MAKEFILES_LIST := $(SRC_ROOT)/oscl/oscl/oscllib/build/make/local.mk 
+endif
 
-LOCAL_MAKEFILES_LIST := \
-$(SRC_ROOT)/oscl/oscl/osclbase/build/make/local.mk \
-$(SRC_ROOT)/oscl/oscl/osclerror/build/make/local.mk \
-$(SRC_ROOT)/oscl/oscl/osclmemory/build/make/local.mk \
+LOCAL_MAKEFILES_LIST += \
+$(SRC_ROOT)/oscl/pvlogger/build/make/local.mk \
+$(SRC_ROOT)/oscl/oscl/osclregcli/build/make/local.mk \
+$(SRC_ROOT)/oscl/oscl/osclregserv/build/make/local.mk \
 $(SRC_ROOT)/oscl/oscl/osclutil/build/make/local.mk \
 $(SRC_ROOT)/oscl/oscl/osclproc/build/make/local.mk \
 $(SRC_ROOT)/oscl/oscl/osclio/build/make/local.mk \
-$(SRC_ROOT)/oscl/oscl/osclregserv/build/make/local.mk \
-$(SRC_ROOT)/oscl/oscl/osclregcli/build/make/local.mk \
-$(SRC_ROOT)/oscl/pvlogger/build/make/local.mk
-
-ifeq ($(USE_LOADABLE_MODULES),y)
-  LOCAL_MAKEFILES_LIST += $(SRC_ROOT)/oscl/oscl/oscllib/build/make/local.mk 
-endif
+$(SRC_ROOT)/oscl/oscl/osclmemory/build/make/local.mk \
+$(SRC_ROOT)/oscl/oscl/osclerror/build/make/local.mk \
+$(SRC_ROOT)/oscl/oscl/osclbase/build/make/local.mk 
 
 include $(MK)/intermediate_level.mk
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,11 +172,11 @@ SBR_ERROR extractFrameInfo(BIT_BUFFER     * hBitBuf,
     Int32 tE[MAX_ENVELOPES + 1];
     Int32 tQ[2 + 1];
     Int32 f[MAX_ENVELOPES + 1];
-    Int32 bs_rel_bord[3];
-    Int32 bs_rel_bord_0[3];
-    Int32 bs_rel_bord_1[3];
-    Int32 relBordLead[3];
-    Int32 relBordTrail[3];
+    Int32 bs_rel_bord[4];
+    Int32 bs_rel_bord_0[4];
+    Int32 bs_rel_bord_1[4];
+    Int32 relBordLead[4];
+    Int32 relBordTrail[4];
 
 
     Int32 *v_frame_info = h_frame_data->frameInfo;
@@ -199,6 +199,11 @@ SBR_ERROR extractFrameInfo(BIT_BUFFER     * hBitBuf,
             temp = buf_getbits(hBitBuf, SBR_ENV_BITS);   /* 2 bits */
 
             bs_num_env = 1 << temp;
+
+            if (bs_num_env >= MAX_ENVELOPES)
+            {
+                bs_num_env = MAX_ENVELOPES - 1;  // For FIXFIX this is limited to 4
+            }
 
 
             f[0] = buf_getbits(hBitBuf, SBR_RES_BITS);   /* 1 bit */
@@ -270,6 +275,12 @@ SBR_ERROR extractFrameInfo(BIT_BUFFER     * hBitBuf,
             bs_num_rel_1  = buf_getbits(hBitBuf, SBR_NUM_BITS);
 
             bs_num_env = bs_num_rel_0 + bs_num_rel_1 + 1;
+
+            if (bs_num_env > MAX_ENVELOPES)
+            {
+                bs_num_env = MAX_ENVELOPES;  // For VARVAR this is limited to 5
+            }
+
 
             for (k = 0; k < bs_num_rel_0; k++)
             {                                                 /* 2 bits */
@@ -414,7 +425,7 @@ SBR_ERROR extractFrameInfo(BIT_BUFFER     * hBitBuf,
      *  Check consistency on freq bands
      */
 
-    if ((tE[bs_num_env] < tE[0]) || (tE[0] < 0))
+    if ((tE[bs_num_env] < tE[0]) || (tE[0] < 0) || (bs_num_env > MAX_ENVELOPES))
     {
         err = SBRDEC_INVALID_BITSTREAM;
     }

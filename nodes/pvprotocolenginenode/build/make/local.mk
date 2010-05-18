@@ -62,7 +62,10 @@ SRCS += \
 	../../download_protocols/smooth_streaming/src/pvmf_protocol_engine_tcpsocket.cpp \
 	../../download_protocols/smooth_streaming/src/pvmf_protocol_engine_smooth_streaming.cpp \
 	../../download_protocols/smooth_streaming/src/pvmf_protocol_engine_node_smooth_streaming.cpp \
-	../../download_protocols/smooth_streaming/src/pvmf_protocol_engine_node_smooth_streaming_container_factory.cpp
+	../../download_protocols/smooth_streaming/src/pvmf_protocol_engine_node_smooth_streaming_container_factory.cpp \
+	../../download_protocols/smooth_streaming/src/pvmf_protocol_engine_node_smooth_streaming_ppb.cpp \
+	../../download_protocols/smooth_streaming/src/pvmf_protocol_engine_node_smooth_streaming_ppb_container_factory.cpp
+
 endif
 
 ifeq ($(penode_ftdl_support),y)

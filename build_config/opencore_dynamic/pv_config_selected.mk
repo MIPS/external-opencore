@@ -14,10 +14,12 @@ PV_HAS_SHOUTCAST_SUPPORT_ENABLED=y
 
 
 #
-# Menu for configuring runtime loadable modules
+# Menu for configuring modules
 #
 pv_so=n
+pvplayerservice_so=n
 pvsplit_so=y
+dynamic_loading_support=y
 download_support=y
 fasttrack_download_support=n
 mp4local_support=y
@@ -94,6 +96,7 @@ mpeg2recognizer_utility_lib=n
 omx_mastercore_lib=m
 MAX_NUMBER_OF_OMX_CORES=10
 MAX_NUMBER_OF_OMX_COMPONENTS=50
+USE_DYNAMIC_LOAD_OMX_COMPONENTS=y
 pv_omx=y
 omx_avc_component_lib=m
 omx_common_lib=m
@@ -352,6 +355,7 @@ pvmiofileinput_lib=m
 pvmiofileoutput_lib=m
 pvmioaviwavfileinput_lib=y
 pvmio_comm_loopback_lib=m
+pvaudiotrackmio_lib=n
 
 
 #

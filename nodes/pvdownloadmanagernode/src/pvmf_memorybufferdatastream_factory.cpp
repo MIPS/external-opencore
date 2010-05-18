@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -540,7 +540,8 @@ PVMFMemoryBufferReadDataStreamImpl::Read(PvmiDataStreamSession aSessionID, uint8
             // But if the cache is full, we need to send reposition request
             // This code will not be executed for Shoutcast, SCSP always reads within cache, no need to check for offsets wrapping around 4GB mark
             if (MBDS_STREAM_FORMAT_SHOUTCAST != iStreamFormat &&
-                    MBDS_STREAM_FORMAT_RTMPSTREAMING != iStreamFormat)
+                    MBDS_STREAM_FORMAT_RTMPSTREAMING != iStreamFormat &&
+                    MBDS_STREAM_FORMAT_SMOOTH_STREAMING != iStreamFormat)
             {
                 if ((firstByteToRead < firstTempByteOffset) || ((firstByteToRead - lastTempByteOffset) > PV_MBDS_BYTES_TO_WAIT) ||
                         (((firstByteToRead - lastTempByteOffset) <= PV_MBDS_BYTES_TO_WAIT) && ((lastTempByteOffset - firstTempByteOffset + 1) >= iWriteDataStream->GetTempCacheCapacity())))
@@ -1229,6 +1230,11 @@ PVMFMemoryBufferWriteDataStreamImpl::PVMFMemoryBufferWriteDataStreamImpl(PVMFMem
     {
         iTempCacheTrimThreshold = PV_MBDS_TEMP_CACHE_TRIM_THRESHOLD_SC(iTempCacheCapacity);
         iTempCacheTrimMargin = PV_MBDS_TEMP_CACHE_TRIM_MARGIN_SC;
+    }
+    else if (MBDS_STREAM_FORMAT_SMOOTH_STREAMING == iStreamFormat)
+    {
+        iTempCacheTrimThreshold = PV_MBDS_TEMP_CACHE_TRIM_THRESHOLD_PS_NO_REPOS(iTempCacheCapacity);
+        iTempCacheTrimMargin = PV_MBDS_TEMP_CACHE_TRIM_MARGIN_PS_NO_REPOS;
     }
     else
     {
@@ -3004,6 +3010,10 @@ PVMFMemoryBufferDataStream::PVMFMemoryBufferDataStream(PVMFFormatType& aStreamFo
     else if (aStreamFormat == PVMF_MIME_DATA_SOURCE_RTMP_STREAMING_URL)
     {
         streamFormat = MBDS_STREAM_FORMAT_RTMPSTREAMING;
+    }
+    else if (aStreamFormat == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL)
+    {
+        streamFormat = MBDS_STREAM_FORMAT_SMOOTH_STREAMING;
     }
 
     // Create a temporary cache and a permanent cache

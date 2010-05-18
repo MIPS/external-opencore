@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -253,8 +253,8 @@ int32 CCYUV420SEMItoYUV420::Convert(uint8 *inyuv, uint8 **outyuv)
         case 2://Rotation180
 
             outy  = (uint32*)((uint8*)outyuv[0] + outYsize - 4);
-            outcb = (uint16*)((uint8*)outyuv[1] + (outYsize >> 2) - 4);
-            outcr = (uint16*)((uint8*)outyuv[2] + (outYsize >> 2) - 4);
+            outcb = (uint16*)((uint8*)outyuv[1] + (outYsize >> 2) - 2);
+            outcr = (uint16*)((uint8*)outyuv[2] + (outYsize >> 2) - 2);
 
             offset = lpitch - _mSrc_width;
 

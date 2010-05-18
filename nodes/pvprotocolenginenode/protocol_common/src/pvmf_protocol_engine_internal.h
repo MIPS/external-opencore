@@ -66,7 +66,6 @@
 #define LOGINFO(m) LOGINFOMED(m)
 #define LOGINFODATAPATH(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iDataPathLogger,PVLOGMSG_INFO,m);
 #define LOGERRORDATAPATH(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iDataPathLogger,PVLOGMSG_ERR,m);
-#define LOGINFOCLOCK(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iClockLogger,PVLOGMSG_INFO,m);
 #define PVMF_PROTOCOL_ENGINE_LOGBIN(iPortLogger, m) PVLOGGER_LOGBIN(PVLOGMSG_INST_LLDBG, iPortLogger, PVLOGMSG_ERR, m);
 #define PVMF_PROTOCOL_ENGINE_LOGINFODATAPATH(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iDataPathLogger,PVLOGMSG_INFO,m);
 #define PVMF_PROTOCOL_ENGINE_LOGERRINFODATAPATH(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iDataPathErrLogger,PVLOGMSG_INFO,m);
@@ -763,7 +762,6 @@ class HttpParsingBasicObject
         {
             iLogger = NULL;
             iDataPathLogger = NULL;
-            iClockLogger = NULL;
             OSCL_DELETE(iParser);
         }
 
@@ -777,7 +775,6 @@ class HttpParsingBasicObject
             iLogger = PVLogger::GetLoggerObject("PVMFProtocolEngineNode");
             iDataPathLogger = PVLogger::GetLoggerObject("protocolenginenode.protocolengine");
             iDataPathErrLogger = PVLogger::GetLoggerObject("datapath.sourcenode.protocolenginenode");
-            iClockLogger = PVLogger::GetLoggerObject("clock");
             iTotalHttpStreamingSize = 0;
             reset();
         }
@@ -823,7 +820,6 @@ class HttpParsingBasicObject
         PVLogger* iLogger;
         PVLogger* iDataPathLogger;
         PVLogger* iDataPathErrLogger;
-        PVLogger* iClockLogger;
 
         uint32 iTotalHttpStreamingSize;
 };

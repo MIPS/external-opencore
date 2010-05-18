@@ -282,6 +282,14 @@ PVMFStatus PVMFAACFFParserNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, O
         return PVMFErrArgument;
     }
 
+    if (iCPMMetaDataExtensionInterface != NULL)
+    {
+        PVMFStatus status = iCPMMetaDataExtensionInterface->ReleaseNodeMetadataValues(aValueList, start, end);
+        if (status != PVMFSuccess)
+        {
+            return status;
+        }
+    }
     end = OSCL_MIN(aValueList.size(), iAACParserNodeMetadataValueCount);
 
     for (uint32 i = start; i < end; i++)

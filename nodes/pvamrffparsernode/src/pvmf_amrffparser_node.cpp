@@ -79,7 +79,6 @@ PVMFAMRFFParserNode::PVMFAMRFFParserNode(int32 aPriority) :
     iRequestedUsage.key        = NULL;
     iApprovedUsage.key         = NULL;
     iAuthorizationDataKvp.key  = NULL;
-    iCPMMetaDataExtensionInterface = NULL;
     iCPMGetMetaDataValuesCmdId     = 0;
     iAMRParserNodeMetadataValueCount = 0;
 
@@ -1590,6 +1589,14 @@ PVMFStatus PVMFAMRFFParserNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, O
         return PVMFErrArgument;
     }
 
+    if ((iCPMMetaDataExtensionInterface != NULL))
+    {
+        PVMFStatus status = iCPMMetaDataExtensionInterface->ReleaseNodeMetadataValues(aValueList, start, end);
+        if (status != PVMFSuccess)
+        {
+            return status;
+        }
+    }
     end = OSCL_MIN(aValueList.size(), iAMRParserNodeMetadataValueCount);
 
     for (uint32 i = start; i < end; i++)

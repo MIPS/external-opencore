@@ -1056,7 +1056,8 @@ bool PVMFMP3FFParserNode::HandleTrackState()
             if (iTrack.iSendBOS)
             {
                 // Send BOS downstream on all available tracks
-                uint32 timestamp = iTrack.timestamp_offset;
+                uint32 timestamp = iTrack.iClockConverter->get_converted_ts(COMMON_PLAYBACK_CLOCK_TIMESCALE);
+                timestamp += iTrack.timestamp_offset;
                 timestamp += iCurrSampleDuration;
 
                 if (!SendBeginOfMediaStreamCommand(iTrack.iPort, iStreamID, timestamp, iTrack.iSeqNum++, iPlaybackClipIndex))
@@ -1092,7 +1093,6 @@ bool PVMFMP3FFParserNode::HandleTrackState()
             break;
         case PVMP3FFNodeTrackPortInfo::TRACKSTATE_SEND_ENDOFTRACK:
         {
-            uint32 timestamp = 0;
             if (iPlaybackClipIndex < (int32)(iNumClipsInPlayList - 1))
             {
                 iInitNextClip = true;
@@ -1108,12 +1108,13 @@ bool PVMFMP3FFParserNode::HandleTrackState()
                 }
             }
 
+
+            uint32 timestamp = iTrack.iClockConverter->get_converted_ts(COMMON_PLAYBACK_CLOCK_TIMESCALE);
+            timestamp += iTrack.timestamp_offset;
+            timestamp += iCurrSampleDuration;
             // Check if node needs to send BOS
             if (iTrack.iSendBOS)
             {
-                timestamp = iTrack.timestamp_offset;
-                timestamp += iCurrSampleDuration;
-
                 // Send BOS downstream on all available tracks
                 if (!SendBeginOfMediaStreamCommand(iTrack.iPort, iStreamID, timestamp, iTrack.iSeqNum++, iPlaybackClipIndex))
                 {
@@ -1123,8 +1124,6 @@ bool PVMFMP3FFParserNode::HandleTrackState()
                 iTrack.iSendBOS = false;
             }
 
-            timestamp = iTrack.timestamp_offset;
-            timestamp += iCurrSampleDuration;
             if (SendEndOfTrackCommand(iTrack.iPort, iStreamID, timestamp, iTrack.iSeqNum++, iPlaybackClipIndex))
             {
                 // EOS command sent successfully
@@ -2338,6 +2337,15 @@ PVMFStatus PVMFMP3FFParserNode::ReleaseNodeMetadataValues(Oscl_Vector<PvmiKvp, O
         return PVMFFailure;
     }
 
+    if (iCPMContainer.iCPMMetaDataExtensionInterface != NULL)
+    {
+        PVMFStatus status = iCPMContainer.iCPMMetaDataExtensionInterface->ReleaseNodeMetadataValues(aValueList, start, end);
+        if (status != PVMFSuccess)
+        {
+            return status;
+        }
+    }
+
     end = OSCL_MIN(aValueList.size(), iMP3ParserNodeMetadataValueCount);
 
     if (start > end || aValueList.size() == 0)
@@ -2670,7 +2678,7 @@ PVMFStatus PVMFMP3FFParserNode::SetPlaybackStartupTime(uint32& aTargetNPT,
     }
     // get the clock offset
     iTrack.iClockConverter->update_clock(parserObj->GetTimestampForCurrentSample());
-    iTrack.timestamp_offset = iTrack.iClockConverter->get_converted_ts(COMMON_PLAYBACK_CLOCK_TIMESCALE);
+    iTrack.timestamp_offset += iTrack.iClockConverter->get_converted_ts(COMMON_PLAYBACK_CLOCK_TIMESCALE);
     // Set the timestamp
     *aActualMediaDataTS = iTrack.timestamp_offset;
     // See if targetNPT is greater or equal to clip duration
@@ -4062,6 +4070,8 @@ bool PVMFMP3FFParserNode::SendBeginOfClipCommand(PVMP3FFNodeTrackPortInfo& aTrac
     sharedMediaCmdPtr->setSeqNum(aTrackPortInfo.iSeqNum++);
     // set stream id
     sharedMediaCmdPtr->setStreamID(iStreamID);
+    // Set current playback clip id
+    sharedMediaCmdPtr->setClipID(iPlaybackClipIndex);
 
     // set format specific info
     sharedMediaCmdPtr->setFormatSpecificInfo(iClipInfoList[iPlaybackClipIndex].iClipInfo.iBOCFormatSpecificInfo);
@@ -4111,8 +4121,9 @@ bool PVMFMP3FFParserNode::SendEndOfClipCommand(PVMP3FFNodeTrackPortInfo& aTrackP
     sharedMediaCmdPtr->setSeqNum(aTrackPortInfo.iSeqNum++);
     // set stream id
     sharedMediaCmdPtr->setStreamID(iStreamID);
+    // Set current playback clip id
+    sharedMediaCmdPtr->setClipID(iPlaybackClipIndex);
     // set format specific info
-
     struct EOCInfo* fragPtr = (struct EOCInfo*)iClipInfoList[iPlaybackClipIndex].iClipInfo.iEOCFormatSpecificInfo.getMemFragPtr();
     fragPtr->framesToFollow = iClipInfoList[iPlaybackClipIndex].iClipInfo.iFramesToFollowEOC;
 

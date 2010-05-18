@@ -1334,6 +1334,16 @@ OSCL_EXPORT_REF PVMFStatus PVMFSMFSPBaseNode::ReleaseNodeMetadataValuesBase(Oscl
         return PVMFErrArgument;
     }
 
+    if ((iCPMMetaDataExtensionInterface != NULL) &&
+            (iSessionSourceInfo->iDRMProtected  == true))
+    {
+        PVMFStatus status = iCPMMetaDataExtensionInterface->ReleaseNodeMetadataValues(aValueList, aStartingValueIndex, aEndValueIndex);
+        if (status != PVMFSuccess)
+        {
+            return status;
+        }
+    }
+
     //Only CPM related metadata is retrived. Then this one should be 0.
     if (iPVMFStreamingManagerNodeMetadataValueCount == 0) return PVMFSuccess;
 
