@@ -1664,14 +1664,26 @@ int32 MP3Parser::GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &e
     // reset the padding buffer
     if (iFirstFrameAfterReposition)
     {
-        // reset first frame flag
-        iFirstFrameAfterReposition = false;
         if (iPaddingFrameBuffer)
         {
             // clear previous buffers, if any
             OSCL_ARRAY_DELETE(iPaddingFrameBuffer);
             iPaddingFrameBuffer = NULL;
         }
+
+        for (int index = 0; index < iPaddingFrames; index++)
+        {
+            iGau.info[index].len = 0;
+            iGau.info[index].ts = 0;
+            iGau.info[index].ts_delta = 0;
+            iGau.buf.buf_states[0] = NULL;
+            iGau.buf.fragments[0].ptr = NULL;
+            iGau.buf.fragments[0].len = 0;
+            iGau.frameNum = 0;
+        }
+
+        // reset first frame flag
+        iFirstFrameAfterReposition = false;
     }
 
     // there might be frames that were already read to prevent reading beyond
