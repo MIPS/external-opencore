@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -409,6 +409,12 @@ Int hufffac(
     {
         nsfb_win  = pFrameInfo->sfb_per_win[group_end];
         group_end = *pGroup++;  /* index of 1st window in next group */
+
+        if (group_end == 0)
+        {
+            break;      /*  error condition */
+        }
+
 
         /* decode scf in first window of each group */
 

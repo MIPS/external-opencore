@@ -305,14 +305,17 @@ class PVMFNodeCommand: public PVMFNodeCommandBase
                        uint32& aFirstSeqNumAfterChange, OsclAny* aContext)
         {
             PVMFNodeCommandBase::Construct(s, cmd, aContext);
-            iParam1 = (OsclAny*) & aNPTInMS;
-            iParam2 = (OsclAny*) & aFirstSeqNumAfterChange;
+            iParam1 = (OsclAny*) Oscl_Int64_Utils::get_int64_upper32(aNPTInMS);
+            iParam2 = (OsclAny*) Oscl_Int64_Utils::get_int64_lower32(aNPTInMS);
+            iParam3 = (OsclAny*) & aFirstSeqNumAfterChange;
         }
 
         void Parse(uint64& aNPTInMS, uint32*& aFirstSeqNumAfterChange)
         {
-            aNPTInMS = *((uint64*)iParam1);
-            aFirstSeqNumAfterChange = (uint32*)iParam2;
+            uint64 ts64 = 0;
+            Oscl_Int64_Utils::set_uint64(ts64, (uint32)iParam1, (uint32)iParam2);
+            aNPTInMS = ts64;
+            aFirstSeqNumAfterChange = (uint32*)iParam3;
         }
 
         // constructor and parser for data stream request, especially reposition request

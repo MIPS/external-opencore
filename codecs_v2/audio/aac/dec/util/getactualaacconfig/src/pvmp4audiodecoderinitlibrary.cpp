@@ -227,6 +227,11 @@ OSCL_EXPORT_REF Int PVMP4AudioDecoderInitLibrary(
     pVars->current_program = -1;
     pVars->mc_info.sampling_rate_idx = Fs_44; /* Fs_44 = 4, 44.1kHz */
 
+    pVars->mc_info.ch_info[0].tag = 0;
+
+    pVars->parameters_acquired = false;
+
+
     /*
      * In the future, the frame length will change with MP4 file format.
      * Presently this variable is used to simply the unit test for
@@ -275,6 +280,7 @@ OSCL_EXPORT_REF Int PVMP4AudioDecoderInitLibrary(
      */
 
     pExt->inputBufferUsedLength = 0;
+
 
     return (MP4AUDEC_SUCCESS);
 

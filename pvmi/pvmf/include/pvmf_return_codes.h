@@ -269,37 +269,44 @@ Error due to device currently not activated for drm-protected content playback
 */
 const PVMFStatus PVMFErrDrmDeviceNotActivated = (-52);
 /*
+The metering certificate was not found in the store.
+*/
+const PVMFStatus PVMFErrDrmMeterCertNotFound = (-53);
+/*
 Service specific server error.
 */
-const PVMFStatus PVMFErrDrmServerServiceSpecific = (-53);
+const PVMFStatus PVMFErrDrmServerServiceSpecific = (-54);
 /*
 An internal server error occurred.
 */
-const PVMFStatus PVMFErrDrmServerInternalError = (-54);
+const PVMFStatus PVMFErrDrmServerInternalError = (-55);
 /*
 The device limit for the domain has been reached.
 */
-const PVMFStatus PVMFErrDrmServerDeviceLimitReached = (-55);
+const PVMFStatus PVMFErrDrmServerDeviceLimitReached = (-56);
 /*
 The metering identifier is unknown.
 */
-const PVMFStatus PVMFErrDrmServerUnknownMeteringID = (-56);
+const PVMFStatus PVMFErrDrmServerUnknownMeteringID = (-57);
 /*
 The computer limit for the domain has been reached.
 */
-const PVMFStatus PVMFErrDrmServerComputerLimitReached = (-57);
+const PVMFStatus PVMFErrDrmServerComputerLimitReached = (-58);
 /*
 The protocol version specified was not supported by the server.
 */
-const PVMFStatus PVMFErrDrmServerProtocolVersionMismatch = (-58);
+const PVMFStatus PVMFErrDrmServerProtocolVersionMismatch = (-59);
 /*
 The account identifier is unknown.
 */
-const PVMFStatus PVMFErrDrmServerUnknownAccountID = (-59);
+const PVMFStatus PVMFErrDrmServerUnknownAccountID = (-60);
 /*
-The account identifier is unknown.
+Server redirected request to different server due to protocol mismatch.
 */
-const PVMFStatus PVMFErrDrmServerProtocolRedirect = (-60);
+const PVMFStatus PVMFErrDrmServerProtocolRedirect = (-61);
+/*
+*/
+
 /*
 ... this range reserved for future DRM-related errors
 */

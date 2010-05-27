@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -546,12 +546,17 @@ Int get_audio_specific_config(tDec_Int_File   * const pVars)
 
 #endif
 
-
-
-
         }
 
     }  /*  if ( extensionAudioObjectType != MP4AUDIO_SBR ) */
+
+
+
+    if (channel_config > 2)
+    {
+        pVars->multichannel_numChannels = channel_config << 1; /* to go along with own multichannel format */
+        pVars->multichannel_detected = true;
+    }
 
     /*
      * The following object types are not supported in this release,

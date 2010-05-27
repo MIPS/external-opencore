@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,22 @@
 #ifndef COLORCONV_CONFIG_H_INCLUDED
 #include " colorconv_config.h"
 #endif
+
+
+#if UY0VY1
+#define RSHIFTCB 0
+#define RSHIFTCR 16
+#endif
+#if Y0VY1U
+#define RSHIFTCB 24
+#define RSHIFTCR 8
+#endif
+#if Y1VY0U
+#define RSHIFTCB 24
+#define RSHIFTCR 8
+#endif
+/*Macro Function for Y-Cb-Cr pixel extraction in YUV422-YUV420 conversion & Scaling*/
+#define PIXEL_EXTRACT(comp_val,shift) (uint8)((comp_val >> shift) & 0xFF)
 
 class CCYUV422toYUV420 : public ColorConvertBase
 {
@@ -117,13 +133,44 @@ class CCYUV422toYUV420 : public ColorConvertBase
         *                                         */
 
         virtual int32  SetYuvFullRange(bool range);
-
+        /**
+        *   @brief: This function calculates the number of repetitions for each input pixel to output
+        *   pixel such that the total output size is as specified For Chroma.
+        *   this function internally calls stretchline function of base class
+        */
+        int32 Stretchline_Chroma();
     private:
         CCYUV422toYUV420();
-
-        int32 _mSrc_width, _mSrc_height, _mSrc_pitch, _mDst_width, _mDst_height, _mDst_pitch;
-        int32 _mRotation;
         int32 _mDst_mheight;
+
+        /*Buffers for Row-Col Stretch Line Chroma*/
+        uint8 *_mRowPix_chroma, *_mColPix_chroma;
+
+        /**
+        *    @brief: This function does YUV422 to YUV420 conversion without Scaling and also does
+        *     rotation with 90/180/270/Flip/Flip+180 degree rotation.
+        */
+        int32 ccYUV_SimpleRotation_Conversion(uint8 *src, uint8 *dst);
+
+        /**
+        *    @brief: This function calls C-Functions for YUV422 to YUV420 conversion with Up-Down Scaling along with
+              No rotaion                 0
+              180degree rotaion          2
+              Filp                       4
+              Flip+180degree rotation    6
+        */
+        int32 cc420ZoomIn(uint8 *src, uint8 *dst);
+
+
+        /**
+        *    @brief: This function calls C-Functions for YUV422 to YUV420 conversion with Up-DownScaling
+              along with
+              90degree rotaion    1
+              270 degree rotaion  3
+        */
+        int32 cc420ZoomRotate(uint8 *src, uint8 *dst);
+        int32(CCYUV422toYUV420::*mPtrYUV422to420)(uint8 *src, uint8 *dst);
+
 
 };
 

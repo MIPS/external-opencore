@@ -4630,25 +4630,6 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
             uint32 contentSize = (uint32)(eventData);
             iNumBufferingComplete++;
             fprintf(file, "   PVMFInfoBufferingComplete (contentSize=%d), iNumBufferingComplete=%d\n", contentSize, iNumBufferingComplete);
-            // we should only get one of these.
-            // if the download speed is very fast, it is quite possible that buffering complete is recieved again
-            // hence the following test should be seen from this perspective as well.
-            if (iVerifyNumBufferingCompleteEvent)
-            {
-                iEndTick = OsclTickCount::TickCount();
-                double t1 = OsclTickCount::TicksToMsec(iStartTick);
-                double t2 = OsclTickCount::TicksToMsec(iEndTick);
-                if (((t2 - t1) / 1000) > 20)
-                {
-                    if (iNumBufferingComplete == 2 && !iEOSStopPlay && iLoopReq == 0)
-                        PVPATB_TEST_IS_TRUE(false);
-                }
-            }
-            else
-            {
-                if (iNumBufferingComplete == 2 && !iEOSStopPlay && iLoopReq == 0)
-                    PVPATB_TEST_IS_TRUE(false);
-            }
 
             if (iNumBufferingComplete == 1)
             {

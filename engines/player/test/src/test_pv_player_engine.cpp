@@ -3526,7 +3526,6 @@ void pvplayer_engine_test::test()
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableTwice();
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->useLongClip();
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("MP4 Progressive Playback Start Pause Seek Resume Twice");
-                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->SetVerifyNumBufferingCompleteEvent();
                 break;
 
             case ProgPlaybackMP4SeekStartTest:
@@ -3592,7 +3591,6 @@ void pvplayer_engine_test::test()
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableHeadRequest();
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->useLongClip();
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("MP4 Progressive Playback Start Pause Resume Seek Stop");
-                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->SetVerifyNumBufferingCompleteEvent();
                 break;
 
 
@@ -4048,11 +4046,23 @@ void pvplayer_engine_test::test()
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 
+            case DLA_CancelJoinDomain_PRUtility_PlayReadyCPMTest:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
             case DLA_LeaveDomain_PlayReadyCPMTest:
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 
+            case DLA_CancelLeaveDomain_PlayReadyCPMTest:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
             case DLA_MeteringByMID_PlayReadyCPMTest:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
+            case DLA_CancelReportMeteringData_PlayReadyCPMTest:
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 
@@ -4076,6 +4086,10 @@ void pvplayer_engine_test::test()
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 
+            case DLA_CancelSyncLicense_PlayReadyCPMTest:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
             case DLA_LicenseUpdateExpired_PlayReadyCPMTest:
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
@@ -4094,6 +4108,14 @@ void pvplayer_engine_test::test()
                 break;
 
             case DLA_CancelJoinDomain_PlayReadyCPMTest:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
+            case DLA_CancelFirstAsyncCommand_PlayReadyCPMTest:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
+            case DLA_CancelAll_PlayReadyCPMTest:
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 
@@ -4122,6 +4144,10 @@ void pvplayer_engine_test::test()
                 break;
 
             case WebInitiatorLicAcqDomainBound_PlayReadyCPMTest:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
+            case WebInitiatorCancelAcquireLicenseByHeader_PlayReadyCPMTest:
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 

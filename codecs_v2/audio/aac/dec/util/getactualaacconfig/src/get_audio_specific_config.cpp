@@ -546,12 +546,17 @@ Int get_audio_specific_config(tDec_Int_File   * const pVars)
 
 #endif
 
-
-
-
         }
 
     }  /*  if ( extensionAudioObjectType != MP4AUDIO_SBR ) */
+
+
+
+    if (channel_config > 2)
+    {
+        pVars->multichannel_numChannels = channel_config << 1; /* to go along with own multichannel format */
+        pVars->multichannel_detected = true;
+    }
 
     /*
      * The following object types are not supported in this release,

@@ -2344,26 +2344,33 @@ class pvplayer_engine_test
             //Misc utility tests
             DLA_JoinDomain_PlayReadyCPMTest = 1500,
             DLA_LeaveDomain_PlayReadyCPMTest,//1501
-            DLA_DeleteLicense_PlayReadyCPMTest_v2_Content,//1502
-            DLA_DeleteLicense_PlayReadyCPMTest_v4_Content,//1503
-            DLA_MeteringByMID_PlayReadyCPMTest,//1504
-            DLA_MeteringAll_PlayReadyCPMTest,//1505
-            DLA_Metering_DeleteCert_PlayReadyCPMTest,//1506
-            DLA_Metering_InvalidateCert_PlayReadyCPMTest,//1507
-            DLA_MeteringByMeterURL_PlayReadyCPMTest,//1508
-            DLA_LicenseUpdateAll_PlayReadyCPMTest,//1509
-            DLA_LicenseUpdateExpired_PlayReadyCPMTest,//1510
-            NonSilentLicAcquire_LUIUrlRetrieval_PlayReadyCPMTest,//1511
-            LUIUrlParsing_PlayReadyCPMTest, //1512
-            FindKID_In_Header_PlayReadyCPMTest,//1513
-            ContentHeaderRetrieval_PlayReadyCPMTest,//1514
+            DLA_CancelJoinDomain_PRUtility_PlayReadyCPMTest,//1502
+            DLA_CancelLeaveDomain_PlayReadyCPMTest,//1503
+            DLA_DeleteLicense_PlayReadyCPMTest_v2_Content,//1504
+            DLA_DeleteLicense_PlayReadyCPMTest_v4_Content,//1505
+            DLA_MeteringByMID_PlayReadyCPMTest,//1506
+            DLA_CancelReportMeteringData_PlayReadyCPMTest,//1507
+            DLA_MeteringAll_PlayReadyCPMTest,//1508
+            DLA_Metering_DeleteCert_PlayReadyCPMTest,//1509
+            DLA_Metering_InvalidateCert_PlayReadyCPMTest,//1510
+            DLA_MeteringByMeterURL_PlayReadyCPMTest,//1511
+            DLA_LicenseUpdateAll_PlayReadyCPMTest,//1512
+            DLA_CancelSyncLicense_PlayReadyCPMTest,//1513
+            DLA_LicenseUpdateExpired_PlayReadyCPMTest,//1514
+            DLA_CancelFirstAsyncCommand_PlayReadyCPMTest,//1515
+            DLA_CancelAll_PlayReadyCPMTest,//1516
+            NonSilentLicAcquire_LUIUrlRetrieval_PlayReadyCPMTest,//1517
+            LUIUrlParsing_PlayReadyCPMTest, //1518
+            FindKID_In_Header_PlayReadyCPMTest,//1519
+            ContentHeaderRetrieval_PlayReadyCPMTest,//1520
 
             //Utility Web-initiator tests
-            WebInitiatorParsing_PlayReadyCPMTest, //1515
-            WebInitiatorLicAcq_PlayReadyCPMTest, //1516
-            WebInitiatorLicAcqDomainBound_PlayReadyCPMTest, //1517
-            WebInitiatorMetering_PlayReadyCPMTest, //1518
-            WebInitiatorJoinAndLeaveDomain_PlayReadyCPMTest, //1519
+            WebInitiatorParsing_PlayReadyCPMTest, //1521
+            WebInitiatorLicAcq_PlayReadyCPMTest, //1522
+            WebInitiatorLicAcqDomainBound_PlayReadyCPMTest, //1523
+            WebInitiatorCancelAcquireLicenseByHeader_PlayReadyCPMTest,//1524
+            WebInitiatorMetering_PlayReadyCPMTest, //1525
+            WebInitiatorJoinAndLeaveDomain_PlayReadyCPMTest, //1526
 
             //RESERVED FOR FUTURE PLAYREADY CPM TESTS.
             LastPlayReadyCPMTest = 1599,//placeholder

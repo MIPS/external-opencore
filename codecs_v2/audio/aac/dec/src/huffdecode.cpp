@@ -363,6 +363,10 @@ Int huffdecode(
                  *  Acquire tags for single or dual mono channel only during first frame
                  *  pMcInfo->ch_info[0].tag was init to 0 and used here as index for dual-mono channels
                  */
+                if (pMcInfo->ch_info[0].tag >> 1)
+                {
+                    status = 1; /* ERROR  */
+                }
 
                 pVars->prog_config.front.ele_tag[ pMcInfo->ch_info[0].tag] = tag;
                 pMcInfo->ch_info[0].tag ^= 1;  /* set index to next dual-mono, if exist */
@@ -375,7 +379,7 @@ Int huffdecode(
                 pMcInfo->nch = (pMcInfo->nch > num_channels) ? pMcInfo->nch : num_channels;
                 pVars->prog_config.front.num_ele = pMcInfo->nch;
 
-                if (pMcInfo->ch_info[0].tag == 2)   /* limit to only 2 channel */
+                if (pMcInfo->ch_info[0].tag == 0)   /* limit to only 2 channel, tag is set to zero on 2nd pass */
                 {
                     pVars->current_program = 0;  /* lock tag acquisition */
                 }

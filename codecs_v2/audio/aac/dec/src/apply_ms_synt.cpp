@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -339,6 +339,11 @@ void apply_ms_synt(
          */
 
         partition = *(pGroup++);
+
+        if (partition == 0)
+        {
+            break;      /*  error condition */
+        }
 
         band_start = 0;
 
