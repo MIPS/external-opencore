@@ -1342,10 +1342,13 @@ bool PVMFMP3FFParserNode::RetrieveTrackData(PVMP3FFNodeTrackPortInfo& aTrackPort
     gau.buf.fragments[0].len = refCtrMemFragOut.getCapacity();
     gau.frameNum = 0;
 
+    int32 eocFrameIndex = -1;
+    uint32 numPaddingFrames = 0;
+    uint32 framesToFollowEOC = 0;
     // Mp3FF ErrorCode
     MP3ErrorType error = MP3_SUCCESS;
     // Grab data from the mp3 ff parser library
-    int32 retval = iPlaybackParserObj->GetNextBundledAccessUnits(&numsamples, &gau, error);
+    int32 retval = iPlaybackParserObj->GetNextBundledAccessUnits(&numsamples, &gau, error, eocFrameIndex, numPaddingFrames);
 
     // Determine actual size of the retrieved data by summing each sample length in GAU
     // Check if the frame contains encoder delay or zero padding
@@ -1360,18 +1363,28 @@ bool PVMFMP3FFParserNode::RetrieveTrackData(PVMP3FFNodeTrackPortInfo& aTrackPort
         {
             iClipInfoList[iPlaybackClipIndex].iClipInfo.iHasBOCFrame = true;
         }
-        if ((gau.frameNum + index) == iClipInfoList[iPlaybackClipIndex].iClipInfo.iFirstFrameEOC)
+
+        if (eocFrameIndex >= 0 && eocFrameIndex == (int32) index)
         {
-            // we must calculate this based on the total number of frames since the padding may cross the GAU boundary
+            iClipInfoList[iPlaybackClipIndex].iClipInfo.iFirstFrameEOC = gau.frameNum + eocFrameIndex;
             if (iClipInfoList[iPlaybackClipIndex].iClipInfo.iGaplessInfoAvailable)
             {
-                iClipInfoList[iPlaybackClipIndex].iClipInfo.iFramesToFollowEOC = iClipInfoList[iPlaybackClipIndex].iClipInfo.iGaplessMetadata.GetTotalFrames() - gau.frameNum + 1;
+                // number of frames read this cycle
+                framesToFollowEOC = numsamples;
+                // there could possibly be more frames following
+                if (MP3_SUCCESS == error)
+                {
+                    // account for more samples present
+                    framesToFollowEOC += numPaddingFrames;
+                }
             }
             else
             {
-                iClipInfoList[iPlaybackClipIndex].iClipInfo.iFramesToFollowEOC = iPlaybackParserObj->GetNumSampleEntries() - gau.frameNum + 1;
+                // gapless metadata is not available
+                framesToFollowEOC = iPlaybackParserObj->GetNumSampleEntries() - gau.frameNum + 1;
             }
 
+            iClipInfoList[iPlaybackClipIndex].iClipInfo.iFramesToFollowEOC = framesToFollowEOC;
             iClipInfoList[iPlaybackClipIndex].iClipInfo.iHasEOCFrame = true;
         }
     }

@@ -205,7 +205,7 @@ class IMpeg3File
         * @param pgau Frame information structure of type GAU
         * @returns Result of operation: 1=success; 0=fail
         */
-        OSCL_IMPORT_REF int32  GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &err);
+        OSCL_IMPORT_REF int32  GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &err, int32 &aEOCFrameIndex, uint32 &aNumPaddingFrames);
 
         /**
         * @brief Attempts to peek into the number of audio frames specified by n

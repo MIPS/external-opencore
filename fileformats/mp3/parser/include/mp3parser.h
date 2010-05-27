@@ -233,7 +233,7 @@ class MP3Parser
         * @param pgau Pointer to data read
         * @returns Number of bytes read
         */
-        int32   GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &err);
+        int32   GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &err, int32 &aEOCFrameIndex, uint32 &aNumPaddingFrames);
 
         /**
         * @brief Peeks into the next MP3 frames specified by n.
@@ -455,6 +455,7 @@ class MP3Parser
         uint32 iFileSizeFromExternalSource;
         uint32 iInitSearchFileSize;
         uint32 iMinBytesRequiredForInit;
+        bool iFirstFrameAfterReposition;
         bool iLocalFileSizeSet;
         PVFile * fp;
         MediaClockConverter iClockConverter;

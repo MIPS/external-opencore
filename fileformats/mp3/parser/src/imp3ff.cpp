@@ -345,11 +345,11 @@ OSCL_EXPORT_REF uint32 IMpeg3File::ResetPlayback(uint32 time)
     }
 }
 
-OSCL_EXPORT_REF int32 IMpeg3File::GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &err)
+OSCL_EXPORT_REF int32 IMpeg3File::GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &err, int32 &aEOCFrameIndex, uint32 &aNumPaddingFrames)
 {
     if (pMP3Parser != NULL)
     {
-        return pMP3Parser->GetNextBundledAccessUnits(n, pgau, err);
+        return pMP3Parser->GetNextBundledAccessUnits(n, pgau, err, aEOCFrameIndex, aNumPaddingFrames);
     }
     else
     {
