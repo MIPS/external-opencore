@@ -343,7 +343,6 @@ oma1_passthru_plugin_lib=m
 cpm_headers_lib=m
 pvoma1lockstream_lib=n
 pvplayreadyplugin_lib=n
-pvplayreadyutility_lib=n
 pvdivxdrmplugin_lib=n
 pvdtcpplugin_lib=n
 
@@ -443,6 +442,7 @@ pv2waysample_lib=m
 engines_common_headers_lib=m
 pvframemetadatautility_lib=m
 pvmetadata_engine_lib=m
+pvplayreadyutility_lib=n
 pvmp4eu_lib=n
 
 
