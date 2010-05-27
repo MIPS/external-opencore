@@ -3526,7 +3526,6 @@ void pvplayer_engine_test::test()
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableTwice();
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->useLongClip();
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("MP4 Progressive Playback Start Pause Seek Resume Twice");
-                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->SetVerifyNumBufferingCompleteEvent();
                 break;
 
             case ProgPlaybackMP4SeekStartTest:
@@ -3592,7 +3591,6 @@ void pvplayer_engine_test::test()
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enableHeadRequest();
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->useLongClip();
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("MP4 Progressive Playback Start Pause Resume Seek Stop");
-                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->SetVerifyNumBufferingCompleteEvent();
                 break;
 
 
