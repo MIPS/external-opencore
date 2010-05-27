@@ -402,6 +402,34 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
 
     pVars->inputStream.usedBits = initialUsedBits;
 
+    /*
+     *  Verified that vital parameters have not changed, after they were set
+     */
+    if (pVars->parameters_acquired)
+    {
+        Int32 temp = samp_rate_info[pVars->mc_info.sampling_rate_idx].samp_rate;
+
+#ifdef AAC_PLUS
+        temp <<= (pVars->mc_info.upsamplingFactor - 1);
+#endif
+
+        if (pExt->samplingRate != temp)
+        {
+            status = MP4AUDEC_INVALID_FRAME;
+        }
+
+
+        if ((pExt->extendedAudioObjectType != pVars->mc_info.ExtendedAudioObjectType) ||
+                (pExt->audioObjectType != pVars->mc_info.audioObjectType) ||
+                (pExt->encodedChannels != pVars->mc_info.nch))
+        {
+            status = MP4AUDEC_INVALID_FRAME;
+        }
+
+    }
+
+
+
     if (initialUsedBits > pVars->inputStream.availableBits)
     {
         status = MP4AUDEC_INVALID_FRAME;
@@ -1205,6 +1233,9 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
              * to set these values only during the second call
              * when they change.
              */
+
+            pVars->parameters_acquired = true;
+
             pExt->samplingRate =
                 samp_rate_info[pVars->mc_info.sampling_rate_idx].samp_rate;
 

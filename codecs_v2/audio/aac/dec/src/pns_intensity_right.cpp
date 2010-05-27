@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -390,7 +390,7 @@ void pns_intensity_right(
     Int     start_indx;
     Int     sfb;
 
-    Int     band_length;
+    Int     band_length = 0;
     Int     band_start;
     Int     band_stop;
     Int     coef_per_win;
@@ -452,6 +452,11 @@ void pns_intensity_right(
         pGroup[3] = 8
         -----------------------------------------------------------*/
         partition = *(pGroup++);
+
+        if (partition == 0)
+        {
+            break;      /*  error condition */
+        }
 
         band_start = 0;
 

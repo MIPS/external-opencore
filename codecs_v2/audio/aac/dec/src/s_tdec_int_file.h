@@ -99,6 +99,7 @@ extern "C"
         UInt32         bno;
         Int            status;  /* save the status */
 
+        bool           parameters_acquired;
         bool           aacPlusEnabled;
         bool           aacConfigUtilityEnabled;
 
