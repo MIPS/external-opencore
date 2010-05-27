@@ -4046,11 +4046,23 @@ void pvplayer_engine_test::test()
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 
+            case DLA_CancelJoinDomain_PRUtility_PlayReadyCPMTest:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
             case DLA_LeaveDomain_PlayReadyCPMTest:
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 
+            case DLA_CancelLeaveDomain_PlayReadyCPMTest:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
             case DLA_MeteringByMID_PlayReadyCPMTest:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
+            case DLA_CancelReportMeteringData_PlayReadyCPMTest:
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 
@@ -4074,6 +4086,10 @@ void pvplayer_engine_test::test()
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 
+            case DLA_CancelSyncLicense_PlayReadyCPMTest:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
             case DLA_LicenseUpdateExpired_PlayReadyCPMTest:
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
@@ -4092,6 +4108,14 @@ void pvplayer_engine_test::test()
                 break;
 
             case DLA_CancelJoinDomain_PlayReadyCPMTest:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
+            case DLA_CancelFirstAsyncCommand_PlayReadyCPMTest:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
+            case DLA_CancelAll_PlayReadyCPMTest:
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 
@@ -4120,6 +4144,10 @@ void pvplayer_engine_test::test()
                 break;
 
             case WebInitiatorLicAcqDomainBound_PlayReadyCPMTest:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
+            case WebInitiatorCancelAcquireLicenseByHeader_PlayReadyCPMTest:
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 
