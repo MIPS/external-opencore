@@ -808,8 +808,8 @@ void PVMFMP3FFParserNode::Run()
             // complete init command
             CompleteInit(cmdStatus);
 
-            iPlaybackClipIndex = 0;
-            iPlaybackParserObj = parserObj;
+            iPlaybackClipIndex = iClipIndexForMetadata = 0;
+            iPlaybackParserObj = iMetadataParserObj = parserObj;
         }
         else if (PVMFFailure == cmdStatus)
         {
