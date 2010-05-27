@@ -639,7 +639,8 @@ PVMFStatus PVMFRecognizerRegistryImpl::RunRecognitionPass(PVMFRecognizerResult& 
                         PvmiDataStreamStatus status =
                             iDataStream->QueryReadCapacity(iDataStreamSessionID, capacity);
                         uint32 totalSize = iDataStream->GetContentLength();
-                        if ((status == PVDS_END_OF_STREAM) || (capacity == totalSize))
+                        if ((status == PVDS_END_OF_STREAM) ||
+                                ((capacity == totalSize) && ((*it)->iMinSizeRequiredForRecognition > totalSize)))
                         {
                             //we pretty much have the complete file and if a recognizer still
                             //cannot make up its mind, then stop using it.
