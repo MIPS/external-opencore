@@ -1416,6 +1416,7 @@ bool PVMFOMXBaseDecNode::CheckComponentCapabilities(PVMFFormatType* aFormat, OMX
         iOMXComponentUsesInterleaved4BNALSizes = (OMX_TRUE == Cap_flags.iOMXComponentUsesInterleaved4BNALSizes) ? true : false;
     }
 
+
     // do some sanity checking
 
     if ((*aFormat != PVMF_MIME_H264_VIDEO) && (*aFormat != PVMF_MIME_H264_VIDEO_MP4) && (*aFormat != PVMF_MIME_H264_VIDEO_RAW))

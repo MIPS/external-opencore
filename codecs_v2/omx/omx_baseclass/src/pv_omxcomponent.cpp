@@ -4777,6 +4777,7 @@ OSCL_EXPORT_REF OMX_ERRORTYPE OmxComponentVideo::SetParameter(
         }
         break;
 
+
         default:
         {
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_NOTICE, (0, "OmxComponentVideo : SetParameter error Unsupported index"));

@@ -1287,6 +1287,7 @@ OMX_ERRORTYPE OpenmaxAvcAO::ComponentInit()
     }
     iIsInit = OMX_TRUE;
 
+
     //avc lib init
     if (!iCodecReady)
     {

@@ -27,6 +27,7 @@ struct PVMFOMXBaseDecNodeConfig
     bool iKeyFrameOnlyMode;
     uint32 iSkipNUntilKeyFrame;
 
+
     PVMFOMXBaseDecNodeConfig()
     {
         iPostProcessingEnable = false;
@@ -35,6 +36,7 @@ struct PVMFOMXBaseDecNodeConfig
         iMimeType = PVMF_MIME_FORMAT_UNKNOWN;
         iKeyFrameOnlyMode = false;
         iSkipNUntilKeyFrame = 0;
+
     };
 };
 
