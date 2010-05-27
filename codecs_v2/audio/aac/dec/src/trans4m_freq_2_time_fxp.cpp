@@ -459,10 +459,10 @@ void trans4m_freq_2_time_fxp_1(
                     pOverlap_and_Add_Buffer_1 = Time_data;
 
                     {
+                        const Int16 *pLong_Window_1 = &Long_Window_fxp[wnd_shape_prev_bk][0];
                         const Int16 *pLong_Window_2 = &Long_Window_fxp[wnd_shape_this_bk][LONG_WINDOW_m_1];
 
                         Int32 * pFreq2T = (Int32 *)pFreqInfo;
-                        Int32 * win = (Int32 *) & Long_Window_fxp[wnd_shape_prev_bk][0];
                         Int shift = exp + 15 - SCALING;
 
 
@@ -474,17 +474,16 @@ void trans4m_freq_2_time_fxp_1(
                             Int16 win1, win2;
                             Int32  temp2, test2;
 
-                            Int32  winx;
-
                             temp2 = *(pFreq2T++);
-                            winx = *(win++);
+                            win1  = *(pLong_Window_1++);
+                            win2  = *(pLong_Window_1++);
 
-                            test  = *(pOverlap_and_Add_Buffer_1++);
-                            test2 = *(pOverlap_and_Add_Buffer_1--);
-                            temp  =   fxp_mul_16_by_16bb(temp2, winx) >> shift;
-                            temp2 =   fxp_mul_16_by_16tt(temp2, winx) >> shift;
-                            limiter(*(pOutput_buffer++), (temp + test));
-                            limiter(*(pOutput_buffer++), (temp2 + test2));
+                            test  = *(pOverlap_and_Add_Buffer_1);
+                            test2 = *(pOverlap_and_Add_Buffer_1 + 1);
+                            temp  =   fxp_mul_16_by_16bb(temp2, win1);
+                            temp2 =   fxp_mul_16_by_16tb(temp2, win2);
+                            limiter(*(pOutput_buffer++), test  + (temp >> shift));
+                            limiter(*(pOutput_buffer++), test2 + (temp2 >> shift));
 
                             temp2 = *(pFreq2T_2++);
 
@@ -1464,32 +1463,32 @@ void trans4m_freq_2_time_fxp_2(
 
                     {
 
+                        const Int16 *pLong_Window_1 = &Long_Window_fxp[wnd_shape_prev_bk][0];
                         const Int16 *pLong_Window_2 = &Long_Window_fxp[wnd_shape_this_bk][LONG_WINDOW_m_1];
 
                         Int32 * pFreq2T   = (Int32 *)pFreqInfo;
                         Int32 * pFreq2T_2 = &pFreq2T[HALF_LONG_WINDOW];
-                        Int32 * win = (Int32 *) & Long_Window_fxp[wnd_shape_prev_bk][0];
 
                         Int shift = exp + 15 - SCALING;
+
 
                         for (i = HALF_LONG_WINDOW; i != 0; i--)
                         {
                             Int16 win1, win2;
                             Int32  temp2, test2;
 
-                            Int32  winx;
-
                             temp2 = *(pFreq2T++);
-                            winx = *(win++);
 
-                            test  = *(pOverlap_and_Add_Buffer_1++);
-                            test2 = *(pOverlap_and_Add_Buffer_1--);
-                            temp  =   fxp_mul_16_by_16bb(temp2, winx) >> shift;
-                            temp2 =   fxp_mul_16_by_16tt(temp2, winx) >> shift;
+                            test  = *(pOverlap_and_Add_Buffer_1);
+                            test2 = *(pOverlap_and_Add_Buffer_1 + 1);
 
-                            limiter(*(pInterleaved_output), (temp + test));
+                            win1  = *(pLong_Window_1++);
+                            win2  = *(pLong_Window_1++);
+                            temp  = fxp_mul_16_by_16bb(temp2, win1);
+                            temp2 = fxp_mul_16_by_16tb(temp2, win2);
 
-                            limiter(*(pInterleaved_output + 2), (temp2 + test2));
+                            limiter(*(pInterleaved_output), test  + (temp >> shift));
+                            limiter(*(pInterleaved_output + 2), test2 + (temp2 >> shift));
                             pInterleaved_output += 4;
 
                             temp2 = *(pFreq2T_2++);
@@ -1502,7 +1501,6 @@ void trans4m_freq_2_time_fxp_2(
                             *(pOverlap_and_Add_Buffer_1++) = temp;
                             *(pOverlap_and_Add_Buffer_1++) = test2;
                         }
-
                     }
 
                 }

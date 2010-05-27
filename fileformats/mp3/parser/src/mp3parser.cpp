@@ -2133,10 +2133,9 @@ uint32 MP3Parser::SeekPointFromTimestamp(uint32 &timestamp)
             fpc = 1.00f;
 
         pc = (uint32)(fpc * 100.00f);
-        fa = (OsclFloat)iXingHeader.TOC[pc];
 
-        if (pc > 99)
-            pc = 99;
+        pc = (pc > 99) ? 99 : pc;
+        fa = (OsclFloat)iXingHeader.TOC[pc];
 
         if (pc < 99)
             fb = (OsclFloat)iXingHeader.TOC[pc+1];
@@ -3468,4 +3467,3 @@ bool MP3Parser::GetGaplessMetadata(PVMFGaplessMetadata& aGaplessMetadata)
 
     return false;
 }
-
