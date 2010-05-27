@@ -464,20 +464,7 @@ PVMFStatus PVMFMP3FFParserNode::DoInit()
     if (iPlaybackClipIndex == -1)
     {
         // Instantiate the IMpeg3File object, this class represents the mp3ff library
-        dsFactory = iCPMContainer.iCPMContentAccessFactory;
-        if ((dsFactory == NULL) && (iDataStreamFactory != NULL))
-        {
-            if (GetClipFormatTypeAt(iPlaybackClipIndex) == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL && iSCSPFactory != NULL && iSCSP != NULL)
-            {
-
-                dsFactory = iSCSPFactory;
-                iSCSP->RequestMetadataUpdates(iDataStreamSessionID, *this, iMetadataBufSize, iMetadataBuf);
-            }
-            else
-            {
-                dsFactory = iDataStreamFactory;
-            }
-        }
+        dsFactory = GetDataStreamFactory();
     }
 
     if (iUseCPMPluginRegistry)
@@ -887,7 +874,7 @@ void PVMFMP3FFParserNode::PassDatastreamFactory(PVMFDataStreamFactory& aFactory,
         PVInterface* iFace = NULL;
         iDataStreamFactory = &aFactory;
 
-        if (GetClipFormatTypeAt(iPlaybackClipIndex) == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
+        if (GetClipFormatTypeAt(0) == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
         {
             iSCSPFactory = PVMF_BASE_NODE_NEW(PVMFShoutcastStreamParserFactory, (&aFactory, iMetadataInterval));
 
@@ -1933,14 +1920,6 @@ PVMFStatus PVMFMP3FFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
         PVMFFormatTypeDRMInfo aType)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_NOTICE, (0, "PVMFMP3FFParserNode::SetSourceInitializationData() In ClipIndex [%d] iPlaybackClipIndex %d", aClipIndex, iPlaybackClipIndex));
-    if (aType != PVMF_FORMAT_TYPE_CONNECT_UNPROTECTED)
-    {
-        iUseCPMPluginRegistry = true;
-    }
-    else
-    {
-        iUseCPMPluginRegistry = false;
-    }
 
     // updates cant be accepted for currently playing back clip
     if ((int32)aClipIndex == iPlaybackClipIndex)
@@ -1987,6 +1966,16 @@ PVMFStatus PVMFMP3FFParserNode::SetSourceInitializationData(OSCL_wString& aSourc
         // either information is recieved for the first time for zeroth index
         // of zeroth index is being updated again first same index is being updated
         CleanupFileSource();
+    }
+
+    // check for protected content here, after CleanupFileSource()
+    if (aType != PVMF_FORMAT_TYPE_CONNECT_UNPROTECTED)
+    {
+        iUseCPMPluginRegistry = true;
+    }
+    else
+    {
+        iUseCPMPluginRegistry = false;
     }
 
     if (aClipIndex == 0)
@@ -2979,7 +2968,7 @@ PVMFStatus PVMFCPMContainerMp3::IssueCommand(int32 aCmd)
                 iCPM = NULL;
 
                 //treat it as unprotected content.
-                PVMFStatus status = iContainer->InitNextValidClipInPlaylist();
+                PVMFStatus status = iContainer->InitNextValidClipInPlaylist(0, iContainer->GetDataStreamFactory());
                 return status;
             }
             else
@@ -3067,7 +3056,7 @@ PVMFStatus PVMFCPMContainerMp3::IssueCommand(int32 aCmd)
             else
             {
                 /* Unsupported format - use it as unprotected content */
-                status = iContainer->InitNextValidClipInPlaylist();
+                status = iContainer->InitNextValidClipInPlaylist(0, iContainer->GetDataStreamFactory());
             }
             return status;
         }
@@ -3091,7 +3080,7 @@ PVMFStatus PVMFCPMContainerMp3::IssueCommand(int32 aCmd)
                 {
                     return PVMFFailure;//unexpected, since ApproveUsage succeeded.
                 }
-                status = iContainer->InitNextValidClipInPlaylist();
+                status = iContainer->InitNextValidClipInPlaylist(0, iContainer->GetDataStreamFactory());
             }
             return status;
         }
@@ -3169,7 +3158,7 @@ OSCL_EXPORT_REF void PVMFCPMContainerMp3::CPMCommandCompleted(const PVMFCmdResp&
             {
                 //if CPM comes back as PVMFErrNotSupported then by pass rest of the CPM
                 //sequence. Fake success here so that node doesnt treat this as an error
-                status = iContainer->InitNextValidClipInPlaylist();
+                status = iContainer->InitNextValidClipInPlaylist(0, iContainer->GetDataStreamFactory());
                 if (status == PVMFPending)
                 {
                     return;
@@ -3734,10 +3723,6 @@ void PVMFMP3FFParserNode::MetadataUpdated(uint32 aMetadataSize)
     {
         iMetadataVector.erase(iMetadataVector.begin());
     }
-    if (eventMsg)
-    {
-        eventMsg->removeRef();
-    }
 }
 
 PVMFStatus PVMFMP3FFParserNode::ParseShoutcastMetadata(char* aMetadataBuf, uint32 aMetadataSize, Oscl_Vector<PvmiKvp, OsclMemAllocator>& aKvpVector)
@@ -3845,6 +3830,26 @@ PVMFLocalDataSource& PVMFMP3FFParserNode::GetCPMSourceDataAt(uint32 aClipIndex)
 {
     return iClipInfoList[aClipIndex].iClipInfo.iCPMSourceData;
 }
+
+PVMFDataStreamFactory* PVMFMP3FFParserNode::GetDataStreamFactory()
+{
+    PVMFDataStreamFactory* dsFactory = NULL;
+    dsFactory = iCPMContainer.iCPMContentAccessFactory;
+    if ((dsFactory == NULL) && (iDataStreamFactory != NULL))
+    {
+        if (GetClipFormatTypeAt(0) == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL && iSCSPFactory != NULL && iSCSP != NULL)
+        {
+            dsFactory = iSCSPFactory;
+            iSCSP->RequestMetadataUpdates(iDataStreamSessionID, *this, iMetadataBufSize, iMetadataBuf);
+        }
+        else
+        {
+            dsFactory = iDataStreamFactory;
+        }
+    }
+    return dsFactory;
+}
+
 
 PVMFStatus PVMFMP3FFParserNode::InitNextValidClipInPlaylist(int32 aSkipToTrack, PVMFDataStreamFactory* aDataStreamFactory)
 {

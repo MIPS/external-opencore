@@ -461,6 +461,7 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
         PVMFSourceContextData& GetSourceContextDataAt(uint32 aClipIndex);
         bool IsValidContextData(uint32 aClipIndex);
         PVMFLocalDataSource& GetCPMSourceDataAt(uint32 aClipIndex);
+        PVMFDataStreamFactory* GetDataStreamFactory();
 
     private:
         int32 AllocateDurationCalculator();
