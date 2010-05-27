@@ -1098,7 +1098,7 @@ uint32 TSC_324m::CheckAltCapSet(PS_AlternativeCapabilitySet pAltCapSet,
     return(false);
 }
 
-CPvtMediaCapability* TSC_324m::GetRemoteCodecCapability(FormatCapabilityInfo aFormatCapabilityInfo)
+OSCL_EXPORT_REF CPvtMediaCapability* TSC_324m::GetRemoteCodecCapability(FormatCapabilityInfo aFormatCapabilityInfo)
 {
     return iTSCcapability.GetRemoteCapability(PVMFFormatTypeToPVCodecType(aFormatCapabilityInfo.format));
 }
