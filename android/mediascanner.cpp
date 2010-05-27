@@ -850,7 +850,7 @@ static char* extractASFAlbumArt(int fd)
     struct stat asfbuf;
     char *data = NULL;
     sp<MediaMetadataRetriever> retriever = new MediaMetadataRetriever();
-    if ((retriever == NULL) && (0 != (fstat(fd,&asfbuf)))) {
+    if ((retriever == NULL) || (0 != fstat(fd,&asfbuf))) {
         return data;
     }
     retriever->setMode( 1 /*MediaMetadataRetriever.MODE_GET_METADATA_ONLY*/);
