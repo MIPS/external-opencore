@@ -6770,7 +6770,6 @@ void PVMFMP4FFParserNode::GetCPMContentType()
 
 bool PVMFMP4FFParserNode::GetCPMMetaDataExtensionInterface()
 {
-    iCPMSequenceInProgress = true;
     PVInterface* temp = NULL;
     bool retVal =
         iCPM->queryInterface(KPVMFMetadataExtensionUuid, temp);
