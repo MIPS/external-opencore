@@ -128,6 +128,10 @@ ifeq ($(run_$(TARGET)_SOURCE_DIR), )
 run_$(TARGET)_SOURCE_DIR := $(LOCAL_PATH)
 endif
 
+ifeq ($(PROGTYPE),gui_app)
+  POST_LDFLAGS += $(GUI_LINKER_FLAG)
+endif
+
 ifneq ($(DISABLE_MAKE_BUILD), 1)
 run_$(TARGET): $(REALTARGET)
 endif
