@@ -523,7 +523,7 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         bool iDoInBandReconfigStart_IdleReached;
         bool iDoInBandReconfigStart_ExeReached;
 
-        virtual void HandleInBandReconfig();
+        void HandleInBandReconfig();
 
         OSCL_IMPORT_REF void DropCurrentBufferUnderConstruction();
         OSCL_IMPORT_REF void SendIncompleteBufferUnderConstruction();
