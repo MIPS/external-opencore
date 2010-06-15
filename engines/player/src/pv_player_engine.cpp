@@ -3450,7 +3450,7 @@ PVMFStatus PVPlayerEngine::ConvertFromMillisec(uint32 aTimeMS, PVPPlaybackPositi
             // Query each active track for its data position
             // Return the max data position
             PVMFTimestamp ts = aTimeMS;
-            uint32 maxdatapos = 0;
+            TOsclFileOffset maxdatapos = 0;
             bool maxdataposvalid = false;
 
             // Go through each active track
@@ -3458,7 +3458,7 @@ PVMFStatus PVPlayerEngine::ConvertFromMillisec(uint32 aTimeMS, PVPPlaybackPositi
             {
                 if (iDatapathList[i].iDatapath)
                 {
-                    uint32 curdatapos = 0;
+                    TOsclFileOffset curdatapos = 0;
                     // Convert the time to data position
                     if (iSourceNodeTrackLevelInfoIF->GetDataPositionForTimestamp(*(iDatapathList[i].iTrackInfo), ts, curdatapos) != PVMFSuccess)
                     {

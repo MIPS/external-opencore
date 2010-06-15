@@ -378,7 +378,7 @@ class PVMFRecognizerRegistryImpl : public OsclTimerObject,
     private:
         PVMFSessionId iNextSessionId;
         PVMFCommandId iNextCommandId;
-        PVMFStatus GetRequestReadCapacityNotificationID(uint32 aMaxSize, uint32 aCapacity);
+        PVMFStatus GetRequestReadCapacityNotificationID(TOsclFileOffset aMaxSize, TOsclFileOffset aCapacity);
 
         // From OsclTimerObject
         void Run();
@@ -412,7 +412,7 @@ class PVMFRecognizerRegistryImpl : public OsclTimerObject,
         PvmiDataStreamSession iDataStreamSessionID;
         PvmiDataStreamCommandId iRequestReadCapacityNotificationID;
 
-        PVMFStatus GetMaxRequiredSizeForRecognition(uint32& aMaxSize);
+        PVMFStatus GetMaxRequiredSizeForRecognition(TOsclFileOffset& aMaxSize);
         PVMFStatus CheckForDataAvailability();
         PVMFStatus CreateDataStream();
         void DestroyDataStream();

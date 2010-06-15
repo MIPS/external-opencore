@@ -1061,7 +1061,7 @@ PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::QueryRandomAccessCapabilit
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
 PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::QueryReadCapacity(PvmiDataStreamSession sessionID,
-        uint32& capacity)
+        TOsclFileOffset& capacity)
 {
     OSCL_UNUSED_ARG(sessionID);
     if (iDataStreamReadCapacityObserver != NULL)
@@ -1091,7 +1091,7 @@ PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::QueryReadCapacity(PvmiData
 OSCL_EXPORT_REF PvmiDataStreamCommandId
 PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::RequestReadCapacityNotification(PvmiDataStreamSession sessionID,
         PvmiDataStreamObserver& observer,
-        uint32 capacity,
+        TOsclFileOffset capacity,
         OsclAny* aContextData)
 {
     OSCL_UNUSED_ARG(sessionID);
@@ -1104,7 +1104,7 @@ PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::RequestReadCapacityNotific
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
 PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::QueryWriteCapacity(PvmiDataStreamSession sessionID,
-        uint32& capacity)
+        TOsclFileOffset& capacity)
 {
     OSCL_UNUSED_ARG(sessionID);
     OSCL_UNUSED_ARG(capacity);
@@ -1171,7 +1171,7 @@ PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::Write(PvmiDataStreamSessio
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
 PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::Seek(PvmiDataStreamSession sessionID,
-        int32 offset,
+        TOsclFileOffset offset,
         PvmiDataStreamSeekType origin)
 {
     OSCL_UNUSED_ARG(sessionID);
@@ -1201,7 +1201,7 @@ PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::Seek(PvmiDataStreamSession
     return PVDS_SUCCESS;
 }
 
-OSCL_EXPORT_REF uint32
+OSCL_EXPORT_REF TOsclFileOffset
 PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::GetCurrentPointerPosition(PvmiDataStreamSession sessionID)
 {
     OSCL_UNUSED_ARG(sessionID);
@@ -1209,9 +1209,9 @@ PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::GetCurrentPointerPosition(
         return PVDS_FAILURE;
     //TODO: This cast needs to be removed when oma1 pass thru plugin
     //datastream implementation is updated for large file support
-    int32 result = (TOsclFileOffsetInt32)iFileObject->Tell();
+    TOsclFileOffset result = iFileObject->Tell();
     PVMF_CPMPLUGIN_PASSTHRUOMA1_LOGDEBUG((0, "PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl::GetCurrentContentPosition returning %d", result));
-    return (uint32)(result);
+    return (TOsclFileOffset)(result);
 }
 
 OSCL_EXPORT_REF PvmiDataStreamStatus

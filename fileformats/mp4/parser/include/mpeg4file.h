@@ -898,7 +898,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
 
         MP4_ERROR_CODE GetCurrentFileSize(TOsclFileOffset& aFileSize);
 
-        int32 getTrackTSStartOffset(uint32& aTSOffset, uint32 aTrackID)
+        int32 getTrackTSStartOffset(TOsclFileOffset& aTSOffset, uint32 aTrackID)
         {
             if (_pmovieAtom != NULL)
             {

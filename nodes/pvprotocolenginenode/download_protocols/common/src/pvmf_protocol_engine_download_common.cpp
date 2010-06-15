@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,11 @@
  * -------------------------------------------------------------------
  */
 #include "pvmf_protocol_engine_download_common.h"
+
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
 
 ////////////////////////////////////////////////////////////////////////////////////
 //////  DownloadState related implementation
@@ -100,7 +105,7 @@ OSCL_EXPORT_REF int32 DownloadState::checkParsingStatus(int32 parsingStatus)
 OSCL_EXPORT_REF int32 DownloadState::updateDownloadStatistics()
 {
     // update current file size in config file
-    uint32 downloadSize = iParser->getDownloadSize();
+    TOsclFileOffset downloadSize = iParser->getDownloadSize();
     bool aFirstDownloadFromFileBeginning = (downloadSize > 0 && iCfgFile->GetCurrentFileSize() == 0);
     if (downloadSize > iCfgFile->GetCurrentFileSize())
     {
@@ -114,7 +119,7 @@ OSCL_EXPORT_REF int32 DownloadState::updateDownloadStatistics()
     }
 
     // update total file size in config file
-    uint32 contentLength = iParser->getContentLength();
+    TOsclFileOffset contentLength = iParser->getContentLength();
     if (iCfgFile->GetOverallFileSize() == 0 ||
             (iCfgFile->GetOverallFileSize() != contentLength && contentLength > 0))
     {

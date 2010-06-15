@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,13 @@
 #define OSCL_HAS_SYMBIAN_MATH   0
 
 #define OSCL_RAND_MAX           RAND_MAX
+
+#if (_MSC_VER <= 1200) //1200 = VC6
+#define OSCL_HAS_SNPRINTF_LONGLONG_SUPPORT 0
+#else
+#define OSCL_HAS_SNPRINTF_LONGLONG_SUPPORT 1
+#endif
+
 
 //Define system sleep call for the tick count test here.
 #include <unistd.h>

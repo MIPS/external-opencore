@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,17 +62,17 @@ class PVMIDataStreamSyncInterfaceRefImpl : public PVMIDataStreamSyncInterface
 
         OSCL_IMPORT_REF
         PvmiDataStreamStatus QueryReadCapacity(PvmiDataStreamSession aSessionID,
-                                               uint32& capacity);
+                                               TOsclFileOffset& capacity);
 
         OSCL_IMPORT_REF
         PvmiDataStreamCommandId RequestReadCapacityNotification(PvmiDataStreamSession aSessionID,
                 PvmiDataStreamObserver& observer,
-                uint32 capacity,
+                TOsclFileOffset capacity,
                 OsclAny* aContextData = NULL);
 
         OSCL_IMPORT_REF
         PvmiDataStreamStatus QueryWriteCapacity(PvmiDataStreamSession aSessionID,
-                                                uint32& capacity);
+                                                TOsclFileOffset& capacity);
 
         OSCL_IMPORT_REF
         PvmiDataStreamCommandId RequestWriteCapacityNotification(PvmiDataStreamSession aSessionID,
@@ -115,11 +115,11 @@ class PVMIDataStreamSyncInterfaceRefImpl : public PVMIDataStreamSyncInterface
 
         OSCL_IMPORT_REF
         PvmiDataStreamStatus Seek(PvmiDataStreamSession aSessionID,
-                                  int32 offset,
+                                  TOsclFileOffset offset,
                                   PvmiDataStreamSeekType origin);
 
         OSCL_IMPORT_REF
-        uint32 GetCurrentPointerPosition(PvmiDataStreamSession aSessionID) ;
+        TOsclFileOffset GetCurrentPointerPosition(PvmiDataStreamSession aSessionID) ;
 
         OSCL_IMPORT_REF
         PvmiDataStreamStatus Flush(PvmiDataStreamSession aSessionID);
@@ -129,7 +129,7 @@ class PVMIDataStreamSyncInterfaceRefImpl : public PVMIDataStreamSyncInterface
             OSCL_UNUSED_ARG(aContentLength);
         }
 
-        uint32 GetContentLength()
+        TOsclFileOffset GetContentLength()
         {
             return (uint32)iFileNumBytes;
         }

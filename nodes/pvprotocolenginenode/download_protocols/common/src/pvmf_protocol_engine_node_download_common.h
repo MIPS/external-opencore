@@ -31,6 +31,11 @@
 #include "pvdl_config_file.h"
 #endif
 
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////
 //////  DownloadContainer
@@ -120,7 +125,7 @@ class pvHttpDownloadOutput : public PVMFProtocolEngineNodeOutput
         OSCL_IMPORT_REF virtual PVMFStatus initialize(OsclAny* aInitInfo = NULL);
         OSCL_IMPORT_REF virtual int32 flushData(const uint32 aOutputType = NodeOutputType_InputPortForData);
         OSCL_IMPORT_REF virtual void discardData(const bool aNeedReopen = false);
-        OSCL_IMPORT_REF uint32 getAvailableOutputSize();
+        OSCL_IMPORT_REF TOsclFileOffset getAvailableOutputSize();
         OSCL_IMPORT_REF uint32 getMaxAvailableOutputSize();
 
         // constructor and destructor
@@ -191,7 +196,7 @@ class OSCL_IMPORT_REF pvDownloadControl : public DownloadControlInterface
             iClipDurationMsec = aClipDurationMsec;
         }
 
-        void setPrevDownloadSize(uint32 aPrevDownloadSize = 0)
+        void setPrevDownloadSize(TOsclFileOffset aPrevDownloadSize = 0)
         {
             iPrevDownloadSize = aPrevDownloadSize;
         }
@@ -216,7 +221,7 @@ class OSCL_IMPORT_REF pvDownloadControl : public DownloadControlInterface
         virtual void sendDownloadCompleteNotification();
 
         // auto-resume playback decision
-        bool isResumePlayback(const uint32 aDownloadRate, const uint32 aCurrDownloadSize, const uint32 aFileSize);
+        bool isResumePlayback(const uint32 aDownloadRate, const TOsclFileOffset aCurrDownloadSize, const TOsclFileOffset aFileSize);
 
         // create iDlProgressClock, will leave when memory allocation fails
         void createDownloadClock();
@@ -234,17 +239,17 @@ class OSCL_IMPORT_REF pvDownloadControl : public DownloadControlInterface
         // called by isResumePlayback()
         virtual bool isDlAlgoPreConditionMet(const uint32 aDownloadRate,
                                              const uint32 aDurationMsec,
-                                             const uint32 aCurrDownloadSize,
-                                             const uint32 aFileSize);
+                                             const TOsclFileOffset aCurrDownloadSize,
+                                             const TOsclFileOffset aFileSize);
 
         // update duration by new playback rate, called by checkAutoResumeAlgoWithConstraint
         virtual uint32 checkNewDuration(const uint32 aCurrDurationMsec)
         {
-            return (uint32)aCurrDurationMsec;
+            return aCurrDurationMsec;
         }
 
         // called by checkAutoResumeAlgoWithConstraint()
-        virtual bool approveAutoResumeDecisionShortCut(const uint32 aCurrDownloadSize,
+        virtual bool approveAutoResumeDecisionShortCut(const TOsclFileOffset aCurrDownloadSize,
                 const uint32 aDurationMsec,
                 const uint32 aPlaybackTimeMsec,
                 uint32 &aPlaybackRemainingTimeMsec)
@@ -258,8 +263,8 @@ class OSCL_IMPORT_REF pvDownloadControl : public DownloadControlInterface
 
         // No constraint: for file size/clip duration/clip bitrate(i.e. playback rate), one of them must be unavailable, except
         // file size and clip duration are available, but clip bitrate is unavailable. This only applies on PDL
-        virtual bool checkAutoResumeAlgoNoConstraint(const uint32 aCurrDownloadSize,
-                const uint32 aFileSize,
+        virtual bool checkAutoResumeAlgoNoConstraint(const TOsclFileOffset aCurrDownloadSize,
+                const TOsclFileOffset aFileSize,
                 uint32 &aDurationMsec)
         {
             OSCL_UNUSED_ARG(aCurrDownloadSize);
@@ -270,21 +275,21 @@ class OSCL_IMPORT_REF pvDownloadControl : public DownloadControlInterface
 
         // with contraint: file size and clip duration are both available
         bool checkAutoResumeAlgoWithConstraint(const uint32 aDownloadRate,
-                                               const uint32 aRemainingDownloadSize,
+                                               const TOsclFileOffset aRemainingDownloadSize,
                                                const uint32 aDurationMsec,
-                                               const uint32 aFileSize);
+                                               const TOsclFileOffset aFileSize);
 
         // use fixed-point calculation to replace the float-point calculation: aRemainingDLSize<0.0009*aDownloadRate*aRemainingPlaybackTime
-        virtual bool approveAutoResumeDecision(const uint32 aRemainingDLSize,
+        virtual bool approveAutoResumeDecision(const TOsclFileOffset aRemainingDLSize,
                                                const uint32 aDownloadRate,
                                                const uint32 aRemainingPlaybackTime);
 
         // old algorithm
         bool isResumePlaybackWithOldAlg(const uint32 aDownloadRate,
-                                        const uint32 aRemainingDownloadSize);
+                                        const TOsclFileOffset aRemainingDownloadSize);
 
         virtual bool canRunAutoResumeAlgoWithConstraint(const uint32 aDurationMsec,
-                const uint32 aFileSize)
+                const TOsclFileOffset aFileSize)
         {
             return (aDurationMsec > 0 && aFileSize > 0);
         }
@@ -298,13 +303,13 @@ class OSCL_IMPORT_REF pvDownloadControl : public DownloadControlInterface
 
 
         // handle overflow issue: // result = x*1000/y
-        uint32 divisionInMilliSec(const uint32 x, const uint32 y);
+        TOsclFileOffset divisionInMilliSec(const TOsclFileOffset x, const TOsclFileOffset y);
 
         // called by checkResumeNotification()
         bool checkSendingNotification(const bool aDownloadComplete = false);
 
         // set file size to parser node for the new API, setFileSize()
-        virtual void setFileSize(const uint32 aFileSize);
+        virtual void setFileSize(const TOsclFileOffset aFileSize);
         virtual void updateFileSize();
         bool getPlaybackTimeFromEngineClock(uint32 &aPlaybackTime);
         virtual void setProtocolInfo()
@@ -335,11 +340,11 @@ class OSCL_IMPORT_REF pvDownloadControl : public DownloadControlInterface
         bool iDownloadComplete;
         bool iRequestResumeNotification;
         bool iFirstResumeNotificationSent;
-        uint32 iCurrentNPTReadPosition;
+        TOsclFileOffset iCurrentNPTReadPosition;
         uint32 iClipDurationMsec;
         uint32 iPlaybackByteRate;
-        uint32 iPrevDownloadSize;
-        uint32 iFileSize;
+        TOsclFileOffset iPrevDownloadSize;
+        TOsclFileOffset iFileSize;
 
         bool iDlAlgoPreConditionMet;
         bool iSetFileSize;
@@ -397,7 +402,7 @@ class OSCL_IMPORT_REF DownloadProgress : public DownloadProgressInterface
     protected:
         virtual uint32 getClipDuration();
         virtual bool updateDownloadClock(const bool aDownloadComplete) = 0;
-        virtual bool calculateDownloadPercent(uint32 &aDownloadProgressPercent);
+        virtual bool calculateDownloadPercent(TOsclFileOffset &aDownloadProgressPercent);
         virtual void reset();
 
     protected:
@@ -428,7 +433,7 @@ class PVMFDownloadDataSourceContainer
         bool iHasDataSource;                                    // true means the constainer is already filled in the data source
         bool iIsNewSession;                                     // true if the downloading a new file, false if keep downloading a partial downloading file
         uint32 iByteSeekMode;                                   // 1 if byte-seek supported by server, 0 if not supported, 2 if value is not set by App or server not DMS.
-        uint32 iMaxFileSize;                                    // the max size of the file.
+        TOsclFileOffset iMaxFileSize;                                    // the max size of the file.
         uint32 iPlaybackControl;                                // correspond to PVMFDownloadDataSourceHTTP::TPVPlaybackControl, PVMFSourceContextDataDownloadHTTP::TPVPlaybackControl
         OSCL_wHeapString<OsclMemAllocator> iConfigFileName;     // download config file
         OSCL_wHeapString<OsclMemAllocator> iDownloadFileName;   // local file name of the downloaded clip

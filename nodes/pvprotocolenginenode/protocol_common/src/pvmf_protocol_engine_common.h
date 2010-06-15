@@ -20,6 +20,8 @@
 
 #include "pvmf_protocol_engine_internal.h"
 
+#include "pvmf_source_context_data.h"
+
 #define DATAPATHLOGGER_TAG "protocolenginenode.protocolengine"
 #define DATAPATHERRLOGGER_TAG "datapath.sourcenode.protocolenginenode"
 
@@ -27,13 +29,18 @@
 #define Response1xxEndStatusCode    200
 #define Response305StatusCode       305
 
+
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
 class UserCommands
 {
     public:
         virtual ~UserCommands() {}
 
         // aSeekPosition can be time-based (in MS HTTP streaming) or byte-based (in progressive streaming
-        virtual void seek(const uint32 aSeekPosition) = 0;
+        virtual void seek(const TOsclFileOffset aSeekPosition) = 0;
         virtual void stop(const bool isAfterEOS = false) = 0;
         virtual void pause(const bool isFirstCallInPause = true) = 0;
         virtual void resume() = 0;
@@ -82,7 +89,7 @@ struct ProtocolEngineOutputDataSideInfo
 
 struct ProtocolEngineOutputDataSideInfoForFasttrack
 {
-    uint32 iCurrDataStreamOffset;
+    TOsclFileOffset iCurrDataStreamOffset;
     uint32 iCurrPlaybackTime;
 
     ProtocolEngineOutputDataSideInfoForFasttrack() :
@@ -200,15 +207,15 @@ class OSCL_IMPORT_REF ProtocolState : public HttpParsingBasicObjectObserver,
         // get functions to expose the information that node needs
         // The header could be http header, sdp or asf header
         virtual bool getHeader(Oscl_Vector<OsclRefCounterMemFrag, OsclMemAllocator> &aHeader) = 0;
-        virtual uint32 getContentLength()
+        virtual TOsclFileOffset getContentLength()
         {
             return (iParser == NULL ? 0 : iParser->getContentLength());
         }
-        virtual uint32 getDownloadSize()
+        virtual TOsclFileOffset getDownloadSize()
         {
             return (iParser == NULL ? 0 : iParser->getDownloadSize());
         }
-        virtual uint32 getRemainingSize()
+        virtual TOsclFileOffset getRemainingSize()
         {
             if (iParser == NULL || iParser->getContentLength() == 0) return 0;
             return iParser->getContentLength() - iParser->getDownloadSize();
@@ -292,7 +299,7 @@ class OSCL_IMPORT_REF ProtocolState : public HttpParsingBasicObjectObserver,
         }
 
         // user commands
-        virtual void seek(const uint32 aSeekPosition)
+        virtual void seek(const TOsclFileOffset aSeekPosition)
         {
             OSCL_UNUSED_ARG(aSeekPosition);    // only used in ms http streaming for now
         }
@@ -547,7 +554,7 @@ class HttpBasedProtocol : public ProtocolStateObserver,
         {
             iCurrState->stop(isAfterEOS);
         }
-        virtual void seek(const uint32 aSeekPosition)
+        virtual void seek(const TOsclFileOffset aSeekPosition)
         {
             iCurrState->seek(aSeekPosition);
         }
@@ -608,15 +615,15 @@ class HttpBasedProtocol : public ProtocolStateObserver,
         {
             return iCurrState->getHeader(aHeader);
         }
-        uint32 getContentLength()
+        TOsclFileOffset getContentLength()
         {
             return iCurrState->getContentLength();
         }
-        uint32 getDownloadSize()
+        TOsclFileOffset getDownloadSize()
         {
             return iCurrState->getDownloadSize();
         }
-        uint32 getRemainingSize()
+        TOsclFileOffset getRemainingSize()
         {
             return iCurrState->getRemainingSize();
         }

@@ -437,9 +437,9 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
                                                 OsclAny* aContext = NULL);
 
         // From PVMFFormatProgDownloadSupportInterface
-        int32 convertSizeToTime(uint32 fileSize, uint32& aNPTInMS);
+        int32 convertSizeToTime(TOsclFileOffset fileSize, uint32& aNPTInMS);
         bool setProtocolInfo(Oscl_Vector<PvmiKvp*, OsclMemAllocator>& aInfoKvpVec);
-        void setFileSize(const uint32 aFileSize);
+        void setFileSize(const TOsclFileOffset aFileSize);
         void setDownloadProgressInterface(PVMFDownloadProgressInterface* download_progress);
         void playResumeNotification(bool aDownloadComplete);
         void notifyDownloadComplete()

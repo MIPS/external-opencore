@@ -79,6 +79,10 @@
 #include "pvmf_mp4ffparser_events.h"
 #endif
 
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
 OsclFileHandle* iFileHandle;
 FILE *fp;
 #ifdef ANDROID
@@ -165,7 +169,7 @@ void pvplayer_async_test_printmetadata::Run()
                     }
                     iDownloadConfigFilename = OUTPUTNAME_PREPEND_WSTRING;
                     iDownloadConfigFilename += _STRLIT_WCHAR("mydlconfig");
-                    iDownloadMaxfilesize = 0x7FFFFFFF;
+                    iDownloadMaxfilesize = (TOsclFileOffset)MAX_TOSCLFILEOFFSET_VALUE;
                     iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
                     iDownloadFilename += _STRLIT_WCHAR("test_ftdownload.dl");
                     bool aIsNewSession = true;
@@ -1320,7 +1324,7 @@ void pvplayer_async_test_printmemstats::Run()
                     }
                     iDownloadConfigFilename = OUTPUTNAME_PREPEND_WSTRING;
                     iDownloadConfigFilename += _STRLIT_WCHAR("mydlconfig");
-                    iDownloadMaxfilesize = 0x7FFFFFFF;
+                    iDownloadMaxfilesize = (TOsclFileOffset)MAX_TOSCLFILEOFFSET_VALUE;
                     iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
                     iDownloadFilename += _STRLIT_WCHAR("test_ftdownload.dl");
                     bool aIsNewSession = true;
@@ -1945,7 +1949,7 @@ void pvplayer_async_test_playuntileos::Run()
                         }
                         iDownloadConfigFilename = OUTPUTNAME_PREPEND_WSTRING;
                         iDownloadConfigFilename += _STRLIT_WCHAR("mydlconfig");
-                        iDownloadMaxfilesize = 0x7FFFFFFF;
+                        iDownloadMaxfilesize = (TOsclFileOffset)MAX_TOSCLFILEOFFSET_VALUE;
                         iDownloadFilename = OUTPUTNAME_PREPEND_WSTRING;
                         iDownloadFilename += _STRLIT_WCHAR("test_ftdownload.dl");
                         bool aIsNewSession = true;
@@ -2699,7 +2703,7 @@ void pvplayer_async_test_playuntileos::HandleInformationalEvent(const PVAsyncInf
         curpos.iPosUnit = PVPPBPOSUNIT_DATAPOSITION;
         if (iPlayer->GetCurrentPositionSync(curpos) == PVMFSuccess)
         {
-            fprintf(iTestMsgOutputFile, "Playback status(data position) %d bytes\n", curpos.iPosValue.datapos_value);
+            fprintf(iTestMsgOutputFile, "Playback status(data position) %d bytes\n", (int32)curpos.iPosValue.datapos_value);
         }
 
         fprintf(iTestMsgOutputFile, "------------------------------\n");
@@ -3382,7 +3386,7 @@ void pvplayer_async_test_playuntileos_using_external_file_handle::HandleInformat
         curpos.iPosUnit = PVPPBPOSUNIT_DATAPOSITION;
         if (iPlayer->GetCurrentPositionSync(curpos) == PVMFSuccess)
         {
-            fprintf(iTestMsgOutputFile, "Playback status(data position) %d bytes\n", curpos.iPosValue.datapos_value);
+            fprintf(iTestMsgOutputFile, "Playback status(data position) %d bytes\n", (int32)curpos.iPosValue.datapos_value);
         }
 
         fprintf(iTestMsgOutputFile, "------------------------------\n");

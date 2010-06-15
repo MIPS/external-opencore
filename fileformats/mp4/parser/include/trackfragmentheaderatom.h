@@ -41,7 +41,7 @@ class TrackFragmentHeaderAtom : public FullAtom
 
         TOsclFileOffset getBaseDataOffset() const
         {
-            return _base_data_offset;
+            return (TOsclFileOffset)_base_data_offset;
         }
 
         uint32 getSampleDescriptionIndex() const

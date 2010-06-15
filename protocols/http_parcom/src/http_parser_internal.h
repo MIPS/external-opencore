@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,9 +60,9 @@ enum HTTPContentType
 // on header parsing and entity body parsing
 struct HTTPContentInfoInternal
 {
-    uint32 iContentLength;      // for "Content-Length"
-    uint32 iContentRangeLeft;   // for "Content-Range"
-    uint32 iContentRangeRight;
+    TOsclFileOffset iContentLength;      // for "Content-Length"
+    TOsclFileOffset iContentRangeLeft;   // for "Content-Range"
+    TOsclFileOffset iContentRangeRight;
 
     // constructor
     HTTPContentInfoInternal() : iBoundaryBuffer(NULL)
@@ -91,7 +91,7 @@ struct HTTPContentInfoInternal
 
     void get(HTTPContentInfo &aContentInfo)
     {
-        aContentInfo.iContentLength = iContentLength;
+        aContentInfo.iContentLength = (TOsclFileOffset)iContentLength;
         aContentInfo.iContentRangeLeft = iContentRangeLeft;
         aContentInfo.iContentRangeRight = iContentRangeRight;
     }
@@ -114,7 +114,7 @@ struct HTTPContentInfoInternal
     // range lengh = range right - range left
     uint32 getContentRangeLength() const
     {
-        return (iContentRangeRight == 0 ? 0 : iContentRangeRight - iContentRangeLeft + 1);
+        return (iContentRangeRight == 0 ? 0 : (uint32)(iContentRangeRight - iContentRangeLeft + 1));
     }
 
     bool parseBoudaryLine(HTTPMemoryFragment &aInputLineData, bool &isFinalBoundary);
@@ -449,7 +449,7 @@ class HTTPParserNormalContentObject : public HTTPParserEntityBodyObject
         }
 
     private:
-        uint32 iCurrTotalLengthObtained;
+        TOsclFileOffset iCurrTotalLengthObtained;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////

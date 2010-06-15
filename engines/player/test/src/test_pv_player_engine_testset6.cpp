@@ -2423,7 +2423,7 @@ void pvplayer_async_test_streamingopenplaystop::HandleInformationalEvent(const P
         curpos.iPosUnit = PVPPBPOSUNIT_DATAPOSITION;
         if (iPlayer->GetCurrentPositionSync(curpos) == PVMFSuccess)
         {
-            fprintf(iTestMsgOutputFile, "Playback status(data position) %d bytes\n", curpos.iPosValue.datapos_value);
+            fprintf(iTestMsgOutputFile, "Playback status(data position) %d bytes\n", (int32)curpos.iPosValue.datapos_value);
         }
 
         fprintf(iTestMsgOutputFile, "------------------------------\n");
@@ -3843,7 +3843,7 @@ void pvplayer_async_test_streamingJBadjust::HandleInformationalEvent(const PVAsy
         curpos.iPosUnit = PVPPBPOSUNIT_DATAPOSITION;
         if (iPlayer->GetCurrentPositionSync(curpos) == PVMFSuccess)
         {
-            fprintf(iTestMsgOutputFile, "Playback status(data position) %d bytes\n", curpos.iPosValue.datapos_value);
+            fprintf(iTestMsgOutputFile, "Playback status(data position) %d bytes\n", (int32)curpos.iPosValue.datapos_value);
         }
 
         fprintf(iTestMsgOutputFile, "------------------------------\n");
@@ -5192,7 +5192,7 @@ void pvplayer_async_test_streaming_bitstream_switch::HandleInformationalEvent(co
         curpos.iPosUnit = PVPPBPOSUNIT_DATAPOSITION;
         if (iPlayer->GetCurrentPositionSync(curpos) == PVMFSuccess)
         {
-            fprintf(iTestMsgOutputFile, "Playback status(data position) %d bytes\n", curpos.iPosValue.datapos_value);
+            fprintf(iTestMsgOutputFile, "Playback status(data position) %d bytes\n", (int32)curpos.iPosValue.datapos_value);
         }
 
         fprintf(iTestMsgOutputFile, "------------------------------\n");
@@ -8587,7 +8587,7 @@ void pvplayer_async_test_streamingopenplaystoppreparelaystop::HandleInformationa
         curpos.iPosUnit = PVPPBPOSUNIT_DATAPOSITION;
         if (iPlayer->GetCurrentPositionSync(curpos) == PVMFSuccess)
         {
-            fprintf(iTestMsgOutputFile, "Playback status(data position) %d bytes\n", curpos.iPosValue.datapos_value);
+            fprintf(iTestMsgOutputFile, "Playback status(data position) %d bytes\n", (int32)curpos.iPosValue.datapos_value);
         }
 
         fprintf(iTestMsgOutputFile, "------------------------------\n");

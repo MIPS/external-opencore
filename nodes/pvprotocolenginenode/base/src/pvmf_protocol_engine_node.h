@@ -138,7 +138,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterfaceImpl,
         // From PVMFProtocolEngineNodeExtensionInterface and
         // From PVMFProtocolEngineNodeMSHTTPStreamingExtensionInterface
         PVMFStatus GetHTTPHeader(uint8*& aHeader, uint32& aHeaderLen);
-        void GetFileSize(uint32& aFileSize)
+        void GetFileSize(TOsclFileOffset& aFileSize)
         {
             aFileSize = (iInterfacingObjectContainer == NULL ? 0 : iInterfacingObjectContainer->getFileSize());
         }

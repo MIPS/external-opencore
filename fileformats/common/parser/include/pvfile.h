@@ -227,14 +227,14 @@ class PVFile
 
         // For memory buffer data stream
         // file size is content length from HTTP HEAD response
-        OSCL_IMPORT_REF uint32 GetContentLength();
+        OSCL_IMPORT_REF TOsclFileOffset GetContentLength();
 
         // memory cache size, is 0 if not MBDS
         OSCL_IMPORT_REF uint32 GetFileBufferingCapacity();
 
         // For memory buffer data stream
         // portion of the data can be copied to persistent storage for the duration of playback
-        OSCL_IMPORT_REF bool MakePersistent(int32 offset, uint32 size);
+        OSCL_IMPORT_REF bool MakePersistent(TOsclFileOffset offset, uint32 size);
 
         // For memory buffer data stream
         // to trigger a http GET request

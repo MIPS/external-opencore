@@ -93,10 +93,10 @@ class ProgressiveDownloadState_GET : public DownloadState
         OSCL_IMPORT_REF void getStartFragmentInNewDownloadData(OUTPUT_DATA_QUEUE &aOutputQueue,
                 bool &aUseAllNewDownloadData,
                 uint32 &aStartFragsNo,
-                uint32 &aStartFragOffset);
+                TOsclFileOffset &aStartFragOffset);
         OSCL_IMPORT_REF void getEndFragmentInNewDownloadData(OUTPUT_DATA_QUEUE &aOutputQueue,
                 uint32 &aEndFragNo,
-                uint32 &aEndFragValidLen);
+                TOsclFileOffset &aEndFragValidLen);
         OSCL_IMPORT_REF int32 checkContentInfoMatchingForResumeDownload();
         OSCL_IMPORT_REF virtual int32 checkParsingStatus(int32 parsingStatus);
         OSCL_IMPORT_REF int32 updateDownloadStatistics();
@@ -111,7 +111,7 @@ class ProgressiveDownloadState_GET : public DownloadState
 class ProgressiveStreamingState_GET : public ProgressiveDownloadState_GET
 {
     public:
-        virtual void seek(const uint32 aSeekPosition)
+        virtual void seek(const TOsclFileOffset aSeekPosition)
         {
             iCfgFile->SetCurrentFileSize(aSeekPosition);
             iNeedGetResponsePreCheck = true; // reset the parser
@@ -221,7 +221,7 @@ class ProgressiveStreaming : public ProgressiveDownload
             if (iParser) iParser->setNumRetry(MAX_NUM_EOS_MESSAGES_FOR_SAME_REQUEST + 1); // +1 for testing purpose (i.e., insert an EOS)
         }
 
-        virtual void seek(const uint32 aSeekPosition)
+        virtual void seek(const TOsclFileOffset aSeekPosition)
         {
             HttpBasedProtocol::seek(aSeekPosition);
 

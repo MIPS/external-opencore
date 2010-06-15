@@ -58,6 +58,10 @@
 #include "pvlogger.h"
 #endif
 
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
 // log macros
 #define LOGERROR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
 #define LOGINFOHI(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG,iLogger,PVLOGMSG_INFO,m);
@@ -72,6 +76,7 @@
 #define NODEDATAPATHLOGGER_TAG "datapath.sourcenode.protocolenginenode"
 #define DATAPATHLOGGER_TAG "protocolenginenode.protocolengine"
 #define DATAPATHERRLOGGER_TAG "datapath.sourcenode.protocolenginenode"
+
 
 
 enum pvHttpProcessingMicroState
@@ -629,16 +634,16 @@ class HttpParsingBasicObject
 {
     public:
         // get/query functions
-        uint32 getContentLength(const bool aRefresh = false)
+        TOsclFileOffset getContentLength(const bool aRefresh = false)
         {
             if (aRefresh) iParser->getContentInfo(iContentInfo);
             return iContentInfo.iContentLength;
         }
-        uint32 getDownloadSize()
+        TOsclFileOffset getDownloadSize()
         {
             return iTotalDLHttpBodySize;
         }
-        OSCL_IMPORT_REF void setDownloadSize(const uint32 aInitialSize = 0);
+        OSCL_IMPORT_REF void setDownloadSize(const TOsclFileOffset aInitialSize = 0);
 
         uint32 getTotalHttpStreamingSize()
         {
@@ -678,7 +683,7 @@ class HttpParsingBasicObject
         {
             return iServerVersionNumber;
         }
-        OSCL_IMPORT_REF int32 isNewContentRangeInfoMatchingCurrentOne(const uint32 aPrevContentLength);
+        OSCL_IMPORT_REF int32 isNewContentRangeInfoMatchingCurrentOne(const TOsclFileOffset aPrevContentLength);
         bool isDownloadReallyHappen() const
         {
             return (iTotalDLHttpBodySize - iTotalDLSizeForPrevEOS > 0);
@@ -809,10 +814,10 @@ class HttpParsingBasicObject
         HttpParsingBasicObjectObserver *iObserver;
         OUTPUT_DATA_QUEUE *iOutputQueue;
         uint32 iServerVersionNumber;
-        uint32 iTotalDLHttpBodySize;
+        TOsclFileOffset iTotalDLHttpBodySize;
         uint32 iNumEOSMessagesAfterRequest;// number of continuous EOS messages received after sending request
-        uint32 iTotalDLSizeForPrevEOS; // for detecting download size change between two adjacent EOSs or start and first EOS
-        uint32 iTotalDLSizeAtCurrEOS;
+        TOsclFileOffset iTotalDLSizeForPrevEOS; // for detecting download size change between two adjacent EOSs or start and first EOS
+        TOsclFileOffset iTotalDLSizeAtCurrEOS;
         uint32  iLatestMediaDataTimestamp;
         BandwidthEstimationInfo iBWEstInfo;
         uint32 iNumRetry;

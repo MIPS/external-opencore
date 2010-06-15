@@ -269,7 +269,7 @@ int32 TrackAtom::NEWsetTrackTSOffset(uint32 ts)
     return EVERYTHING_FINE;
 }
 
-int32 TrackAtom::getTrackTSOffset(uint32& aTSOffset, uint32 aMovieTimeScale)
+int32 TrackAtom::getTrackTSOffset(TOsclFileOffset& aTSOffset, uint32 aMovieTimeScale)
 {
     aTSOffset = 0;
     if (_pmediaAtom != NULL)
@@ -281,7 +281,7 @@ int32 TrackAtom::getTrackTSOffset(uint32& aTSOffset, uint32 aMovieTimeScale)
             float fTS = (float)_pmediaAtom->getMediaTimescale();
             fTS *= (float)initTimeOffset;
             fTS /= (float)aMovieTimeScale;
-            aTSOffset = (uint32)(fTS);
+            aTSOffset = (TOsclFileOffset)(fTS);
         }
     }
     return EVERYTHING_FINE;

@@ -224,7 +224,7 @@ OSCL_EXPORT_REF bool MP4FileRecognizer::IsMP4File(PVMFCPMPluginAccessInterfaceFa
             {
                 break;
             }
-            if (fileSize < (TOsclFileOffset)atomSize)
+            if ((uint64)fileSize < atomSize)
             {
                 break;
             }

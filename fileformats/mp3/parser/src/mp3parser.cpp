@@ -3019,7 +3019,7 @@ MP3ErrorType MP3Parser::IsMp3File(MP3_FF_FILE* aFile, uint32 aInitSearchFileSize
     if (!GetMP3Header(firstHeader, iMP3HeaderInfo))
     {
         uint32 seekOffset = 0;
-        MP3Utils::SeektoOffset(fp, 0 - MP3_FRAME_HEADER_SIZE, Oscl_File::SEEKCUR);
+        MP3Utils::SeektoOffset(fp, (int32)0 - (int32)MP3_FRAME_HEADER_SIZE, Oscl_File::SEEKCUR);
         errCode = mp3FindSync(StartOffset, seekOffset, fp);
         if (errCode == MP3_SUCCESS)
         {

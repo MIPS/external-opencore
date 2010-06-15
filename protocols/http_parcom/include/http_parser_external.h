@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,17 @@
 #include "oscl_refcounter_memfrag.h"
 #include "oscl_vector.h"
 
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
+
 // content info exposed to user
 struct HTTPContentInfo
 {
-    uint32 iContentLength;      // for "Content-Length"
-    uint32 iContentRangeLeft;   // for "Content-Range"
-    uint32 iContentRangeRight;
+    TOsclFileOffset iContentLength;      // for "Content-Length"
+    TOsclFileOffset iContentRangeLeft;   // for "Content-Range"
+    TOsclFileOffset iContentRangeRight;
 
     // constructor
     HTTPContentInfo()

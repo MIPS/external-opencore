@@ -32,34 +32,15 @@
 #include "oscl_tickcount.h"
 #endif
 
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
 // Logging #define
 #define LOGDEBUG(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_VERBOSE, m);
 #define LOGERROR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, m);
 #define LOGTRACE(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, m);
 
-// For Shoutcast, the content length is infinite
-// the offsets will wrap around to 0 after 0xFFFFFFFF
-#define WRAP_THRESHOLD  0x8000000
-
-#define IS_OFFSET_IN_RANGE(firstRangeOffset, lastRangeOffset, thisOffset, inRange)      \
-    {                                                                                   \
-        inRange = true;                                                                 \
-        if ((firstRangeOffset >= WRAP_THRESHOLD) && (lastRangeOffset < WRAP_THRESHOLD)) \
-        {                                                                               \
-            if ((thisOffset >= WRAP_THRESHOLD) && (thisOffset < firstRangeOffset))      \
-            {                                                                           \
-                inRange = false;                                                        \
-            }                                                                           \
-            else if ((thisOffset < WRAP_THRESHOLD) && (thisOffset > lastRangeOffset))   \
-            {                                                                           \
-                inRange = false;                                                        \
-            }                                                                           \
-        }                                                                               \
-        else if ((thisOffset < firstRangeOffset) || (thisOffset > lastRangeOffset))     \
-        {                                                                               \
-            inRange = false;                                                            \
-        }                                                                               \
-    }
 
 //////////////////////////////////////////////////////////////////////
 // PVMFMemoryBufferReadDataStreamFactoryImpl
@@ -352,7 +333,7 @@ PVMFMemoryBufferReadDataStreamImpl::QueryRandomAccessCapability()
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
 PVMFMemoryBufferReadDataStreamImpl::QueryReadCapacity(PvmiDataStreamSession aSessionID,
-        uint32& aCapacity)
+        TOsclFileOffset& aCapacity)
 {
     LOGTRACE((0, "PVMFMemoryBufferReadDataStreamImpl::QueryReadCapacity"));
 
@@ -368,8 +349,8 @@ PVMFMemoryBufferReadDataStreamImpl::QueryReadCapacity(PvmiDataStreamSession aSes
         // i.e. from the current file pointer position to the last byte that has been written to the file so far
 
         // Get the current file position
-        uint32 currFilePosition = GetCurrentPointerPosition(aSessionID);
-        uint32 lastFilePosition = 0;
+        TOsclFileOffset currFilePosition = GetCurrentPointerPosition(aSessionID);
+        TOsclFileOffset lastFilePosition = 0;
 
         // Determine the file size from write datastream.
         status = iWriteDataStream->QueryReadCapacity(iSessionID, lastFilePosition);
@@ -391,7 +372,7 @@ PVMFMemoryBufferReadDataStreamImpl::QueryReadCapacity(PvmiDataStreamSession aSes
 
 OSCL_EXPORT_REF PvmiDataStreamCommandId
 PVMFMemoryBufferReadDataStreamImpl::RequestReadCapacityNotification(PvmiDataStreamSession aSessionID,
-        PvmiDataStreamObserver& aObserver, uint32 aCapacity,
+        PvmiDataStreamObserver& aObserver, TOsclFileOffset aCapacity,
         OsclAny* aContextData)
 {
     OSCL_UNUSED_ARG(aSessionID);
@@ -425,7 +406,7 @@ PVMFMemoryBufferReadDataStreamImpl::RequestReadCapacityNotification(PvmiDataStre
 
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
-PVMFMemoryBufferReadDataStreamImpl::QueryWriteCapacity(PvmiDataStreamSession aSessionID, uint32& aCapacity)
+PVMFMemoryBufferReadDataStreamImpl::QueryWriteCapacity(PvmiDataStreamSession aSessionID, TOsclFileOffset& aCapacity)
 {
     OSCL_UNUSED_ARG(aSessionID);
     OSCL_UNUSED_ARG(aCapacity);
@@ -499,27 +480,27 @@ PVMFMemoryBufferReadDataStreamImpl::Read(PvmiDataStreamSession aSessionID, uint8
     }
 
     // Reading from the current file pointer position
-    uint32 bytesToRead = aSize * aNumElements;
+    TOsclFileOffset bytesToRead = ((TOsclFileOffset)aSize) * ((TOsclFileOffset)aNumElements);
 
     // Check the content range in cache
-    uint32 firstByteToRead = iFilePtrPos;
-    uint32 lastByteToRead = iFilePtrPos + bytesToRead - 1;
+    TOsclFileOffset firstByteToRead = iFilePtrPos;
+    TOsclFileOffset lastByteToRead = iFilePtrPos + bytesToRead - 1;
 
     uint32 numPermEntries = iPermCache->GetNumEntries();
-    uint32 firstPermByteOffset = 0;
-    uint32 lastPermByteOffset = 0;
+    TOsclFileOffset firstPermByteOffset = 0;
+    TOsclFileOffset lastPermByteOffset = 0;
     iPermCache->GetFileOffsets(firstPermByteOffset, lastPermByteOffset);
 
     uint32 numTempEntries = iTempCache->GetNumEntries();
-    uint32 firstTempByteOffset = 0;
-    uint32 lastTempByteOffset = 0;
+    TOsclFileOffset firstTempByteOffset = 0;
+    TOsclFileOffset lastTempByteOffset = 0;
     iTempCache->GetFileOffsets(firstTempByteOffset, lastTempByteOffset);
 
     // for debugging only
     //LOGERROR((0, "PVMFMemoryBufferReadDataStreamImpl::Read session %d offset %d size %d firstTempByteOffset %d lastTempByteOffset %d",
     //  iSessionID, iFilePtrPos, aSize * aNumElements, firstTempByteOffset, lastTempByteOffset));
 
-    uint32 bytesRead = 0;
+    TOsclFileOffset bytesRead = 0;
     uint32 firstEntry = 0;
 
     bool inTempCache = true;
@@ -544,8 +525,8 @@ PVMFMemoryBufferReadDataStreamImpl::Read(PvmiDataStreamSession aSessionID, uint8
                     MBDS_STREAM_FORMAT_SMOOTH_STREAMING != iStreamFormat &&
                     MBDS_STREAM_FORMAT_APPLE_HTTP_STREAMING != iStreamFormat)
             {
-                if ((firstByteToRead < firstTempByteOffset) || ((firstByteToRead - lastTempByteOffset) > PV_MBDS_BYTES_TO_WAIT) ||
-                        (((firstByteToRead - lastTempByteOffset) <= PV_MBDS_BYTES_TO_WAIT) && ((lastTempByteOffset - firstTempByteOffset + 1) >= iWriteDataStream->GetTempCacheCapacity())))
+                if ((firstByteToRead < firstTempByteOffset) || ((firstByteToRead - lastTempByteOffset) > (TOsclFileOffset)PV_MBDS_BYTES_TO_WAIT) ||
+                        (((firstByteToRead - lastTempByteOffset) <= (TOsclFileOffset)PV_MBDS_BYTES_TO_WAIT) && ((lastTempByteOffset - firstTempByteOffset + 1) >= (TOsclFileOffset)(iWriteDataStream->GetTempCacheCapacity()))))
                 {
                     LOGDEBUG((0, "PVMFMemoryBufferReadDataStreamImpl::Read Reposition first %d last %d session %d offset %d",
                               firstTempByteOffset, lastTempByteOffset, iSessionID, firstByteToRead));
@@ -597,12 +578,12 @@ PVMFMemoryBufferReadDataStreamImpl::Read(PvmiDataStreamSession aSessionID, uint8
     }
 
     iFilePtrPos += bytesRead;
-    aNumElements = bytesRead / aSize;
+    aNumElements = (uint32)bytesRead / aSize;
 
     iWriteDataStream->SetReadPointerCacheLocation(iSessionID, inTempCache);
     iWriteDataStream->SetReadPointerPosition(iSessionID, iFilePtrPos);
 
-    if (0 != bytesRead && 0 != firstEntry)
+    if ((TOsclFileOffset)0 != bytesRead && 0 != firstEntry)
     {
         // there may be some entries in the cache that can be released
         iWriteDataStream->ManageCache();
@@ -644,7 +625,7 @@ PVMFMemoryBufferReadDataStreamImpl::Write(PvmiDataStreamSession aSessionID, Oscl
 }
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
-PVMFMemoryBufferReadDataStreamImpl::Seek(PvmiDataStreamSession aSessionID, int32 aOffset, PvmiDataStreamSeekType aOrigin)
+PVMFMemoryBufferReadDataStreamImpl::Seek(PvmiDataStreamSession aSessionID, TOsclFileOffset aOffset, PvmiDataStreamSeekType aOrigin)
 {
     OSCL_UNUSED_ARG(aSessionID);
 
@@ -668,14 +649,14 @@ PVMFMemoryBufferReadDataStreamImpl::Seek(PvmiDataStreamSession aSessionID, int32
         // If the requested offset is far from the current offset, should trigger a reposition request now.
         // Make sure not seeking beyond end of clip if content length is known
 
-        uint32 contentLength = iWriteDataStream->GetContentLength();
+        TOsclFileOffset contentLength = iWriteDataStream->GetContentLength();
         bool skip = false;
-        uint32 skipTo = 0;
+        TOsclFileOffset skipTo = 0;
 
         switch (aOrigin)
         {
             case PVDS_SEEK_SET:
-                if ((0 != contentLength) && ((uint32)aOffset >= contentLength))
+                if ((0 != contentLength) && (aOffset >= contentLength))
                 {
                     status = PVDS_FAILURE;
                 }
@@ -697,7 +678,7 @@ PVMFMemoryBufferReadDataStreamImpl::Seek(PvmiDataStreamSession aSessionID, int32
                 break;
 
             case PVDS_SEEK_END:
-                if ((0 == contentLength) || (contentLength <= (uint32)aOffset))
+                if ((0 == contentLength) || (contentLength <= aOffset))
                 {
                     // contentLength is not known, fail the seek
                     // if known, do not seek beyond beginning of clip
@@ -710,7 +691,7 @@ PVMFMemoryBufferReadDataStreamImpl::Seek(PvmiDataStreamSession aSessionID, int32
                 break;
 
             case PVDS_SKIP_SET:
-                if ((0 != contentLength) && ((uint32)aOffset >= contentLength))
+                if ((0 != contentLength) && (aOffset >= contentLength))
                 {
                     status = PVDS_FAILURE;
                 }
@@ -734,7 +715,7 @@ PVMFMemoryBufferReadDataStreamImpl::Seek(PvmiDataStreamSession aSessionID, int32
                 break;
 
             case PVDS_SKIP_END:
-                if ((0 == contentLength) || (contentLength <= (uint32)aOffset))
+                if ((0 == contentLength) || (contentLength <= aOffset))
                 {
                     // contentLength is not known, fail the skip
                     // if known, do not skip beyond beginning of clip
@@ -764,8 +745,8 @@ PVMFMemoryBufferReadDataStreamImpl::Seek(PvmiDataStreamSession aSessionID, int32
                 // Shoutcast never uses skips
                 // No need to check for the 4GB wrap around for PS
                 // If seeking backwards, data will never come without a reposition request
-                uint32 firstTempByteOffset = 0;
-                uint32 lastTempByteOffset = 0;
+                TOsclFileOffset firstTempByteOffset = 0;
+                TOsclFileOffset lastTempByteOffset = 0;
                 iTempCache->GetFileOffsets(firstTempByteOffset, lastTempByteOffset);
 
                 if ((0 != firstTempByteOffset && 0 != lastTempByteOffset) &&
@@ -774,7 +755,7 @@ PVMFMemoryBufferReadDataStreamImpl::Seek(PvmiDataStreamSession aSessionID, int32
                 {
                     // Seeking forward,, eed to see if the data may be coming shortly before sending request
                     // If the temp cache is full, send the request right away
-                    uint32 capacity = 0;
+                    TOsclFileOffset capacity = 0;
                     iWriteDataStream->QueryWriteCapacity(0, capacity);
                     if (capacity > 64000)
                     {
@@ -805,12 +786,12 @@ PVMFMemoryBufferReadDataStreamImpl::Seek(PvmiDataStreamSession aSessionID, int32
     return status;
 }
 
-OSCL_EXPORT_REF uint32
+OSCL_EXPORT_REF TOsclFileOffset
 PVMFMemoryBufferReadDataStreamImpl::GetCurrentPointerPosition(PvmiDataStreamSession aSessionID)
 {
     OSCL_UNUSED_ARG(aSessionID);
 
-    uint32 pos = 0;
+    TOsclFileOffset pos = 0;
 
     // OpenSession needs to be called first
     if (iReadSessionOpened)
@@ -844,17 +825,17 @@ PVMFMemoryBufferReadDataStreamImpl::NotifyDownloadComplete()
 }
 
 
-OSCL_EXPORT_REF uint32
+OSCL_EXPORT_REF TOsclFileOffset
 PVMFMemoryBufferReadDataStreamImpl::GetContentLength()
 {
     // returning length of media, if known
-    uint32 length = 0;
+    TOsclFileOffset length = 0;
     if (NULL != iWriteDataStream)
     {
         length = iWriteDataStream->GetContentLength();
     }
 
-    LOGTRACE((0, "PVMFMemoryBufferReadDataStreamImpl::GetContentLength returning %d", length));
+    LOGTRACE((0, "PVMFMemoryBufferReadDataStreamImpl::GetContentLength returning %I64d", length));
     return length;
 }
 
@@ -945,21 +926,21 @@ OSCL_EXPORT_REF uint32 PVMFMemoryBufferReadDataStreamImpl::QueryBufferingTrimMar
 //      return failure
 //
 OSCL_EXPORT_REF PvmiDataStreamStatus
-PVMFMemoryBufferReadDataStreamImpl::MakePersistent(int32 aOffset, uint32 aSize)
+PVMFMemoryBufferReadDataStreamImpl::MakePersistent(TOsclFileOffset aOffset, uint32 aSize)
 {
     LOGTRACE((0, "PVMFMemoryBufferReadDataStreamImpl::MakePersistent offset %d size %d", aOffset, aSize));
 
     // MakePersistent should not be called multiple times with different offsets
-    uint32 firstPersistentOffset = 0;
-    uint32 lastPeristentOffset = 0;
+    TOsclFileOffset firstPersistentOffset = 0;
+    TOsclFileOffset lastPeristentOffset = 0;
     bool bMadePersistent = iWriteDataStream->GetPermCachePersistence(firstPersistentOffset, lastPeristentOffset);
 
     if (bMadePersistent)
     {
         // has already been called, check the offset + size
         // last byte in perm cache is one byte beyond moov atom
-        if ((0 == aSize && 0 == firstPersistentOffset && 0 == lastPeristentOffset) ||
-                (aOffset == (int32)firstPersistentOffset && (aOffset + aSize) == lastPeristentOffset))
+        if ((0 == aSize && (TOsclFileOffset)0 == firstPersistentOffset && (TOsclFileOffset)0 == lastPeristentOffset) ||
+                (aOffset == firstPersistentOffset && (aOffset + (TOsclFileOffset)aSize) == lastPeristentOffset))
         {
             // same paramerters, it is ok
             LOGDEBUG((0, "PVMFMemoryBufferReadDataStreamImpl::MakePersistent has already been called with same offset and size"));
@@ -983,8 +964,8 @@ PVMFMemoryBufferReadDataStreamImpl::MakePersistent(int32 aOffset, uint32 aSize)
     {
         // find out current perm cache size
         // want to know what has been allocated, not what has been filled
-        uint32 cacheSize = iPermCache->GetCacheSize();
-        if ((cacheSize + aSize) > PV_MBDS_PERM_CACHE_SIZE)
+        TOsclFileOffset cacheSize = iPermCache->GetCacheSize();
+        if ((cacheSize + (TOsclFileOffset)aSize) > (TOsclFileOffset)PV_MBDS_PERM_CACHE_SIZE)
         {
             LOGERROR((0, "PVMFMemoryBufferReadDataStreamImpl::MakePersistent exceed cache size limit cacheSize %d limit %d", cacheSize, PV_MBDS_PERM_CACHE_SIZE));
             return PVDS_FAILURE;
@@ -995,20 +976,20 @@ PVMFMemoryBufferReadDataStreamImpl::MakePersistent(int32 aOffset, uint32 aSize)
     // currently, the data in the temp cache and the perm cache are sequential,  there are no gaps in the caches
     // however, the caches can easily modified to be permit gaps
 
-    uint32 firstPermByteOffset = 0;
-    uint32 lastPermByteOffset = 0;
+    TOsclFileOffset firstPermByteOffset = 0;
+    TOsclFileOffset lastPermByteOffset = 0;
     iPermCache->GetPermOffsets(firstPermByteOffset, lastPermByteOffset);
 
-    uint32 firstTempByteOffset = 0;
-    uint32 lastTempByteOffset = 0;
+    TOsclFileOffset firstTempByteOffset = 0;
+    TOsclFileOffset lastTempByteOffset = 0;
     iTempCache->GetFileOffsets(firstTempByteOffset, lastTempByteOffset);
 
     LOGDEBUG((0, "PVMFMemoryBufferReadDataStreamImpl::MakePersistent perm %d %d temp %d %d",
               firstPermByteOffset, lastPermByteOffset, firstTempByteOffset, lastTempByteOffset));
 
     // last byte in perm cache is one byte beyond moov atom
-    uint32 copyFirstByteOffset = aOffset;
-    uint32 copyLastByteOffset = aOffset + aSize;
+    TOsclFileOffset copyFirstByteOffset = aOffset;
+    TOsclFileOffset copyLastByteOffset = aOffset + (TOsclFileOffset)aSize;
 
     // check if some or all data is already in the perm cache, if the perm cache is not empty
     uint32 count = iPermCache->GetNumEntries();
@@ -1062,8 +1043,8 @@ PVMFMemoryBufferReadDataStreamImpl::MakePersistent(int32 aOffset, uint32 aSize)
     }
 
     // allocate a memory buffer
-    uint32 bufSize = copyLastByteOffset - copyFirstByteOffset + 1;
-    uint8* memBuf = (uint8*)oscl_malloc(bufSize);
+    TOsclFileOffset bufSize = (copyLastByteOffset - copyFirstByteOffset + 1);
+    uint8* memBuf = (uint8*)oscl_malloc((uint32)bufSize);
     if (NULL == memBuf)
     {
         LOGERROR((0, "PVMFMemoryBufferReadDataStreamImpl::MakePersistent out of memory"));
@@ -1072,7 +1053,7 @@ PVMFMemoryBufferReadDataStreamImpl::MakePersistent(int32 aOffset, uint32 aSize)
 
     PvmiDataStreamStatus status = PVDS_SUCCESS;
     bool releaseMemFrags = false;
-    uint32 bytesRead = 0;
+    TOsclFileOffset bytesRead = 0;
     uint32 firstEntry = 0;
 
     // the data to be made permanent may not be in the temp cache yet
@@ -1108,7 +1089,7 @@ PVMFMemoryBufferReadDataStreamImpl::MakePersistent(int32 aOffset, uint32 aSize)
     else if ((copyFirstByteOffset >= firstTempByteOffset) && (copyFirstByteOffset <= lastTempByteOffset))
     {
         // first part of data is in the temp cache, copy whatever is there
-        uint32 copySize = lastTempByteOffset - copyFirstByteOffset + 1;
+        TOsclFileOffset copySize = (lastTempByteOffset - copyFirstByteOffset + 1);
 
         bytesRead = iTempCache->ReadBytes(memBuf, copyFirstByteOffset, lastTempByteOffset, firstEntry);
         if (bytesRead != copySize)
@@ -1158,13 +1139,13 @@ PVMFMemoryBufferReadDataStreamImpl::MakePersistent(int32 aOffset, uint32 aSize)
 
 
 OSCL_EXPORT_REF void
-PVMFMemoryBufferReadDataStreamImpl::GetCurrentByteRange(uint32& aCurrentFirstByteOffset, uint32& aCurrentLastByteOffset)
+PVMFMemoryBufferReadDataStreamImpl::GetCurrentByteRange(TOsclFileOffset& aCurrentFirstByteOffset, TOsclFileOffset& aCurrentLastByteOffset)
 {
     // if the perm cache and the temp cache was contiguous,
     // report the entire range
     // if not, report only the temp cache range
-    uint32 firstTempByteOffset = 0;
-    uint32 lastTempByteOffset = 0;
+    TOsclFileOffset firstTempByteOffset = 0;
+    TOsclFileOffset lastTempByteOffset = 0;
     iTempCache->GetFileOffsets(firstTempByteOffset, lastTempByteOffset);
 
     aCurrentFirstByteOffset = firstTempByteOffset;
@@ -1174,8 +1155,8 @@ PVMFMemoryBufferReadDataStreamImpl::GetCurrentByteRange(uint32& aCurrentFirstByt
     // no need to worry aboyt offsets wrapping around
     if (0 != iPermCache->GetNumEntries())
     {
-        uint32 firstPermByteOffset = 0;
-        uint32 lastPermByteOffset = 0;
+        TOsclFileOffset firstPermByteOffset = 0;
+        TOsclFileOffset lastPermByteOffset = 0;
         iPermCache->GetFileOffsets(firstPermByteOffset, lastPermByteOffset);
 
 
@@ -1541,17 +1522,17 @@ PVMFMemoryBufferWriteDataStreamImpl::QueryRandomAccessCapability()
 }
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
-PVMFMemoryBufferWriteDataStreamImpl::QueryReadCapacity(PvmiDataStreamSession aSessionID, uint32& aCapacity)
+PVMFMemoryBufferWriteDataStreamImpl::QueryReadCapacity(PvmiDataStreamSession aSessionID, TOsclFileOffset& aCapacity)
 {
     OSCL_UNUSED_ARG(aSessionID);
 
     // return the offset of the last byte in the cache
-    uint32 firstTempByteOffset = 0;
-    uint32 lastTempByteOffset = 0;
+    TOsclFileOffset firstTempByteOffset = 0;
+    TOsclFileOffset lastTempByteOffset = 0;
     iTempCache->GetFileOffsets(firstTempByteOffset, lastTempByteOffset);
 
-    uint32 firstPermByteOffset = 0;
-    uint32 lastPermByteOffset = 0;
+    TOsclFileOffset firstPermByteOffset = 0;
+    TOsclFileOffset lastPermByteOffset = 0;
     iPermCache->GetFileOffsets(firstPermByteOffset, lastPermByteOffset);
 
     aCapacity = lastTempByteOffset;
@@ -1559,14 +1540,14 @@ PVMFMemoryBufferWriteDataStreamImpl::QueryReadCapacity(PvmiDataStreamSession aSe
     // perm cache is empty for Shoutcast
     if (0 != iPermCache->GetNumEntries())
     {
-        uint32 firstPermByteOffset = 0;
-        uint32 lastPermByteOffset = 0;
+        TOsclFileOffset firstPermByteOffset = 0;
+        TOsclFileOffset lastPermByteOffset = 0;
         iPermCache->GetFileOffsets(firstPermByteOffset, lastPermByteOffset);
 
         // Return the larger of the two offsets, as the temp cache may be trimmed
         iTempCache->GetFileOffsets(firstTempByteOffset, lastTempByteOffset);
 
-        aCapacity = (lastTempByteOffset > lastPermByteOffset) ? lastTempByteOffset : lastPermByteOffset;
+        aCapacity = ((lastTempByteOffset > lastPermByteOffset) ? lastTempByteOffset : lastPermByteOffset);
     }
 
     LOGTRACE((0, "PVMFMemoryBufferWriteDataStreamImpl::QueryReadCapacity returning %d", aCapacity));
@@ -1576,7 +1557,7 @@ PVMFMemoryBufferWriteDataStreamImpl::QueryReadCapacity(PvmiDataStreamSession aSe
 OSCL_EXPORT_REF PvmiDataStreamCommandId
 PVMFMemoryBufferWriteDataStreamImpl::RequestReadCapacityNotification(PvmiDataStreamSession aSessionID,
         PvmiDataStreamObserver& aObserver,
-        uint32 aCapacity, OsclAny* aContextData)
+        TOsclFileOffset aCapacity, OsclAny* aContextData)
 {
     LOGTRACE((0, "PVMFMemoryBufferWriteDataStreamImpl::RequestReadCapacityNotification"));
 
@@ -1604,14 +1585,14 @@ PVMFMemoryBufferWriteDataStreamImpl::RequestReadCapacityNotification(PvmiDataStr
 
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
-PVMFMemoryBufferWriteDataStreamImpl::QueryWriteCapacity(PvmiDataStreamSession aSessionID, uint32& aCapacity)
+PVMFMemoryBufferWriteDataStreamImpl::QueryWriteCapacity(PvmiDataStreamSession aSessionID, TOsclFileOffset& aCapacity)
 {
     OSCL_UNUSED_ARG(aSessionID);
 
     // return the number of bytes left in the sliding window that can be filled
     // only support writing to the temp cache right now
     // the perm cache is filled by copyig from the temp cache
-    aCapacity = (iTempCache->GetTotalBytes() >= iTempCacheCapacity) ? 0 : iTempCacheCapacity - (iTempCache->GetTotalBytes());
+    aCapacity = (iTempCache->GetTotalBytes() >= (TOsclFileOffset)iTempCacheCapacity) ? 0 : (TOsclFileOffset)iTempCacheCapacity - (iTempCache->GetTotalBytes());
 
     LOGTRACE((0, "PVMFMemoryBufferWriteDataStreamImpl::QueryWriteCapacity returning %d", aCapacity));
 
@@ -1771,15 +1752,15 @@ PVMFMemoryBufferWriteDataStreamImpl::Write(PvmiDataStreamSession aSessionID, Osc
             iRepositionRequest.iOutstanding = false;
         }
         bool written = false;
-        uint32 dataWritten = 0, totalDataWritten = 0;
+        TOsclFileOffset dataWritten = 0, totalDataWritten = 0;
 
         // check if this data is supposed to written to the perm cache if perm cache is not empty
-        uint32 firstPermOffset = 0;
-        uint32 lastPermOffset = 0;
+        TOsclFileOffset firstPermOffset = 0;
+        TOsclFileOffset lastPermOffset = 0;
         iPermCache->GetPermOffsets(firstPermOffset, lastPermOffset);
 
-        uint32 firstPermReadOffset = 0;
-        uint32 lastPermReadOffset = 0;
+        TOsclFileOffset firstPermReadOffset = 0;
+        TOsclFileOffset lastPermReadOffset = 0;
         iPermCache->GetFileOffsets(firstPermReadOffset, lastPermReadOffset);
         if (0 != lastPermReadOffset)
         {
@@ -1791,10 +1772,10 @@ PVMFMemoryBufferWriteDataStreamImpl::Write(PvmiDataStreamSession aSessionID, Osc
         uint32 fragSize = aFrag->getMemFragSize();
         uint8* fragPtr = (uint8*)aFrag->getMemFragPtr();
 
-        uint32 tempCacheCapacity = 0;
+        TOsclFileOffset tempCacheCapacity = 0;
         if (PVMF_MBDS_TEMPCACHE_INFINITE == GetTempCacheWriteCapacity(tempCacheCapacity))
         {
-            tempCacheCapacity = 0xFFFFFFFF;
+            tempCacheCapacity = (TOsclFileOffset)MAX_TOSCLFILEOFFSET_VALUE;
         }
 
         // perm cache should be empty for Shoutcast
@@ -1808,12 +1789,12 @@ PVMFMemoryBufferWriteDataStreamImpl::Write(PvmiDataStreamSession aSessionID, Osc
             // however, there may be data in this frag that has not been made persistent
             // if there is data left in this frag that does not belong in the perm cache,
             // add the entire fragment to the temp cache
-            if ((iFilePtrPos + fragSize - 1) > lastPermOffset)
+            if ((iFilePtrPos + (TOsclFileOffset)fragSize - 1) > lastPermOffset)
             {
                 LOGDEBUG((0, "PVMFMemoryBufferWriteDataStreamImpl::Write partially to perm cache"));
 
                 // part of frag has been made persistent
-                uint32 firstEntrySize = lastPermOffset - iFilePtrPos + 1;
+                TOsclFileOffset firstEntrySize = lastPermOffset - iFilePtrPos + 1;
                 // copy the first part
                 status = iPermCache->WriteBytes(fragPtr, firstEntrySize, dataWritten, iFilePtrPos);
                 totalDataWritten = dataWritten;
@@ -1833,7 +1814,7 @@ PVMFMemoryBufferWriteDataStreamImpl::Write(PvmiDataStreamSession aSessionID, Osc
                     }
                     else
                     {
-                        if (tempCacheCapacity >= fragSize)
+                        if (tempCacheCapacity >= (TOsclFileOffset)fragSize)
                         {
                             status = iTempCache->AddEntry(aFrag, fragPtr, fragSize, dataWritten, iFilePtrPos);
                             if (PVDS_SUCCESS == status || PVDS_PENDING == status)
@@ -1869,8 +1850,8 @@ PVMFMemoryBufferWriteDataStreamImpl::Write(PvmiDataStreamSession aSessionID, Osc
             // this mem frag should be added to temp cache
             // If this mem frag does not fit sequentially in the cache, i.e. a reposition has happened
             // The cache needs to be flushed and all the existing entries returned
-            uint32 firstByteOffset = 0;
-            uint32 lastByteOffset = 0;
+            TOsclFileOffset firstByteOffset = 0;
+            TOsclFileOffset lastByteOffset = 0;
             iTempCache->GetFileOffsets(firstByteOffset, lastByteOffset);
             if (iFilePtrPos != (lastByteOffset + 1))
             {
@@ -1888,7 +1869,7 @@ PVMFMemoryBufferWriteDataStreamImpl::Write(PvmiDataStreamSession aSessionID, Osc
                     NotifyObserverToDeleteMemFrag(frag);
                 }
             }
-            if (tempCacheCapacity >= fragSize)
+            if (tempCacheCapacity >= (TOsclFileOffset)fragSize)
             {
                 status = iTempCache->AddEntry(aFrag, fragPtr, fragSize, dataWritten, iFilePtrPos);
                 if (PVDS_SUCCESS == status || PVDS_PENDING == status)
@@ -1923,7 +1904,7 @@ PVMFMemoryBufferWriteDataStreamImpl::Write(PvmiDataStreamSession aSessionID, Osc
 
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
-PVMFMemoryBufferWriteDataStreamImpl::Seek(PvmiDataStreamSession aSessionID, int32 aOffset, PvmiDataStreamSeekType aOrigin)
+PVMFMemoryBufferWriteDataStreamImpl::Seek(PvmiDataStreamSession aSessionID, TOsclFileOffset aOffset, PvmiDataStreamSeekType aOrigin)
 {
     LOGTRACE((0, "PVMFMemoryBufferWriteDataStreamImpl::Seek offset %d origin %d", aOffset, aOrigin));
 
@@ -1968,14 +1949,14 @@ PVMFMemoryBufferWriteDataStreamImpl::Seek(PvmiDataStreamSession aSessionID, int3
 
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
-PVMFMemoryBufferWriteDataStreamImpl::Reposition(PvmiDataStreamSession aSessionID, uint32 aOffset,
+PVMFMemoryBufferWriteDataStreamImpl::Reposition(PvmiDataStreamSession aSessionID, TOsclFileOffset aOffset,
         MBDSRepositionMode aMode)
 {
     LOGTRACE((0, "PVMFMemoryBufferWriteDataStreamImpl::Reposition"));
 
     // there is no repositioning in Shoutcast
     // no need to worry about 4GB wrap around problem right now
-    uint32 writeCap = 0;
+    TOsclFileOffset writeCap = 0;
     QueryWriteCapacity(0, writeCap);
     PvmiDataStreamStatus status = PVDS_SUCCESS;
 
@@ -1993,22 +1974,24 @@ PVMFMemoryBufferWriteDataStreamImpl::Reposition(PvmiDataStreamSession aSessionID
         return status;
     }
     else if ((aOffset >= iFilePtrPos)
-             && ((writeCap != 0) && ((writeCap + iFilePtrPos) > aOffset)))
+             && ((writeCap != (TOsclFileOffset)0) && ((writeCap + iFilePtrPos) > aOffset)))
     {
         // data is on route. Now check whether we should send new GET and flush the old data or just wait
         LOGDEBUG((0, "PVMFMemoryBufferWriteDataStreamImpl::Reposition data is en route, GET request not sent"));
         // Check for read position pointers in temp cache
         bool found = false;
-        uint32 smallest = 0xFFFFFFFF;
+
+        TOsclFileOffset smallest = (TOsclFileOffset)MAX_TOSCLFILEOFFSET_VALUE;
+
         {
-            uint32 firstPersistentOffset = 0;
-            uint32 lastPersistentOffset = 0;
+            TOsclFileOffset firstPersistentOffset = 0;
+            TOsclFileOffset lastPersistentOffset = 0;
             iPermCache->GetPermOffsets(firstPersistentOffset, lastPersistentOffset);
-            for (int32 i = 0; i < PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
+            for (int32 i = 0; i < (int32)PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
             {
                 if ((iReadFilePositions[i].iReadPositionStructValid == true) && (iReadFilePositions[i].iInTempCache == true))
                 {
-                    if ((0 == i) && (0 == firstPersistentOffset) && (0 == lastPersistentOffset) && (0 == iReadFilePositions[i].iReadFilePtr))
+                    if (((int32)0 == i) && ((TOsclFileOffset)0 == firstPersistentOffset) && ((TOsclFileOffset)0 == lastPersistentOffset) && ((TOsclFileOffset)0 == iReadFilePositions[i].iReadFilePtr))
                     {
                         // nothing made persistent, ignore session 0 ptr at offset 0
                         continue;
@@ -2028,12 +2011,12 @@ PVMFMemoryBufferWriteDataStreamImpl::Reposition(PvmiDataStreamSession aSessionID
         {
             if (smallest < iFilePtrPos)
             {
-                uint32 firstTempOffset = 0;
-                uint32 lastTempOffset = 0;
+                TOsclFileOffset firstTempOffset = 0;
+                TOsclFileOffset lastTempOffset = 0;
                 iTempCache->GetFileOffsets(firstTempOffset, lastTempOffset);
 
-                uint32 bytesToWait = aOffset - lastTempOffset;
-                if (bytesToWait <= PV_MBDS_FWD_SEEKING_NO_GET_REQUEST_THRESHOLD)
+                TOsclFileOffset bytesToWait = aOffset - lastTempOffset;
+                if (bytesToWait <= (TOsclFileOffset)PV_MBDS_FWD_SEEKING_NO_GET_REQUEST_THRESHOLD)
                 {
                     LOGDEBUG((0, "Ln %d Do nothing. found %d smalltest %d bytesToWait %d", __LINE__, found, smallest, bytesToWait));
                     return status;
@@ -2043,8 +2026,8 @@ PVMFMemoryBufferWriteDataStreamImpl::Reposition(PvmiDataStreamSession aSessionID
 
             if ((smallest >= iFilePtrPos) &&
                     (iFilePtrPos + PV_MBDS_FWD_SEEKING_NO_GET_REQUEST_THRESHOLD > smallest) &&
-                    ((writeCap != 0) && ((smallest - iFilePtrPos) < writeCap)) &&
-                    (iAVTOffsetDelta < iTempCacheCapacity))
+                    ((writeCap != (TOsclFileOffset)0) && ((smallest - iFilePtrPos) < writeCap)) &&
+                    (iAVTOffsetDelta < (TOsclFileOffset)iTempCacheCapacity))
             {
                 //LOGE("Ln %d Do nothing. found %d smalltest %d", __LINE__, found, smallest );
                 return status;
@@ -2096,8 +2079,8 @@ PVMFMemoryBufferWriteDataStreamImpl::Reposition(PvmiDataStreamSession aSessionID
                     if (0 != iPermCache->GetNumEntries())
                     {
                         hasPerm = true;
-                        uint32 firstPermByteOffset = 0;
-                        uint32 lastPermByteOffset = 0;
+                        TOsclFileOffset firstPermByteOffset = 0;
+                        TOsclFileOffset lastPermByteOffset = 0;
                         iPermCache->GetFileOffsets(firstPermByteOffset, lastPermByteOffset);
 
                         // should never reposition outside of the temp cache
@@ -2115,7 +2098,7 @@ PVMFMemoryBufferWriteDataStreamImpl::Reposition(PvmiDataStreamSession aSessionID
                 if (!hasPerm)
                 {
                     // add the margin
-                    if (aOffset > PV_MBDS_TEMP_CACHE_TRIM_MARGIN_PS)
+                    if (aOffset > (TOsclFileOffset)PV_MBDS_TEMP_CACHE_TRIM_MARGIN_PS)
                     {
                         iRepositionRequest.iNewFilePosition = aOffset - PV_MBDS_TEMP_CACHE_TRIM_MARGIN_PS;
                     }
@@ -2175,10 +2158,10 @@ PVMFMemoryBufferWriteDataStreamImpl::Reposition(PvmiDataStreamSession aSessionID
 }
 
 
-OSCL_EXPORT_REF uint32
+OSCL_EXPORT_REF TOsclFileOffset
 PVMFMemoryBufferWriteDataStreamImpl::GetCurrentPointerPosition(PvmiDataStreamSession aSessionID)
 {
-    uint32 pos = 0;
+    TOsclFileOffset pos = 0;
     // Return the write position pointer
     // Make sure this is the write session and that the session is open
     if ((aSessionID == 0) && (iWriteSessionOpened))
@@ -2231,15 +2214,15 @@ PVMFMemoryBufferWriteDataStreamImpl::NotifyDownloadComplete()
 
 
 OSCL_EXPORT_REF void
-PVMFMemoryBufferWriteDataStreamImpl::SetContentLength(uint32 aContentLength)
+PVMFMemoryBufferWriteDataStreamImpl::SetContentLength(TOsclFileOffset aContentLength)
 {
     iContentLength = aContentLength;
 
-    LOGTRACE((0, "PVMFMemoryBufferWriteDataStreamImpl::SetContentLength %d", iContentLength));
+    LOGTRACE((0, "PVMFMemoryBufferWriteDataStreamImpl::SetContentLength %I64d", iContentLength));
 }
 
 
-OSCL_EXPORT_REF uint32
+OSCL_EXPORT_REF TOsclFileOffset
 PVMFMemoryBufferWriteDataStreamImpl::GetContentLength()
 {
     LOGTRACE((0, "PVMFMemoryBufferWriteDataStreamImpl::GetContentLength returning %d", iContentLength));
@@ -2336,7 +2319,7 @@ OSCL_EXPORT_REF uint32 PVMFMemoryBufferWriteDataStreamImpl::QueryBufferingTrimMa
 }
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
-PVMFMemoryBufferWriteDataStreamImpl::MakePersistent(int32 aOffset, uint32 aSize)
+PVMFMemoryBufferWriteDataStreamImpl::MakePersistent(TOsclFileOffset aOffset, uint32 aSize)
 {
     OSCL_UNUSED_ARG(aOffset);
     OSCL_UNUSED_ARG(aSize);
@@ -2347,7 +2330,7 @@ PVMFMemoryBufferWriteDataStreamImpl::MakePersistent(int32 aOffset, uint32 aSize)
 
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
-PVMFMemoryBufferWriteDataStreamImpl::SetReadPointerPosition(PvmiDataStreamSession aSessionID, uint32 aFilePosition)
+PVMFMemoryBufferWriteDataStreamImpl::SetReadPointerPosition(PvmiDataStreamSession aSessionID, TOsclFileOffset aFilePosition)
 {
     LOGTRACE((0, "PVMFMemoryBufferWriteDataStreamImpl::SetReadPointerPosition session %d pos %d", aSessionID, aFilePosition));
 
@@ -2355,7 +2338,7 @@ PVMFMemoryBufferWriteDataStreamImpl::SetReadPointerPosition(PvmiDataStreamSessio
     {
         // go through the temp cache looking for the id's of the audio/video/text sessions
         PvmiDataStreamSession avtFirst = 0, avtSecond = 0, avtThird = 0;
-        for (int32 i = 0; i < PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
+        for (int32 i = 0; i < (int32)PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
         {
             if ((iReadFilePositions[i].iReadPositionStructValid == true) && (iReadFilePositions[i].iInTempCache == true))
             {
@@ -2414,7 +2397,7 @@ PVMFMemoryBufferWriteDataStreamImpl::SetReadPointerPosition(PvmiDataStreamSessio
                 }
                 if (0 != iAVTSessionID[2])
                 {
-                    uint32 tempDelta = 0;
+                    TOsclFileOffset tempDelta = 0;
                     if (iReadFilePositions[iAVTSessionID[1]].iReadFilePtr > iReadFilePositions[iAVTSessionID[2]].iReadFilePtr)
                     {
                         tempDelta = iReadFilePositions[iAVTSessionID[1]].iReadFilePtr > iReadFilePositions[iAVTSessionID[2]].iReadFilePtr;
@@ -2482,7 +2465,7 @@ PVMFMemoryBufferWriteDataStreamImpl::ManageReadCapacityNotifications()
     // Send notification if write pointer has advanced beyond requested read capacity, or
     // download has completed
 
-    uint32 currFilePosition = iFilePtrPos;
+    TOsclFileOffset currFilePosition = iFilePtrPos;
     for (uint32 i = 0; i < PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
     {
         // Make sure it a valid iReadNotifications element
@@ -2493,9 +2476,17 @@ PVMFMemoryBufferWriteDataStreamImpl::ManageReadCapacityNotifications()
         {
             bool bSend = false;
             PVMFStatus status = PVMFFailure;
-            uint32 desiredPosition = iReadNotifications[i].iFilePosition + iReadNotifications[i].iReadCapacity;
+            TOsclFileOffset desiredPosition = iReadNotifications[i].iFilePosition + iReadNotifications[i].iReadCapacity;
 
-            // deal with 4GB wrap around
+            bool inRange = false;
+            IS_OFFSET_IN_RANGE(iReadNotifications[i].iFilePosition , currFilePosition, desiredPosition , inRange);
+            if (inRange)
+            {
+                bSend = true;
+                status = PVMFSuccess;
+            }
+
+            /*// deal with 4GB wrap around
             if (iReadNotifications[i].iFilePosition >= WRAP_THRESHOLD)
             {
                 // potential of pointers wrapping around at 4GB
@@ -2530,7 +2521,7 @@ PVMFMemoryBufferWriteDataStreamImpl::ManageReadCapacityNotifications()
                     bSend = true;
                     status = PVMFSuccess;
                 }
-            }
+            }*/
             if (!bSend && iDownloadComplete)
             {
                 // no more data is coming
@@ -2579,7 +2570,7 @@ PVMFMemoryBufferWriteDataStreamImpl::ManageCache()
     }
 
     // for debug only
-    for (int32 j = 0; j < PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; j++)
+    for (int32 j = 0; j < (int32)PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; j++)
     {
         LOGDEBUG((0, "PVMFMemoryBufferWriteDataStreamImpl::ManageCache session %d valid %d cache %d ptr %d",
                   j + 1, iReadFilePositions[j].iReadPositionStructValid, iReadFilePositions[j].iInTempCache, iReadFilePositions[j].iReadFilePtr));
@@ -2601,16 +2592,16 @@ PVMFMemoryBufferWriteDataStreamImpl::ManageCache()
     // find the smallest pointer position,
     // subtract 64000 from that and release old mem frags up to that point
 
-    uint32 firstPermByteOffset = 0;
-    uint32 lastPermByteOffset = 0;
+    TOsclFileOffset firstPermByteOffset = 0;
+    TOsclFileOffset lastPermByteOffset = 0;
     iPermCache->GetFileOffsets(firstPermByteOffset, lastPermByteOffset);
 
-    uint32 firstPersistentOffset = 0;
-    uint32 lastPersistentOffset = 0;
+    TOsclFileOffset firstPersistentOffset = 0;
+    TOsclFileOffset lastPersistentOffset = 0;
     iPermCache->GetPermOffsets(firstPersistentOffset, lastPersistentOffset);
 
-    uint32 firstTempByteOffset = 0;
-    uint32 lastTempByteOffset = 0;
+    TOsclFileOffset firstTempByteOffset = 0;
+    TOsclFileOffset lastTempByteOffset = 0;
     iTempCache->GetFileOffsets(firstTempByteOffset, lastTempByteOffset);
 
     LOGDEBUG((0, "PVMFMemoryBufferWriteDataStreamImpl::ManageCache firstPermByteOffset %d lastPermByteOffset %d firstTempByteOffset %d lastTempByteOffset %d",
@@ -2619,13 +2610,14 @@ PVMFMemoryBufferWriteDataStreamImpl::ManageCache()
     // Check for read position pointers in temp cache
     bool found = false;
     bool trim = false;
-    uint32 smallest = 0xFFFFFFFF;
 
-    for (int32 i = 0; i < PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
+    TOsclFileOffset smallest = (TOsclFileOffset)MAX_TOSCLFILEOFFSET_VALUE;
+
+    for (int32 i = 0; i < (int32)PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
     {
         if ((iReadFilePositions[i].iReadPositionStructValid == true) && (iReadFilePositions[i].iInTempCache == true))
         {
-            if ((0 == i) && (0 == firstPersistentOffset) && (0 == lastPersistentOffset) && (0 == iReadFilePositions[i].iReadFilePtr))
+            if (((int32)0 == i) && ((TOsclFileOffset)0 == firstPersistentOffset) && ((TOsclFileOffset)0 == lastPersistentOffset) && ((TOsclFileOffset)0 == iReadFilePositions[i].iReadFilePtr))
             {
                 // nothing made persistent, ignore session 0 ptr at offset 0
                 continue;
@@ -2650,7 +2642,36 @@ PVMFMemoryBufferWriteDataStreamImpl::ManageCache()
                 else
                 {
                     // this is the subsequent track(s)
-                    if (!((smallest >= WRAP_THRESHOLD) && (iReadFilePositions[i].iReadFilePtr < WRAP_THRESHOLD)))
+                    TOsclFileOffset difference = iReadFilePositions[i].iReadFilePtr - firstTempByteOffset;
+                    if (difference >=  0)
+                    {
+                        if (difference < smallest) smallest = difference;
+                    }
+                }
+            }
+            found = true;
+
+            /*if (MBDS_STREAM_FORMAT_SHOUTCAST != iStreamFormat)
+            {
+                if (iReadFilePositions[i].iReadFilePtr < smallest)
+                {
+                    smallest = iReadFilePositions[i].iReadFilePtr;
+                }
+            }
+            else
+            {
+                // there is usually only 1 track for shoutcast streams
+                // but if there are multiple tracks, since there is no seeking
+                // the read offsets should be close to one another
+                if (!found)
+                {
+                    // this is the first track encountered
+                    smallest = iReadFilePositions[i].iReadFilePtr;
+                }
+                else
+                {
+                    // this is the subsequent track(s)
+                    if (!((smallest >= (TOsclFileOffset)WRAP_THRESHOLD) && (iReadFilePositions[i].iReadFilePtr < (TOsclFileOffset)WRAP_THRESHOLD)))
                     {
                         if (iReadFilePositions[i].iReadFilePtr < smallest)
                         {
@@ -2659,7 +2680,7 @@ PVMFMemoryBufferWriteDataStreamImpl::ManageCache()
                     }
                 }
             }
-            found = true;
+            found = true;*/
         }
     }
 
@@ -2690,7 +2711,7 @@ PVMFMemoryBufferWriteDataStreamImpl::ManageCache()
         // If there is less than 64000 at the beginning, don't touch the cache
         // This is important in case there are other read sessions (audio, video, text) that have not yet been opened,
         // don't want to throw away any media data that may be needed later
-        if ((smallest - firstTempByteOffset) <= iTempCacheTrimMargin)
+        if ((smallest - firstTempByteOffset) <= (TOsclFileOffset)iTempCacheTrimMargin)
         {
             LOGDEBUG((0, "PVMFMemoryBufferWriteDataStreamImpl::ManageCache leaving a %d zone, do nothing", iTempCacheTrimMargin));
             return;
@@ -2701,33 +2722,33 @@ PVMFMemoryBufferWriteDataStreamImpl::ManageCache()
         }
     }
 
-    while ((0 != iTempCache->GetNumEntries()) && (trim || (iTempCache->GetTotalBytes() > (iTempCacheTrimThreshold))))
+    while ((0 != iTempCache->GetNumEntries()) && (trim || (iTempCache->GetTotalBytes() > (TOsclFileOffset)(iTempCacheTrimThreshold))))
     {
         // Check if any read pointers are pointing to this frag
         uint32 size = 0;
-        uint32 offset = 0;
+        TOsclFileOffset offset = 0;
         iTempCache->GetFirstEntryInfo(offset, size);
 
         bool inEntry = false;
-        IS_OFFSET_IN_RANGE(offset, offset + size - 1, smallest, inEntry);
+        IS_OFFSET_IN_RANGE(offset, offset + (TOsclFileOffset)(size - 1), smallest, inEntry);
 
         if (!inEntry)
         {
             // this entire fragment is below the zone and can be released if no read pointers are in it
             found = true;
-            for (int32 i = 0; i < PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
+            for (int32 i = 0; i < (int32)PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
             {
                 if ((iReadFilePositions[i].iReadPositionStructValid == true) && (iReadFilePositions[i].iInTempCache == true))
                 {
                     LOGDEBUG((0, "PVMFMemoryBufferWriteDataStreamImpl::ManageCache ptr %d session %d", iReadFilePositions[i].iReadFilePtr, i + 1));
 
-                    if ((0 == i) && (0 == firstPersistentOffset) && (0 == lastPersistentOffset) && (0 == iReadFilePositions[i].iReadFilePtr))
+                    if (((int32)0 == i) && ((TOsclFileOffset)0 == firstPersistentOffset) && ((TOsclFileOffset)0 == lastPersistentOffset) && ((TOsclFileOffset)0 == iReadFilePositions[i].iReadFilePtr))
                     {
                         // nothing made persistent, ignore session 0 ptr at offset 0
                         continue;
                     }
 
-                    IS_OFFSET_IN_RANGE(offset, offset + size - 1, iReadFilePositions[i].iReadFilePtr, inEntry);
+                    IS_OFFSET_IN_RANGE(offset, offset + (TOsclFileOffset)(size - 1), iReadFilePositions[i].iReadFilePtr, inEntry);
                     if (inEntry)
                     {
                         // this pointer is in cache entry, don't release
@@ -2802,16 +2823,16 @@ PVMFMemoryBufferWriteDataStreamImpl::TrimTempCache(MBDSCacheTrimMode aTrimMode)
         {
             bool releaseBuf = true;
             uint32 size = 0;
-            uint32 offset = 0;
+            TOsclFileOffset offset = 0;
             iTempCache->GetFirstEntryInfo(offset, size);
 
-            for (int i = 0; i < PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
+            for (int i = 0; i < (int)PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
             {
                 if ((true == iReadFilePositions[i].iReadPositionStructValid) &&
                         (iReadFilePositions[i].iInTempCache == true))
                 {
                     bool inEntry = false;
-                    IS_OFFSET_IN_RANGE(offset, offset + size - 1, iReadFilePositions[i].iReadFilePtr, inEntry);
+                    IS_OFFSET_IN_RANGE(offset, offset + (TOsclFileOffset)(size - 1), iReadFilePositions[i].iReadFilePtr, inEntry);
                     if (inEntry)
                     {
                         // don't release this buffer
@@ -2842,20 +2863,20 @@ PVMFMemoryBufferWriteDataStreamImpl::TrimTempCache(MBDSCacheTrimMode aTrimMode)
     {
         // Trim from the end, up to 1/2 of max cache size
         while (((MBDS_CACHE_TRIM_HEAD_AND_TAIL == aTrimMode) && (iTempCache->GetNumEntries() > 0)) ||
-                ((MBDS_CACHE_TRIM_TAIL_ONLY == aTrimMode) && (iTempCache->GetTotalBytes() > (iTempCacheCapacity >> 1))))
+                ((MBDS_CACHE_TRIM_TAIL_ONLY == aTrimMode) && (iTempCache->GetTotalBytes() > (TOsclFileOffset)(iTempCacheCapacity >> 1))))
         {
             bool releaseBuf = true;
             uint32 size = 0;
-            uint32 offset = 0;
+            TOsclFileOffset offset = 0;
             iTempCache->GetLastEntryInfo(offset, size);
 
-            for (int i = 0; i < PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
+            for (int i = 0; i < (int)PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
             {
                 if ((true == iReadFilePositions[i].iReadPositionStructValid) &&
                         (iReadFilePositions[i].iInTempCache == true))
                 {
                     bool inEntry = false;
-                    IS_OFFSET_IN_RANGE(offset, offset + size - 1, iReadFilePositions[i].iReadFilePtr, inEntry);
+                    IS_OFFSET_IN_RANGE(offset, offset + (TOsclFileOffset)(size - 1), iReadFilePositions[i].iReadFilePtr, inEntry);
                     if (inEntry)
                     {
                         // don't release this buffer
@@ -2891,8 +2912,8 @@ PVMFMemoryBufferWriteDataStreamImpl::UpdateReadPointersAfterMakePersistent()
 {
     LOGTRACE((0, "PVMFMemoryBufferWriteDataStreamImpl::UpdateReadPointersAfterMakePersistent"));
 
-    uint32 firstOffset = 0;
-    uint32 lastOffset = 0;
+    TOsclFileOffset firstOffset = 0;
+    TOsclFileOffset lastOffset = 0;
     iPermCache->GetFileOffsets(firstOffset, lastOffset);
 
     for (int32 i = 0; i < PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS; i++)
@@ -2912,10 +2933,10 @@ PVMFMemoryBufferWriteDataStreamImpl::UpdateReadPointersAfterMakePersistent()
 
 
 OSCL_EXPORT_REF bool
-PVMFMemoryBufferWriteDataStreamImpl::GetPermCachePersistence(uint32& aFirstOffset, uint32& aLastOffset)
+PVMFMemoryBufferWriteDataStreamImpl::GetPermCachePersistence(TOsclFileOffset& aFirstOffset, TOsclFileOffset& aLastOffset)
 {
-    uint32 firstPersistentOffset = 0;
-    uint32 lastPersistentOffset = 0;
+    TOsclFileOffset firstPersistentOffset = 0;
+    TOsclFileOffset lastPersistentOffset = 0;
     iPermCache->GetPermOffsets(firstPersistentOffset, lastPersistentOffset);
 
     LOGTRACE((0, "PVMFMemoryBufferWriteDataStreamImpl::GetPermCachePersistence MakePersistent called %d first offset %d last offset %d",
@@ -2993,7 +3014,7 @@ PVMFMemoryBufferWriteDataStreamImpl::IsWriteNotificationPending(PvmiDataStreamSe
 }
 
 PVMFMBDSTempCacheStatus
-PVMFMemoryBufferWriteDataStreamImpl::GetTempCacheWriteCapacity(uint32& aCapacity)
+PVMFMemoryBufferWriteDataStreamImpl::GetTempCacheWriteCapacity(TOsclFileOffset& aCapacity)
 {
     /* This function should update the  correct capacity of the temp cache if the memory of tempcache is finate.
        In case if the memory of tempcache is infinate as in the case of nomal MBDS which sotes only the pointers
@@ -3125,7 +3146,7 @@ PVMFMemoryBufferDataStreamTempCache::~PVMFMemoryBufferDataStreamTempCache()
 }
 
 
-uint32
+TOsclFileOffset
 PVMFMemoryBufferDataStreamTempCache::GetTotalBytes()
 {
     LOGTRACE((0, "PVMFMemoryBufferDataStreamTempCache::GetTotalBytes returning %d", iTotalBytes));
@@ -3134,7 +3155,7 @@ PVMFMemoryBufferDataStreamTempCache::GetTotalBytes()
 
 
 void
-PVMFMemoryBufferDataStreamTempCache::GetFileOffsets(uint32& aFirstByte, uint32& aLastByte)
+PVMFMemoryBufferDataStreamTempCache::GetFileOffsets(TOsclFileOffset& aFirstByte, TOsclFileOffset& aLastByte)
 {
 
     aFirstByte = iFirstByteFileOffset;
@@ -3145,7 +3166,7 @@ PVMFMemoryBufferDataStreamTempCache::GetFileOffsets(uint32& aFirstByte, uint32& 
 
 
 PvmiDataStreamStatus
-PVMFMemoryBufferDataStreamTempCache::AddEntry(OsclRefCounterMemFrag* aFrag, uint8* aFragPtr, uint32 aFragSize, uint32& dataWritten, uint32 aFileOffset)
+PVMFMemoryBufferDataStreamTempCache::AddEntry(OsclRefCounterMemFrag* aFrag, uint8* aFragPtr, TOsclFileOffset aFragSize, TOsclFileOffset& dataWritten, TOsclFileOffset aFileOffset)
 {
     LOGTRACE((0, "PVMFMemoryBufferDataStreamTempCache::AddEntry ptr %x size %d offset %d", aFragPtr, aFragSize, aFileOffset));
 
@@ -3183,7 +3204,7 @@ PVMFMemoryBufferDataStreamTempCache::AddEntry(OsclRefCounterMemFrag* aFrag, uint
             {
                 iLastByteFileOffset += aFragSize;
             }
-            iTotalBytes += aFragSize;
+            iTotalBytes += (uint32)aFragSize;
 
             LOGDEBUG((0, "PVMFMemoryBufferDataStreamTempCache::AddEntry %x size %d first %d last %d total %d",
                       entry, aFragSize, iFirstByteFileOffset, iLastByteFileOffset, iTotalBytes));
@@ -3191,7 +3212,7 @@ PVMFMemoryBufferDataStreamTempCache::AddEntry(OsclRefCounterMemFrag* aFrag, uint
             uint8 data[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
             int32 count = 16;
             if (aFragSize < 16)
-                count = aFragSize;
+                count = (int32)aFragSize;
             for (int32 i = 0; i < count; i++)
             {
                 data[i] = *(aFragPtr + i);
@@ -3228,9 +3249,9 @@ PVMFMemoryBufferDataStreamTempCache::RemoveFirstEntry(OsclRefCounterMemFrag*& aF
         found = true;
 
 #if (PVLOGGER_INST_LEVEL > PVLOGMSG_INST_LLDBG)
-        uint32 offset = entry->fileOffset;
+        TOsclFileOffset offset = entry->fileOffset;
 #endif
-        uint32 size = entry->fragSize;
+        uint32 size = (uint32)entry->fragSize;
 
         aFrag = entry->frag;
         aFragPtr = entry->fragPtr;
@@ -3282,8 +3303,8 @@ PVMFMemoryBufferDataStreamTempCache::RemoveLastEntry(OsclRefCounterMemFrag*& aFr
 
         found = true;
 
-        uint32 offset = entry->fileOffset;
-        uint32 size = entry->fragSize;
+        TOsclFileOffset offset = entry->fileOffset;
+        uint32 size = (uint32)entry->fragSize;
 
         aFrag = entry->frag;
         aFragPtr = entry->fragPtr;
@@ -3314,8 +3335,8 @@ PVMFMemoryBufferDataStreamTempCache::RemoveLastEntry(OsclRefCounterMemFrag*& aFr
     return found;
 }
 
-uint32
-PVMFMemoryBufferDataStreamTempCache::ReadBytes(uint8* aBuffer, uint32 aFirstByte, uint32 aLastByte, uint32& firstEntry)
+TOsclFileOffset
+PVMFMemoryBufferDataStreamTempCache::ReadBytes(uint8* aBuffer, TOsclFileOffset aFirstByte, TOsclFileOffset aLastByte, uint32& firstEntry)
 {
     LOGTRACE((0, "PVMFMemoryBufferDataStreamTempCache::ReadBytes buf %x first %d last %d", aBuffer, aFirstByte, aLastByte));
 
@@ -3323,8 +3344,8 @@ PVMFMemoryBufferDataStreamTempCache::ReadBytes(uint8* aBuffer, uint32 aFirstByte
     // the first byte should be in the cache, need to go through the cache entries for the file offset
     bool found = false;
     uint32 count = iEntries.size();
-    uint32 bytesRead = 0;
-    uint32 bytesToRead = 0;
+    TOsclFileOffset bytesRead = 0;
+    TOsclFileOffset bytesToRead = 0;
     uint8* dataPtr = NULL;
     uint8* bufferPtr = aBuffer;
 
@@ -3347,9 +3368,9 @@ PVMFMemoryBufferDataStreamTempCache::ReadBytes(uint8* aBuffer, uint32 aFirstByte
                     //LOGDEBUG((0, "TC1 entry %d offset %d size %d", i, iEntries[i]->fileOffset, iEntries[i]->fragSize));
                     // every byte to be read is in this one frag
                     dataPtr = iEntries[i]->fragPtr + (aFirstByte - iEntries[i]->fileOffset);
-                    bytesToRead = aLastByte - aFirstByte + 1;
+                    bytesToRead = (aLastByte - aFirstByte + 1);
                     // copy the data to the buffer
-                    oscl_memcpy(bufferPtr, dataPtr, bytesToRead);
+                    oscl_memcpy(bufferPtr, dataPtr, (uint32)bytesToRead);
                     bytesRead += bytesToRead;
                     firstEntry = i;
                     // done
@@ -3360,9 +3381,9 @@ PVMFMemoryBufferDataStreamTempCache::ReadBytes(uint8* aBuffer, uint32 aFirstByte
                     //LOGDEBUG((0, "TC2 entry %d offset %d size %d", i, iEntries[i]->fileOffset, iEntries[i]->fragSize));
                     // only a portion is in this frag
                     dataPtr = iEntries[i]->fragPtr + (aFirstByte - iEntries[i]->fileOffset);
-                    bytesToRead = iEntries[i]->fragSize - (aFirstByte - iEntries[i]->fileOffset);
+                    bytesToRead = (iEntries[i]->fragSize - (aFirstByte - iEntries[i]->fileOffset));
                     // copy the data, the rest of the data should be in the next frag or frags
-                    oscl_memcpy(bufferPtr, dataPtr, bytesToRead);
+                    oscl_memcpy(bufferPtr, dataPtr, (uint32)bytesToRead);
                     bytesRead += bytesToRead;
                     bufferPtr += bytesToRead;
                     firstEntry = i;
@@ -3378,9 +3399,9 @@ PVMFMemoryBufferDataStreamTempCache::ReadBytes(uint8* aBuffer, uint32 aFirstByte
                 //LOGDEBUG((0, "TC3 entry %d offset %d size %d", i, iEntries[i]->fileOffset, iEntries[i]->fragSize));
                 // what is left to be read is in this one frag
                 dataPtr = iEntries[i]->fragPtr;
-                bytesToRead = aLastByte - iEntries[i]->fileOffset + 1;
+                bytesToRead = (aLastByte - iEntries[i]->fileOffset + 1);
                 // copy the data to the buffer
-                oscl_memcpy(bufferPtr, dataPtr, bytesToRead);
+                oscl_memcpy(bufferPtr, dataPtr, (uint32)bytesToRead);
                 bytesRead += bytesToRead;
                 // done
                 break;
@@ -3392,7 +3413,7 @@ PVMFMemoryBufferDataStreamTempCache::ReadBytes(uint8* aBuffer, uint32 aFirstByte
                 dataPtr = iEntries[i]->fragPtr;
                 bytesToRead = iEntries[i]->fragSize;
                 // copy the data, the rest of the data should be in the next frag or frags
-                oscl_memcpy(bufferPtr, dataPtr, bytesToRead);
+                oscl_memcpy(bufferPtr, dataPtr, (uint32)bytesToRead);
                 bytesRead += bytesToRead;
                 bufferPtr += bytesToRead;
             }
@@ -3405,7 +3426,7 @@ PVMFMemoryBufferDataStreamTempCache::ReadBytes(uint8* aBuffer, uint32 aFirstByte
 
 
 void
-PVMFMemoryBufferDataStreamTempCache::GetFirstEntryInfo(uint32& entryOffset, uint32& entrySize)
+PVMFMemoryBufferDataStreamTempCache::GetFirstEntryInfo(TOsclFileOffset& entryOffset, uint32& entrySize)
 {
     LOGTRACE((0, "PVMFMemoryBufferDataStreamTempCache::GetFirstEntryInfo"));
 
@@ -3414,7 +3435,7 @@ PVMFMemoryBufferDataStreamTempCache::GetFirstEntryInfo(uint32& entryOffset, uint
     {
         MBDSTempCacheEntry* entry = iEntries.front();
 
-        entrySize = entry->fragSize;
+        entrySize = (uint32)entry->fragSize;
         entryOffset = entry->fileOffset;
     }
 
@@ -3423,7 +3444,7 @@ PVMFMemoryBufferDataStreamTempCache::GetFirstEntryInfo(uint32& entryOffset, uint
 
 
 void
-PVMFMemoryBufferDataStreamTempCache::GetLastEntryInfo(uint32& entryOffset, uint32& entrySize)
+PVMFMemoryBufferDataStreamTempCache::GetLastEntryInfo(TOsclFileOffset& entryOffset, uint32& entrySize)
 {
     LOGTRACE((0, "PVMFMemoryBufferDataStreamCache::GetLastEntryInfo"));
 
@@ -3432,7 +3453,7 @@ PVMFMemoryBufferDataStreamTempCache::GetLastEntryInfo(uint32& entryOffset, uint3
     {
         MBDSTempCacheEntry* entry = iEntries.back();
 
-        entrySize = entry->fragSize;
+        entrySize = (uint32)entry->fragSize;
         entryOffset = entry->fileOffset;
     }
 
@@ -3489,7 +3510,7 @@ PVMFMemoryBufferDataStreamPermCache::~PVMFMemoryBufferDataStreamPermCache()
 }
 
 
-uint32
+TOsclFileOffset
 PVMFMemoryBufferDataStreamPermCache::GetTotalBytes()
 {
     LOGTRACE((0, "PVMFMemoryBufferDataStreamPermCache::GetTotalBytes returning %d", iTotalBytes));
@@ -3498,7 +3519,7 @@ PVMFMemoryBufferDataStreamPermCache::GetTotalBytes()
 
 
 void
-PVMFMemoryBufferDataStreamPermCache::GetFileOffsets(uint32& aFirstByte, uint32& aLastByte)
+PVMFMemoryBufferDataStreamPermCache::GetFileOffsets(TOsclFileOffset& aFirstByte, TOsclFileOffset& aLastByte)
 {
     aFirstByte = iFirstByteFileOffset;
     aLastByte = iLastByteFileOffset;
@@ -3508,7 +3529,7 @@ PVMFMemoryBufferDataStreamPermCache::GetFileOffsets(uint32& aFirstByte, uint32& 
 
 
 void
-PVMFMemoryBufferDataStreamPermCache::GetPermOffsets(uint32& aFirstByte, uint32& aLastByte)
+PVMFMemoryBufferDataStreamPermCache::GetPermOffsets(TOsclFileOffset& aFirstByte, TOsclFileOffset& aLastByte)
 {
     aFirstByte = iFirstPermByteOffset;
     aLastByte = iLastPermByteOffset;
@@ -3517,8 +3538,8 @@ PVMFMemoryBufferDataStreamPermCache::GetPermOffsets(uint32& aFirstByte, uint32& 
 }
 
 PvmiDataStreamStatus
-PVMFMemoryBufferDataStreamPermCache::AddEntry(uint8* aBufPtr, uint32 aBufSize, uint8* aFillPtr, uint32 aFirstOffset,
-        uint32 aLastOffset, uint32 aFillOffset, uint32 aFillSize)
+PVMFMemoryBufferDataStreamPermCache::AddEntry(uint8* aBufPtr, TOsclFileOffset aBufSize, uint8* aFillPtr, TOsclFileOffset aFirstOffset,
+        TOsclFileOffset aLastOffset, TOsclFileOffset aFillOffset, TOsclFileOffset aFillSize)
 {
     LOGTRACE((0, "PVMFMemoryBufferDataStreamPermCache::AddEntry bufPtr %x bufSize %d fillPtr %x firstOffset %d lastOffset %d fillOffset %d fillSize %d",
               aBufPtr, aBufSize, aFillPtr, aFirstOffset, aLastOffset, aFillOffset, aFillSize));
@@ -3584,7 +3605,7 @@ PVMFMemoryBufferDataStreamPermCache::AddEntry(uint8* aBufPtr, uint32 aBufSize, u
             uint8 data[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
             int32 count = 16;
             if (aBufSize < 16)
-                count = aBufSize;
+                count = (int32)aBufSize;
             for (int32 i = 0; i < count; i++)
             {
                 data[i] = *(aBufPtr + i);
@@ -3606,7 +3627,7 @@ PVMFMemoryBufferDataStreamPermCache::AddEntry(uint8* aBufPtr, uint32 aBufSize, u
 
 
 PvmiDataStreamStatus
-PVMFMemoryBufferDataStreamPermCache::WriteBytes(uint8* aFragPtr, uint32 aFragSize, uint32& dataWritten, uint32 aFileOffset)
+PVMFMemoryBufferDataStreamPermCache::WriteBytes(uint8* aFragPtr, TOsclFileOffset aFragSize, TOsclFileOffset& dataWritten, TOsclFileOffset aFileOffset)
 {
     LOGTRACE((0, "PVMFMemoryBufferDataStreamPermCache::WriteBytes aFragPtr %x aFragSize %d aFileOffset %d", aFragPtr, aFragSize, aFileOffset));
 
@@ -3649,9 +3670,9 @@ PVMFMemoryBufferDataStreamPermCache::WriteBytes(uint8* aFragPtr, uint32 aFragSiz
     // copy data into cache
     uint8* dstPtr = iEntries[entry]->bufPtr + (aFileOffset - iEntries[entry]->firstFileOffset);
     uint8* srcPtr = aFragPtr;
-    uint32 bytesToCopy = aFragSize;
-    uint32 bufAvail = iEntries[entry]->bufSize - (aFileOffset - iEntries[entry]->firstFileOffset);
-    uint32 copySize = bytesToCopy;
+    TOsclFileOffset bytesToCopy = aFragSize;
+    TOsclFileOffset bufAvail = (iEntries[entry]->bufSize - (aFileOffset - iEntries[entry]->firstFileOffset));
+    TOsclFileOffset copySize = bytesToCopy;
     while (bytesToCopy)
     {
         copySize = bytesToCopy;
@@ -3659,7 +3680,7 @@ PVMFMemoryBufferDataStreamPermCache::WriteBytes(uint8* aFragPtr, uint32 aFragSiz
         {
             copySize = bufAvail;
         }
-        oscl_memcpy(dstPtr, srcPtr, copySize);
+        oscl_memcpy(dstPtr, srcPtr, (uint32)copySize);
 
         iEntries[entry]->fillFileOffset += copySize;
         iEntries[entry]->fillSize += copySize;
@@ -3686,8 +3707,8 @@ PVMFMemoryBufferDataStreamPermCache::WriteBytes(uint8* aFragPtr, uint32 aFragSiz
 }
 
 
-uint32
-PVMFMemoryBufferDataStreamPermCache::ReadBytes(uint8* aBuffer, uint32 aFirstByte, uint32 aLastByte)
+TOsclFileOffset
+PVMFMemoryBufferDataStreamPermCache::ReadBytes(uint8* aBuffer, TOsclFileOffset aFirstByte, TOsclFileOffset aLastByte)
 {
     LOGTRACE((0, "PVMFMemoryBufferDataStreamPermCache::ReadBytes buf %x first %d last %d", aBuffer, aFirstByte, aLastByte));
 
@@ -3695,8 +3716,8 @@ PVMFMemoryBufferDataStreamPermCache::ReadBytes(uint8* aBuffer, uint32 aFirstByte
     // the first byte should be in the cache, go through the cache entires looking for the file offset
     bool found = false;
     uint32 count = iEntries.size();
-    uint32 bytesRead = 0;
-    uint32 bytesToRead = 0;
+    TOsclFileOffset bytesRead = 0;
+    TOsclFileOffset bytesToRead = 0;
     uint8* dataPtr = NULL;
     uint8* bufferPtr = aBuffer;
 
@@ -3720,9 +3741,9 @@ PVMFMemoryBufferDataStreamPermCache::ReadBytes(uint8* aBuffer, uint32 aFirstByte
                     //LOGDEBUG((0, "PC1 entry %d offset %d size %d", i, iEntries[i]->firstFileOffset, iEntries[i]->fillSize));
                     // every byte to be read is in this entry
                     dataPtr = iEntries[i]->bufPtr + (aFirstByte - iEntries[i]->firstFileOffset);
-                    bytesToRead = aLastByte - aFirstByte + 1;
+                    bytesToRead = (aLastByte - aFirstByte + 1);
                     // copy the data to the buffer
-                    oscl_memcpy(bufferPtr, dataPtr, bytesToRead);
+                    oscl_memcpy(bufferPtr, dataPtr, (uint32)bytesToRead);
                     bytesRead += bytesToRead;
                     // done
                     break;
@@ -3732,9 +3753,9 @@ PVMFMemoryBufferDataStreamPermCache::ReadBytes(uint8* aBuffer, uint32 aFirstByte
                     //LOGDEBUG((0, "PC2 entry %d offset %d size %d", i, iEntries[i]->firstFileOffset, iEntries[i]->fillSize));
                     // only a portion is in this entry
                     dataPtr = iEntries[i]->bufPtr + (aFirstByte - iEntries[i]->firstFileOffset);
-                    bytesToRead = iEntries[i]->fillSize - (aFirstByte - iEntries[i]->firstFileOffset);
+                    bytesToRead = (iEntries[i]->fillSize - (aFirstByte - iEntries[i]->firstFileOffset));
                     // copy the data, the rest of the data should be in the next entry/entries
-                    oscl_memcpy(bufferPtr, dataPtr, bytesToRead);
+                    oscl_memcpy(bufferPtr, dataPtr, (uint32)bytesToRead);
                     bytesRead += bytesToRead;
                     bufferPtr += bytesToRead;
                 }
@@ -3748,9 +3769,9 @@ PVMFMemoryBufferDataStreamPermCache::ReadBytes(uint8* aBuffer, uint32 aFirstByte
                 //LOGDEBUG((0, "PC3 entry %d offset %d size %d", i, iEntries[i]->firstFileOffset, iEntries[i]->fillSize));
                 // what is left to be read is in this entry
                 dataPtr = iEntries[i]->bufPtr;
-                bytesToRead = aLastByte - iEntries[i]->firstFileOffset + 1;
+                bytesToRead = (aLastByte - iEntries[i]->firstFileOffset + 1);
                 // copy the data to the buffer
-                oscl_memcpy(bufferPtr, dataPtr, bytesToRead);
+                oscl_memcpy(bufferPtr, dataPtr, (uint32) bytesToRead);
                 bytesRead += bytesToRead;
                 // done
                 break;
@@ -3762,7 +3783,7 @@ PVMFMemoryBufferDataStreamPermCache::ReadBytes(uint8* aBuffer, uint32 aFirstByte
                 dataPtr = iEntries[i]->bufPtr;
                 bytesToRead = iEntries[i]->fillSize;
                 // copy the data, the rest of the data should be in the next entry/entries
-                oscl_memcpy(bufferPtr, dataPtr, bytesToRead);
+                oscl_memcpy(bufferPtr, dataPtr, (uint32)bytesToRead);
                 bytesRead += bytesToRead;
                 bufferPtr += bytesToRead;
             }
@@ -3787,9 +3808,9 @@ PVMFMemoryBufferDataStreamPermCache::RemoveFirstEntry(uint8*& aFragPtr)
 
         found = true;
 #if (PVLOGGER_INST_LEVEL > PVLOGMSG_INST_LLDBG)
-        uint32 offset = entry->firstFileOffset;
+        TOsclFileOffset offset = entry->firstFileOffset;
 #endif
-        uint32 size = entry->fillSize;
+        TOsclFileOffset size = entry->fillSize;
 
         aFragPtr = entry->bufPtr;
 
@@ -3834,7 +3855,7 @@ PVMFMemoryBufferDataStreamPermCache::GetNumEntries()
 }
 
 
-uint32
+TOsclFileOffset
 PVMFMemoryBufferDataStreamPermCache::GetCacheSize()
 {
     LOGTRACE((0, "PVMFMemoryBufferDataStreamPermCache::GetCacheSize %d", iTotalBufferAlloc));

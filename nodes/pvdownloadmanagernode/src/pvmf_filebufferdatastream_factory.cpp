@@ -179,7 +179,7 @@ PVMFFileBufferDataStreamWriteDataStreamFactoryImpl::DestroyPVMFCPMPluginAccessIn
 }
 
 PvmiDataStreamStatus
-PVMFFileBufferDataStreamWriteDataStreamFactoryImpl::GetStreamReadCapacity(uint32& aCapacity)
+PVMFFileBufferDataStreamWriteDataStreamFactoryImpl::GetStreamReadCapacity(TOsclFileOffset& aCapacity)
 {
     aCapacity = 0;
     if (iWriteDataStream != NULL)
@@ -317,7 +317,7 @@ PVMFFileBufferReadDataStreamImpl::QueryRandomAccessCapability()
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
 PVMFFileBufferReadDataStreamImpl::QueryReadCapacity(PvmiDataStreamSession aSessionID,
-        uint32& capacity)
+        TOsclFileOffset& capacity)
 {
     int32 result = -1;
     if (!iFileObject)
@@ -326,7 +326,7 @@ PVMFFileBufferReadDataStreamImpl::QueryReadCapacity(PvmiDataStreamSession aSessi
         return PVDS_FAILURE;
     }
     // Get the current file position
-    uint32 currFilePosition = GetCurrentPointerPosition(aSessionID);
+    TOsclFileOffset currFilePosition = GetCurrentPointerPosition(aSessionID);
 
     // for projects on Symbian using RFileBuf cache enabled
     // we need to reload the filecache in symbian, since oscl fileio
@@ -336,9 +336,9 @@ PVMFFileBufferReadDataStreamImpl::QueryReadCapacity(PvmiDataStreamSession aSessi
 
     // since the behaviour of fflush is undefined for read-only files
     // file pos may not be preserved. So seek back
-    iFileObject->Seek((int32)(currFilePosition), Oscl_File::SEEKSET);
+    iFileObject->Seek((currFilePosition), Oscl_File::SEEKSET);
 
-    uint32 lastFilePosition = 0;
+    TOsclFileOffset lastFilePosition = 0;
     // Determine the file size from write datastream.
     result = iWriteDataStream->QueryReadCapacity(iSessionID, lastFilePosition);
     if (result != 0)
@@ -360,7 +360,7 @@ PVMFFileBufferReadDataStreamImpl::QueryReadCapacity(PvmiDataStreamSession aSessi
 OSCL_EXPORT_REF PvmiDataStreamCommandId
 PVMFFileBufferReadDataStreamImpl::RequestReadCapacityNotification(PvmiDataStreamSession aSessionID,
         PvmiDataStreamObserver& observer,
-        uint32 capacity,
+        TOsclFileOffset capacity,
         OsclAny* aContextData)
 {
     OSCL_UNUSED_ARG(aSessionID);
@@ -391,9 +391,9 @@ PVMFFileBufferReadDataStreamImpl::RequestReadCapacityNotification(PvmiDataStream
     //Read datastream's current read location cannot exceed write datastream's
     //current location (cant read beyond what is written), therefore subtract
     //writedatastream's current position from capacity, before making the request
-    uint32 currwritepos = iWriteDataStream->GetCurrentPointerPosition(iSessionID);
-    uint32 currreadpos = GetCurrentPointerPosition(0);
-    uint32 finalreadpositionforthisrequest = currreadpos + capacity;
+    TOsclFileOffset currwritepos = iWriteDataStream->GetCurrentPointerPosition(iSessionID);
+    TOsclFileOffset currreadpos = GetCurrentPointerPosition(0);
+    TOsclFileOffset finalreadpositionforthisrequest = currreadpos + capacity;
     if (currwritepos >= finalreadpositionforthisrequest)
     {
         //this request should never have been sent
@@ -403,7 +403,7 @@ PVMFFileBufferReadDataStreamImpl::RequestReadCapacityNotification(PvmiDataStream
     }
     //these many bytes are yet to be written, so ask the writedatastream
     //to notify when they become available
-    uint32 requestsize = finalreadpositionforthisrequest - currwritepos;
+    TOsclFileOffset requestsize = finalreadpositionforthisrequest - currwritepos;
 
     PvmiDataStreamCommandId iCommandID = 0;
     int32 error = 0;
@@ -427,7 +427,7 @@ PVMFFileBufferReadDataStreamImpl::RequestReadCapacityNotification(PvmiDataStream
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
 PVMFFileBufferReadDataStreamImpl::QueryWriteCapacity(PvmiDataStreamSession aSessionID,
-        uint32& capacity)
+        TOsclFileOffset& capacity)
 {
     OSCL_UNUSED_ARG(aSessionID);
     OSCL_UNUSED_ARG(capacity);
@@ -533,7 +533,7 @@ PVMFFileBufferReadDataStreamImpl::Write(PvmiDataStreamSession aSessionID, OsclRe
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
 PVMFFileBufferReadDataStreamImpl::Seek(PvmiDataStreamSession aSessionID,
-                                       int32 offset,
+                                       TOsclFileOffset offset,
                                        PvmiDataStreamSeekType origin)
 {
     OSCL_UNUSED_ARG(aSessionID);
@@ -564,16 +564,16 @@ PVMFFileBufferReadDataStreamImpl::Seek(PvmiDataStreamSession aSessionID,
     return PVDS_SUCCESS;
 }
 
-OSCL_EXPORT_REF uint32
+OSCL_EXPORT_REF TOsclFileOffset
 PVMFFileBufferReadDataStreamImpl::GetCurrentPointerPosition(PvmiDataStreamSession aSessionID)
 {
     OSCL_UNUSED_ARG(aSessionID);
 
     if (!iFileObject)
         return 0;  // No iFileObject to work with, return zero
-    int32 result = (TOsclFileOffsetInt32)iFileObject->Tell();
+    TOsclFileOffset result = iFileObject->Tell();
     LOGDEBUG((0, "PVMFFileBufferReadDataStreamImpl::GetCurrentContentPosition returning %d", result));
-    return (uint32)(result);
+    return result;
 }
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
@@ -731,7 +731,7 @@ PVMFFileBufferWriteDataStreamImpl::OpenSession(PvmiDataStreamSession& aSessionID
             aSessionID = 0;
             if (result == 0)
             {
-                const int32 filesize = (TOsclFileOffsetInt32)iFileObject->Size();
+                const TOsclFileOffset filesize = iFileObject->Size();
                 if (filesize >= 0)
                     this->iFileNumBytes = filesize;
             }
@@ -818,7 +818,7 @@ PVMFFileBufferWriteDataStreamImpl::QueryRandomAccessCapability()
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
 PVMFFileBufferWriteDataStreamImpl::QueryReadCapacity(PvmiDataStreamSession aSessionID,
-        uint32& capacity)
+        TOsclFileOffset& capacity)
 {
     OSCL_UNUSED_ARG(aSessionID);
     OSCL_UNUSED_ARG(capacity);
@@ -830,7 +830,7 @@ PVMFFileBufferWriteDataStreamImpl::QueryReadCapacity(PvmiDataStreamSession aSess
 OSCL_EXPORT_REF PvmiDataStreamCommandId
 PVMFFileBufferWriteDataStreamImpl::RequestReadCapacityNotification(PvmiDataStreamSession aSessionID,
         PvmiDataStreamObserver& observer,
-        uint32 capacity,
+        TOsclFileOffset capacity,
         OsclAny* aContextData)
 {
     //  Check if the aSessionID is a valid SessionID
@@ -861,7 +861,7 @@ PVMFFileBufferWriteDataStreamImpl::RequestReadCapacityNotification(PvmiDataStrea
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
 PVMFFileBufferWriteDataStreamImpl::QueryWriteCapacity(PvmiDataStreamSession sessionID,
-        uint32& capacity)
+        TOsclFileOffset& capacity)
 {
     OSCL_UNUSED_ARG(sessionID);
     capacity = 0xFFFFFFFF; // for file write, write capacity would be infinite.
@@ -990,7 +990,7 @@ PVMFFileBufferWriteDataStreamImpl::Write(PvmiDataStreamSession aSessionID,
         if ((iReadNotifications[i].ReadStructValid == true) &&
                 (iReadNotifications[i].iReadObserver != NULL))
         {
-            uint32 currFilePosition = GetCurrentPointerPosition(0);
+            TOsclFileOffset currFilePosition = GetCurrentPointerPosition(0);
 
             PVMFStatus status;
             if ((currFilePosition -
@@ -1057,7 +1057,7 @@ PVMFFileBufferWriteDataStreamImpl::WriteAtOffset(PvmiDataStreamSession aSessionI
         uint8* aBuffer,
         uint32 aSize,
         uint32& aNumElements,
-        uint32 aOffset)
+        TOsclFileOffset aOffset)
 {
     if ((!iFileObject) || (aSessionID != 0))
     {
@@ -1066,7 +1066,7 @@ PVMFFileBufferWriteDataStreamImpl::WriteAtOffset(PvmiDataStreamSession aSessionI
     }
 
     // save the current position
-    uint32 currentPos = GetCurrentPointerPosition(aSessionID);
+    TOsclFileOffset currentPos = GetCurrentPointerPosition(aSessionID);
 
     // Now, seek to the desired point
     PvmiDataStreamStatus ret = Seek(aSessionID, aOffset, PVDS_SEEK_SET);
@@ -1077,10 +1077,10 @@ PVMFFileBufferWriteDataStreamImpl::WriteAtOffset(PvmiDataStreamSession aSessionI
     Flush(0);
 
     aNumElements = result;
-    uint32 maxOffsetWritten = aOffset + (aSize * aNumElements);
+    TOsclFileOffset maxOffsetWritten = aOffset + (aSize * aNumElements);
 
     // Only update with the num bytes written beyond the current file size
-    if (maxOffsetWritten > (uint32)iFileNumBytes)
+    if (maxOffsetWritten > iFileNumBytes)
         iFileNumBytes += maxOffsetWritten - iFileNumBytes;
 
     // seek to the previous position
@@ -1092,7 +1092,7 @@ PVMFFileBufferWriteDataStreamImpl::WriteAtOffset(PvmiDataStreamSession aSessionI
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
 PVMFFileBufferWriteDataStreamImpl::Seek(PvmiDataStreamSession aSessionID,
-                                        int32 offset,
+                                        TOsclFileOffset offset,
                                         PvmiDataStreamSeekType origin)
 {
     OSCL_UNUSED_ARG(aSessionID);
@@ -1123,16 +1123,16 @@ PVMFFileBufferWriteDataStreamImpl::Seek(PvmiDataStreamSession aSessionID,
     return PVDS_SUCCESS;
 }
 
-OSCL_EXPORT_REF uint32
+OSCL_EXPORT_REF TOsclFileOffset
 PVMFFileBufferWriteDataStreamImpl::GetCurrentPointerPosition(PvmiDataStreamSession aSessionID)
 {
     OSCL_UNUSED_ARG(aSessionID);
 
     if (!iFileObject)
         return 0;  // No iFileObject to work with, return zero
-    int32 result = (TOsclFileOffsetInt32)iFileObject->Tell();
+    TOsclFileOffset result = iFileObject->Tell();
     LOGDEBUG((0, "PVMFFileBufferWriteDataStreamImpl::GetCurrentContentPosition returning %d", result));
-    return (uint32)(result);
+    return result;
 }
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
@@ -1166,7 +1166,7 @@ PVMFFileBufferWriteDataStreamImpl::NotifyDownloadComplete()
         if ((iReadNotifications[i].ReadStructValid == true) &&
                 (iReadNotifications[i].iReadObserver != NULL))
         {
-            uint32 currFilePosition = GetCurrentPointerPosition(0);
+            TOsclFileOffset currFilePosition = GetCurrentPointerPosition(0);
 
             PVMFStatus status;
             if ((currFilePosition -

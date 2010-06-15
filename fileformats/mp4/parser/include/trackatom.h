@@ -341,7 +341,7 @@ class TrackAtom : public Atom
         // Atom only holds TS deltas.  For a track that does not begin at 0s, we need to hold an
         // offset timestamp value.
         int32 NEWsetTrackTSOffset(uint32 ts);
-        int32 getTrackTSOffset(uint32& aTSOffset, uint32 aMovieTimeScale);
+        int32 getTrackTSOffset(TOsclFileOffset& aTSOffset, uint32 aMovieTimeScale);
 
         //From TrackHeader
         uint64 getTrackDuration()

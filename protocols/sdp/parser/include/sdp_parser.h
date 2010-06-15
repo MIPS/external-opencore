@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ class SDP_Parser
         ~SDP_Parser();
 
         OSCL_IMPORT_REF
-        SDP_ERROR_CODE parseSDP(const char *, int length , SDPInfo *sdp);
+        SDP_ERROR_CODE parseSDP(const char *, int64 length , SDPInfo *sdp);
 
         OSCL_IMPORT_REF
         SDP_ERROR_CODE parseSDPDownload(const char *, int length, SDPInfo *sdp, movieInfo *mv);

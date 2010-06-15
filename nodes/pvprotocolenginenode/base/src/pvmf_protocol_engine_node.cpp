@@ -21,6 +21,10 @@
 #include "pvlogger.h"
 #include "oscl_utf8conv.h"
 
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
 #define Response300StatusCode     300
 #define Response301StatusCode     301
 #define Response302StatusCode     302
@@ -798,7 +802,7 @@ void PVMFProtocolEngineNode::ReportInfoEvent(PVMFEventType aEventType, OsclAny* 
         const int32 aEventCode, OsclAny* aEventLocalBuffer,
         const uint32 aEventLocalBufferSize)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFProtocolEngineNode:NodeInfoEvent Type %d Data %d",
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFProtocolEngineNode:NodeInfoEvent Type %d Data %u",
                     aEventType, aEventData));
 
     if (aEventCode == 0)
@@ -2672,7 +2676,7 @@ bool HttpHeaderAvailableHandler::handle(PVProtocolEngineNodeInternalEvent &aEven
     bool status = true;
     if (headerLength > 0)
     {
-        uint32 length = iProtocol->getContentLength();
+        TOsclFileOffset length = iProtocol->getContentLength();
         iNode->iInterfacingObjectContainer->setFileSize(length);
         iNodeOutput->setContentLength(length);
         status = iNode->iProtocolContainer->downloadUpdateForHttpHeaderAvailable();

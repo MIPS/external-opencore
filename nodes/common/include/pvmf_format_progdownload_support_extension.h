@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,10 @@
 #include "pvmi_kvp.h"
 #endif
 
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
 #define PVMF_FF_PROGDOWNLOAD_SUPPORT_INTERFACE_MIMETYPE "x-pvmf/pvmf/ff/progdownload-support"
 #define PVMF_FF_PROGDOWNLOAD_SUPPORT_INTERFACE_UUID PVUuid(0x00f80b00, 0x4bd4, 0x4656, 0x8e, 0x0f, 0x63, 0xe0, 0x3d, 0x7a, 0x5f, 0x39)
 
@@ -61,13 +65,13 @@ class PVMFFormatProgDownloadSupportInterface:  public PVInterface
          * Any other return value indicates ERROR.
          *
          */
-        virtual int32 convertSizeToTime(uint32 aFileSize, uint32& aNPTInMS) = 0;
+        virtual int32 convertSizeToTime(TOsclFileOffset aFileSize, uint32& aNPTInMS) = 0;
 
         /**
          * This API sets the file size to parser node. If the file size is not available, then this API shouldn't be called
          * @param aFileSize
         */
-        virtual void setFileSize(const uint32 aFileSize) = 0;
+        virtual void setFileSize(const TOsclFileOffset aFileSize) = 0;
 
         /**
          * Sets the download progress interface which will be used to determine if there is sufficient

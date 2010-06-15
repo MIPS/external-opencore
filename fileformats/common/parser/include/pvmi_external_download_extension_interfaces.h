@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ class PVMIExternalDownloadSizeObserver
 {
     public:
         virtual ~PVMIExternalDownloadSizeObserver() {};
-        virtual void DownloadUpdate(uint32 aLatestFileSizeInBytes, bool aDownloadComplete) = 0;
+        virtual void DownloadUpdate(TOsclFileOffset aLatestFileSizeInBytes, bool aDownloadComplete) = 0;
 };
 
 #define PVMIExternalDownloadSizeUpdateInterfaceUUID PVUuid(0x417da9d4, 0x3200, 0x450b, 0x95, 0x57, 0x95, 0x17, 0x54, 0x57, 0x66, 0xc5)
@@ -45,7 +45,7 @@ class PVMIExternalDownloadSizeUpdateInterface : public PVInterface
     public:
         virtual void SetObserver(PVMIExternalDownloadSizeObserver* aObs) = 0;
         virtual void RemoveObserver(PVMIExternalDownloadSizeObserver* aObs) = 0;
-        virtual uint32 GetDownloadedFileSize() = 0;
+        virtual TOsclFileOffset GetDownloadedFileSize() = 0;
         virtual bool IsDownloadComplete() = 0;
 };
 

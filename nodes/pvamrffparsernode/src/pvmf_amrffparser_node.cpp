@@ -1705,11 +1705,11 @@ PVMFStatus PVMFAMRFFParserNode::CheckForAMRHeaderAvailability()
          * First check if we have minimum number of bytes to recognize
          * the file and determine the header size.
          */
-        uint32 currCapacity = 0;
+        TOsclFileOffset currCapacity = 0;
         iDataStreamInterface->QueryReadCapacity(iDataStreamSessionID,
                                                 currCapacity);
 
-        if (currCapacity <  AMR_MIN_DATA_SIZE_FOR_RECOGNITION)
+        if (currCapacity < (TOsclFileOffset)AMR_MIN_DATA_SIZE_FOR_RECOGNITION)
         {
             iRequestReadCapacityNotificationID =
                 iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
@@ -1722,7 +1722,7 @@ PVMFStatus PVMFAMRFFParserNode::CheckForAMRHeaderAvailability()
         uint32 headerSize32 =
             Oscl_Int64_Utils::get_uint64_lower32(iAMRHeaderSize);
 
-        if (currCapacity < headerSize32)
+        if (currCapacity < (TOsclFileOffset)headerSize32)
         {
             iRequestReadCapacityNotificationID =
                 iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
@@ -2306,12 +2306,12 @@ void PVMFAMRFFParserNode::CompleteGetMetaDataValues()
     CommandComplete(iCurrentCommand, PVMFSuccess);
 }
 
-void PVMFAMRFFParserNode::setFileSize(const uint32 aFileSize)
+void PVMFAMRFFParserNode::setFileSize(const TOsclFileOffset aFileSize)
 {
-    iDownloadFileSize = aFileSize;
+    iDownloadFileSize = (uint32)aFileSize;
 }
 
-int32 PVMFAMRFFParserNode::convertSizeToTime(uint32 aFileSize, uint32& aNPTInMS)
+int32 PVMFAMRFFParserNode::convertSizeToTime(TOsclFileOffset aFileSize, uint32& aNPTInMS)
 {
     OSCL_UNUSED_ARG(aFileSize);
     OSCL_UNUSED_ARG(aNPTInMS);
@@ -2637,7 +2637,7 @@ PVMFStatus PVMFAMRFFParserNode::RetrieveMediaSample(PVAMRFFNodeTrackPortInfo* aT
                 aTrackInfoPtr->oEOSReached = true;
                 return PVMFSuccess;
             }
-            iDownloadProgressInterface->requestResumeNotification(aTrackInfoPtr->iContinuousTimeStamp,
+            iDownloadProgressInterface->requestResumeNotification((uint32)aTrackInfoPtr->iContinuousTimeStamp,
                     iDownloadComplete);
             iAutoPaused = true;
             PVMF_AMRPARSERNODE_LOGERROR((0, "PVMFAMRParserNode::RetrieveMediaSample() - Auto Pause Triggered - TS=%d", aTrackInfoPtr->iContinuousTimeStamp));

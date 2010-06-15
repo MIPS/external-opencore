@@ -597,7 +597,7 @@ PVMFStatus PVMFAACFFParserNode::RetrieveMediaSample(PVAACFFNodeTrackPortInfo* aT
                 return PVMFInfoEndOfData;
             }
 
-            iDownloadProgressInterface->requestResumeNotification(aTrackInfoPtr->iPrevSampleTimeStamp,
+            iDownloadProgressInterface->requestResumeNotification((uint32)aTrackInfoPtr->iPrevSampleTimeStamp,
                     iDownloadComplete);
             iAutoPaused = true;
             PVMF_AACPARSERNODE_LOGERROR((0, "PVMFAACParserNode::RetrieveMediaSample() - Auto Pause Triggered - TS=%d", aTrackInfoPtr->iPrevSampleTimeStamp));
@@ -685,11 +685,11 @@ PVMFStatus PVMFAACFFParserNode::CheckForAACHeaderAvailability()
          * First check if we have minimum number of bytes to recognize
          * the file and determine the header size.
          */
-        uint32 currCapacity = 0;
+        TOsclFileOffset currCapacity = 0;
         iDataStreamInterface->QueryReadCapacity(iDataStreamSessionID,
                                                 currCapacity);
 
-        if (currCapacity <  AAC_MIN_DATA_SIZE_FOR_RECOGNITION)
+        if (currCapacity < (TOsclFileOffset)AAC_MIN_DATA_SIZE_FOR_RECOGNITION)
         {
             iRequestReadCapacityNotificationID =
                 iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
@@ -709,7 +709,7 @@ PVMFStatus PVMFAACFFParserNode::CheckForAACHeaderAvailability()
         }
         if (AAC_SUCCESS == iAACParser->getAACHeaderLen(params, false, &headerSize32))
         {
-            if (currCapacity < headerSize32)
+            if (currCapacity < (TOsclFileOffset)headerSize32)
             {
                 iRequestReadCapacityNotificationID =
                     iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
@@ -764,7 +764,7 @@ PVMFStatus PVMFAACFFParserNode::ParseAACFile()
 
     if (iDataStreamInterface)
     {
-        uint32 currCapacity = 0;
+        TOsclFileOffset currCapacity = 0;
         iDataStreamInterface->QueryReadCapacity(iDataStreamSessionID,
                                                 currCapacity);
 
@@ -2970,9 +2970,9 @@ void PVMFAACFFParserNode::playResumeNotification(bool aDownloadComplete)
 
 }
 
-void PVMFAACFFParserNode::setFileSize(const uint32 aFileSize)
+void PVMFAACFFParserNode::setFileSize(const TOsclFileOffset aFileSize)
 {
-    iDownloadFileSize = aFileSize;
+    iDownloadFileSize = (uint32)aFileSize;
 }
 
 void PVMFAACFFParserNode::setDownloadProgressInterface(PVMFDownloadProgressInterface* aInterface)
@@ -2984,7 +2984,7 @@ void PVMFAACFFParserNode::setDownloadProgressInterface(PVMFDownloadProgressInter
     iDownloadProgressInterface = aInterface;
 }
 
-int32 PVMFAACFFParserNode::convertSizeToTime(uint32 aFileSize, uint32& aNPTInMS)
+int32 PVMFAACFFParserNode::convertSizeToTime(TOsclFileOffset aFileSize, uint32& aNPTInMS)
 {
     OSCL_UNUSED_ARG(aFileSize);
     OSCL_UNUSED_ARG(aNPTInMS);

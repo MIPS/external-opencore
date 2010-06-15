@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,11 @@
 #ifndef   PVMI_EXTERNAL_DOWNLOAD_EXTENSION_INTERFACES_H_INCLUDED
 #include "pvmi_external_download_extension_interfaces.h"
 #endif
+
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
 
 
 /*!
@@ -106,7 +111,7 @@ class PVMIExternalDownloadFileMonitor
          * @brief     Returns the total number of bytes downloaded so far.
          * @return    Current file size in bytes.
          */
-        OSCL_IMPORT_REF virtual uint32 GetDownloadedFileSize();
+        OSCL_IMPORT_REF virtual TOsclFileOffset GetDownloadedFileSize();
 
         /*!
          * @brief     Predicate method that indicates if download is complete.
@@ -154,7 +159,7 @@ class PVMIExternalDownloadFileMonitor
 
         Oscl_Vector<PVMIExternalDownloadSizeObserver*, OsclMemAllocator> iObservers;
         bool            iDownloadComplete;
-        uint32          iBytesDownloaded;
+        TOsclFileOffset          iBytesDownloaded;
         States          iState;
         Oscl_File       iFile;
         Oscl_FileServer iFileServer;

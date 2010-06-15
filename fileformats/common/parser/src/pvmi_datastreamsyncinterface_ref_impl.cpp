@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,19 +163,19 @@ PVMIDataStreamSyncInterfaceRefImpl::QueryRandomAccessCapability()
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
 PVMIDataStreamSyncInterfaceRefImpl::QueryReadCapacity(PvmiDataStreamSession sessionID,
-        uint32& capacity)
+        TOsclFileOffset& capacity)
 {
     OSCL_UNUSED_ARG(sessionID);
 
-    uint32 currFilePosition = GetCurrentPointerPosition(iSessionID);
-    capacity = ((uint32)iFileNumBytes - currFilePosition);
+    TOsclFileOffset currFilePosition = GetCurrentPointerPosition(iSessionID);
+    capacity = (iFileNumBytes - currFilePosition);
     return PVDS_SUCCESS;
 }
 
 OSCL_EXPORT_REF PvmiDataStreamCommandId
 PVMIDataStreamSyncInterfaceRefImpl::RequestReadCapacityNotification(PvmiDataStreamSession sessionID,
         PvmiDataStreamObserver& observer,
-        uint32 capacity,
+        TOsclFileOffset capacity,
         OsclAny* aContextData)
 {
     OSCL_UNUSED_ARG(sessionID);
@@ -189,7 +189,7 @@ PVMIDataStreamSyncInterfaceRefImpl::RequestReadCapacityNotification(PvmiDataStre
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
 PVMIDataStreamSyncInterfaceRefImpl::QueryWriteCapacity(PvmiDataStreamSession sessionID,
-        uint32& capacity)
+        TOsclFileOffset& capacity)
 {
     OSCL_UNUSED_ARG(sessionID);
     OSCL_UNUSED_ARG(capacity);
@@ -259,7 +259,7 @@ PVMIDataStreamSyncInterfaceRefImpl::Write(PvmiDataStreamSession sessionID,
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
 PVMIDataStreamSyncInterfaceRefImpl::Seek(PvmiDataStreamSession sessionID,
-        int32 offset,
+        TOsclFileOffset offset,
         PvmiDataStreamSeekType origin)
 {
     OSCL_UNUSED_ARG(sessionID);
@@ -288,16 +288,16 @@ PVMIDataStreamSyncInterfaceRefImpl::Seek(PvmiDataStreamSession sessionID,
     return PVDS_SUCCESS;
 }
 
-OSCL_EXPORT_REF uint32
+OSCL_EXPORT_REF TOsclFileOffset
 PVMIDataStreamSyncInterfaceRefImpl::GetCurrentPointerPosition(PvmiDataStreamSession sessionID)
 {
     OSCL_UNUSED_ARG(sessionID);
 
     if (!iFileObject)
         return 0;
-    int32 result = (TOsclFileOffsetInt32)iFileObject->Tell();
+    TOsclFileOffset result = iFileObject->Tell();
     LOGDEBUG((0, "PVMIDataStreamSyncInterfaceRefImpl::GetCurrentContentPosition returning %d", result));
-    return (uint32)(result);
+    return (result);
 }
 
 OSCL_EXPORT_REF PvmiDataStreamStatus

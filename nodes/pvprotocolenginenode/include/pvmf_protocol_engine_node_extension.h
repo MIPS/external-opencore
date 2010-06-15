@@ -48,6 +48,10 @@
 #include "pvmf_port_interface.h"
 #endif
 
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
 #include "pvmf_source_context_data.h"
 
 // default number of redirect trials
@@ -58,6 +62,7 @@
 
 #define PVMF_PROTOCOL_ENGINE_GENERIC_EXTENSION_MIMETYPE "pvxxx/PVMFProtocolEngineNode/GenericExtensionInterface"
 #define KPVMFProtocolEngineNodeExtensionUuid PVUuid(0xca27cb64,0x83ed,0x40d6,0x96,0xa3,0xed,0x1d,0x8b,0x60,0x11,0x38)
+
 
 enum HttpVersion
 {
@@ -102,7 +107,7 @@ class PVMFProtocolEngineNodeExtensionInterface : public PVInterface
          * is not available, and set to zero.
          * @param aFileSize returned download file size.
          */
-        virtual void GetFileSize(uint32& aFileSize) = 0;
+        virtual void GetFileSize(TOsclFileOffset& aFileSize) = 0;
 
         /**
          * Retrieves the host name and port number for socket node port request

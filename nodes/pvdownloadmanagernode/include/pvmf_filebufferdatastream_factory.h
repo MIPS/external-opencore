@@ -104,7 +104,7 @@ class PVMFFileBufferDataStreamWriteDataStreamFactoryImpl : public PVMFDataStream
         OSCL_IMPORT_REF PVInterface* CreatePVMFCPMPluginAccessInterface(PVUuid& aUuid);
         OSCL_IMPORT_REF void DestroyPVMFCPMPluginAccessInterface(PVUuid& aUuid, PVInterface* aPtr);
 
-        virtual PvmiDataStreamStatus GetStreamReadCapacity(uint32& aCapacity);
+        virtual PvmiDataStreamStatus GetStreamReadCapacity(TOsclFileOffset& aCapacity);
 
     private:
         void addRef() {};
@@ -150,17 +150,17 @@ class PVMFFileBufferReadDataStreamImpl : public PVMIDataStreamSyncInterface
 
         OSCL_IMPORT_REF
         PvmiDataStreamStatus QueryReadCapacity(PvmiDataStreamSession aSessionID,
-                                               uint32& capacity);
+                                               TOsclFileOffset& GetStreamReadCapacity);
 
         OSCL_IMPORT_REF
         PvmiDataStreamCommandId RequestReadCapacityNotification(PvmiDataStreamSession aSessionID,
                 PvmiDataStreamObserver& observer,
-                uint32 capacity,
+                TOsclFileOffset capacity,
                 OsclAny* aContextData = NULL);
 
         OSCL_IMPORT_REF
         PvmiDataStreamStatus QueryWriteCapacity(PvmiDataStreamSession aSessionID,
-                                                uint32& capacity);
+                                                TOsclFileOffset& capacity);
 
         OSCL_IMPORT_REF
         PvmiDataStreamCommandId RequestWriteCapacityNotification(PvmiDataStreamSession aSessionID,
@@ -196,23 +196,23 @@ class PVMFFileBufferReadDataStreamImpl : public PVMIDataStreamSyncInterface
 
         OSCL_IMPORT_REF
         PvmiDataStreamStatus Seek(PvmiDataStreamSession aSessionID,
-                                  int32 offset,
+                                  TOsclFileOffset offset,
                                   PvmiDataStreamSeekType origin);
 
         OSCL_IMPORT_REF
-        uint32 GetCurrentPointerPosition(PvmiDataStreamSession aSessionID) ;
+        TOsclFileOffset GetCurrentPointerPosition(PvmiDataStreamSession aSessionID) ;
 
         OSCL_IMPORT_REF
         PvmiDataStreamStatus Flush(PvmiDataStreamSession aSessionID);
 
         OSCL_IMPORT_REF void NotifyDownloadComplete();
 
-        void SetContentLength(uint32 aContentLength)
+        void SetContentLength(TOsclFileOffset aContentLength)
         {
             OSCL_UNUSED_ARG(aContentLength);
         }
 
-        uint32 GetContentLength()
+        TOsclFileOffset GetContentLength()
         {
             return 0;
         }
@@ -233,7 +233,7 @@ class PVMFFileBufferReadDataStreamImpl : public PVMIDataStreamSyncInterface
             OSCL_UNUSED_ARG(aResponse);
         }
 
-        PvmiDataStreamStatus MakePersistent(int32 aOffset, uint32 aSize)
+        PvmiDataStreamStatus MakePersistent(TOsclFileOffset aOffset, uint32 aSize)
         {
             OSCL_UNUSED_ARG(aOffset);
             OSCL_UNUSED_ARG(aSize);
@@ -253,7 +253,7 @@ class PVMFFileBufferReadDataStreamImpl : public PVMIDataStreamSyncInterface
 
         PvmiDataStreamSession iSessionID;
 
-        int32 iFileNumBytes;
+        TOsclFileOffset iFileNumBytes;
 
         PVLogger* iLogger;
 };
@@ -289,17 +289,17 @@ class PVMFFileBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
 
         OSCL_IMPORT_REF
         PvmiDataStreamStatus QueryReadCapacity(PvmiDataStreamSession aSessionID,
-                                               uint32& capacity);
+                                               TOsclFileOffset& capacity);
 
         OSCL_IMPORT_REF
         PvmiDataStreamCommandId RequestReadCapacityNotification(PvmiDataStreamSession aSessionID,
                 PvmiDataStreamObserver& observer,
-                uint32 capacity,
+                TOsclFileOffset capacity,
                 OsclAny* aContextData = NULL);
 
         OSCL_IMPORT_REF
         PvmiDataStreamStatus QueryWriteCapacity(PvmiDataStreamSession aSessionID,
-                                                uint32& capacity);
+                                                TOsclFileOffset& capacity);
 
         OSCL_IMPORT_REF
         PvmiDataStreamCommandId RequestWriteCapacityNotification(PvmiDataStreamSession aSessionID,
@@ -337,27 +337,27 @@ class PVMFFileBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
                 uint8* aBuffer,
                 uint32 aSize,
                 uint32& aNumElements,
-                uint32 aOffset);
+                TOsclFileOffset aOffset);
 
         OSCL_IMPORT_REF
         PvmiDataStreamStatus Seek(PvmiDataStreamSession aSessionID,
-                                  int32 offset,
+                                  TOsclFileOffset offset,
                                   PvmiDataStreamSeekType origin);
 
         OSCL_IMPORT_REF
-        uint32 GetCurrentPointerPosition(PvmiDataStreamSession aSessionID) ;
+        TOsclFileOffset GetCurrentPointerPosition(PvmiDataStreamSession aSessionID) ;
 
         OSCL_IMPORT_REF
         PvmiDataStreamStatus Flush(PvmiDataStreamSession aSessionID);
 
         OSCL_IMPORT_REF void NotifyDownloadComplete();
 
-        void SetContentLength(uint32 aContentLength)
+        void SetContentLength(TOsclFileOffset aContentLength)
         {
             OSCL_UNUSED_ARG(aContentLength);
         }
 
-        uint32 GetContentLength()
+        TOsclFileOffset GetContentLength()
         {
             return 0;
         }
@@ -378,7 +378,7 @@ class PVMFFileBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
             OSCL_UNUSED_ARG(aResponse);
         }
 
-        PvmiDataStreamStatus MakePersistent(int32 aOffset, uint32 aSize)
+        PvmiDataStreamStatus MakePersistent(TOsclFileOffset aOffset, uint32 aSize)
         {
             OSCL_UNUSED_ARG(aOffset);
             OSCL_UNUSED_ARG(aSize);
@@ -395,8 +395,8 @@ class PVMFFileBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
             bool ReadStructValid;
             PvmiDataStreamSession iReadSessionID;
             PvmiDataStreamObserver *iReadObserver;
-            uint32 iFilePosition;
-            uint32 iReadCapacity;
+            TOsclFileOffset iFilePosition;
+            TOsclFileOffset iReadCapacity;
             OsclAny* iContextData;
             PVMFCommandId iCommandID;
             PVMFCommandId iCurrentCommandID;
@@ -411,7 +411,7 @@ class PVMFFileBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
 
         PvmiDataStreamSession iSessionID;
 
-        int32 iFileNumBytes;
+        TOsclFileOffset iFileNumBytes;
 
         PVLogger* iLogger;
 };

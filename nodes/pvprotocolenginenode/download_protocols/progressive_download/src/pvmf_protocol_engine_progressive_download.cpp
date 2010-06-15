@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,12 @@
  * -------------------------------------------------------------------
  */
 #include "pvmf_protocol_engine_progressive_download.h"
+
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
+
 
 //////  ProgressiveDownloadState_HEAD implementation ////////////////////////////
 OSCL_EXPORT_REF void ProgressiveDownloadState_HEAD::setRequestBasics()
@@ -116,9 +122,10 @@ OSCL_EXPORT_REF bool ProgressiveDownloadState_GET::setRangeHeaderFields()
         if (iCfgFile->GetCurrentFileSize() > 0 && iCfgFile->GetOverallFileSize() > 0)
         {
             StrCSumPtrLen rangeKey = "Range";
-            char buffer[64];
-            oscl_snprintf(buffer, 64, "bytes=%d-%d", iCfgFile->GetCurrentFileSize(), (iCfgFile->GetOverallFileSize() - 1));
-            LOGINFODATAPATH((0, "ProgressiveDownloadState_GET::setHeaderFields(), Range: bytes=%d-", iCfgFile->GetCurrentFileSize()));
+
+            char buffer[80];
+            oscl_snprintf(buffer, 80, "bytes=%lld-%lld", iCfgFile->GetCurrentFileSize(), (iCfgFile->GetOverallFileSize() - 1));
+            LOGINFODATAPATH((0, "ProgressiveDownloadState_GET::setHeaderFields(), Range: bytes=%lld-", iCfgFile->GetCurrentFileSize()));
             if (!iComposer->setField(rangeKey, buffer)) return false;
         }
     }
@@ -162,7 +169,7 @@ OSCL_EXPORT_REF int32 ProgressiveDownloadState_GET::checkParsingStatus(int32 par
         {
             iCfgFile->SetCurrentFileSize(iParser->getDownloadSize());
             if (iParser->getContentLength() == 0) iCfgFile->SetOverallFileSize(iParser->getDownloadSize());
-            LOGINFODATAPATH((0, "ProgressiveDownloadState_GET::checkParsingStatus(), GOT EOS and COMPLETE DOWNLOAD, downloadSize=%d, contentLength=%d, isDownloadHappen=%d",
+            LOGINFODATAPATH((0, "ProgressiveDownloadState_GET::checkParsingStatus(), GOT EOS and COMPLETE DOWNLOAD, downloadSize=%lld, contentLength=%lld, isDownloadHappen=%lld",
                              iParser->getDownloadSize(), iParser->getContentLength(), (int32)iParser->isDownloadReallyHappen()));
             return PROCESS_SUCCESS_END_OF_MESSAGE_BY_SERVER_DISCONNECT;
         }
@@ -210,7 +217,7 @@ OSCL_EXPORT_REF int32 ProgressiveDownloadState_GET::OutputDataAvailable(OUTPUT_D
 OSCL_EXPORT_REF int32 ProgressiveDownloadState_GET::checkContentInfoMatchingForResumeDownload()
 {
     if (iCfgFile->IsNewSession()) return HttpParsingBasicObject::PARSE_SUCCESS;
-    uint32 prevOverallFileSize = iCfgFile->GetOverallFileSize();
+    TOsclFileOffset prevOverallFileSize = iCfgFile->GetOverallFileSize();
     if (iCfgFile->GetOverallFileSize() == iCfgFile->GetMaxAllowedFileSize() && !iCfgFile->HasContentLength())
     {
         prevOverallFileSize = 0; // no content-length for the previous download
@@ -225,23 +232,24 @@ OSCL_EXPORT_REF void ProgressiveDownloadState_GET::updateOutputDataQueue(OUTPUT_
 {
     // get start fragment especially for resume download case
     bool aUseAllNewDownloadData;
-    uint32 aStartFragNo = 0, aStartFragOffset = 0;
+    uint32 aStartFragNo = 0;
+    TOsclFileOffset aStartFragOffset = 0;
     getStartFragmentInNewDownloadData(*aOutputQueue, aUseAllNewDownloadData, aStartFragNo, aStartFragOffset);
     if (aUseAllNewDownloadData) return;
 
-    LOGINFODATAPATH((0, "ProgressiveDownloadState_GET::updateOutputDataQueue()->getStartFragmentInNewDownloadData() : aOutputQueue->size=%d, aStartFragNo=%d, aStartFragOffset=%d",
-                     aOutputQueue->size(), aStartFragNo, aStartFragOffset));
+    LOGINFODATAPATH((0, "ProgressiveDownloadState_GET::updateOutputDataQueue()->getStartFragmentInNewDownloadData() : aOutputQueue->size=%d, aStartFragNo=%d, aStartFragOffset=%u",
+                     aOutputQueue->size(), aStartFragNo, (uint32)aStartFragOffset));
 
-    LOGINFODATAPATH((0, "ProgressiveDownloadState_GET::updateOutputDataQueue()->getStartFragmentInNewDownloadData() : downloadSize=%d, currFileSize=%d",
-                     iParser->getDownloadSize(), iCfgFile->GetCurrentFileSize()));
+    LOGINFODATAPATH((0, "ProgressiveDownloadState_GET::updateOutputDataQueue()->getStartFragmentInNewDownloadData() : downloadSize=%u, currFileSize=%u",
+                     (uint32)iParser->getDownloadSize(), (uint32)iCfgFile->GetCurrentFileSize()));
 
     // process start fragment
-    if (!(aStartFragNo == 0 && aStartFragOffset == 0))   // exist offset
+    if (!((aStartFragNo == 0) && (aStartFragOffset == (TOsclFileOffset)0)))   // exist offset
     {
         OsclMemoryFragment memFrag;
         uint8 *startPtr = (uint8*)((*aOutputQueue)[aStartFragNo].getMemFragPtr()) + aStartFragOffset;
         memFrag.ptr = (OsclAny*)startPtr;
-        memFrag.len = (*aOutputQueue)[aStartFragNo].getMemFragSize() - aStartFragOffset;
+        memFrag.len = (*aOutputQueue)[aStartFragNo].getMemFragSize() - (uint32)aStartFragOffset;
         OsclRefCounter *refcnt = (*aOutputQueue)[aStartFragNo].getRefCounter();
         OsclRefCounterMemFrag refCountMemFrag = OsclRefCounterMemFrag(memFrag, refcnt, memFrag.len);
         refcnt->addRef(); // manually add reference counter since there will be vector push_back happens.
@@ -256,22 +264,23 @@ OSCL_EXPORT_REF void ProgressiveDownloadState_GET::updateOutputDataQueue(OUTPUT_
     }
 
     // get end fragment especially for truncated content case
-    uint32 aEndFragNo = 0, aEndFragValidLen = 0;
+    uint32 aEndFragNo = 0;
+    TOsclFileOffset aEndFragValidLen = 0;
     getEndFragmentInNewDownloadData(*aOutputQueue, aEndFragNo, aEndFragValidLen);
 
     LOGINFODATAPATH((0, "ProgressiveDownloadState_GET::updateOutputDataQueue()->getEndFragmentInNewDownloadData() : aOutputQueue->size=%d, aEndFragNo=%d, aEndFragValidLen=%d",
                      aOutputQueue->size(), aEndFragNo, aEndFragValidLen));
 
-    LOGINFODATAPATH((0, "ProgressiveDownloadState_GET::updateOutputDataQueue()->getStartFragmentInNewDownloadData() : downloadSize=%d, overallFileSize=%d",
-                     iParser->getDownloadSize(), iCfgFile->GetOverallFileSize()));
+    LOGINFODATAPATH((0, "ProgressiveDownloadState_GET::updateOutputDataQueue()->getStartFragmentInNewDownloadData() : downloadSize=%u, overallFileSize=%u",
+                     (uint32)iParser->getDownloadSize(), (uint32)iCfgFile->GetOverallFileSize()));
 
     // process end fragment
     if (!(aEndFragNo == aOutputQueue->size() - 1 &&
-            aEndFragValidLen == (*aOutputQueue)[aEndFragNo].getMemFragSize()))
+            aEndFragValidLen == (TOsclFileOffset)((*aOutputQueue)[aEndFragNo].getMemFragSize())))
     {
         OsclMemoryFragment memFrag;
         memFrag.ptr = (*aOutputQueue)[aEndFragNo].getMemFragPtr();
-        memFrag.len = aEndFragValidLen;
+        memFrag.len = (uint32)aEndFragValidLen;
         OsclRefCounter *refcnt = (*aOutputQueue)[aEndFragNo].getRefCounter();
         OsclRefCounterMemFrag refCountMemFrag = OsclRefCounterMemFrag(memFrag, refcnt, memFrag.len);
         refcnt->addRef(); // manually add reference counter since there will be vector push_back happens.
@@ -290,14 +299,15 @@ OSCL_EXPORT_REF void ProgressiveDownloadState_GET::updateOutputDataQueue(OUTPUT_
 OSCL_EXPORT_REF void ProgressiveDownloadState_GET::getStartFragmentInNewDownloadData(OUTPUT_DATA_QUEUE &aOutputQueue,
         bool &aUseAllNewDownloadData,
         uint32 &aStartFragNo,
-        uint32 &aStartFragOffset)
+        TOsclFileOffset &aStartFragOffset)
 {
     aUseAllNewDownloadData = false;
-    aStartFragNo = aStartFragOffset = 0;
+    aStartFragNo = 0;
+    aStartFragOffset = 0;
 
-    uint32 validSize = iParser->getDownloadSize() - iCfgFile->GetCurrentFileSize();
+    TOsclFileOffset validSize = iParser->getDownloadSize() - iCfgFile->GetCurrentFileSize();
 
-    uint32 totalSize = 0, prevTotalSize = 0;
+    TOsclFileOffset totalSize = 0, prevTotalSize = 0;
     for (uint32 i = 0; i < aOutputQueue.size(); i++)
     {
         prevTotalSize = totalSize;
@@ -319,15 +329,15 @@ OSCL_EXPORT_REF void ProgressiveDownloadState_GET::getStartFragmentInNewDownload
 
 OSCL_EXPORT_REF void ProgressiveDownloadState_GET::getEndFragmentInNewDownloadData(OUTPUT_DATA_QUEUE &aOutputQueue,
         uint32 &aEndFragNo,
-        uint32 &aEndFragValidLen)
+        TOsclFileOffset &aEndFragValidLen)
 {
     aEndFragNo = aOutputQueue.size() - 1;
     aEndFragValidLen = aOutputQueue[aEndFragNo].getMemFragSize();
 
     if (iParser->getDownloadSize() > iCfgFile->GetOverallFileSize())
     {
-        uint32 extraSize = iParser->getDownloadSize() - iCfgFile->GetOverallFileSize();
-        uint32 reduceSize = 0, prevReduceSize = 0;
+        TOsclFileOffset extraSize = iParser->getDownloadSize() - iCfgFile->GetOverallFileSize();
+        TOsclFileOffset reduceSize = 0, prevReduceSize = 0;
         for (int32 i = aOutputQueue.size() - 1; i >= 0; i--)
         {
             prevReduceSize = reduceSize;

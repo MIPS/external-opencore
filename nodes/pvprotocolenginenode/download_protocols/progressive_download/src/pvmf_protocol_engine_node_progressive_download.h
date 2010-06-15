@@ -71,18 +71,18 @@ class progressiveDownloadControl : public pvDownloadControl
     protected:
         OSCL_IMPORT_REF bool isDlAlgoPreConditionMet(const uint32 aDownloadRate,
                 const uint32 aDurationMsec,
-                const uint32 aCurrDownloadSize,
-                const uint32 aFileSize);
+                const TOsclFileOffset aCurrDownloadSize,
+                const TOsclFileOffset aFileSize);
 
         // ret_val: 0 success, 1 playback rate is not close to clip bitrate, but the information is all available
         //          -1, related information, e.g. duration=0, size2time conversion is not available, is not available
         // called by isDlAlgoPreConditionMet()
         OSCL_IMPORT_REF virtual int32 isPlaybackRateCloseToClipBitrate(const uint32 aDurationMsec,
-                const uint32 aCurrDownloadSize,
-                const uint32 aFileSize);
+                const TOsclFileOffset aCurrDownloadSize,
+                const TOsclFileOffset aFileSize);
 
         // called by isPlaybackRateCloseToClipBitrate, using clip bitrate to do buffer time calculation
-        OSCL_IMPORT_REF bool isBufferingEnoughTime(const uint32 aCurrDownloadSize,
+        OSCL_IMPORT_REF bool isBufferingEnoughTime(const TOsclFileOffset aCurrDownloadSize,
                 const uint32 aBufferTimeLimitInSec,
                 const uint32 aNPTInMS = 0xFFFFFFFF);
 
@@ -90,18 +90,18 @@ class progressiveDownloadControl : public pvDownloadControl
         OSCL_IMPORT_REF uint32 checkNewDuration(const uint32 aCurrDurationMsec);
 
         // extra 4 sec buffering time
-        OSCL_IMPORT_REF bool approveAutoResumeDecisionShortCut(const uint32 aCurrDownloadSize,
+        OSCL_IMPORT_REF bool approveAutoResumeDecisionShortCut(const TOsclFileOffset aCurrDownloadSize,
                 const uint32 aDurationMsec,
                 const uint32 aPlaybackTimeMsec,
                 uint32 &aPlaybackRemainingTimeMsec);
 
         // No constraint: for file size/clip duration/clip bitrate(i.e. playback rate), one of them must be unavailable, except
         // file size and clip duration are available, but clip bitrate is unavailable. This only applies on PDL
-        OSCL_IMPORT_REF virtual bool checkAutoResumeAlgoNoConstraint(const uint32 aCurrDownloadSize,
-                const uint32 aFileSize,
+        OSCL_IMPORT_REF virtual bool checkAutoResumeAlgoNoConstraint(const TOsclFileOffset aCurrDownloadSize,
+                const TOsclFileOffset aFileSize,
                 uint32 &aDurationMsec);
 
-        OSCL_IMPORT_REF bool checkEstDurationAvailable(const uint32 aFileSize,
+        OSCL_IMPORT_REF bool checkEstDurationAvailable(const TOsclFileOffset aFileSize,
                 uint32 &aDurationMsec);
 
         // updata download clock
@@ -140,12 +140,12 @@ class ProgressiveDownloadProgress : public DownloadProgress
         }
 
     protected:
-        OSCL_IMPORT_REF virtual bool calculateDownloadPercent(uint32 &aDownloadProgressPercent);
+        OSCL_IMPORT_REF virtual bool calculateDownloadPercent(TOsclFileOffset &aDownloadProgressPercent);
         OSCL_IMPORT_REF bool updateDownloadClock(const bool aDownloadComplete);
-        OSCL_IMPORT_REF bool calculateDownloadPercentBody(uint32 &aDownloadProgressPercent, const uint32 aFileSize);
+        OSCL_IMPORT_REF bool calculateDownloadPercentBody(TOsclFileOffset &aDownloadProgressPercent, const TOsclFileOffset aFileSize);
         // determine if download percent is time-based or byte-based
         OSCL_IMPORT_REF bool checkDownloadPercentModeAndUpdateDLClock();
-        OSCL_IMPORT_REF uint32 getDownloadBytePercent(const uint32 aDownloadSize, const uint32 aFileSize);
+        OSCL_IMPORT_REF TOsclFileOffset getDownloadBytePercent(const TOsclFileOffset aDownloadSize, const TOsclFileOffset aFileSize);
         OSCL_IMPORT_REF void reset();
 
 
@@ -156,7 +156,7 @@ class ProgressiveDownloadProgress : public DownloadProgress
         // user-specified download progress mode, 0 - time-based, 1 - byte-based
         uint32 iDownloadProgressMode;
         bool iTimeBasedDownloadPercent; // false means byte-based download percent
-        uint32 iDownloadSize;
+        TOsclFileOffset iDownloadSize;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////

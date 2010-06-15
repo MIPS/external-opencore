@@ -164,6 +164,10 @@ SampleToChunkAtom::SampleToChunkAtom(MP4_FF_FILE *fp, uint32 size, uint32 type, 
                         AtomUtils::seekFromCurrPos(fp, dataSize);
                         AtomUtils::seekFromStart(_fileptr, _head_offset);
 
+                        ParseEntryUnit(0);
+                        uint32 firstsamplenum = 0;
+                        resetStateVariables(firstsamplenum);
+
                         return;
                     }
                     else
@@ -255,7 +259,7 @@ bool SampleToChunkAtom::ParseEntryUnit(uint32 sample_cnt)
     uint32 prevFirstChunk = 0;
 
 
-    const uint32 threshold = 512;
+    const uint32 threshold = TABLE_ENTRIES_THRESHOLD_FILE;
     sample_cnt += threshold;
 
     if (sample_cnt > _entryCount)

@@ -3823,7 +3823,9 @@ PVMFStatus PVMFDownloadManagerNode::ParsePLSFile(OSCL_wString& aPLSFile)
     iPLSSessionContextData->DownloadHTTPData()->bIsNewSession = true;
     iPLSSessionContextData->DownloadHTTPData()->iConfigFileName = NULL;
     iPLSSessionContextData->DownloadHTTPData()->iDownloadFileName = NULL;
-    iPLSSessionContextData->DownloadHTTPData()->iMaxFileSize = 0xFFFFFFFF;
+
+    iPLSSessionContextData->DownloadHTTPData()->iMaxFileSize = (TOsclFileOffset)MAX_TOSCLFILEOFFSET_VALUE;
+
     iPLSSessionContextData->DownloadHTTPData()->iProxyName = _STRLIT_CHAR("");
     iPLSSessionContextData->DownloadHTTPData()->iProxyPort = 0;
     iPLSSessionContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::ENoSaveToFile;

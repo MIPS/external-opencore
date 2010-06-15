@@ -152,8 +152,8 @@ class PVMFAMRFFParserNode :  public PVMFNodeInterfaceImpl
         void PassDatastreamReadCapacityObserver(PVMFDataStreamReadCapacityObserver* aObserver);
 
         /* From PVMFFormatProgDownloadSupportInterface */
-        int32 convertSizeToTime(uint32 fileSize, uint32& aNPTInMS);
-        void setFileSize(const uint32 aFileSize);
+        int32 convertSizeToTime(TOsclFileOffset fileSize, uint32& aNPTInMS);
+        void setFileSize(const TOsclFileOffset aFileSize);
         void setDownloadProgressInterface(PVMFDownloadProgressInterface*);
         void playResumeNotification(bool aDownloadComplete);
         void notifyDownloadComplete()

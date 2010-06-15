@@ -40,9 +40,16 @@
 #include "pvmf_event_handling.h"
 #endif
 
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
+
+
 
 #define PVMI_DATA_STREAM_INTERFACE_MIMETYPE "pvxxx/pvmf/stream"
 #define PVMIDataStreamSyncInterfaceUuid PVUuid(0x6d32c608,0x6307,0x4538,0x83,0xe7,0x34,0x0e,0x7a,0xba,0xb9,0x8a)
+
 
 typedef int32 PvmiDataStreamSession;
 typedef int32 PvmiDataStreamCommandId;
@@ -114,7 +121,7 @@ typedef enum
 class PVMFDataStreamReadCapacityObserver
 {
     public:
-        virtual PvmiDataStreamStatus GetStreamReadCapacity(uint32& aCapacity) = 0;
+        virtual PvmiDataStreamStatus GetStreamReadCapacity(TOsclFileOffset& aCapacity) = 0;
 
         virtual ~PVMFDataStreamReadCapacityObserver() {}
 };
@@ -134,7 +141,6 @@ class PvmiDataStreamRequestObserver
 
         virtual ~PvmiDataStreamRequestObserver() {}
 };
-
 
 class PVMIDataStreamSyncInterface : public PVInterface
 {
@@ -196,7 +202,7 @@ class PVMIDataStreamSyncInterface : public PVInterface
         *
         */
         virtual PvmiDataStreamStatus QueryReadCapacity(PvmiDataStreamSession aSessionID,
-                uint32& aCapacity) = 0;
+                TOsclFileOffset& aCapacity) = 0;
 
         /**
         * Request notification when the read capacity reaches a certain level.
@@ -217,7 +223,7 @@ class PVMIDataStreamSyncInterface : public PVInterface
         */
         virtual PvmiDataStreamCommandId RequestReadCapacityNotification(PvmiDataStreamSession aSessionID,
                 PvmiDataStreamObserver& aObserver,
-                uint32 aCapacity,
+                TOsclFileOffset aCapacity,
                 OsclAny* aContextData = NULL) = 0;
 
 
@@ -234,7 +240,7 @@ class PVMIDataStreamSyncInterface : public PVInterface
         * @return returns 0 if successful, and a non-zero value otherwise
         */
         virtual PvmiDataStreamStatus QueryWriteCapacity(PvmiDataStreamSession aSessionID,
-                uint32& aCapacity) = 0;
+                TOsclFileOffset& aCapacity) = 0;
 
         /**
         * Request notification when the write capacity reaches a certain level.
@@ -379,7 +385,7 @@ class PVMIDataStreamSyncInterface : public PVInterface
                 uint8* aBuffer,
                 uint32 aSize,
                 uint32& aNumElements,
-                uint32 aOffset)
+                TOsclFileOffset aOffset)
         {
             OSCL_UNUSED_ARG(aSessionID);
             OSCL_UNUSED_ARG(aBuffer);
@@ -401,14 +407,14 @@ class PVMIDataStreamSyncInterface : public PVInterface
         * @return returns the status of the operation.
         */
         virtual PvmiDataStreamStatus Seek(PvmiDataStreamSession aSessionID,
-                                          int32 aOffset,
+                                          TOsclFileOffset aOffset,
                                           PvmiDataStreamSeekType aOrigin) = 0;
 
         /**
         * Returns the current position (i.e., byte offset from the beginning
         * of the data stream for the read/write pointer.
         */
-        virtual uint32 GetCurrentPointerPosition(PvmiDataStreamSession aSessionID) = 0;
+        virtual TOsclFileOffset GetCurrentPointerPosition(PvmiDataStreamSession aSessionID) = 0;
 
 
         /**
@@ -440,7 +446,7 @@ class PVMIDataStreamSyncInterface : public PVInterface
         *
         * @param aLength length of clip in bytes
         */
-        virtual void SetContentLength(uint32 aLength)
+        virtual void SetContentLength(TOsclFileOffset aLength)
         {
             OSCL_UNUSED_ARG(aLength);
         }
@@ -453,7 +459,7 @@ class PVMIDataStreamSyncInterface : public PVInterface
         *
         * @return returns the content lenght (0 = unknown)
         */
-        virtual uint32 GetContentLength()
+        virtual TOsclFileOffset GetContentLength()
         {
             return 0;
         }
@@ -555,7 +561,7 @@ class PVMIDataStreamSyncInterface : public PVInterface
         *
         * @return returns the status of the operation.
         */
-        virtual PvmiDataStreamStatus MakePersistent(int32 aOffset, uint32 aSize)
+        virtual PvmiDataStreamStatus MakePersistent(TOsclFileOffset aOffset, uint32 aSize)
         {
             OSCL_UNUSED_ARG(aOffset);
             OSCL_UNUSED_ARG(aSize);
@@ -579,7 +585,7 @@ class PVMIDataStreamSyncInterface : public PVInterface
         * @return aCurrentFirstByteOffset first byte offset inclusive
         * @return aCurrentLastByteOffset last byte offset inclusive
         */
-        virtual void GetCurrentByteRange(uint32& aCurrentFirstByteOffset, uint32& aCurrentLastByteOffset)
+        virtual void GetCurrentByteRange(TOsclFileOffset& aCurrentFirstByteOffset, TOsclFileOffset& aCurrentLastByteOffset)
         {
             aCurrentFirstByteOffset = 0;
             aCurrentLastByteOffset = 0;

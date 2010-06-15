@@ -378,17 +378,17 @@ class PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl : public PVMIDataStre
 
         OSCL_IMPORT_REF
         PvmiDataStreamStatus QueryReadCapacity(PvmiDataStreamSession aSessionID,
-                                               uint32& capacity);
+                                               TOsclFileOffset& capacity);
 
         OSCL_IMPORT_REF
         PvmiDataStreamCommandId RequestReadCapacityNotification(PvmiDataStreamSession aSessionID,
                 PvmiDataStreamObserver& observer,
-                uint32 capacity,
+                TOsclFileOffset capacity,
                 OsclAny* aContextData = NULL);
 
         OSCL_IMPORT_REF
         PvmiDataStreamStatus QueryWriteCapacity(PvmiDataStreamSession aSessionID,
-                                                uint32& capacity);
+                                                TOsclFileOffset& capacity);
 
         OSCL_IMPORT_REF
         PvmiDataStreamCommandId RequestWriteCapacityNotification(PvmiDataStreamSession aSessionID,
@@ -416,11 +416,11 @@ class PVMFCPMPassThruPlugInOMA1DataStreamSyncInterfaceImpl : public PVMIDataStre
 
         OSCL_IMPORT_REF
         PvmiDataStreamStatus Seek(PvmiDataStreamSession aSessionID,
-                                  int32 offset,
+                                  TOsclFileOffset offset,
                                   PvmiDataStreamSeekType origin);
 
         OSCL_IMPORT_REF
-        uint32 GetCurrentPointerPosition(PvmiDataStreamSession aSessionID) ;
+        TOsclFileOffset GetCurrentPointerPosition(PvmiDataStreamSession aSessionID) ;
 
         OSCL_IMPORT_REF
         PvmiDataStreamStatus Flush(PvmiDataStreamSession aSessionID);
