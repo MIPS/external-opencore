@@ -602,7 +602,7 @@ PVMFMemoryBufferReadDataStreamImpl::Read(PvmiDataStreamSession aSessionID, uint8
     iWriteDataStream->SetReadPointerCacheLocation(iSessionID, inTempCache);
     iWriteDataStream->SetReadPointerPosition(iSessionID, iFilePtrPos);
 
-    if ((0 != bytesRead && 0 != firstEntry) && (!inCache))
+    if (0 != bytesRead && 0 != firstEntry)
     {
         // there may be some entries in the cache that can be released
         iWriteDataStream->ManageCache();
