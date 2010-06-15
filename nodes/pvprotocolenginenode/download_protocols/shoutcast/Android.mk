@@ -9,7 +9,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := libprotocolenginenode_shoutcast
 
-LOCAL_CFLAGS := -DPV_CPU_ARCH_VERSION=0  $(PV_CFLAGS)
+LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
 LOCAL_STATIC_LIBRARIES := 

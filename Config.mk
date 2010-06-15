@@ -49,6 +49,7 @@ ifneq ($(strip $(EXTERNAL_OPENCORE_CONFIG_ONCE)),true)
     else
       GLOBAL_CPU_ARCH_VERSION :=5
     endif
+      PV_CFLAGS += -DPV_CPU_ARCH_VERSION=$(GLOBAL_CPU_ARCH_VERSION)
   endif
 
   FORMAT := android

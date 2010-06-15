@@ -1,5 +1,11 @@
 XCPPFLAGS += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 CPPFLAGS += -DPV_COMPILER=1
+
+#For inclusion of assembly files in Android-Build
+ifeq ($(BUILD_ARCH),android)
+  GLOBAL_CPU_ARCH_VERSION := 5
+endif
+
 ifeq ($(GLOBAL_CPU_ARCH_VERSION), )
 GLOBAL_CPU_ARCH_VERSION :=0
 endif

@@ -17,104 +17,6 @@
  */
 #include "oscl_base_macros.h"// has integer values of PV_COMPILER
 
-#if   ((PV_CPU_ARCH_VERSION>=4) && (PV_COMPILER==EPV_ARM_GNUC))
-
-#if (NUMBER==3)
-__inline int32 sad_mb_offset3(uint8 *ref, uint8 *blk, int lx, int dmin)
-#elif (NUMBER==2)
-__inline int32 sad_mb_offset2(uint8 *ref, uint8 *blk, int lx, int dmin)
-#elif (NUMBER==1)
-__inline int32 sad_mb_offset1(uint8 *ref, uint8 *blk, int lx, int dmin)
-#endif
-{
-    int32 x4, x5, x6, x8, x9, x10, x11, x12, x14;
-
-    x9 = 0x80808080; /* const. */
-    x4 = x5 = 0;
-    x8 = 16; //<<===========*******
-
-__asm__ volatile("MVN  %0, #0xFF0000": "=r"(x6));
-
-#if (NUMBER==3)
-LOOP_SAD3:
-#elif (NUMBER==2)
-LOOP_SAD2:
-#elif (NUMBER==1)
-LOOP_SAD1:
-#endif
-__asm__ volatile("BIC  %0, %0, #3": "=r"(ref));
-    /****** process 8 pixels ******/
-    x11 = *((int32*)(ref + 12));
-    x12 = *((int32*)(ref + 16));
-    x10 = *((int32*)(ref + 8));
-    x14 = *((int32*)(blk + 12));
-
-#if (SHIFT==8)
-__asm__ volatile("MVN   %0, %0, lsr #8\n\tBIC   %0, %0, %1,lsl #24\n\tMVN   %1, %1,lsr #8\n\tBIC   %1, %1, %2,lsl #24": "=&r"(x10), "=&r"(x11): "r"(x12));
-#elif (SHIFT==16)
-__asm__ volatile("MVN   %0, %0, lsr #16\n\tBIC   %0, %0, %1,lsl #16\n\tMVN   %1, %1,lsr #16\n\tBIC   %1, %1, %2,lsl #16": "=&r"(x10), "=&r"(x11): "r"(x12));
-#elif (SHIFT==24)
-__asm__ volatile("MVN   %0, %0, lsr #24\n\tBIC   %0, %0, %1,lsl #8\n\tMVN   %1, %1,lsr #24\n\tBIC   %1, %1, %2,lsl #8": "=&r"(x10), "=&r"(x11): "r"(x12));
-#endif
-
-    x12 = *((int32*)(blk + 8));
-
-    /* process x11 & x14 */
-    x11 = sad_4pixelN(x11, x14, x9);
-
-    /* process x12 & x10 */
-    x10 = sad_4pixelN(x10, x12, x9);
-
-    sum_accumulate;
-
-    /****** process 8 pixels ******/
-    x11 = *((int32*)(ref + 4));
-    x12 = *((int32*)(ref + 8));
-    x10 = *((int32*)ref);
-    ref += lx;
-    x14 = *((int32*)(blk + 4));
-
-#if (SHIFT==8)
-__asm__ volatile("MVN   %0, %0, lsr #8\n\tBIC   %0, %0, %1,lsl #24\n\tMVN   %1, %1,lsr #8\n\tBIC   %1, %1, %2,lsl #24": "=&r"(x10), "=&r"(x11): "r"(x12));
-#elif (SHIFT==16)
-__asm__ volatile("MVN   %0, %0, lsr #16\n\tBIC   %0, %0, %1,lsl #16\n\tMVN   %1, %1,lsr #16\n\tBIC   %1, %1, %2,lsl #16": "=&r"(x10), "=&r"(x11): "r"(x12));
-#elif (SHIFT==24)
-__asm__ volatile("MVN   %0, %0, lsr #24\n\tBIC   %0, %0, %1,lsl #8\n\tMVN   %1, %1,lsr #24\n\tBIC   %1, %1, %2,lsl #8": "=&r"(x10), "=&r"(x11): "r"(x12));
-#endif
-__asm__ volatile("LDR   %0, [%1], #16": "=&r"(x12), "=r"(blk));
-
-    /* process x11 & x14 */
-    x11 = sad_4pixelN(x11, x14, x9);
-
-    /* process x12 & x10 */
-    x10 = sad_4pixelN(x10, x12, x9);
-
-    sum_accumulate;
-
-    /****************/
-    x10 = x5 - (x4 << 8); /* extract low bytes */
-    x10 = x10 + x4;     /* add with high bytes */
-    x10 = x10 + (x10 << 16); /* add with lower half word */
-
-    if (((uint32)x10 >> 16) <= (uint32)dmin) /* compare with dmin */
-    {
-        if (--x8)
-        {
-#if (NUMBER==3)
-            goto         LOOP_SAD3;
-#elif (NUMBER==2)
-            goto         LOOP_SAD2;
-#elif (NUMBER==1)
-            goto         LOOP_SAD1;
-#endif
-        }
-
-    }
-
-    return ((uint32)x10 >> 16);
-}
-
-#else
 /*C Code*/
 #if (NUMBER==3)
 __inline int32 sad_mb_offset3(uint8 *ref, uint8 *blk, int lx, int dmin)
@@ -206,9 +108,9 @@ LOOP_SAD1:
 #if (NUMBER==3)
             goto         LOOP_SAD3;
 #elif (NUMBER==2)
-goto         LOOP_SAD2;
+            goto         LOOP_SAD2;
 #elif (NUMBER==1)
-goto         LOOP_SAD1;
+            goto         LOOP_SAD1;
 #endif
         }
 
@@ -218,5 +120,4 @@ goto         LOOP_SAD1;
 }
 
 
-#endif
 
