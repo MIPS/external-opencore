@@ -4265,6 +4265,11 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
         case STATE_STOP:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
+                if (iShoutcastSession)
+                {
+                    PVPATB_TEST_IS_TRUE(iMetadataReceived);
+                }
+
                 if (iEOSStopPlay || iShoutcastPlayStopPlay)
                 {
                     iState = STATE_PREPARE_AFTERSTOP;
@@ -4814,6 +4819,10 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
                             fprintf(file, "\n*********************************");
                             fprintf(file, "\nMetadata Key '%s', value '%s'\n", kvpVector[i].key, kvpVector[i].value.pChar_value);
                             fprintf(file, "\n*********************************");
+                            if (iShoutcastSession)
+                            {
+                                iMetadataReceived = true;
+                            }
                         }
                         else if (oscl_strstr(kvpVector[i].key, "valtype=wchar*"))
                         {
@@ -4830,6 +4839,11 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
                             fprintf(file, "\n*********************************");
                             fprintf(file, "  Metadata Key '%s', value '%s'\n", kvpVector[i].key, ostr.get_str());
                             fprintf(file, "\n*********************************");
+                            if (iShoutcastSession)
+                            {
+                                iMetadataReceived = true;
+                            }
+
                         }
                     }
                 }
