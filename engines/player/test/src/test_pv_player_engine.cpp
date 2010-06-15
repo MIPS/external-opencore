@@ -4013,6 +4013,10 @@ void pvplayer_engine_test::test()
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 
+            case DLA_OpenPlayStop_PlayReadyCPMTest_verifyOPLLevels:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
             case DLA_OpenPlayStop_PlayReadyCPMTest_unprotected_AAC:
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
