@@ -90,6 +90,7 @@ LIBS :=  pvframemetadatautility \
         omx_avc_component_lib \
         pvavcdecoder \
         pv_avc_common_lib \
+	pv_avc_mp_decoder \
         omx_amr_component_lib \
         pvdecoder_gsmamr \
         pv_amr_nb_common_lib \

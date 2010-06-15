@@ -76,6 +76,7 @@ END_LIBS = \
    pvavcdecoder \
    pvavch264enc \
    pv_avc_common_lib \
+   pv_avc_mp_decoder \
    pvcommsionode \
    pvgendatastruct \
    pvgeneraltools \
@@ -141,6 +142,8 @@ endif
 endif
 
 LIBS := $(FULL_LIBS)
+
+
 
 include $(MK)/prog.mk
 
