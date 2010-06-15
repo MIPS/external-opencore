@@ -4291,7 +4291,6 @@ bool PVMFMP4FFParserNode::RetrieveTrackData(PVMP4FFNodeTrackPortInfo& aTrackPort
         uint32 keySampleNumber;
         if (aTrackPortInfo.iFirstFrameAfterRepositioning)
         {
-            iPrevSampleTS = iPlaybackParserObj->getMediaTimestampForCurrentSample(trackid);
             retval = iPlaybackParserObj->getPrevKeyMediaSample(iPrevSampleTS, keySampleNumber, trackid,
                      &numSamples, &iGau, &protectedSampleDecryptionInfoVect);
             iStartForNextTSSearch = iPlaybackParserObj->getMediaTimestampForCurrentSample(trackid) - 2 * iGau.info[0].ts_delta;
