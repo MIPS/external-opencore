@@ -39,7 +39,7 @@ PvmiDataStream::PvmiDataStream(int input_fd)
 {
 }
 
-PvmiDataStream::PvmiDataStream(const char *filename)
+OSCL_EXPORT_REF PvmiDataStream::PvmiDataStream(const char *filename)
 {
     RESET_FD_DS_STATE(iDataStreamState);
     // Create the Oscl_File
