@@ -211,7 +211,6 @@ int32 DecodePPS(mp4StreamType *psBits, AVCConfigInfo* iAVCConfigInfo);
 void ue_v(mp4StreamType *psBits, uint32 *codeNum);
 void se_v(mp4StreamType *psBits, int32 *value);
 void Parser_EBSPtoRBSP(uint8 *nal_unit, int32 *size);
-bool getNALType(uint8 *bitstream, int size, int *nal_type);
 
 #endif //PV_M4V_CONFIG_PARSER_H_INCLUDED
 
