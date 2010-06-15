@@ -33,7 +33,7 @@ class PVMFCPMMeterId
     public:
         PVMFCPMMeterId()
         {
-            oscl_memset(data, NULL, PVMF_CPM_METER_ID_SIZE);
+            oscl_memset(data, 0, PVMF_CPM_METER_ID_SIZE);
         }
         PVMFCPMMeterId(const PVMFCPMMeterId &aId)
         {
@@ -77,7 +77,7 @@ class PVMFCPMMeterCertInfo
         {
             iValid = false;
             iURL = _STRLIT_WCHAR("");
-            oscl_memset(iMeterId.data, NULL, sizeof(iMeterId.data));
+            oscl_memset(iMeterId.data, 0, sizeof(iMeterId.data));
         }
         void Set(const PVMFCPMMeterCertInfo& aInfo)
         {

@@ -22,14 +22,6 @@
 #include "test_case.h"
 #endif
 
-#ifndef TEXT_TEST_INTERPRETER_H_INCLUDED
-#include "text_test_interpreter.h"
-#endif
-
-#ifndef XML_TEST_INTERPRETER_H_INCLUDED
-#include "xml_test_interpreter.h"
-#endif
-
 #ifndef OSCL_SCHEDULER_AO_H_INCLUDED
 #include "oscl_scheduler_ao.h"
 #endif
@@ -117,6 +109,7 @@ class pvplayer_engine_test_suite : public test_case
     public:
         pvplayer_engine_test_suite
         (
+            FILE* aFileHandleStdOut,
             char *aFilename,
             PVMFFormatType aFiletype,
             int32 aFirstTest,
@@ -394,7 +387,8 @@ class pvplayer_engine_test
         , public OsclTimerObserver
 {
     public:
-        pvplayer_engine_test(char *aFileName,
+        pvplayer_engine_test(FILE* aFileHandleSTDOUT,
+                             char *aFileName,
                              PVMFFormatType aFileType,
                              int32 aFirstTest,
                              int32 aLastTest,
@@ -2798,6 +2792,7 @@ class pvplayer_engine_test
         virtual void TimeoutOccurred(int32 timerID, int32 timeoutInfo);
 
     private:
+        FILE* iFileHandleSTDOUT;
         const char *iFileName;
         PVMFFormatType iFileType;
 
@@ -2838,7 +2833,7 @@ class pvplayer_engine_test
         bool iRunPRUtilityNoSchedulerTC;
         OsclTimer<OsclMemAllocator> *iTimer;
 
-        uint32 m_starttick; // used to compute elapsed time for test cases
+        uint32 iStarttick; // used to compute elapsed time for test cases
 };
 
 /**

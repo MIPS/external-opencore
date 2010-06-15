@@ -277,6 +277,7 @@ pvmpeg2ffparsernode_lib=n
 #
 build_oscl=m
 unit_test_lib=y
+unit_test_utils_lib=y
 
 
 #

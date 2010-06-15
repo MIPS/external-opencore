@@ -43,7 +43,7 @@ SRCS := test_pv_player_engine.cpp \
 		test_pv_player_engine_testset_playlist.cpp
 
 
-LIBS := unit_test opencore_player opencore_common opencore_net_support
+LIBS := unit_test_utils unit_test opencore_player opencore_common opencore_net_support
 
 include $(MK)/prog.mk
 

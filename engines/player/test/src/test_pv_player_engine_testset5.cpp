@@ -159,12 +159,12 @@ void pvplayer_async_test_downloadbase::PrintMetadata()
     {
         if (!iMetadataValueList[i].key)
         {
-            fprintf(file, "  Metadata Key Missing!, value ?\n");
+            fprintf(iTestMsgOutputFile, "  Metadata Key Missing!, value ?\n");
             PVPATB_TEST_IS_TRUE(false);
         }
         else if (oscl_strstr(iMetadataValueList[i].key, "valtype=char*"))
         {
-            fprintf(file, "  Metadata Key '%s', value '%s'\n", iMetadataValueList[i].key, iMetadataValueList[i].value.pChar_value);
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', value '%s'\n", iMetadataValueList[i].key, iMetadataValueList[i].value.pChar_value);
         }
         else if (oscl_strstr(iMetadataValueList[i].key, "valtype=wchar*"))
         {
@@ -178,23 +178,23 @@ void pvplayer_async_test_downloadbase::PrintMetadata()
                 buf[0] = iMetadataValueList[i].value.pWChar_value[j];
                 ostr += buf;
             }
-            fprintf(file, "  Metadata Key '%s', value '%s'\n", iMetadataValueList[i].key, ostr.get_str());
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', value '%s'\n", iMetadataValueList[i].key, ostr.get_str());
         }
         else if (oscl_strstr(iMetadataValueList[i].key, "valtype=uint32"))
         {
-            fprintf(file, "  Metadata Key '%s', value %d\n", iMetadataValueList[i].key, iMetadataValueList[i].value.uint32_value);
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', value %d\n", iMetadataValueList[i].key, iMetadataValueList[i].value.uint32_value);
         }
         else if (oscl_strstr(iMetadataValueList[i].key, "valtype=bool"))
         {
-            fprintf(file, "  Metadata Key '%s', value %d\n", iMetadataValueList[i].key, iMetadataValueList[i].value.bool_value);
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', value %d\n", iMetadataValueList[i].key, iMetadataValueList[i].value.bool_value);
         }
         else if (oscl_strstr(iMetadataValueList[i].key, "valtype=uint8*"))
         {
-            fprintf(file, "  Metadata Key '%s', len %d\n", iMetadataValueList[i].key, iMetadataValueList[i].length);
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', len %d\n", iMetadataValueList[i].key, iMetadataValueList[i].length);
         }
         else
         {
-            fprintf(file, "  Metadata Key '%s', value ?\n", iMetadataValueList[i].key);
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', value ?\n", iMetadataValueList[i].key);
         }
         if ((oscl_strstr(iMetadataValueList[i].key, "duration")) && iSessionDuration == 0)
         {
@@ -223,7 +223,7 @@ void pvplayer_async_test_downloadbase::PrintMetadata()
             }
         }
     }
-    fprintf(file, "\n\n");
+    fprintf(iTestMsgOutputFile, "\n\n");
 }
 
 void pvplayer_async_test_downloadbase::StartTest()
@@ -487,7 +487,7 @@ void pvplayer_async_test_downloadbase::Run()
                         }
                         if (iPauseResumeAfterUnderflow == true)
                         {
-                            fprintf(file, "\n   Buffering Complete before Underflow event, pass the test case but Scenario not tested\n\n");
+                            fprintf(iTestMsgOutputFile, "\n   Buffering Complete before Underflow event, pass the test case but Scenario not tested\n\n");
                             // pass the test case but scenario is not tested, print a message for the user,
                             // now either play for 5 seconds or wait till the EOS.
                         }
@@ -656,11 +656,11 @@ void pvplayer_async_test_downloadbase::Run()
 
         case STATE_CLEANUPANDCOMPLETE:
         {
-            fprintf(file, "Events:\n");
-            fprintf(file, "  Num BuffStart %d\n", iNumBufferingStart);
-            fprintf(file, "  Num BuffComplete %d\n", iNumBufferingComplete);
-            fprintf(file, "  Num Data Ready %d\n", iNumDataReady);
-            fprintf(file, "  Num Underflow %d\n", iNumUnderflow);
+            fprintf(iTestMsgOutputFile, "Events:\n");
+            fprintf(iTestMsgOutputFile, "  Num BuffStart %d\n", iNumBufferingStart);
+            fprintf(iTestMsgOutputFile, "  Num BuffComplete %d\n", iNumBufferingComplete);
+            fprintf(iTestMsgOutputFile, "  Num Data Ready %d\n", iNumDataReady);
+            fprintf(iTestMsgOutputFile, "  Num Underflow %d\n", iNumUnderflow);
 
             PVPATB_TEST_IS_TRUE(PVPlayerFactory::DeletePlayer(iPlayer));
             iPlayer = NULL;
@@ -805,7 +805,7 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
                     else
                     {
                         //wait on download to complete.
-                        fprintf(file, "***Wait for BufferingComplete...\n");
+                        fprintf(iTestMsgOutputFile, "***Wait for BufferingComplete...\n");
                         iState = STATE_WAIT_FOR_BUFFCOMPLETE;
                         if (iPlayUntilEOS == false)
                         {
@@ -827,7 +827,7 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
                         (aResponse.GetCmdStatus() == PVMFErrContentTooLarge))
                 {
                     // Test success in this case
-                    fprintf(file, "   INIT returned PVMFErrContentTooLarge\n");
+                    fprintf(iTestMsgOutputFile, "   INIT returned PVMFErrContentTooLarge\n");
                     PVPATB_TEST_IS_TRUE(true);
                     iState = STATE_REMOVEDATASOURCE;
                     RunIfNotReady();
@@ -922,7 +922,7 @@ void pvplayer_async_test_downloadbase::CommandCompleted(const PVCmdResponse& aRe
                 }
                 else
                 {
-                    fprintf(file, "***Wait for DataReady...\n");
+                    fprintf(iTestMsgOutputFile, "***Wait for DataReady...\n");
                     iState = STATE_WAIT_FOR_DATAREADY;
                     if (iPlayUntilEOS == false)
                     {
@@ -1321,23 +1321,23 @@ void pvplayer_async_test_downloadbase::HandleProtocolEngineNodeErrors(int32 aErr
     else if ((aErr >= PVProtocolEngineNodeErrorHTTPErrorCode500) &&
              (aErr < PVProtocolEngineNodeErrorHTTPCode5xxUnknownStart))
     {
-        fprintf(file, "   ERROR: PVProtocolEngineNodeError5xx HTTP Status Code %d\n",
+        fprintf(iTestMsgOutputFile, "   ERROR: PVProtocolEngineNodeError5xx HTTP Status Code %d\n",
                 aErr - PVProtocolEngineNodeErrorEventStart);
     }
     else if ((aErr >= PVProtocolEngineNodeErrorHTTPRedirectCodeStart) &&
              (aErr <= PVProtocolEngineNodeErrorHTTPRedirectCodeEnd))
     {
-        fprintf(file, "   ERROR IN REDIRECT: PVProtocolEngineNodeError3xx HTTP Status Code %d\n",
+        fprintf(iTestMsgOutputFile, "   ERROR IN REDIRECT: PVProtocolEngineNodeError3xx HTTP Status Code %d\n",
                 aErr - PVProtocolEngineNodeErrorEventStart);
     }
     else if (aErr < PVProtocolEngineNodeErrorNotHTTPErrorStart || aErr > PVProtocolEngineNodeErrorNotHTTPErrorEnd)
     {
-        fprintf(file, "   ERROR: PVProtocolEngineNodeError HTTP Unknown Status Code %d\n",
+        fprintf(iTestMsgOutputFile, "   ERROR: PVProtocolEngineNodeError HTTP Unknown Status Code %d\n",
                 aErr - PVProtocolEngineNodeErrorEventStart);
     }
     else
     {
-        fprintf(file, "   ERROR: PVProtocolEngineNodeError General Error %d\n", aErr);
+        fprintf(iTestMsgOutputFile, "   ERROR: PVProtocolEngineNodeError General Error %d\n", aErr);
     }
 }
 
@@ -1353,31 +1353,31 @@ void pvplayer_async_test_downloadbase::HandleErrorEvent(const PVAsyncErrorEvent&
         case PVMFErrResourceConfiguration:
             // Just log the error
             PVPATB_TEST_IS_TRUE(false);
-            fprintf(file, "   GOT PVMFErrResourceConfiguration error event\n");
+            fprintf(iTestMsgOutputFile, "   GOT PVMFErrResourceConfiguration error event\n");
             break;
 
         case PVMFErrResource:
             // Just log the error
             PVPATB_TEST_IS_TRUE(false);
-            fprintf(file, "   GOT PVMFErrResource error event\n");
+            fprintf(iTestMsgOutputFile, "   GOT PVMFErrResource error event\n");
             break;
 
         case PVMFErrCorrupt:
             // Just log the error
             PVPATB_TEST_IS_TRUE(false);
-            fprintf(file, "   GOT PVMFErrCorrupt error event\n");
+            fprintf(iTestMsgOutputFile, "   GOT PVMFErrCorrupt error event\n");
             break;
 
         case PVMFErrProcessing:
             // Just log the error
             PVPATB_TEST_IS_TRUE(false);
-            fprintf(file, "   GOT PVMFErrProcessing error event\n");
+            fprintf(iTestMsgOutputFile, "   GOT PVMFErrProcessing error event\n");
             break;
 
         case PVMFErrTimeout:
 
             PVPATB_TEST_IS_TRUE(false);
-            fprintf(file, "   GOT PVMFErrTimeout error event");
+            fprintf(iTestMsgOutputFile, "   GOT PVMFErrTimeout error event");
             break;
 
         case PVMFErrNotSupported:
@@ -1398,11 +1398,11 @@ void pvplayer_async_test_downloadbase::HandleInformationalEvent(const PVAsyncInf
 {
     if (aEvent.GetEventType() == PVMFInfoErrorHandlingStart)
     {
-        fprintf(file, "PVMFInfoErrorHandlingStart...\n");
+        fprintf(iTestMsgOutputFile, "PVMFInfoErrorHandlingStart...\n");
     }
     if (aEvent.GetEventType() == PVMFInfoErrorHandlingComplete)
     {
-        fprintf(file, "PVMFInfoErrorHandlingComplete...\n");
+        fprintf(iTestMsgOutputFile, "PVMFInfoErrorHandlingComplete...\n");
         iState = STATE_CLEANUPANDCOMPLETE;
         RunIfNotReady();
     }
@@ -1424,7 +1424,7 @@ void pvplayer_async_test_downloadbase::HandleInformationalEvent(const PVAsyncInf
             infomsgiface->GetCodeUUID(infocode, infouuid);
             if ((infouuid == PVPlayerErrorInfoEventTypesUUID) && (infocode == PVPlayerInfoEndOfClipReached))
             {
-                fprintf(file, "   GOT PVPlayerInfoEndOfClipReached EVENT\n");
+                fprintf(iTestMsgOutputFile, "   GOT PVPlayerInfoEndOfClipReached EVENT\n");
                 iNumEOS++;
                 if (iState == STATE_STOP)
                 {
@@ -1455,16 +1455,16 @@ void pvplayer_async_test_downloadbase::HandleInformationalEvent(const PVAsyncInf
             iLastBufferingStatusVal = *percent;
             if (iLastBufferingStatusVal == 0 || iLastBufferingStatusVal == 100)
             {
-                fprintf(file, "   PVMFInfoBufferingStatus %d\n", iLastBufferingStatusVal);
+                fprintf(iTestMsgOutputFile, "   PVMFInfoBufferingStatus %d\n", iLastBufferingStatusVal);
             }
             else
             {
-                fprintf(file, ".%d.", iLastBufferingStatusVal);
+                fprintf(iTestMsgOutputFile, ".%d.", iLastBufferingStatusVal);
             }
         }
         break;
         case PVMFInfoBufferingStart:
-            fprintf(file, "   PVMFInfoBufferingStart\n");
+            fprintf(iTestMsgOutputFile, "   PVMFInfoBufferingStart\n");
             iNumBufferingStart++;
             if (iPlayStopPlay)
             {
@@ -1485,7 +1485,7 @@ void pvplayer_async_test_downloadbase::HandleInformationalEvent(const PVAsyncInf
             PVExclusivePtr eventData;
             aEvent.GetEventData(eventData);
             uint32 contentSize = (uint32)(eventData);
-            fprintf(file, "   PVMFInfoBufferingComplete (contentSize=%d)\n", contentSize);
+            fprintf(iTestMsgOutputFile, "   PVMFInfoBufferingComplete (contentSize=%d)\n", contentSize);
             iNumBufferingComplete++;
             if (iPlayStopPlay)
             {
@@ -1512,7 +1512,7 @@ void pvplayer_async_test_downloadbase::HandleInformationalEvent(const PVAsyncInf
 
         case PVMFInfoDataReady:
             iNumDataReady++;
-            fprintf(file, "\n   PVMFInfoDataReady\n");
+            fprintf(iTestMsgOutputFile, "\n   PVMFInfoDataReady\n");
             //special handling for very first data ready event.
             if (iNumDataReady == 1)
             {
@@ -1537,7 +1537,7 @@ void pvplayer_async_test_downloadbase::HandleInformationalEvent(const PVAsyncInf
             break;
         case PVMFInfoUnderflow:
             iNumUnderflow++;
-            fprintf(file, "\n   PVMFInfoUnderflow\n");
+            fprintf(iTestMsgOutputFile, "\n   PVMFInfoUnderflow\n");
             if (iPauseResumeAfterUnderflow == true)
             {
                 iState = STATE_PAUSE;
@@ -1553,7 +1553,7 @@ void pvplayer_async_test_downloadbase::HandleInformationalEvent(const PVAsyncInf
             PVExclusivePtr eventData;
             aEvent.GetEventData(eventData);
             uint32 contentSize = (uint32)(eventData);
-            fprintf(file, "   PVMFInfoContentLength = %d\n", contentSize);
+            fprintf(iTestMsgOutputFile, "   PVMFInfoContentLength = %d\n", contentSize);
         }
         break;
 
@@ -1562,7 +1562,7 @@ void pvplayer_async_test_downloadbase::HandleInformationalEvent(const PVAsyncInf
             PVExclusivePtr eventData;
             aEvent.GetEventData(eventData);
             uint32 downloadSize = (uint32)(eventData);
-            fprintf(file, "\n   PVMFInfoContentTruncated! downloadSize = %d\n", downloadSize);
+            fprintf(iTestMsgOutputFile, "\n   PVMFInfoContentTruncated! downloadSize = %d\n", downloadSize);
 
             // check extension info code
             PVMFErrorInfoMessageInterface *msg = NULL;
@@ -1586,7 +1586,7 @@ void pvplayer_async_test_downloadbase::HandleInformationalEvent(const PVAsyncInf
                         if (infoUUID == PVMFPROTOCOLENGINENODEInfoEventTypesUUID &&
                                 srcInfoCode == PVMFPROTOCOLENGINENODEInfo_TruncatedContentByServerDisconnect)
                         {
-                            fprintf(file, "   PVMFInfoContentTruncated! TruncatedContentByServerDisconnect!\n");
+                            fprintf(iTestMsgOutputFile, "   PVMFInfoContentTruncated! TruncatedContentByServerDisconnect!\n");
                         }
                     }
                 }
@@ -1600,17 +1600,17 @@ void pvplayer_async_test_downloadbase::HandleInformationalEvent(const PVAsyncInf
             PVExclusivePtr eventData;
             aEvent.GetEventData(eventData);
             char *constentType = (char *)(eventData);
-            fprintf(file, "   PVMFInfoContentType   = %s\n", constentType);
+            fprintf(iTestMsgOutputFile, "   PVMFInfoContentType   = %s\n", constentType);
         }
         break;
 
         case PVMFInfoUnexpectedData:
-            fprintf(file, "   PVMFInfoUnexpectedData! Downloaded more data than content-length\n");
+            fprintf(iTestMsgOutputFile, "   PVMFInfoUnexpectedData! Downloaded more data than content-length\n");
             if (iNumBufferingComplete == 0) PVPATB_TEST_IS_TRUE(false); // we should get this info event after buffer complete event
             break;
 
         case PVMFInfoSessionDisconnect:
-            fprintf(file, "   PVMFInfoSessionDisconnect! Got server disconnect after download is complete\n");
+            fprintf(iTestMsgOutputFile, "   PVMFInfoSessionDisconnect! Got server disconnect after download is complete\n");
             if (iNumBufferingComplete == 0) PVPATB_TEST_IS_TRUE(false); // we should get this info event after buffer complete event
             break;
 
@@ -1640,7 +1640,7 @@ void pvplayer_async_test_downloadbase::HandleInformationalEvent(const PVAsyncInf
                         if (infoUUID == PVMFFileFormatEventTypesUUID
                                 && srcInfoCode == PVMFMP4FFParserInfoNotPseudostreamableFile)
                         {
-                            fprintf(file, "   PVMFInfoRemoteSourceNotification (not progressive-downloadable)\n");
+                            fprintf(iTestMsgOutputFile, "   PVMFInfoRemoteSourceNotification (not progressive-downloadable)\n");
                         }
                         else if (infoUUID == PVMFPROTOCOLENGINENODEInfoEventTypesUUID
                                  && (srcInfoCode >= PVMFPROTOCOLENGINENODEInfo_HTTPRedirectCode300 &&
@@ -1649,7 +1649,7 @@ void pvplayer_async_test_downloadbase::HandleInformationalEvent(const PVAsyncInf
                             PVExclusivePtr eventData;
                             aEvent.GetEventData(eventData);
                             char *redirectUrl = (char *)(eventData);
-                            fprintf(file, "   PVMFInfoRemoteSourceNotification (HTTP Status code = %d), redirectUrl = %s\n",
+                            fprintf(iTestMsgOutputFile, "   PVMFInfoRemoteSourceNotification (HTTP Status code = %d), redirectUrl = %s\n",
                                     srcInfoCode - PVMFPROTOCOLENGINENODEInfo_Redirect, redirectUrl);
                         }
 
@@ -1705,17 +1705,17 @@ void pvplayer_async_test_3gppdlnormal::CreateDataSource()
     {
         if (iFileType == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL)
         {
-            fprintf(file, "Setting source to %s\n", DEFAULT_SMOOTHSTREAMING_URL);
+            fprintf(iTestMsgOutputFile, "Setting source to %s\n", DEFAULT_SMOOTHSTREAMING_URL);
             url = DEFAULT_SMOOTHSTREAMING_URL;
         }
         else if (iPlayStopPlay)
         {//use slow download simulator so we test stop during download.
-            fprintf(file, "Setting source to %s\n", DEFAULT_3GPPDL_URL_SLOW);
+            fprintf(iTestMsgOutputFile, "Setting source to %s\n", DEFAULT_3GPPDL_URL_SLOW);
             url = DEFAULT_3GPPDL_URL_SLOW;
         }
         else
         {
-            fprintf(file, "Setting source to %s\n", DEFAULT_3GPPDL_URL);
+            fprintf(iTestMsgOutputFile, "Setting source to %s\n", DEFAULT_3GPPDL_URL);
             url = DEFAULT_3GPPDL_URL;
         }
     }
@@ -1819,7 +1819,7 @@ void pvplayer_async_test_ppbnormal::CreateDataSource()
     default_source += DEFAULTSOURCEFILENAME;
     if (url == default_source)
     {
-        fprintf(file, "Setting source to %s\n", DEFAULT_3GPPDL_URL);
+        fprintf(iTestMsgOutputFile, "Setting source to %s\n", DEFAULT_3GPPDL_URL);
         url = DEFAULT_3GPPDL_URL;
     }
     oscl_wchar wbuf[2];
@@ -1910,12 +1910,12 @@ void pvplayer_async_test_3gppdlnormal_dlthenplay::CreateDataSource()
     {
         if (iFileType == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL)
         {
-            fprintf(file, "Setting source to %s\n", DEFAULT_SMOOTHSTREAMING_URL);
+            fprintf(iTestMsgOutputFile, "Setting source to %s\n", DEFAULT_SMOOTHSTREAMING_URL);
             url = DEFAULT_SMOOTHSTREAMING_URL;
         }
         else
         {
-            fprintf(file, "Setting source to %s\n", DEFAULT_3GPPDL_URL);
+            fprintf(iTestMsgOutputFile, "Setting source to %s\n", DEFAULT_3GPPDL_URL);
             url = DEFAULT_3GPPDL_URL;
         }
     }
@@ -2010,7 +2010,7 @@ void pvplayer_async_test_3gppdlnormal_dlonly::CreateDataSource()
     default_source += DEFAULTSOURCEFILENAME;
     if (url == default_source)
     {
-        fprintf(file, "Setting source to %s\n", DEFAULT_3GPPDL_URL);
+        fprintf(iTestMsgOutputFile, "Setting source to %s\n", DEFAULT_3GPPDL_URL);
         url = DEFAULT_3GPPDL_URL;
     }
     oscl_wchar wbuf[2];
@@ -2113,7 +2113,7 @@ void pvplayer_async_test_3gppdlcancelduringinit::Run()
             default_source += DEFAULTSOURCEFILENAME;
             if (url == default_source)
             {
-                fprintf(file, "Setting source to %s\n", DEFAULT_CANCEL_DURING_INIT_TEST_URL);
+                fprintf(iTestMsgOutputFile, "Setting source to %s\n", DEFAULT_CANCEL_DURING_INIT_TEST_URL);
                 url = DEFAULT_CANCEL_DURING_INIT_TEST_URL;
             }
             oscl_wchar wbuf[2];
@@ -2168,9 +2168,9 @@ void pvplayer_async_test_3gppdlcancelduringinit::Run()
         {
             if (iCancelCommandExecuted)
             {
-                fprintf(file, "\nError - Cancel command being executed multiple times, please verify ...\n");
+                fprintf(iTestMsgOutputFile, "\nError - Cancel command being executed multiple times, please verify ...\n");
             }
-            fprintf(file, "\n Cancel all ...\n");
+            fprintf(iTestMsgOutputFile, "\n Cancel all ...\n");
             OSCL_TRY(error, iCurrentCmdId = iPlayer->CancelAllCommands((OsclAny*) & iContextObject));
             iCancelCommandExecuted = true;
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -2270,7 +2270,7 @@ void pvplayer_async_test_3gppdlcancelduringinit::CommandCompleted(const PVCmdRes
         case STATE_CANCELALL:
             if (!iCancelCommandExecuted)
             {
-                fprintf(file, "\n Error - Cancel command not executed, Pass the test case but scenario not tested...\n");
+                fprintf(iTestMsgOutputFile, "\n Error - Cancel command not executed, Pass the test case but scenario not tested...\n");
             }
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
@@ -2293,11 +2293,11 @@ void pvplayer_async_test_3gppdlcancelduringinit::CommandCompleted(const PVCmdRes
                 if (aResponse.GetCmdId() != iCurrentCmdId)
                 {
                     // Init success. Ignore.
-                    fprintf(file, "\n Init Completed ...\n");
+                    fprintf(iTestMsgOutputFile, "\n Init Completed ...\n");
                 }
                 else
                 {
-                    fprintf(file, "\n Cancel all complete ...\n");
+                    fprintf(iTestMsgOutputFile, "\n Cancel all complete ...\n");
                     // Cancel succeeded so test passed
                     PVPATB_TEST_IS_TRUE(true);
                     iState = STATE_CLEANUPANDCOMPLETE;
@@ -2403,11 +2403,11 @@ void pvplayer_async_test_3gppdlcancelduringinit::HandleInformationalEvent(const 
 {
     if (aEvent.GetEventType() == PVMFInfoErrorHandlingStart)
     {
-        fprintf(file, "PVMFInfoErrorHandlingStart...\n");
+        fprintf(iTestMsgOutputFile, "PVMFInfoErrorHandlingStart...\n");
     }
     if (aEvent.GetEventType() == PVMFInfoErrorHandlingComplete)
     {
-        fprintf(file, "PVMFInfoErrorHandlingComplete...\n");
+        fprintf(iTestMsgOutputFile, "PVMFInfoErrorHandlingComplete...\n");
         iState = STATE_CLEANUPANDCOMPLETE;
         RunIfNotReady();
     }
@@ -2424,26 +2424,26 @@ void pvplayer_async_test_3gppdlcancelduringinit::HandleInformationalEvent(const 
             int32 *percent = (int32*)aEvent.GetLocalBuffer();
             if (*percent == 0 || *percent == 100)
             {
-                fprintf(file, "   PVMFInfoBufferingStatus %d\n", *percent);
+                fprintf(iTestMsgOutputFile, "   PVMFInfoBufferingStatus %d\n", *percent);
             }
             else
             {
-                fprintf(file, ".%d.", *percent);
+                fprintf(iTestMsgOutputFile, ".%d.", *percent);
             }
         }
         break;
         case PVMFInfoBufferingStart:
-            fprintf(file, "   PVMFInfoBufferingStart\n");
+            fprintf(iTestMsgOutputFile, "   PVMFInfoBufferingStart\n");
             break;
         case PVMFInfoBufferingComplete:
-            fprintf(file, "   PVMFInfoBufferingComplete\n");
+            fprintf(iTestMsgOutputFile, "   PVMFInfoBufferingComplete\n");
             break;
         case PVMFInfoContentLength:
         {
             PVExclusivePtr eventData;
             aEvent.GetEventData(eventData);
             uint32 contentSize = (uint32)(eventData);
-            fprintf(file, "   PVMFInfoContentLength = %d\n", contentSize);
+            fprintf(iTestMsgOutputFile, "   PVMFInfoContentLength = %d\n", contentSize);
         }
         break;
         case PVMFInfoContentTruncated:
@@ -2451,7 +2451,7 @@ void pvplayer_async_test_3gppdlcancelduringinit::HandleInformationalEvent(const 
             PVExclusivePtr eventData;
             aEvent.GetEventData(eventData);
             uint32 downloadSize = (uint32)(eventData);
-            fprintf(file, "\n   PVMFInfoContentTruncated! downloadSize = %d\n", downloadSize);
+            fprintf(iTestMsgOutputFile, "\n   PVMFInfoContentTruncated! downloadSize = %d\n", downloadSize);
         }
         break;
 
@@ -2460,7 +2460,7 @@ void pvplayer_async_test_3gppdlcancelduringinit::HandleInformationalEvent(const 
             PVExclusivePtr eventData;
             aEvent.GetEventData(eventData);
             char *constentType = (char *)(eventData);
-            fprintf(file, "   PVMFInfoContentType   = %s\n", constentType);
+            fprintf(iTestMsgOutputFile, "   PVMFInfoContentType   = %s\n", constentType);
         }
         break;
 
@@ -2490,7 +2490,7 @@ void pvplayer_async_test_3gppdlcancelduringinit::HandleInformationalEvent(const 
                         if (infoUUID == PVMFFileFormatEventTypesUUID
                                 && srcInfoCode == PVMFMP4FFParserInfoNotPseudostreamableFile)
                         {
-                            fprintf(file, "   PVMFInfoRemoteSourceNotification (not progressive-downloadable)\n");
+                            fprintf(iTestMsgOutputFile, "   PVMFInfoRemoteSourceNotification (not progressive-downloadable)\n");
                         }
                         else if (infoUUID == PVMFPROTOCOLENGINENODEInfoEventTypesUUID
                                  && (srcInfoCode >= PVMFPROTOCOLENGINENODEInfo_HTTPRedirectCode300 &&
@@ -2499,7 +2499,7 @@ void pvplayer_async_test_3gppdlcancelduringinit::HandleInformationalEvent(const 
                             PVExclusivePtr eventData;
                             aEvent.GetEventData(eventData);
                             char *redirectUrl = (char *)(eventData);
-                            fprintf(file, "   PVMFInfoRemoteSourceNotification (HTTP Status code = %d), redirectUrl = %s\n",
+                            fprintf(iTestMsgOutputFile, "   PVMFInfoRemoteSourceNotification (HTTP Status code = %d), redirectUrl = %s\n",
                                     srcInfoCode - PVMFPROTOCOLENGINENODEInfo_Redirect, redirectUrl);
                         }
 
@@ -2559,7 +2559,7 @@ void pvplayer_async_test_3gppdlcancelduringinitdelay::Run()
             default_source += DEFAULTSOURCEFILENAME;
             if (url == default_source)
             {
-                fprintf(file, "Setting source to %s\n", DEFAULT_CANCEL_DURING_INIT_DELAY_TEST_URL);
+                fprintf(iTestMsgOutputFile, "Setting source to %s\n", DEFAULT_CANCEL_DURING_INIT_DELAY_TEST_URL);
                 url = DEFAULT_CANCEL_DURING_INIT_DELAY_TEST_URL;
             }
             oscl_wchar wbuf[2];
@@ -2616,9 +2616,9 @@ void pvplayer_async_test_3gppdlcancelduringinitdelay::Run()
         {
             if (iCancelCommandExecuted)
             {
-                fprintf(file, "\nError - Cancel command being executed multiple times, please verify ...\n");
+                fprintf(iTestMsgOutputFile, "\nError - Cancel command being executed multiple times, please verify ...\n");
             }
-            fprintf(file, "\n Cancel all waiting 15 seconds to complete or cancel download ...\n");
+            fprintf(iTestMsgOutputFile, "\n Cancel all waiting 15 seconds to complete or cancel download ...\n");
             OSCL_TRY(error, iCurrentCmdId = iPlayer->CancelAllCommands((OsclAny*) & iContextObject));
             iCancelCommandExecuted = true;
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -2720,7 +2720,7 @@ void pvplayer_async_test_3gppdlcancelduringinitdelay::CommandCompleted(const PVC
         case STATE_CANCELALL:
             if (!iCancelCommandExecuted)
             {
-                fprintf(file, "\n Init complete before CancelAll was issued. Test case passed but scenario not tested \n");
+                fprintf(iTestMsgOutputFile, "\n Init complete before CancelAll was issued. Test case passed but scenario not tested \n");
             }
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
@@ -2742,7 +2742,7 @@ void pvplayer_async_test_3gppdlcancelduringinitdelay::CommandCompleted(const PVC
                     iInitCmdId == -1 && // init has been completed
                     aResponse.GetCmdStatus() == PVMFSuccess) // cancel was successful
             {
-                fprintf(file, "\n Cancel all complete ...\n");
+                fprintf(iTestMsgOutputFile, "\n Cancel all complete ...\n");
 
                 // Cancel succeeded so test passed
                 PVPATB_TEST_IS_TRUE(true);
@@ -2763,7 +2763,7 @@ void pvplayer_async_test_3gppdlcancelduringinitdelay::CommandCompleted(const PVC
             else
             {
                 // Cancel failed
-                fprintf(file, "\n Previous command was not cancelled or cancel failed ...\n");
+                fprintf(iTestMsgOutputFile, "\n Previous command was not cancelled or cancel failed ...\n");
 
                 PVPATB_TEST_IS_TRUE(false);
                 iState = STATE_CLEANUPANDCOMPLETE;
@@ -2852,11 +2852,11 @@ void pvplayer_async_test_3gppdlcancelduringinitdelay::HandleInformationalEvent(c
 {
     if (aEvent.GetEventType() == PVMFInfoErrorHandlingStart)
     {
-        fprintf(file, "PVMFInfoErrorHandlingStart...\n");
+        fprintf(iTestMsgOutputFile, "PVMFInfoErrorHandlingStart...\n");
     }
     if (aEvent.GetEventType() == PVMFInfoErrorHandlingComplete)
     {
-        fprintf(file, "PVMFInfoErrorHandlingComplete...\n");
+        fprintf(iTestMsgOutputFile, "PVMFInfoErrorHandlingComplete...\n");
         iState = STATE_CLEANUPANDCOMPLETE;
         RunIfNotReady();
     }
@@ -2868,11 +2868,11 @@ void pvplayer_async_test_3gppdlcancelduringinitdelay::HandleInformationalEvent(c
             int32 *percent = (int32*)aEvent.GetLocalBuffer();
             if (*percent == 0 || *percent == 100)
             {
-                fprintf(file, "   PVMFInfoBufferingStatus %d\n", *percent);
+                fprintf(iTestMsgOutputFile, "   PVMFInfoBufferingStatus %d\n", *percent);
             }
             else
             {
-                fprintf(file, ".%d.", *percent);
+                fprintf(iTestMsgOutputFile, ".%d.", *percent);
             }
             if (iState == STATE_CANCELALL && !iCancelCommandExecuted)
             {
@@ -2882,17 +2882,17 @@ void pvplayer_async_test_3gppdlcancelduringinitdelay::HandleInformationalEvent(c
         }
         break;
         case PVMFInfoBufferingStart:
-            fprintf(file, "   PVMFInfoBufferingStart\n");
+            fprintf(iTestMsgOutputFile, "   PVMFInfoBufferingStart\n");
             break;
         case PVMFInfoBufferingComplete:
-            fprintf(file, "   PVMFInfoBufferingComplete\n");
+            fprintf(iTestMsgOutputFile, "   PVMFInfoBufferingComplete\n");
             break;
         case PVMFInfoContentLength:
         {
             PVExclusivePtr eventData;
             aEvent.GetEventData(eventData);
             uint32 contentSize = (uint32)(eventData);
-            fprintf(file, "   PVMFInfoContentLength = %d\n", contentSize);
+            fprintf(iTestMsgOutputFile, "   PVMFInfoContentLength = %d\n", contentSize);
         }
         break;
         case PVMFInfoContentTruncated:
@@ -2900,7 +2900,7 @@ void pvplayer_async_test_3gppdlcancelduringinitdelay::HandleInformationalEvent(c
             PVExclusivePtr eventData;
             aEvent.GetEventData(eventData);
             uint32 downloadSize = (uint32)(eventData);
-            fprintf(file, "\n   PVMFInfoContentTruncated! downloadSize = %d\n", downloadSize);
+            fprintf(iTestMsgOutputFile, "\n   PVMFInfoContentTruncated! downloadSize = %d\n", downloadSize);
         }
         break;
 
@@ -2909,7 +2909,7 @@ void pvplayer_async_test_3gppdlcancelduringinitdelay::HandleInformationalEvent(c
             PVExclusivePtr eventData;
             aEvent.GetEventData(eventData);
             char *constentType = (char *)(eventData);
-            fprintf(file, "   PVMFInfoContentType   = %s\n", constentType);
+            fprintf(iTestMsgOutputFile, "   PVMFInfoContentType   = %s\n", constentType);
         }
         break;
 
@@ -2939,7 +2939,7 @@ void pvplayer_async_test_3gppdlcancelduringinitdelay::HandleInformationalEvent(c
                         if (infoUUID == PVMFFileFormatEventTypesUUID
                                 && srcInfoCode == PVMFMP4FFParserInfoNotPseudostreamableFile)
                         {
-                            fprintf(file, "   PVMFInfoRemoteSourceNotification (not progressive-downloadable)\n");
+                            fprintf(iTestMsgOutputFile, "   PVMFInfoRemoteSourceNotification (not progressive-downloadable)\n");
                         }
                         else if (infoUUID == PVMFPROTOCOLENGINENODEInfoEventTypesUUID
                                  && (srcInfoCode >= PVMFPROTOCOLENGINENODEInfo_HTTPRedirectCode300 &&
@@ -2948,7 +2948,7 @@ void pvplayer_async_test_3gppdlcancelduringinitdelay::HandleInformationalEvent(c
                             PVExclusivePtr eventData;
                             aEvent.GetEventData(eventData);
                             char *redirectUrl = (char *)(eventData);
-                            fprintf(file, "   PVMFInfoRemoteSourceNotification (HTTP Status code = %d), redirectUrl = %s\n",
+                            fprintf(iTestMsgOutputFile, "   PVMFInfoRemoteSourceNotification (HTTP Status code = %d), redirectUrl = %s\n",
                                     srcInfoCode - PVMFPROTOCOLENGINENODEInfo_Redirect, redirectUrl);
                         }
 
@@ -2978,7 +2978,7 @@ void pvplayer_async_test_3gppdlcontenttoolarge::CreateDataSource()
     default_source += DEFAULTSOURCEFILENAME;
     if (url == default_source)
     {
-        fprintf(file, "Setting source to %s\n", DEFAULT_3GPPDL_URL);
+        fprintf(iTestMsgOutputFile, "Setting source to %s\n", DEFAULT_3GPPDL_URL);
         url = DEFAULT_3GPPDL_URL;
     }
     oscl_wchar wbuf[2];
@@ -3003,7 +3003,7 @@ void pvplayer_async_test_3gppdlcontenttoolarge::CreateDataSource()
 
     // Set the max file size to a small number
     uint32 iMaxFileSize = 0x7FFF;
-    fprintf(file, "   Setting iMaxFileSize to %d\n", iMaxFileSize);
+    fprintf(iTestMsgOutputFile, "   Setting iMaxFileSize to %d\n", iMaxFileSize);
 
     // Set the iContentTooLarge to TRUE.  This will return success
     //   for INIT failure of PVMFErrContentTooLarge
@@ -3054,7 +3054,7 @@ void pvplayer_async_test_3gppdlContentTruncated::CreateDataSource()
     default_source += DEFAULTSOURCEFILENAME;
     if (url == default_source)
     {
-        fprintf(file, "Setting source to %s\n", DEFAULT_TRUNCATED_TEST_URL);
+        fprintf(iTestMsgOutputFile, "Setting source to %s\n", DEFAULT_TRUNCATED_TEST_URL);
         url = DEFAULT_TRUNCATED_TEST_URL;
     }
     oscl_wchar wbuf[2];
@@ -3128,12 +3128,12 @@ void pvplayer_async_test_ppb_base::PrintMetadata()
     {
         if (!iMetadataValueList[i].key)
         {
-            fprintf(file, "  Metadata Key Missing!, value ?\n");
+            fprintf(iTestMsgOutputFile, "  Metadata Key Missing!, value ?\n");
             PVPATB_TEST_IS_TRUE(false);
         }
         else if (oscl_strstr(iMetadataValueList[i].key, "valtype=char*"))
         {
-            fprintf(file, "  Metadata Key '%s', value '%s'\n", iMetadataValueList[i].key, iMetadataValueList[i].value.pChar_value);
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', value '%s'\n", iMetadataValueList[i].key, iMetadataValueList[i].value.pChar_value);
         }
         else if (oscl_strstr(iMetadataValueList[i].key, "valtype=wchar*"))
         {
@@ -3147,23 +3147,23 @@ void pvplayer_async_test_ppb_base::PrintMetadata()
                 buf[0] = iMetadataValueList[i].value.pWChar_value[j];
                 ostr += buf;
             }
-            fprintf(file, "  Metadata Key '%s', value '%s'\n", iMetadataValueList[i].key, ostr.get_str());
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', value '%s'\n", iMetadataValueList[i].key, ostr.get_str());
         }
         else if (oscl_strstr(iMetadataValueList[i].key, "valtype=uint32"))
         {
-            fprintf(file, "  Metadata Key '%s', value %d\n", iMetadataValueList[i].key, iMetadataValueList[i].value.uint32_value);
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', value %d\n", iMetadataValueList[i].key, iMetadataValueList[i].value.uint32_value);
         }
         else if (oscl_strstr(iMetadataValueList[i].key, "valtype=bool"))
         {
-            fprintf(file, "  Metadata Key '%s', value %d\n", iMetadataValueList[i].key, iMetadataValueList[i].value.bool_value);
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', value %d\n", iMetadataValueList[i].key, iMetadataValueList[i].value.bool_value);
         }
         else if (oscl_strstr(iMetadataValueList[i].key, "valtype=uint8*"))
         {
-            fprintf(file, "  Metadata Key '%s', len %d\n", iMetadataValueList[i].key, iMetadataValueList[i].length);
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', len %d\n", iMetadataValueList[i].key, iMetadataValueList[i].length);
         }
         else
         {
-            fprintf(file, "  Metadata Key '%s', value ?\n", iMetadataValueList[i].key);
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', value ?\n", iMetadataValueList[i].key);
         }
         if ((oscl_strstr(iMetadataValueList[i].key, "duration")) && iSessionDuration == 0)
         {
@@ -3192,7 +3192,7 @@ void pvplayer_async_test_ppb_base::PrintMetadata()
             }
         }
     }
-    fprintf(file, "\n\n");
+    fprintf(iTestMsgOutputFile, "\n\n");
 }
 
 void pvplayer_async_test_ppb_base::StartTest()
@@ -3630,9 +3630,9 @@ void pvplayer_async_test_ppb_base::Run()
             if (iState == STATE_STOP)
             {
                 if (iSessionDuration == 0)
-                    fprintf(file, "   DURATION Not Received\n");
+                    fprintf(iTestMsgOutputFile, "   DURATION Not Received\n");
                 else
-                    fprintf(file, "   GOT Duration %d \n\n", iSessionDuration);
+                    fprintf(iTestMsgOutputFile, "   GOT Duration %d \n\n", iSessionDuration);
             }
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Stop((OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -3669,11 +3669,11 @@ void pvplayer_async_test_ppb_base::Run()
 
         case STATE_CLEANUPANDCOMPLETE:
         {
-            fprintf(file, "Events:\n");
-            fprintf(file, "  Num BuffStart %d\n", iNumBufferingStart);
-            fprintf(file, "  Num BuffComplete %d\n", iNumBufferingComplete);
-            fprintf(file, "  Num Data Ready %d\n", iNumDataReady);
-            fprintf(file, "  Num Underflow %d\n", iNumUnderflow);
+            fprintf(iTestMsgOutputFile, "Events:\n");
+            fprintf(iTestMsgOutputFile, "  Num BuffStart %d\n", iNumBufferingStart);
+            fprintf(iTestMsgOutputFile, "  Num BuffComplete %d\n", iNumBufferingComplete);
+            fprintf(iTestMsgOutputFile, "  Num Data Ready %d\n", iNumDataReady);
+            fprintf(iTestMsgOutputFile, "  Num Underflow %d\n", iNumUnderflow);
 
             PVPATB_TEST_IS_TRUE(PVPlayerFactory::DeletePlayer(iPlayer));
             iPlayer = NULL;
@@ -3800,7 +3800,7 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
                         (aResponse.GetCmdStatus() == PVMFErrContentTooLarge))
                 {
                     // Test success in this case
-                    fprintf(file, "   INIT returned PVMFErrContentTooLarge\n");
+                    fprintf(iTestMsgOutputFile, "   INIT returned PVMFErrContentTooLarge\n");
                     PVPATB_TEST_IS_TRUE(true);
                     iState = STATE_REMOVEDATASOURCE;
                     RunIfNotReady();
@@ -4225,7 +4225,7 @@ void pvplayer_async_test_ppb_base::CommandCompleted(const PVCmdResponse& aRespon
         case STATE_RESUME_TWICE:
             if (aResponse.GetCmdStatus() == PVMFSuccess)
             {
-                fprintf(file, "\n    End of Loop %d\n", iLoopReq - iLoop);
+                fprintf(iTestMsgOutputFile, "\n    End of Loop %d\n", iLoopReq - iLoop);
                 if (--iLoop > 0)
                 {
                     iState = STATE_PAUSE;
@@ -4469,29 +4469,29 @@ void pvplayer_async_test_ppb_base::HandleProtocolEngineNodeErrors(int32 aErr)
     if ((aErr >= PVProtocolEngineNodeErrorHTTPErrorCode400) &&
             (aErr <= PVProtocolEngineNodeErrorHTTPCode4xxUnknown))
     {
-        fprintf(file, "   ERROR: PVProtocolEngineNodeError4xx HTTP Status Code %d\n",
+        fprintf(iTestMsgOutputFile, "   ERROR: PVProtocolEngineNodeError4xx HTTP Status Code %d\n",
                 aErr - PVProtocolEngineNodeErrorEventStart);
     }
     else if ((aErr >= PVProtocolEngineNodeErrorHTTPErrorCode500) &&
              (aErr < PVProtocolEngineNodeErrorHTTPCode5xxUnknownStart))
     {
-        fprintf(file, "   ERROR: PVProtocolEngineNodeError5xx HTTP Status Code %d\n",
+        fprintf(iTestMsgOutputFile, "   ERROR: PVProtocolEngineNodeError5xx HTTP Status Code %d\n",
                 aErr - PVProtocolEngineNodeErrorEventStart);
     }
     else if ((aErr >= PVProtocolEngineNodeErrorHTTPRedirectCodeStart) &&
              (aErr <= PVProtocolEngineNodeErrorHTTPRedirectCodeEnd))
     {
-        fprintf(file, "   ERROR IN REDIRECT: PVProtocolEngineNodeError3xx HTTP Status Code %d\n",
+        fprintf(iTestMsgOutputFile, "   ERROR IN REDIRECT: PVProtocolEngineNodeError3xx HTTP Status Code %d\n",
                 aErr - PVProtocolEngineNodeErrorEventStart);
     }
     else if (aErr < PVProtocolEngineNodeErrorNotHTTPErrorStart || aErr > PVProtocolEngineNodeErrorNotHTTPErrorEnd)
     {
-        fprintf(file, "   ERROR: PVProtocolEngineNodeError HTTP Unknown Status Code %d\n",
+        fprintf(iTestMsgOutputFile, "   ERROR: PVProtocolEngineNodeError HTTP Unknown Status Code %d\n",
                 aErr - PVProtocolEngineNodeErrorEventStart);
     }
     else
     {
-        fprintf(file, "   ERROR: PVProtocolEngineNodeError General Error %d\n", aErr);
+        fprintf(iTestMsgOutputFile, "   ERROR: PVProtocolEngineNodeError General Error %d\n", aErr);
     }
 }
 void pvplayer_async_test_ppb_base::PrintJanusError(const PVCmdResponse& aResp)
@@ -4506,31 +4506,31 @@ void pvplayer_async_test_ppb_base::HandleErrorEvent(const PVAsyncErrorEvent& aEv
         case PVMFErrResourceConfiguration:
             // Just log the error
             PVPATB_TEST_IS_TRUE(false);
-            fprintf(file, "   GOT PVMFErrResourceConfiguration error event\n");
+            fprintf(iTestMsgOutputFile, "   GOT PVMFErrResourceConfiguration error event\n");
             break;
 
         case PVMFErrResource:
             // Just log the error
             PVPATB_TEST_IS_TRUE(false);
-            fprintf(file, "   GOT PVMFErrResource error event\n");
+            fprintf(iTestMsgOutputFile, "   GOT PVMFErrResource error event\n");
             break;
 
         case PVMFErrCorrupt:
             // Just log the error
             PVPATB_TEST_IS_TRUE(false);
-            fprintf(file, "   GOT PVMFErrCorrupt error event\n");
+            fprintf(iTestMsgOutputFile, "   GOT PVMFErrCorrupt error event\n");
             break;
 
         case PVMFErrProcessing:
             // Just log the error
             PVPATB_TEST_IS_TRUE(false);
-            fprintf(file, "   GOT PVMFErrProcessing error event\n");
+            fprintf(iTestMsgOutputFile, "   GOT PVMFErrProcessing error event\n");
             break;
 
         case PVMFErrTimeout:
 
             PVPATB_TEST_IS_TRUE(false);
-            fprintf(file, "   GOT PVMFErrTimeout error event");
+            fprintf(iTestMsgOutputFile, "   GOT PVMFErrTimeout error event");
             break;
 
         default:
@@ -4547,11 +4547,11 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
 {
     if (aEvent.GetEventType() == PVMFInfoErrorHandlingStart)
     {
-        fprintf(file, "PVMFInfoErrorHandlingStart...\n");
+        fprintf(iTestMsgOutputFile, "PVMFInfoErrorHandlingStart...\n");
     }
     if (aEvent.GetEventType() == PVMFInfoErrorHandlingComplete)
     {
-        fprintf(file, "PVMFInfoErrorHandlingComplete...\n");
+        fprintf(iTestMsgOutputFile, "PVMFInfoErrorHandlingComplete...\n");
         iState = STATE_CLEANUPANDCOMPLETE;
         RunIfNotReady();
     }
@@ -4572,7 +4572,7 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
             infomsgiface->GetCodeUUID(infocode, infouuid);
             if ((infouuid == PVPlayerErrorInfoEventTypesUUID) && (infocode == PVPlayerInfoEndOfClipReached))
             {
-                fprintf(file, "   GOT PVPlayerInfoEndOfClipReached EVENT\n");
+                fprintf(iTestMsgOutputFile, "   GOT PVPlayerInfoEndOfClipReached EVENT\n");
                 iNumEOS++;
                 if (iState == STATE_STOP)
                 {
@@ -4603,23 +4603,23 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
             int32 *percent = (int32*)aEvent.GetLocalBuffer();
             if (*percent == 0 || *percent == 100)
             {
-                fprintf(file, "   PVMFInfoBufferingStatus %d\n", *percent);
+                fprintf(iTestMsgOutputFile, "   PVMFInfoBufferingStatus %d\n", *percent);
             }
             else
             {
-                fprintf(file, ".%d.", *percent);
+                fprintf(iTestMsgOutputFile, ".%d.", *percent);
             }
 
             // get buffer fullness
             PVExclusivePtr eventData;
             aEvent.GetEventData(eventData);
             uint32 aBufferFullness = (uint32)(eventData);
-            fprintf(file, ".(%d%%).", aBufferFullness);
+            fprintf(iTestMsgOutputFile, ".(%d%%).", aBufferFullness);
 
         }
         break;
         case PVMFInfoBufferingStart:
-            fprintf(file, "   PVMFInfoBufferingStart\n");
+            fprintf(iTestMsgOutputFile, "   PVMFInfoBufferingStart\n");
             iNumBufferingStart++;
             //we should only get one of these.
             if (iNumBufferingStart == 2)
@@ -4635,7 +4635,7 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
             aEvent.GetEventData(eventData);
             uint32 contentSize = (uint32)(eventData);
             iNumBufferingComplete++;
-            fprintf(file, "   PVMFInfoBufferingComplete (contentSize=%d), iNumBufferingComplete=%d\n", contentSize, iNumBufferingComplete);
+            fprintf(iTestMsgOutputFile, "   PVMFInfoBufferingComplete (contentSize=%d), iNumBufferingComplete=%d\n", contentSize, iNumBufferingComplete);
 
             if (iNumBufferingComplete == 1)
             {
@@ -4651,7 +4651,7 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
 
         case PVMFInfoDataReady:
             iNumDataReady++;
-            fprintf(file, "\n   PVMFInfoDataReady\n");
+            fprintf(iTestMsgOutputFile, "\n   PVMFInfoDataReady\n");
             //special handling for very first data ready event.
             if (iNumDataReady == 1)
             {
@@ -4664,7 +4664,7 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
             break;
         case PVMFInfoUnderflow:
             iNumUnderflow++;
-            fprintf(file, "\n   PVMFInfoUnderflow\n");
+            fprintf(iTestMsgOutputFile, "\n   PVMFInfoUnderflow\n");
             //we should not get underflow before data ready
             if (iNumUnderflow == 1
                     && iNumDataReady == 0)
@@ -4675,7 +4675,7 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
             PVExclusivePtr eventData;
             aEvent.GetEventData(eventData);
             uint32 contentSize = (uint32)(eventData);
-            fprintf(file, "   PVMFInfoContentLength = %d\n", contentSize);
+            fprintf(iTestMsgOutputFile, "   PVMFInfoContentLength = %d\n", contentSize);
         }
         break;
 
@@ -4684,7 +4684,7 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
             PVExclusivePtr eventData;
             aEvent.GetEventData(eventData);
             uint32 downloadSize = (uint32)(eventData);
-            fprintf(file, "\n   PVMFInfoContentTruncated! downloadSize = %d\n", downloadSize);
+            fprintf(iTestMsgOutputFile, "\n   PVMFInfoContentTruncated! downloadSize = %d\n", downloadSize);
 
             // check extension info code
             PVMFErrorInfoMessageInterface *msg = NULL;
@@ -4708,7 +4708,7 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
                         if (infoUUID == PVMFPROTOCOLENGINENODEInfoEventTypesUUID &&
                                 srcInfoCode == PVMFPROTOCOLENGINENODEInfo_TruncatedContentByServerDisconnect)
                         {
-                            fprintf(file, "   PVMFInfoContentTruncated! TruncatedContentByServerDisconnect!\n");
+                            fprintf(iTestMsgOutputFile, "   PVMFInfoContentTruncated! TruncatedContentByServerDisconnect!\n");
                         }
                     }
                 }
@@ -4722,17 +4722,17 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
             PVExclusivePtr eventData;
             aEvent.GetEventData(eventData);
             char *constentType = (char *)(eventData);
-            fprintf(file, "   PVMFInfoContentType   = %s\n", constentType);
+            fprintf(iTestMsgOutputFile, "   PVMFInfoContentType   = %s\n", constentType);
         }
         break;
 
         case PVMFInfoUnexpectedData:
-            fprintf(file, "   PVMFInfoUnexpectedData! Downloaded more data than content-length\n");
+            fprintf(iTestMsgOutputFile, "   PVMFInfoUnexpectedData! Downloaded more data than content-length\n");
             if (iNumBufferingComplete == 0) PVPATB_TEST_IS_TRUE(false); // we should get this info event after buffer complete event
             break;
 
         case PVMFInfoSessionDisconnect:
-            fprintf(file, "   PVMFInfoSessionDisconnect! Got server disconnect after download is complete\n");
+            fprintf(iTestMsgOutputFile, "   PVMFInfoSessionDisconnect! Got server disconnect after download is complete\n");
             if (iNumBufferingComplete == 0) PVPATB_TEST_IS_TRUE(false); // we should get this info event after buffer complete event
             break;
 
@@ -4762,7 +4762,7 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
                         if (infoUUID == PVMFFileFormatEventTypesUUID
                                 && srcInfoCode == PVMFMP4FFParserInfoNotPseudostreamableFile)
                         {
-                            fprintf(file, "   PVMFInfoRemoteSourceNotification (not progressive-downloadable)\n");
+                            fprintf(iTestMsgOutputFile, "   PVMFInfoRemoteSourceNotification (not progressive-downloadable)\n");
                         }
                         else if (infoUUID == PVMFPROTOCOLENGINENODEInfoEventTypesUUID
                                  && (srcInfoCode >= PVMFPROTOCOLENGINENODEInfo_HTTPRedirectCode300 &&
@@ -4771,7 +4771,7 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
                             PVExclusivePtr eventData;
                             aEvent.GetEventData(eventData);
                             char *redirectUrl = (char *)(eventData);
-                            fprintf(file, "   PVMFInfoRemoteSourceNotification (HTTP Status code = %d), redirectUrl = %s\n",
+                            fprintf(iTestMsgOutputFile, "   PVMFInfoRemoteSourceNotification (HTTP Status code = %d), redirectUrl = %s\n",
                                     srcInfoCode - PVMFPROTOCOLENGINENODEInfo_Redirect, redirectUrl);
                         }
 
@@ -4816,9 +4816,9 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
                     {
                         if (oscl_strstr(kvpVector[i].key, "valtype=char*"))
                         {
-                            fprintf(file, "\n*********************************");
-                            fprintf(file, "\nMetadata Key '%s', value '%s'\n", kvpVector[i].key, kvpVector[i].value.pChar_value);
-                            fprintf(file, "\n*********************************");
+                            fprintf(iTestMsgOutputFile, "\n*********************************");
+                            fprintf(iTestMsgOutputFile, "\nMetadata Key '%s', value '%s'\n", kvpVector[i].key, kvpVector[i].value.pChar_value);
+                            fprintf(iTestMsgOutputFile, "\n*********************************");
                             if (iShoutcastSession)
                             {
                                 iMetadataReceived = true;
@@ -4836,9 +4836,9 @@ void pvplayer_async_test_ppb_base::HandleInformationalEvent(const PVAsyncInforma
                                 buf[0] = kvpVector[i].value.pWChar_value[j];
                                 ostr += buf;
                             }
-                            fprintf(file, "\n*********************************");
-                            fprintf(file, "  Metadata Key '%s', value '%s'\n", kvpVector[i].key, ostr.get_str());
-                            fprintf(file, "\n*********************************");
+                            fprintf(iTestMsgOutputFile, "\n*********************************");
+                            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', value '%s'\n", kvpVector[i].key, ostr.get_str());
+                            fprintf(iTestMsgOutputFile, "\n*********************************");
                             if (iShoutcastSession)
                             {
                                 iMetadataReceived = true;
@@ -4881,28 +4881,28 @@ void pvplayer_async_test_ppb_normal::CreateDataSource()
         if (iFileType == PVMF_MIME_PLSFF)
         {
             // Shoutcast session with a local playlist file
-            fprintf(file, "Setting source to %s\n", DEFAULT_SHOUTCAST_PLAYLIST_FILE);
+            fprintf(iTestMsgOutputFile, "Setting source to %s\n", DEFAULT_SHOUTCAST_PLAYLIST_FILE);
             url = DEFAULT_SHOUTCAST_PLAYLIST_FILE;
         }
         else if (iFileType == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL)
         {
             // Shoutcast session with a station URL
-            fprintf(file, "Setting source to %s\n", DEFAULT_SHOUTCAST_URL);
+            fprintf(iTestMsgOutputFile, "Setting source to %s\n", DEFAULT_SHOUTCAST_URL);
             url = DEFAULT_SHOUTCAST_URL;
         }
         else if (iFileType == PVMF_MIME_DATA_SOURCE_RTMP_STREAMING_URL)
         {
-            fprintf(file, "Setting source to %s\n", DEFAULT_RTMPSTREAMING_URL);
+            fprintf(iTestMsgOutputFile, "Setting source to %s\n", DEFAULT_RTMPSTREAMING_URL);
             url = DEFAULT_RTMPSTREAMING_URL;
         }
         else if (iFileType == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL)
         {
-            fprintf(file, "Setting source to %s\n", DEFAULT_SMOOTHSTREAMING_URL);
+            fprintf(iTestMsgOutputFile, "Setting source to %s\n", DEFAULT_SMOOTHSTREAMING_URL);
             url = DEFAULT_SMOOTHSTREAMING_URL;
         }
         else if (iFileType == PVMF_MIME_DATA_SOURCE_ALS_URL)
         {
-            fprintf(file, "Setting source to %s\n", DEFAULT_ALS_URL);
+            fprintf(iTestMsgOutputFile, "Setting source to %s\n", DEFAULT_ALS_URL);
             url = DEFAULT_ALS_URL;
         }
         else
@@ -4911,12 +4911,12 @@ void pvplayer_async_test_ppb_normal::CreateDataSource()
             if (iUseLongClip)
             {
                 // for seek tests (154, 155, 156, 157, 159), clip needs to be long
-                fprintf(file, "Setting source to %s\n", DEFAULT_3GPP_PPB_LONG_URL);
+                fprintf(iTestMsgOutputFile, "Setting source to %s\n", DEFAULT_3GPP_PPB_LONG_URL);
                 url = DEFAULT_3GPP_PPB_LONG_URL;
             }
             else
             {
-                fprintf(file, "Setting source to %s\n", DEFAULT_3GPP_PPB_URL);
+                fprintf(iTestMsgOutputFile, "Setting source to %s\n", DEFAULT_3GPP_PPB_URL);
                 url = DEFAULT_3GPP_PPB_URL;
             }
         }
@@ -5115,7 +5115,7 @@ void pvplayer_async_test_PDLPauseResumeAfterUnderFlow::CreateDataSource()
     default_source += DEFAULTSOURCEFILENAME;
     if (url == default_source)
     {
-        fprintf(file, "Setting source to %s\n", DEFAULT_3GPPDL_URL);
+        fprintf(iTestMsgOutputFile, "Setting source to %s\n", DEFAULT_3GPPDL_URL);
         url = DEFAULT_3GPPDL_URL;
     }
     oscl_wchar wbuf[2];

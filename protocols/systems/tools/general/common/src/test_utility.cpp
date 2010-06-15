@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -297,49 +297,3 @@ void FindXmlResultsFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator
 
 }
 
-void WriteInitialXmlSummary(OSCL_HeapString<OsclMemAllocator> &xmlresultsfile, FILE* aFile)
-{
-    // Only print an xml summary if requested.
-    if (xmlresultsfile.get_size() > 0)
-    {
-        Oscl_File xmlfile(0);
-        Oscl_FileServer iFileServer;
-        iFileServer.Connect();
-        if (0 == xmlfile.Open(xmlresultsfile.get_str(), Oscl_File::MODE_READWRITE | Oscl_File::MODE_TEXT, iFileServer))
-        {
-            xml_test_interpreter xml_interp;
-            _STRING xml_results = xml_interp.unexpected_termination_interpretation("PV2WayEngineUnitTest");
-            xmlfile.Write(xml_results.c_str(), sizeof(char), oscl_strlen(xml_results.c_str()));
-            xmlfile.Close();
-            iFileServer.Close();
-        }
-        else
-        {
-            fprintf(aFile, "ERROR: Failed to open XML test summary log file: %s!\n", xmlresultsfile.get_cstr());
-        }
-    }
-}
-
-void WriteFinalXmlSummary(OSCL_HeapString<OsclMemAllocator> &xmlresultsfile, const test_result& result, FILE* aFile)
-{
-    // Print out xml summary if requested
-    if (xmlresultsfile.get_size() > 0)
-    {
-        Oscl_File xmlfile(0);
-        Oscl_FileServer iFileServer;
-        iFileServer.Connect();
-        if (0 == xmlfile.Open(xmlresultsfile.get_str(), Oscl_File::MODE_READWRITE | Oscl_File::MODE_TEXT, iFileServer))
-        {
-            xml_test_interpreter xml_interp;
-            _STRING xml_results = xml_interp.interpretation(result, "PV2WayEngineUnitTest");
-            fprintf(aFile, "\nWrote XML test summary to: %s.\n", xmlresultsfile.get_cstr());
-            xmlfile.Write(xml_results.c_str(), sizeof(char), oscl_strlen(xml_results.c_str()));
-            xmlfile.Close();
-            iFileServer.Close();
-        }
-        else
-        {
-            fprintf(aFile, "ERROR: Failed to open XML test summary log file: %s!\n", xmlresultsfile.get_cstr());
-        }
-    }
-}

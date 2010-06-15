@@ -51,8 +51,6 @@
 #include "oscl_string_utils.h"
 #endif
 
-extern FILE* file;
-
 //
 // pvplayer_async_test_mediaionode_openplaystop section
 //
@@ -10775,7 +10773,7 @@ void pvplayer_async_test_mediaionode_playrepositionnearendofclip::HandleInformat
                 // Should not receive EOS event since repositioning before the end
                 if ((iState == STATE_SETPLAYBACKRANGE) && (iSetPlayBackRangeIssued == false))
                 {
-                    fprintf(file, "EOS received before we could do SET_PLAYBACKRANGE\n");
+                    fprintf(iTestMsgOutputFile, "EOS received before we could do SET_PLAYBACKRANGE\n");
                     RunIfNotReady();
                 }
                 else if ((iState == STATE_SETPLAYBACKRANGE) && (iSetPlayBackRangeIssued == true))
@@ -10848,7 +10846,7 @@ void pvplayer_async_test_mediaionode_forwardstep::Run()
         case STATE_INIT:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Init\n");
+            fprintf(iTestMsgOutputFile, "Init\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Init((OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -10950,7 +10948,7 @@ void pvplayer_async_test_mediaionode_forwardstep::Run()
         case STATE_PREPARE:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Prepare\n");
+            fprintf(iTestMsgOutputFile, "Prepare\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Prepare((OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -10960,7 +10958,7 @@ void pvplayer_async_test_mediaionode_forwardstep::Run()
         case STATE_START:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Start\n");
+            fprintf(iTestMsgOutputFile, "Start\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Start((OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -10978,7 +10976,7 @@ void pvplayer_async_test_mediaionode_forwardstep::Run()
         case STATE_ENTERSTEPMODE:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Entering Step mode\n");
+            fprintf(iTestMsgOutputFile, "Entering Step mode\n");
 #endif
             //replace the player timebase with the step-mode timebase.
             OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRate(0, &iSteppingTimebase, (OsclAny*) & iContextObject));
@@ -10989,7 +10987,7 @@ void pvplayer_async_test_mediaionode_forwardstep::Run()
         case STATE_STARTSTEPPING:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Starting Step mode\n");
+            fprintf(iTestMsgOutputFile, "Starting Step mode\n");
 #endif
             //resume from pause so that data can flow
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Resume((OsclAny*) & iContextObject));
@@ -11013,7 +11011,7 @@ void pvplayer_async_test_mediaionode_forwardstep::Run()
             {
                 iReposComplete = true;//to avoid multiple repos...
 #if(DO_FPRINTF)
-                fprintf(file, "Repositioning to 20 sec\n");
+                fprintf(iTestMsgOutputFile, "Repositioning to 20 sec\n");
 #endif
                 PVPPlaybackPosition start, end;
                 start.iIndeterminate = false;
@@ -11029,7 +11027,7 @@ void pvplayer_async_test_mediaionode_forwardstep::Run()
                 OSCL_TRY(error, iSteppingTimebase.SetCount(++iCount););
                 OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
 #if(DO_FPRINTF)
-                fprintf(file, "Step - %d\n", Oscl_Int64_Utils::get_int64_lower32(iCount));
+                fprintf(iTestMsgOutputFile, "Step - %d\n", Oscl_Int64_Utils::get_int64_lower32(iCount));
 #endif
                 RunIfNotReady(500*1000);
             }
@@ -11055,7 +11053,7 @@ void pvplayer_async_test_mediaionode_forwardstep::Run()
         case STATE_RESUME:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Resuming normal playback\n");
+            fprintf(iTestMsgOutputFile, "Resuming normal playback\n");
 #endif
             //resume from pause with normal timebase.
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Resume((OsclAny*) & iContextObject));
@@ -11564,7 +11562,7 @@ void pvplayer_async_test_mediaionode_forwardstep::HandleInformationalEvent(const
             if (iCount < 25)
             {
                 iEOSReached = true;
-                fprintf(file, "EOS reached on Step - %d only, So can't Step to till 25\n", Oscl_Int64_Utils::get_int64_lower32(iCount));
+                fprintf(iTestMsgOutputFile, "EOS reached on Step - %d only, So can't Step to till 25\n", Oscl_Int64_Utils::get_int64_lower32(iCount));
             }
             iState = STATE_STOP;
             RunIfNotReady();
@@ -11582,7 +11580,7 @@ void pvplayer_async_test_mediaionode_forwardstep::HandleInformationalEvent(const
                 if ((int32)*vpos < 0)
                     PVPATB_TEST_IS_TRUE(false);
 #if(DO_FPRINTF)
-                fprintf(file, "Position Status %d\n", *vpos);
+                fprintf(iTestMsgOutputFile, "Position Status %d\n", *vpos);
 #endif
             }
         }
@@ -11644,7 +11642,7 @@ void pvplayer_async_test_mediaionode_forwardsteptoeos::Run()
         case STATE_INIT:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Init\n");
+            fprintf(iTestMsgOutputFile, "Init\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Init((OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -11723,7 +11721,7 @@ void pvplayer_async_test_mediaionode_forwardsteptoeos::Run()
         case STATE_PREPARE:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Prepare\n");
+            fprintf(iTestMsgOutputFile, "Prepare\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Prepare((OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -11733,7 +11731,7 @@ void pvplayer_async_test_mediaionode_forwardsteptoeos::Run()
         case STATE_SETPLAYBACKRATE:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "SetPlayBackRate\n");
+            fprintf(iTestMsgOutputFile, "SetPlayBackRate\n");
 #endif
             //install the frame-stepping timebase.
             OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRate(0, &iSteppingTimebase, (OsclAny*) & iContextObject));
@@ -11744,7 +11742,7 @@ void pvplayer_async_test_mediaionode_forwardsteptoeos::Run()
         case STATE_START:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Start\n");
+            fprintf(iTestMsgOutputFile, "Start\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Start((OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -11758,7 +11756,7 @@ void pvplayer_async_test_mediaionode_forwardsteptoeos::Run()
             int32 count;
             iSteppingTimebase.GetCount(count);
 #if(DO_FPRINTF)
-            fprintf(file, "Step - %d\n", count);
+            fprintf(iTestMsgOutputFile, "Step - %d\n", count);
 #endif
             OSCL_TRY(error, iSteppingTimebase.SetCount(++count););
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -11773,7 +11771,7 @@ void pvplayer_async_test_mediaionode_forwardsteptoeos::Run()
             iSteppingTimebase.GetCount(count);
             PVPATB_TEST_IS_TRUE(count > 0);
 #if(DO_FPRINTF)
-            fprintf(file, "Finished %d steps\n", (int32)count);
+            fprintf(iTestMsgOutputFile, "Finished %d steps\n", (int32)count);
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Stop((OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -12194,7 +12192,7 @@ void pvplayer_async_test_mediaionode_forwardsteptoeos::HandleInformationalEvent(
                 if ((int32)*vpos < 0)
                     PVPATB_TEST_IS_TRUE(false);
 #if(DO_FPRINTF)
-                //fprintf(file,"Position Status %d\n",*vpos);
+                //fprintf(iTestMsgOutputFile,"Position Status %d\n",*vpos);
 #endif
             }
         }
@@ -12357,7 +12355,7 @@ void pvplayer_async_test_mediaionode_backwardplayback::Run()
         case STATE_GOBACKWARD:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Going backward...\n");
+            fprintf(iTestMsgOutputFile, "Going backward...\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRate(-100000, NULL, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -12367,7 +12365,7 @@ void pvplayer_async_test_mediaionode_backwardplayback::Run()
         case STATE_GOFORWARD:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Going forward...\n");
+            fprintf(iTestMsgOutputFile, "Going forward...\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRate(100000, NULL, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -12377,7 +12375,7 @@ void pvplayer_async_test_mediaionode_backwardplayback::Run()
         case STATE_PAUSE:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Pause...\n");
+            fprintf(iTestMsgOutputFile, "Pause...\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Pause((OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -12387,7 +12385,7 @@ void pvplayer_async_test_mediaionode_backwardplayback::Run()
         case STATE_GOBACKWARDSTEP:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Going backward in single-step mode...\n");
+            fprintf(iTestMsgOutputFile, "Going backward in single-step mode...\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRate(-100000, &iSteppingTimebase, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -12397,7 +12395,7 @@ void pvplayer_async_test_mediaionode_backwardplayback::Run()
         case STATE_RESUME:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Resume...\n");
+            fprintf(iTestMsgOutputFile, "Resume...\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Resume((OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -12412,7 +12410,7 @@ void pvplayer_async_test_mediaionode_backwardplayback::Run()
             iSteppingTimebase.GetCount(count);
             iSteppingTimebase.SetCount(count + 1);
 #if(DO_FPRINTF)
-            fprintf(file, "Step - %d\n", count);
+            fprintf(iTestMsgOutputFile, "Step - %d\n", count);
 #endif
             RunIfNotReady(500*1000);
         }
@@ -12886,7 +12884,7 @@ void pvplayer_async_test_mediaionode_backwardplayback::HandleInformationalEvent(
             iState = STATE_STOP;
             RunIfNotReady();
 #if(DO_FPRINTF)
-            fprintf(file, "End of Data!");
+            fprintf(iTestMsgOutputFile, "End of Data!");
 #endif
             break;
 
@@ -12902,7 +12900,7 @@ void pvplayer_async_test_mediaionode_backwardplayback::HandleInformationalEvent(
                 if ((int32)*vpos < 0)
                     PVPATB_TEST_IS_TRUE(false);
 #if(DO_FPRINTF)
-                fprintf(file, "Position Status %d\n", *vpos);
+                fprintf(iTestMsgOutputFile, "Position Status %d\n", *vpos);
 #endif
             }
         }
@@ -13066,7 +13064,7 @@ void pvplayer_async_test_mediaionode_backwardforwardplayback::Run()
         case STATE_GOBACKWARD:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Going backward...\n");
+            fprintf(iTestMsgOutputFile, "Going backward...\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRate(-200000, NULL, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -13076,7 +13074,7 @@ void pvplayer_async_test_mediaionode_backwardforwardplayback::Run()
         case STATE_GOFORWARD:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Going forward...\n");
+            fprintf(iTestMsgOutputFile, "Going forward...\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRate(300000, NULL, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -13086,7 +13084,7 @@ void pvplayer_async_test_mediaionode_backwardforwardplayback::Run()
         case STATE_GONORMAL:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Going normal forward...\n");
+            fprintf(iTestMsgOutputFile, "Going normal forward...\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRate(100000, NULL, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -13528,7 +13526,7 @@ void pvplayer_async_test_mediaionode_backwardforwardplayback::HandleInformationa
             iState = STATE_STOP;
             RunIfNotReady();
 #if(DO_FPRINTF)
-            fprintf(file, "End of Data!");
+            fprintf(iTestMsgOutputFile, "End of Data!");
 #endif
             break;
 
@@ -13544,7 +13542,7 @@ void pvplayer_async_test_mediaionode_backwardforwardplayback::HandleInformationa
                 if ((int32)*vpos < 0)
                     PVPATB_TEST_IS_TRUE(false);
 #if(DO_FPRINTF)
-                fprintf(file, "Position Status %d\n", *vpos);
+                fprintf(iTestMsgOutputFile, "Position Status %d\n", *vpos);
 #endif
             }
         }
@@ -13718,7 +13716,7 @@ void pvplayer_async_test_mediaionode_pauseneareosbackwardresume::Run()
         case STATE_PAUSE:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Pausing...\n");
+            fprintf(iTestMsgOutputFile, "Pausing...\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Pause((OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -13728,7 +13726,7 @@ void pvplayer_async_test_mediaionode_pauseneareosbackwardresume::Run()
         case STATE_SETBACKWARD:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Setting backward playback...\n");
+            fprintf(iTestMsgOutputFile, "Setting backward playback...\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRate(-400000, NULL, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -13738,7 +13736,7 @@ void pvplayer_async_test_mediaionode_pauseneareosbackwardresume::Run()
         case STATE_RESUME:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Resuming...\n");
+            fprintf(iTestMsgOutputFile, "Resuming...\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Resume((OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -13748,7 +13746,7 @@ void pvplayer_async_test_mediaionode_pauseneareosbackwardresume::Run()
         case STATE_GONORMAL:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Going normal forward...\n");
+            fprintf(iTestMsgOutputFile, "Going normal forward...\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRate(100000, NULL, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -14250,7 +14248,7 @@ void pvplayer_async_test_mediaionode_pauseneareosbackwardresume::HandleInformati
     if (aEvent.GetEventType() == PVMFInfoEndOfData)
     {
 #if(DO_FPRINTF)
-        fprintf(file, "\nEnd of Data!");
+        fprintf(iTestMsgOutputFile, "\nEnd of Data!");
 #endif
         PVInterface* iface = (PVInterface*)(aEvent.GetEventExtensionInterface());
         if (iface == NULL)
@@ -14284,7 +14282,7 @@ void pvplayer_async_test_mediaionode_pauseneareosbackwardresume::HandleInformati
             if ((int32)*vpos < 0)
                 PVPATB_TEST_IS_TRUE(false);
 #if(DO_FPRINTF)
-            fprintf(file, "Position Status %d\n", *vpos);
+            fprintf(iTestMsgOutputFile, "Position Status %d\n", *vpos);
 #endif
         }
     }
@@ -14451,7 +14449,7 @@ void pvplayer_async_test_mediaionode_multiplepausesetplaybackrateresume::Run()
         case STATE_PAUSE:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Pausing...\n");
+            fprintf(iTestMsgOutputFile, "Pausing...\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Pause((OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -14482,7 +14480,7 @@ void pvplayer_async_test_mediaionode_multiplepausesetplaybackrateresume::Run()
                 iPlaybackRate = 1;
 
 #if(DO_FPRINTF)
-            fprintf(file, "Setting playback rate to %dX...\n", iPlaybackRate);
+            fprintf(iTestMsgOutputFile, "Setting playback rate to %dX...\n", iPlaybackRate);
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRate(iPlaybackRate * 100000, NULL, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -14492,7 +14490,7 @@ void pvplayer_async_test_mediaionode_multiplepausesetplaybackrateresume::Run()
         case STATE_RESUME:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Resuming...\n");
+            fprintf(iTestMsgOutputFile, "Resuming...\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Resume((OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -14502,7 +14500,7 @@ void pvplayer_async_test_mediaionode_multiplepausesetplaybackrateresume::Run()
         case STATE_GONORMAL:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Going normal forward...\n");
+            fprintf(iTestMsgOutputFile, "Going normal forward...\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRate(100000, NULL, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -14513,7 +14511,7 @@ void pvplayer_async_test_mediaionode_multiplepausesetplaybackrateresume::Run()
         {
             // Stop the playback
 #if(DO_FPRINTF)
-            fprintf(file, "Stopping...\n");
+            fprintf(iTestMsgOutputFile, "Stopping...\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Stop((OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -15011,7 +15009,7 @@ void pvplayer_async_test_mediaionode_multiplepausesetplaybackrateresume::HandleI
     if (aEvent.GetEventType() == PVMFInfoEndOfData)
     {
 #if(DO_FPRINTF)
-        fprintf(file, "\nEnd of Data!");
+        fprintf(iTestMsgOutputFile, "\nEnd of Data!");
 #endif
         PVInterface* iface = (PVInterface*)(aEvent.GetEventExtensionInterface());
         if (iface == NULL)
@@ -15045,7 +15043,7 @@ void pvplayer_async_test_mediaionode_multiplepausesetplaybackrateresume::HandleI
             if ((int32)*vpos < 0)
                 PVPATB_TEST_IS_TRUE(false);
 #if(DO_FPRINTF)
-            fprintf(file, "Position Status %d\n", *vpos);
+            fprintf(iTestMsgOutputFile, "Position Status %d\n", *vpos);
 #endif
         }
     }
@@ -15213,7 +15211,7 @@ void pvplayer_async_test_mediaionode_backwardneareosforwardnearbos::Run()
         case STATE_PAUSE:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Pausing...\n");
+            fprintf(iTestMsgOutputFile, "Pausing...\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Pause((OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -15223,7 +15221,7 @@ void pvplayer_async_test_mediaionode_backwardneareosforwardnearbos::Run()
         case STATE_SETBACKWARD:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Setting backward playback -4x...\n");
+            fprintf(iTestMsgOutputFile, "Setting backward playback -4x...\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRate(-400000, NULL, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -15233,7 +15231,7 @@ void pvplayer_async_test_mediaionode_backwardneareosforwardnearbos::Run()
         case STATE_RESUME:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Resuming...\n");
+            fprintf(iTestMsgOutputFile, "Resuming...\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->Resume((OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -15243,7 +15241,7 @@ void pvplayer_async_test_mediaionode_backwardneareosforwardnearbos::Run()
         case STATE_GONORMAL:
         {
 #if(DO_FPRINTF)
-            fprintf(file, "Going normal forward...\n");
+            fprintf(iTestMsgOutputFile, "Going normal forward...\n");
 #endif
             OSCL_TRY(error, iCurrentCmdId = iPlayer->SetPlaybackRate(100000, NULL, (OsclAny*) & iContextObject));
             OSCL_FIRST_CATCH_ANY(error, PVPATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
@@ -15750,7 +15748,7 @@ void pvplayer_async_test_mediaionode_backwardneareosforwardnearbos::HandleInform
     if (aEvent.GetEventType() == PVMFInfoEndOfData)
     {
 #if(DO_FPRINTF)
-        fprintf(file, "\nEnd of Data!");
+        fprintf(iTestMsgOutputFile, "\nEnd of Data!");
 #endif
         PVInterface* iface = (PVInterface*)(aEvent.GetEventExtensionInterface());
         if (iface == NULL)
@@ -15784,7 +15782,7 @@ void pvplayer_async_test_mediaionode_backwardneareosforwardnearbos::HandleInform
             if ((int32)*vpos < 0)
                 PVPATB_TEST_IS_TRUE(false);
 #if(DO_FPRINTF)
-            fprintf(file, "Position Status %d\n", *vpos);
+            fprintf(iTestMsgOutputFile, "Position Status %d\n", *vpos);
 #endif
         }
     }

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,14 +29,12 @@
 //a simple interpreter which returns an xml report of testing
 class xml_test_interpreter
 {
-    protected:
-        void add_problems(UnitTest_XMLWriter & writer, _STRING type, const _VECTOR(test_problem, unit_test_allocator)& vect) const;
-        _STRING problem_string(const test_problem& problem) const;
     public:
         //returns the interpretation of a test result
-        _STRING interpretation(const test_result& result, _STRING executable_name) const;
+        static _STRING interpretation(const test_result& result, _STRING executable_name, _STRING* value = 0);
         //returns a summary that reports that the tests failed to run.
-        _STRING unexpected_termination_interpretation(_STRING executable_name) const;
+        static _STRING unexpected_termination_interpretation(_STRING executable_name);
 };
 
 #endif
+

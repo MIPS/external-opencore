@@ -19,12 +19,13 @@ SRCDIR := ../../src
 INCSRCDIR := ../../include 
 			
 XINCDIRS += \
-../../../sample_app/pv2waysample/include \
+    ../../../sample_app/pv2waysample/include \
     ../../../../../protocols/systems/common/include \
     ../../../include \
     ../../../../../protocols/systems/tools/general/common/include 
     
-SRCS := alloc_dealloc_test.cpp \
+SRCS := \
+    alloc_dealloc_test.cpp \
 	av_duplicate_test.cpp \
 	test_engine.cpp \
 	engine_test.cpp \
@@ -32,7 +33,9 @@ SRCS := alloc_dealloc_test.cpp \
 	init_test.cpp \
 	test_base.cpp \
 	../../../../protocols/systems/tools/general/common/src/test_utility.cpp  
-SRCS_324 = av_test.cpp \
+
+SRCS_324 = \
+    av_test.cpp \
     av_using_test_extension.cpp \
 	acceptable_formats_test.cpp \
 	negotiated_formats_test.cpp \
@@ -45,18 +48,18 @@ SRCS_324 = av_test.cpp \
 	user_input_test.cpp \
 	basic_lipsync_test.cpp \
 	pause_resume_test.cpp \
-        receive_data_test.cpp \
-		error_check_audio_only_test.cpp
+    receive_data_test.cpp \
+    error_check_audio_only_test.cpp
 
 SRCS += $(SRCS_324)
 
-
-
-BASE_LIBS = pv2waysample \
+BASE_LIBS = \
+   pv2waysample \
    pv2wayengine \
    pv324m 
 
-END_LIBS =  pvclientserversocketnode \
+END_LIBS = \
+   pvclientserversocketnode \
    pvmediainputnode \
    pvmediaoutputnode \
    pvmiofileinput \
@@ -80,6 +83,7 @@ END_LIBS =  pvclientserversocketnode \
    pvthreadmessaging \
    pvlatmpayloadparser \
    pvmio_comm_loopback \
+   unit_test_utils \
    unit_test \
    pvlogger \
    osclio \
@@ -88,7 +92,6 @@ END_LIBS =  pvclientserversocketnode \
    osclmemory \
    osclerror \
    osclbase
-
 
 ifeq ($(pv2wayengine_lib),y)
 LIBS = \
@@ -130,16 +133,14 @@ FULL_LIBS =  opencore_2way \
    omx_baseclass_lib \
    pvomx_proxy_lib \
    omx_queue_lib \
+   unit_test_utils \
    unit_test \
    opencore_common 
 	     
 endif
 endif
 
-
 LIBS := $(FULL_LIBS)
-
-
 
 include $(MK)/prog.mk
 

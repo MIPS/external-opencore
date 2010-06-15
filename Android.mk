@@ -35,6 +35,7 @@ ifeq ($(BUILD_PV_2WAY),1)
 include $(PV_TOP)/build_config/opencore_dynamic/Android_opencore_2way.mk
 endif
 include $(PV_TOP)/oscl/unit_test/Android.mk
+ include $(PV_TOP)/oscl/unit_test_utils/Android.mk
  include $(PV_TOP)/fileformats/avi/parser/Android.mk
  include $(PV_TOP)/pvmi/media_io/pvmi_mio_avi_wav_fileinput/Android.mk
 ifeq ($(BUILD_PV_TEST_APPS),1)

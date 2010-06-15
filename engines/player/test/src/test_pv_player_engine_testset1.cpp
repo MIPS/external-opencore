@@ -83,8 +83,6 @@
 #include "pvmi_datastreamsyncinterface_ref_factory.h"
 #endif
 
-extern FILE* file;
-
 #define MAX_AUDIO_TRACKS 256
 #define MAX_VIDEO_TRACKS 256
 
@@ -2928,7 +2926,7 @@ void pvplayer_async_test_timing::Run()
 
             //make sure reported playback position is within a small tolerance of elapsed clock time.
             int32 delta = aPos.iPosValue.millisec_value - curtime;
-            //fprintf(file,"curtime %d, msec value %d, delta %d\n",curtime,aPos.iPosValue.millisec_value,delta);
+            //fprintf(iTestMsgOutputFile,"curtime %d, msec value %d, delta %d\n",curtime,aPos.iPosValue.millisec_value,delta);
             if (delta > pvplayer_async_test_timing_TOLERANCE || delta < (-pvplayer_async_test_timing_TOLERANCE))
             {
                 PVPATB_TEST_IS_TRUE(false);
@@ -16595,7 +16593,7 @@ void pvplayer_async_test_setplaybackafterprepare::CommandCompleted(const PVCmdRe
             }
             else if (aResponse.GetCmdStatus() == PVMFErrNotSupported)
             {
-                fprintf(file, " SetPlaybackRange not supported \n");
+                fprintf(iTestMsgOutputFile, " SetPlaybackRange not supported \n");
                 if (iTestNumber == pvplayer_engine_test::SetPlaybackAfterPrepare)
                 {
                     iState = STATE_START;
@@ -16807,7 +16805,7 @@ void pvplayer_async_test_setplaybackafterprepare::HandleInformationalEvent(const
                 {
                     aPos2 = 0;
                 }
-                fprintf(file, " PVMFInfoPositionStatus: %d\n", aPos2);
+                fprintf(iTestMsgOutputFile, " PVMFInfoPositionStatus: %d\n", aPos2);
 
                 /*
                                 if ( !(aPos1.iPosValue.millisec_value <= aPos2 + 50) )
@@ -17850,7 +17848,7 @@ void pvplayer_async_test_multiple_instance::Run()
             {
                 if (!iChildThreadExit)
                 {
-                    fprintf(file, "Waiting on 2nd instance to exit...\n");
+                    fprintf(iTestMsgOutputFile, "Waiting on 2nd instance to exit...\n");
                     for (uint32 i = 0; !iChildThreadExit && i < 20; i++)
                         OsclThread::SleepMillisec(1000);
                 }
@@ -18195,11 +18193,11 @@ void pvplayer_async_test_multiple_instance::PrintMetadata()
     {
         if (!iMetadataValueList[i].key)
         {
-            fprintf(file, "  Metadata Key Missing!, value ?\n");
+            fprintf(iTestMsgOutputFile, "  Metadata Key Missing!, value ?\n");
         }
         else if (oscl_strstr(iMetadataValueList[i].key, "valtype=char*"))
         {
-            fprintf(file, "  Metadata Key '%s', value '%s'\n", iMetadataValueList[i].key, iMetadataValueList[i].value.pChar_value);
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', value '%s'\n", iMetadataValueList[i].key, iMetadataValueList[i].value.pChar_value);
         }
         else if (oscl_strstr(iMetadataValueList[i].key, "valtype=wchar*"))
         {
@@ -18213,26 +18211,26 @@ void pvplayer_async_test_multiple_instance::PrintMetadata()
                 buf[0] = (char)iMetadataValueList[i].value.pWChar_value[j];
                 ostr += buf;
             }
-            fprintf(file, "  Metadata Key '%s', value '%s'\n", iMetadataValueList[i].key, ostr.get_str());
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', value '%s'\n", iMetadataValueList[i].key, ostr.get_str());
         }
         else if (oscl_strstr(iMetadataValueList[i].key, "valtype=uint32"))
         {
-            fprintf(file, "  Metadata Key '%s', value %d\n", iMetadataValueList[i].key, iMetadataValueList[i].value.uint32_value);
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', value %d\n", iMetadataValueList[i].key, iMetadataValueList[i].value.uint32_value);
         }
         else if (oscl_strstr(iMetadataValueList[i].key, "valtype=bool"))
         {
-            fprintf(file, "  Metadata Key '%s', value %d\n", iMetadataValueList[i].key, iMetadataValueList[i].value.bool_value);
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', value %d\n", iMetadataValueList[i].key, iMetadataValueList[i].value.bool_value);
         }
         else if (oscl_strstr(iMetadataValueList[i].key, "valtype=uint8*"))
         {
-            fprintf(file, "  Metadata Key '%s', len %d\n", iMetadataValueList[i].key, iMetadataValueList[i].length);
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', len %d\n", iMetadataValueList[i].key, iMetadataValueList[i].length);
         }
         else
         {
-            fprintf(file, "  Metadata Key '%s', value ?\n", iMetadataValueList[i].key);
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', value ?\n", iMetadataValueList[i].key);
         }
     }
-    fprintf(file, "\n\n");
+    fprintf(iTestMsgOutputFile, "\n\n");
 }
 
 //
@@ -18267,7 +18265,7 @@ static TOsclThreadFuncRet OSCL_THREAD_DECL pvplayer_async_test_multiple_thread_t
 
     //Init Oscl.
     OsclSelect select;
-    select.iOutputFile = file;//for memory leak output.
+    select.iOutputFile = parent->iTestMsgOutputFile;//for memory leak output.
     int32 err;
     OsclInit::Init(err, &select);
     if (err)
@@ -19043,11 +19041,11 @@ void pvplayer_async_test_multiple_thread::PrintMetadata()
     {
         if (!iMetadataValueList[i].key)
         {
-            fprintf(file, "  Metadata Key Missing!, value ?\n");
+            fprintf(iTestMsgOutputFile, "  Metadata Key Missing!, value ?\n");
         }
         else if (oscl_strstr(iMetadataValueList[i].key, "valtype=char*"))
         {
-            fprintf(file, "  Metadata Key '%s', value '%s'\n", iMetadataValueList[i].key, iMetadataValueList[i].value.pChar_value);
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', value '%s'\n", iMetadataValueList[i].key, iMetadataValueList[i].value.pChar_value);
         }
         else if (oscl_strstr(iMetadataValueList[i].key, "valtype=wchar*"))
         {
@@ -19061,24 +19059,24 @@ void pvplayer_async_test_multiple_thread::PrintMetadata()
                 buf[0] = (char)iMetadataValueList[i].value.pWChar_value[j];
                 ostr += buf;
             }
-            fprintf(file, "  Metadata Key '%s', value '%s'\n", iMetadataValueList[i].key, ostr.get_str());
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', value '%s'\n", iMetadataValueList[i].key, ostr.get_str());
         }
         else if (oscl_strstr(iMetadataValueList[i].key, "valtype=uint32"))
         {
-            fprintf(file, "  Metadata Key '%s', value %d\n", iMetadataValueList[i].key, iMetadataValueList[i].value.uint32_value);
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', value %d\n", iMetadataValueList[i].key, iMetadataValueList[i].value.uint32_value);
         }
         else if (oscl_strstr(iMetadataValueList[i].key, "valtype=bool"))
         {
-            fprintf(file, "  Metadata Key '%s', value %d\n", iMetadataValueList[i].key, iMetadataValueList[i].value.bool_value);
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', value %d\n", iMetadataValueList[i].key, iMetadataValueList[i].value.bool_value);
         }
         else if (oscl_strstr(iMetadataValueList[i].key, "valtype=uint8*"))
         {
-            fprintf(file, "  Metadata Key '%s', len %d\n", iMetadataValueList[i].key, iMetadataValueList[i].length);
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', len %d\n", iMetadataValueList[i].key, iMetadataValueList[i].length);
         }
         else
         {
-            fprintf(file, "  Metadata Key '%s', value ?\n", iMetadataValueList[i].key);
+            fprintf(iTestMsgOutputFile, "  Metadata Key '%s', value ?\n", iMetadataValueList[i].key);
         }
     }
-    fprintf(file, "\n\n");
+    fprintf(iTestMsgOutputFile, "\n\n");
 }
