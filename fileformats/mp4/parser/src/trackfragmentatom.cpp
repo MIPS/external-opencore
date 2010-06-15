@@ -837,6 +837,9 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
                     pgau->info[i].sample_info = 0;
                 }
 
+                PV_MP4_FF_TEMPLATED_DELETE(NULL, fragmentptrOffsetVecType,
+                                           Oscl_Vector, _pFragmentptrOffsetVec);
+
                 return (_mp4ErrorCode);
             }
         }
