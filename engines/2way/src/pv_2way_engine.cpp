@@ -3966,8 +3966,16 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
                     (0, "CPV324m2Way::EstablishChannel aDir=%d, channel id=%d, codec %d\n",
                      aDir, aId, aCodec));
 
+    if (PV_CODEC_TYPE_NONE == aCodec)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_INFO,
+                        (0, "CPV324m2Way::EstablishChannel codec type none\n"));
+        LogFunction("EstablishChannel", LEAVE_FUNCTION);
+        return EPVT_Success;
+    }
+
     PV2WayMediaType media_type = ::GetMediaType(aCodec);
-    OSCL_ASSERT(media_type == PV_AUDIO || media_type == PV_VIDEO);
+
     // aFormatType is the Codec that the establishing channel wants
     PVMFFormatType formatType = PVCodecTypeToPVMFFormatType(aCodec);
     PVMFFormatType appFormatType = PVMF_MIME_FORMAT_UNKNOWN;
@@ -4034,6 +4042,7 @@ PVMFStatus CPV324m2Way::EstablishChannel(TPVDirection aDir,
         }
         app_format_for_engine_format = &iAppFormatForEngineFormatOutgoing;
     }
+
     Oscl_Map < PVMFFormatType, FormatCapabilityInfo, OsclMemAllocator,
     pvmf_format_type_key_compare_class >::iterator it = codec_list->find(formatType);
 
