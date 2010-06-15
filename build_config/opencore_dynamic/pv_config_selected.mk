@@ -23,6 +23,7 @@ dynamic_loading_support=y
 download_support=y
 fasttrack_download_support=n
 mp4local_support=y
+mpeg2local_support=n
 divxlocal_support=n
 rmff_support=n
 flvlocal_support=n

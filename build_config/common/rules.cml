@@ -24,6 +24,7 @@ menu modules_menu
     download_support
     fasttrack_download_support
     mp4local_support
+    mpeg2local_support
     divxlocal_support
     rmff_support
     flvlocal_support
@@ -101,6 +102,7 @@ derive AGGREGATE_LIBDIRS_pvplayerservice from (pvplayer_engine_m_mk.pvaudiotrack
                        pvwavffparsernode_m_mk.pvwavffrecognizer_m_mk.pvwav_m_mk.
                        pvmp3ffparsernode_m_mk.pvmp3ffrecognizer_m_mk.pvmp3ff_m_mk.
                        pvmp4ffparsernode_m_mk.pvmp4ffparsernodeopencore_m_mk.pvmp4ffrecognizer_m_mk.pvmp4ff_m_mk.pvmp4ffopencore_m_mk.mp4recognizer_utility_m_mk.
+                       pvmpeg2ffparsernode_m_mk.pvmpeg2ffrecognizer_m_mk.pvmpeg2ff_m_mk.mpeg2recognizer_utility_m_mk.
                        pvasfffparsernode_m_mk.pvasfffrecognizer_m_mk.pvasfff_m_mk.asfrecognizer_utility_m_mk.
                        pvaacffparsernode_m_mk.pvaacffrecognizer_m_mk.pvaacparser_m_mk.
                        pvamrffparsernode_m_mk.pvamrffrecognizer_m_mk.pvgsmamrparser_m_mk.
@@ -133,6 +135,7 @@ derive AGGREGATE_LIBDIRS_pv from (LIBDIR_oscl_shared.
                        pvmf_m_mk.cpm_m_mk.pvmiofileoutput_m_mk.
                        pvfileparserutils_m_mk.pvid3parcom_m_mk.
                        pvmp4ff_m_mk.pvmp4ffopencore_m_mk.mp4recognizer_utility_m_mk.
+                       pvmpeg2ff_m_mk.mpeg2recognizer_utility_m_mk.
                        pvmp4ffcomposer_m_mk.pvmp4ffcomposeropencore_m_mk.pvmp4ffcomposernode_m_mk.pvmp4ffcomposernodeopencore_m_mk.
                        pvpvrff_m_mk.pvpvxparser_m_mk.
                        pvmediainputnode_m_mk.pvmediaoutputnode_m_mk.pvfileoutputnode_m_mk.
@@ -475,6 +478,18 @@ derive opencore_mp4localreg_link_type from "loaded"
 derive AGGREGATE_LIBDIRS_opencore_mp4localreg from pvmp4reginterface_m_mk.pvmp4ffrecognizer_m_mk
 derive MODS_opencore_mp4localreg from "-lopencore_player -lopencore_common"
 
+derive pvmpeg2local_so_name from mpeg2local_support==y ? "pvmpeg2local" : ""
+derive pvmpeg2local_aggregate_libtype from mpeg2local_support==y ? "shared":"static"
+derive pvmpeg2local_link_type from "loaded"
+derive AGGREGATE_LIBDIRS_pvmpeg2local from pvmpeg2interface_m_mk.pvmpeg2ffparsernode_m_mk.pvmpeg2ff_m_mk
+derive MODS_pvmpeg2local from "-lopencore_common -lopencore_player -lpvmpeg2localreg"
+
+derive pvmpeg2localreg_so_name from mpeg2local_support==y ? "pvmpeg2localreg" : ""
+derive pvmpeg2localreg_aggregate_libtype from mpeg2local_support==y ? "shared":"static"
+derive pvmpeg2localreg_link_type from "loaded"
+derive AGGREGATE_LIBDIRS_pvmpeg2localreg from pvmpeg2reginterface_m_mk.pvmpeg2ffrecognizer_m_mk.mpeg2recognizer_utility_m_mk
+derive MODS_pvmpeg2localreg from "-lopencore_player -lopencore_common"
+
 derive pvdivxparser_node_so_name from divxlocal_support==y ? "pvdivxparser_node" : ""
 derive pvdivxparser_node_aggregate_libtype from divxlocal_support==y ? "shared":"static"
 derive pvdivxparser_node_link_type from "loaded"
@@ -668,6 +683,7 @@ derive TARGET_aggregate from (pv_so_name.pvplayerservice_so_name.opencore_common
                            pvasflocalpbreg_so_name.pvasflocalpb_so_name.
                            pvprotocolengine_asfstreamingreg_so_name.pvprotocolengine_asfstreaming_so_name.
                            opencore_mp4localreg_so_name.opencore_mp4local_so_name.
+                           pvmpeg2localreg_so_name.pvmpeg2local_so_name.
                            pvdivx_recognizer_so_name.pvdivxparser_node_so_name.
                            pvrmff_recognizer_so_name.pvrmffparser_node_so_name.
                            pvwmdrmmd_so_name.pvwmdrmoemsettings_so_name.
