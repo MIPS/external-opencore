@@ -657,6 +657,15 @@ void PVFrameAndMetadataUtility::HandleInformationalEvent(const PVAsyncInformatio
             }
         }
     }
+    else if (aEvent.GetEventType() == PVMFInfoErrorHandlingComplete)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVFrameAndMetadataUtility::HandleInformationalEvent() - PVMFInfoErrorHandlingComplete"));
+
+        // Need to shutdown/restart player and cleanup in utility's AO
+        OSCL_ASSERT(iErrorHandlingInUtilityAO == false);
+        iErrorHandlingInUtilityAO = true;
+        RunIfNotReady();
+    }
     else
     {
         // Just pass up other info events up to app
