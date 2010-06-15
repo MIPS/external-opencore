@@ -31,6 +31,7 @@
 #endif
 
 static const uint8 PLAYREADY_SYSTEM_ID[] = {0x9A, 0x04, 0xF0, 0x79, 0x98, 0x40, 0x42, 0x86, 0xAB, 0x92, 0xE6, 0x5B, 0xE0, 0x88, 0x5F, 0x95};
+const uint32 SYSTEM_ID_SIZE = 16;
 
 /**
 ProtectionSystemSpecificHeaderBox :
@@ -76,11 +77,6 @@ class ProtectionSystemSpecificHeaderBox: public ExtendedFullAtom
         //so making copy ctor and assignment oper private
         ProtectionSystemSpecificHeaderBox(const ProtectionSystemSpecificHeaderBox&);
         ProtectionSystemSpecificHeaderBox& operator=(const ProtectionSystemSpecificHeaderBox&);
-
-        enum
-        {
-            SYSTEM_ID_SIZE = 16
-        };
 
         uint8   iSystemID[SYSTEM_ID_SIZE];
         uint32  iDataSize;
