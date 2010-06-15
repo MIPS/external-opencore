@@ -3810,7 +3810,7 @@ PVMFMemoryBufferDataStreamPermCache::RemoveFirstEntry(uint8*& aFragPtr)
 #if (PVLOGGER_INST_LEVEL > PVLOGMSG_INST_LLDBG)
         TOsclFileOffset offset = entry->firstFileOffset;
 #endif
-        TOsclFileOffset size = entry->fillSize;
+        uint32 size = entry->fillSize;
 
         aFragPtr = entry->bufPtr;
 
