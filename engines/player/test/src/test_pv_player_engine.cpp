@@ -6584,37 +6584,70 @@ void pvplayer_engine_test::test()
             }
             break;
 
-            case DLA_StreamingOpenPlayUntilEOST_PlayReadyCPMTest:
+            case DLA_StreamingOpenPlayUntilEOST_WMA_PlayReadyCPMTest:
+            {
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+            }
+            break;
+            case DLA_StreamingOpenPlayUntilEOST_WMV_PlayReadyCPMTest:
             {
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
             }
             break;
 
-            case DLA_StreamingOpenPlayPausePlayUntilEOS_PlayReadyCPMTest:
+            case DLA_StreamingOpenPlayPausePlayUntilEOS_WMA_PlayReadyCPMTest:
+            {
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+            }
+            break;
+            case DLA_StreamingOpenPlayPausePlayUntilEOS_WMV_PlayReadyCPMTest:
             {
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
             }
             break;
 
-            case DLA_StreamingOpenPlaySeekPlayUntilEOS_PlayReadyCPMTest:
+            case DLA_StreamingOpenPlaySeekPlayUntilEOS_WMA_PlayReadyCPMTest:
+            {
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+            }
+            break;
+            case DLA_StreamingOpenPlaySeekPlayUntilEOS_WMV_PlayReadyCPMTest:
             {
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
             }
             break;
 
-            case DLA_StreamingMultiplePlayUntilEOS_PlayReadyCPMTest:
+            case DLA_StreamingMultiplePlayUntilEOS_WMA_PlayReadyCPMTest:
             {
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
             }
             break;
 
-            case DLA_StreamingProtocolRollOverTest_PlayReadyCPMTest:
+            case DLA_StreamingMultiplePlayUntilEOS_WMV_PlayReadyCPMTest:
             {
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
             }
             break;
 
-            case DLA_StreamingProtocolRollOverTestWithUnknownURLType_PlayReadyCPMTest:
+            case DLA_StreamingProtocolRollOverTest_WMA_PlayReadyCPMTest:
+            {
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+            }
+            break;
+
+            case DLA_StreamingProtocolRollOverTest_WMV_PlayReadyCPMTest:
+            {
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+            }
+            break;
+
+            case DLA_StreamingProtocolRollOverTestWithUnknownURLType_WMA_PlayReadyCPMTest:
+            {
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+            }
+            break;
+
+            case DLA_StreamingProtocolRollOverTestWithUnknownURLType_WMV_PlayReadyCPMTest:
             {
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
             }
@@ -7242,7 +7275,13 @@ void pvplayer_engine_test::test()
             }
             break;
 
-            case DLA_StreamingCancelAcquireLicense_PlayReadyCPMTest:
+            case DLA_StreamingCancelAcquireLicense_WMA_PlayReadyCPMTest:
+            {
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+            }
+            break;
+
+            case DLA_StreamingCancelAcquireLicense_WMV_PlayReadyCPMTest:
             {
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
             }
