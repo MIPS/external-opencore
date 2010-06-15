@@ -497,8 +497,6 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         bool iIsThereMoreConfigDataToBeSent;
         uint32 iConfigDataBytesProcessed; // variable that is used in case SPS/PPS NALs cannot be sent in one shot due to lack of buffers
         uint32 iConfigDataBuffersOutstanding; // variable to keep track of number of config buffers (to finally resume normal processing once all config buffers come back)
-        uint8 *iTrackConfigDataBuffer;
-        int32 iTrackConfigDataBufferSize;
 
 
         // flag to prevent freeing buffers twice
@@ -515,15 +513,6 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         bool    iFirstDataMsgAfterBOS;
         InputBufCtrlStruct *iInputBufferUnderConstruction;
         bool    iIncompleteFrame;
-
-        bool iDoInBandReconfigReset;
-        bool iDoInBandReconfigReset_FlushIssued;
-        bool iDoInBandReconfigReset_LoadedReached;
-        bool iDoInBandReconfigStart;
-        bool iDoInBandReconfigStart_IdleReached;
-        bool iDoInBandReconfigStart_ExeReached;
-
-        void HandleInBandReconfig();
 
         OSCL_IMPORT_REF void DropCurrentBufferUnderConstruction();
         OSCL_IMPORT_REF void SendIncompleteBufferUnderConstruction();
@@ -582,13 +571,11 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
             EPVMFOMXBaseDecNodeProcessingState_Stopping,                // when STOP command is issued, the node has to wait for component to transition into
             // idle state. The buffers keep coming back , the node is rescheduled
             // to run. Prevent the node from sending buffers back
-            EPVMFOMXBaseDecNodeProcessingState_Pausing,                  // when PAUSE command is issued, the node has to wait for component to transition into
+            EPVMFOMXBaseDecNodeProcessingState_Pausing                  // when PAUSE command is issued, the node has to wait for component to transition into
             // paused state.
             // Video: This prevents the node from sending buffers back
             // Audio: The buffers may still keep coming back , the node is rescheduled
             // to run. Prevent the node from sending buffers back to component
-            // Reconfiguration in the middle of the stream
-            EPVMFOMXBaseDecNodeProcessingState_InBandReconfiguration
 
         } PVMFOMXBaseDecNode_ProcessingState;
 
