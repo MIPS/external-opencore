@@ -1841,7 +1841,7 @@ void Parser_EBSPtoRBSP(uint8 *nal_unit, int32 *size)
 }
 
 
-bool getNALType(uint8 *bitstream, int size, int *nal_type)
+bool getNALType(uint8 *bitstream, int size, int32 *nal_type)
 {
     int forbidden_zero_bit;
     if (size > 0)
@@ -1850,7 +1850,7 @@ bool getNALType(uint8 *bitstream, int size, int *nal_type)
         if (forbidden_zero_bit != 0)
             return false;
 
-        *nal_type = bitstream[0] & 0x1F;
+        *nal_type = (int32)(bitstream[0] & 0x1F);
         return true;
     }
 
