@@ -1693,10 +1693,11 @@ int32 MP3Parser::GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &e
     // there might be frames that were already read to prevent reading beyond
     // file pointer, pick up these frames first
     uint8 * pOutputBuffer = (uint8 *)pgau->buf.fragments[0].ptr;
-    if (iPaddingFrames > 0 && iCurrFrameNumber > 0 && !iFirstFrameAfterReposition)
+    if (iPaddingFrames > 0)
     {
-        for (int index = 0; index < iPaddingFrames; index++)
+        for (int32 index = 0; index < iPaddingFrames; index++)
         {
+            // retrieve info for previously read padding frames
             if (iGau.info[index].len > 0)
             {
                 nBytesRead += iGau.info[index].len;
@@ -1704,20 +1705,30 @@ int32 MP3Parser::GetNextBundledAccessUnits(uint32 *n, GAU *pgau, MP3ErrorType &e
                 pgau->info[index].ts_delta = iGau.info[index].ts_delta;
                 pgau->info[index].len = iGau.info[index].len;
                 framesRead++;
+
+                // reset the stored info after retrieval
+                iGau.info[index].len = 0;
+                iGau.info[index].ts = 0;
+                iGau.info[index].ts_delta = 0;
             }
         }
-        // first move padding frames to input buffer
-        oscl_memcpy(pOutputBuffer, iGau.buf.fragments[0].ptr, nBytesRead);
-        // move the output buffer ptr
-        pOutputBuffer += nBytesRead;
-        // number of bytes read
-        nBytesReadTotal += nBytesRead;
-        // number of frames read
-        *n = framesRead;
-        // current frame number
-        iCurrFrameNumber += framesRead;
-        pgau->frameNum = iCurrFrameNumber - framesRead + 1;
+
+        if (nBytesRead > 0)
+        {
+            // first move padding frames to input buffer
+            oscl_memcpy(pOutputBuffer, iGau.buf.fragments[0].ptr, nBytesRead);
+            // move the output buffer ptr
+            pOutputBuffer += nBytesRead;
+            // number of bytes read
+            nBytesReadTotal += nBytesRead;
+            // number of frames read
+            *n = framesRead;
+            // current frame number
+            iCurrFrameNumber += framesRead;
+            pgau->frameNum = iCurrFrameNumber - framesRead + 1;
+        }
     }
+
 
     // read remaining frames as per request
     int32 iLength = pgau->buf.fragments[0].len;
