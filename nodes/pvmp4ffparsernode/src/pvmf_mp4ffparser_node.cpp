@@ -8640,6 +8640,9 @@ PVMFStatus PVMFMP4FFParserNode::PopulateVideoDimensions(uint32 aClipIndex, uint3
 {
     VideoTrackDimensionInfo vidDimInfo;
     vidDimInfo.iTrackId = aId;
+    vidDimInfo.iDisplayWidth = 0;
+    vidDimInfo.iDisplayHeight = 0;
+
     if (PVMFSuccess != GetVideoFrameWidth(aClipIndex, aId, vidDimInfo.iWidth, vidDimInfo.iDisplayWidth))
     {
         return PVMFFailure;
