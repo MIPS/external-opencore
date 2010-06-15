@@ -3593,6 +3593,13 @@ void pvplayer_engine_test::test()
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("MP4 Progressive Playback Start Pause Resume Seek Stop");
                 break;
 
+            case ProgPlaybackMPEG2UntilEOSTest:
+                testparam.iFileType = PVMF_MIME_DATA_SOURCE_ALS_URL;
+                iCurrentTest = new pvplayer_async_test_ppb_normal(testparam);
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enablePlayUntilEOS();
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("MPEG-2 Progressive Playback Until EOS");
+                break;
+
 
             case ShoutcastPlayback5MinuteTest:
                 testparam.iFileType = PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL;

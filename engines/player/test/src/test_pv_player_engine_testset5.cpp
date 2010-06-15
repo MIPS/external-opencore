@@ -137,6 +137,7 @@
 
 #define DEFAULT_SMOOTHSTREAMING_URL "http://wms2008.pv.com:8080/SSContent/BendIt2/BendIt_5min.ism/Manifest"
 
+#define DEFAULT_ALS_URL "http://devimages.apple.com/iphone/samples/bipbop/gear1/prog_index.m3u8"
 
 extern FILE* file;
 
@@ -4885,6 +4886,11 @@ void pvplayer_async_test_ppb_normal::CreateDataSource()
             fprintf(file, "Setting source to %s\n", DEFAULT_SMOOTHSTREAMING_URL);
             url = DEFAULT_SMOOTHSTREAMING_URL;
         }
+        else if (iFileType == PVMF_MIME_DATA_SOURCE_ALS_URL)
+        {
+            fprintf(file, "Setting source to %s\n", DEFAULT_ALS_URL);
+            url = DEFAULT_ALS_URL;
+        }
         else
         {
             // progressive playback
@@ -4933,6 +4939,10 @@ void pvplayer_async_test_ppb_normal::CreateDataSource()
         else if (iFileType == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL)
         {
             iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL);
+        }
+        else if (iFileType == PVMF_MIME_DATA_SOURCE_ALS_URL)
+        {
+            iDataSource->SetDataSourceFormatType(PVMF_MIME_DATA_SOURCE_ALS_URL);
         }
         else
         {

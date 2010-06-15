@@ -923,6 +923,14 @@ class pvplayer_engine_test
             * Output YUV and PCM data files from Playback.
             */
             ProgPlaybackMP4StartPauseResumeSeekStopTest, //162
+            /**
+            * @test (163) Progressive Playback until EOS Test
+            * Input http url to a M3U8 file.
+            * Default url is an http url to an MPEG-2 file.
+            * Output YUV and PCM data files from Playback.
+            */
+            ProgPlaybackMPEG2UntilEOSTest, //163
+
 
             LastProgressivePlaybackTest, //placeholder
 

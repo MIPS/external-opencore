@@ -411,6 +411,7 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterfaceImpl,
         bool IsRepositionCmdPending();
         PVMFNodeCommand* FindPendingCmd(int32 aCmdtype);
         void CompletePendingCmd(PVMFStatus aStatus);
+        void ReportEvent(PVMFAsyncEvent& aEvent);
         void NewIncomingMessage(PVMFSharedMediaMsgPtr& aMsg);
 
         // Internal methods

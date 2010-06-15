@@ -619,6 +619,7 @@ PVMFStatus PVMFProtocolEngineNode::DoPrepare()
     PassInObjects();
 
     PVMFStatus status = iProtocolContainer->doPrepare();
+    if (status == PVMFPending) return status;
 
     HandleCommandComplete(iCurrentCommand, status);
     return PVMFCmdCompleted;
@@ -2141,6 +2142,11 @@ void PVMFProtocolEngineNode::ReportEvent(PVMFEventType aEventType, OsclAny* aEve
     ReportInfoEvent(aEventType, aEventData, aEventCode, aEventLocalBuffer, aEventLocalBufferSize);
 }
 
+void PVMFProtocolEngineNode::ReportEvent(PVMFAsyncEvent& aEvent)
+{
+    PVMFNodeInterfaceImpl::ReportInfoEvent(aEvent);
+}
+
 void PVMFProtocolEngineNode::NotifyContentTooLarge()
 {
     // before error out, settle down the interaction with parser node
@@ -2670,6 +2676,12 @@ bool HttpHeaderAvailableHandler::handle(PVProtocolEngineNodeInternalEvent &aEven
         iNode->iInterfacingObjectContainer->setFileSize(length);
         iNodeOutput->setContentLength(length);
         status = iNode->iProtocolContainer->downloadUpdateForHttpHeaderAvailable();
+
+        uint8* header = NULL;
+        uint32 headerLen = 0;
+        iNode->iInterfacingObjectContainer->getHTTPHeader(header, headerLen);
+        LOGINFODATAPATH((0, "HttpHeaderAvailableHandler::handle() HTTP HEADER : \n-----------\n%s\n------------\n",
+                         (char*)header));
     }
 
     if (Handle1xxResponse())
@@ -2953,7 +2965,7 @@ bool EndOfDataProcessingHandler::handle(PVProtocolEngineNodeInternalEvent &aEven
     if (aInfo->iSendResumeNotification)
     {
         iNode->iDownloadControl->checkResumeNotification();
-        iNode->iNodeTimer->clear();
+        iNode->iNodeTimer->clearExcept(PLAYLIST_REFRESH_TIMER_ID);
         LOGINFODATAPATH((0, "EndOfDataProcessingHandler::handle(), send resume notification to parser node, for DOWNLOAD COMPLETE"));
     }
     if (aInfo->iExtraDataComeIn)

@@ -154,7 +154,8 @@ enum NetworkTimerType
     WALL_CLOCK_TIMER_ID,
     // a timer to report buffer status periodically, say at every up to 2sec, at least buffer status has to be reported
     // which tells our system is running
-    BUFFER_STATUS_TIMER_ID
+    BUFFER_STATUS_TIMER_ID,
+    PLAYLIST_REFRESH_TIMER_ID
 };
 
 enum PVHttpProtocol
@@ -229,6 +230,7 @@ class ProtocolContainerObserver
         virtual PVMFNodeCommand* FindPendingCmd(int32 aCmdId) = 0;
         virtual void CompletePendingCmd(PVMFStatus aStatus) = 0;
         virtual void ReportEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, const int32 aEventCode = 0, OsclAny* aEventLocalBuffer = NULL, const uint32 aEventLocalBufferSize = 0) = 0;
+        virtual void ReportEvent(PVMFAsyncEvent& aEvent) = 0;
         virtual void NewIncomingMessage(PVMFSharedMediaMsgPtr& aMsg) = 0;
 };
 
@@ -1179,7 +1181,8 @@ enum DownloadControlSupportObjectType
     DownloadControlSupportObjectType_MetaDataObject,
     DownloadControlSupportObjectType_ManifestFileContainer,
     DownloadControlSupportObjectType_AudioDataPath,
-    DownloadControlSupportObjectType_VideoDataPath
+    DownloadControlSupportObjectType_VideoDataPath,
+    DownloadControlSupportObjectType_PlayListFileContainer
 };
 
 // The intent of introducing this download ocntrol interface is to make streaming counterpart as a NULL object,

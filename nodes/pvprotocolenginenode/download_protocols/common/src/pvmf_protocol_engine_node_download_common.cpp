@@ -62,7 +62,7 @@ OSCL_EXPORT_REF int32 DownloadContainer::doPreStart()
     {
         iInterfacingObjectContainer->setFileSize(aCfgFile->GetOverallFileSize());
         iObserver->SetObserverState((uint32)EPVMFNodeStarted);
-        iNodeTimer->clear();
+        iNodeTimer->clearExcept(PLAYLIST_REFRESH_TIMER_ID);
         iEventReport->startRealDataflow();
         iEventReport->checkReportEvent(PROCESS_SUCCESS_END_OF_MESSAGE);
         iDownloadControl->checkResumeNotification();
@@ -282,7 +282,7 @@ OSCL_EXPORT_REF void DownloadContainer::updateDownloadControl(const bool isDownl
 
 OSCL_EXPORT_REF bool DownloadContainer::handleProtocolStateComplete(PVProtocolEngineNodeInternalEvent &aEvent, PVProtocolEngineNodeInternalEventHandler *aEventHandler)
 {
-    iNodeTimer->clear();
+    iNodeTimer->clearExcept(PLAYLIST_REFRESH_TIMER_ID);
     return ProtocolContainer::handleProtocolStateComplete(aEvent, aEventHandler);
 }
 
@@ -1420,7 +1420,7 @@ OSCL_EXPORT_REF void downloadEventReporter::checkBufferCompleteEvent(const uint3
         }
 
         // clear the timer again because of download completion
-        iNodeTimer->clear();
+        iNodeTimer->clearExcept(PLAYLIST_REFRESH_TIMER_ID);
     }
 
     checkUnexpectedDataAndServerDisconnectEvent(downloadStatus);

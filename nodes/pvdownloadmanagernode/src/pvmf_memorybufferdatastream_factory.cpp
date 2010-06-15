@@ -541,7 +541,8 @@ PVMFMemoryBufferReadDataStreamImpl::Read(PvmiDataStreamSession aSessionID, uint8
             // This code will not be executed for Shoutcast, SCSP always reads within cache, no need to check for offsets wrapping around 4GB mark
             if (MBDS_STREAM_FORMAT_SHOUTCAST != iStreamFormat &&
                     MBDS_STREAM_FORMAT_RTMPSTREAMING != iStreamFormat &&
-                    MBDS_STREAM_FORMAT_SMOOTH_STREAMING != iStreamFormat)
+                    MBDS_STREAM_FORMAT_SMOOTH_STREAMING != iStreamFormat &&
+                    MBDS_STREAM_FORMAT_APPLE_HTTP_STREAMING != iStreamFormat)
             {
                 if ((firstByteToRead < firstTempByteOffset) || ((firstByteToRead - lastTempByteOffset) > PV_MBDS_BYTES_TO_WAIT) ||
                         (((firstByteToRead - lastTempByteOffset) <= PV_MBDS_BYTES_TO_WAIT) && ((lastTempByteOffset - firstTempByteOffset + 1) >= iWriteDataStream->GetTempCacheCapacity())))
@@ -3015,6 +3016,11 @@ PVMFMemoryBufferDataStream::PVMFMemoryBufferDataStream(PVMFFormatType& aStreamFo
     {
         streamFormat = MBDS_STREAM_FORMAT_SMOOTH_STREAMING;
     }
+    else if (aStreamFormat == PVMF_MIME_DATA_SOURCE_ALS_URL)
+    {
+        streamFormat = MBDS_STREAM_FORMAT_APPLE_HTTP_STREAMING;
+    }
+
 
     // Create a temporary cache and a permanent cache
     iTemporaryCache = OSCL_NEW(PVMFMemoryBufferDataStreamTempCache, ());

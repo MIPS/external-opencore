@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,8 +153,10 @@ class ProgressiveDownload : public HttpBasedProtocol
                 iState[i] = NULL;
             }
 
-            OSCL_DELETE(iComposer);
-            OSCL_DELETE(iParser);
+            if (iComposer) OSCL_DELETE(iComposer);
+            iComposer = NULL;
+            if (iParser) OSCL_DELETE(iParser);
+            iParser = NULL;
         }
 
         void setConfigInfo(OsclAny* aConfigInfo)

@@ -9,7 +9,7 @@ include $(MK)/clear.mk
 TARGET := protocolenginenode
 
 XINCDIRS +=  ../../config/$(BUILD_ARCH)  ../../config/linux
-XINCDIRS +=  ../../include ../../base/src ../../protocol_common/src ../../download_protocols/common/src ../../download_protocols/progressive_download/src ../../download_protocols/progressive_streaming/src ../../download_protocols/shoutcast/src ../../download_protocols/fasttrack_download/src ../../download_protocols/rtmp_streaming/src ../../download_protocols/smooth_streaming/src ../../wm_http_streaming/src ../../../../protocols/rtmp_parcom/include  ../../../../protocols/smooth_streaming/include
+XINCDIRS +=  ../../include ../../base/src ../../protocol_common/src ../../download_protocols/common/src ../../download_protocols/progressive_download/src ../../download_protocols/progressive_streaming/src ../../download_protocols/shoutcast/src ../../download_protocols/fasttrack_download/src ../../download_protocols/rtmp_streaming/src ../../download_protocols/smooth_streaming/src ../../download_protocols/apple_http_streaming/src ../../wm_http_streaming/src ../../../../protocols/rtmp_parcom/include  ../../../../protocols/smooth_streaming/include ../../../../protocols/m3u/include
 
 SRCDIR := ../../base/src 
 INCSRCDIR := ../../include
@@ -57,15 +57,25 @@ SRCS += \
 	../../download_protocols/rtmp_streaming/src/pvmf_protocol_engine_node_rtmp_streaming_container_factory.cpp 
 endif
 
+ifeq ($(ss_or_als),y)
+SRCS += \
+	../../download_protocols/common/src/pvmf_protocol_engine_tcpsocket.cpp 
+endif
+
 ifeq ($(penode_smooth_streaming_support),y)
 SRCS += \
-	../../download_protocols/smooth_streaming/src/pvmf_protocol_engine_tcpsocket.cpp \
 	../../download_protocols/smooth_streaming/src/pvmf_protocol_engine_smooth_streaming.cpp \
 	../../download_protocols/smooth_streaming/src/pvmf_protocol_engine_node_smooth_streaming.cpp \
 	../../download_protocols/smooth_streaming/src/pvmf_protocol_engine_node_smooth_streaming_container_factory.cpp \
 	../../download_protocols/smooth_streaming/src/pvmf_protocol_engine_node_smooth_streaming_ppb.cpp \
 	../../download_protocols/smooth_streaming/src/pvmf_protocol_engine_node_smooth_streaming_ppb_container_factory.cpp
+endif
 
+ifeq ($(penode_apple_http_streaming_support),y)
+SRCS += \
+	../../download_protocols/apple_http_streaming/src/pvmf_protocol_engine_apple_http_streaming.cpp \
+	../../download_protocols/apple_http_streaming/src/pvmf_protocol_engine_node_apple_http_streaming.cpp \
+	../../download_protocols/apple_http_streaming/src/pvmf_protocol_engine_node_apple_http_streaming_container_factory.cpp
 endif
 
 ifeq ($(penode_ftdl_support),y)

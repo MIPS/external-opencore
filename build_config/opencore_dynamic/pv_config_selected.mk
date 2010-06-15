@@ -237,6 +237,7 @@ penode_wmhttpstreaming_support=n
 penode_shoutcast_support=y
 penode_rtmp_support=n
 penode_smooth_streaming_support=n
+penode_apple_http_streaming_support=n
 
 pvfileoutputnode_lib=m
 pvmediaoutputnode_lib=m
@@ -311,6 +312,7 @@ pv_rtmp_parcom_lib=n
 pv_smooth_streaming_lib=n
 pv324m_common_headers_lib=m
 pvgeneraltools_lib=m
+pv_m3u_parser_lib=n
 
 
 #
