@@ -31,6 +31,10 @@
 #include "pv_interface.h"
 #endif
 
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
 #define PVMF_DOWNLOAD_DATASOURCE_HTTP_UUID PVUuid(0xdea36265,0x6a59,0x4d8b,0xb3,0xea,0xdf,0x68,0x4d,0x7e,0x0e,0x08)
 
 //Source data for HTTP Progressive download (format type PVMF_DATA_SOURCE_HTTP_URL)

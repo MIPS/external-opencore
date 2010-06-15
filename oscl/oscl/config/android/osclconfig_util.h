@@ -32,11 +32,7 @@
 
 #define OSCL_RAND_MAX           RAND_MAX
 
-#if (_MSC_VER <= 1200) //1200 = VC6
-#define OSCL_HAS_SNPRINTF_LONGLONG_SUPPORT 0
-#else
 #define OSCL_HAS_SNPRINTF_LONGLONG_SUPPORT 1
-#endif
 
 
 //Define system sleep call for the tick count test here.

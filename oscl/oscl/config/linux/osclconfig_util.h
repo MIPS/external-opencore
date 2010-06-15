@@ -36,11 +36,8 @@
 #include <unistd.h>
 #define SLEEP_ONE_SEC sleep(1)
 
-#if (_MSC_VER <= 1200) //1200 = VC6
-#define OSCL_HAS_SNPRINTF_LONGLONG_SUPPORT 0
-#else
 #define OSCL_HAS_SNPRINTF_LONGLONG_SUPPORT 1
-#endif
+
 
 
 #include "osclconfig_util_check.h"
