@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,9 +186,9 @@ OSCL_EXPORT_REF int32 oscl_UTF8ToUnicode(const char *szSrc, int32 nSrcLen, oscl_
         {
             if (i + 2 < nSrcLen && i_cur_output + 1 < nDestLen)
             {
-                strDest[i_cur_output++] = (wchar_t)(((wchar_t)pszSrc[i] << 12) |
-                                                    (((wchar_t)pszSrc[i+1] & 0x3f) << 6) |
-                                                    ((wchar_t)pszSrc[i+2] & 0x3f));
+                strDest[i_cur_output++] = (((wchar_t)(pszSrc[i]   & 0x0f)) << 12) |
+                                          (((wchar_t)(pszSrc[i+1] & 0x3f)) << 6)  |
+                                          ((wchar_t)(pszSrc[i+2] & 0x3f));
                 i += 3;
             }
             else

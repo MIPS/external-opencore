@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,9 +65,9 @@ NOTE:
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Function prototypes
 /*!
-    \brief Convert UTF8 byte sequence to Unicode string
+    \brief Convert UTF8 byte sequence to Unicode UTF-16 string
 
-           The function converts UTF8 byte sequence (or ASCII sequence) to Unicode string.
+           The function converts UTF8 byte sequence (or ASCII sequence) to UTF-16 string.
            The length of input UTF8 byte sequence is specified. It stops at two conditions:
            (A) Whole input UTF8 byte sequence is successfully converted.
            (B) Output buferr is not enough for output, or parse error.
@@ -76,6 +76,7 @@ NOTE:
            In case of (B), it converts as much as possible to the output buffer and adds a terminated '\0'
            at the end of the output Unicode string"(no '\0' added if outLength is less than or
            equal to 0, return 0)", and returns 0.
+     Please note that Unicode character exceeding U+FFFF are not supported.
 
     \param input            Ptr to an input UTF8 byte sequence. '\0' termanation is not neccesary.
     \param inLength         The length of the input UTF8 byte sequence, without counting terminated '\0'(if any).
@@ -91,7 +92,7 @@ OSCL_IMPORT_REF int32 oscl_UTF8ToUnicode(const char *input, int32 inLength, oscl
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Function prototypes
 /*!
-    \brief Convert Unicode string to UTF8 byte sequence
+    \brief Convert UTF-16 Unicode string to UTF8 byte sequence
 
            The function converts Unicode string to UTF8 byte sequence.
            The length of input Unicode string is specified. It stops at two conditions:
@@ -102,6 +103,7 @@ OSCL_IMPORT_REF int32 oscl_UTF8ToUnicode(const char *input, int32 inLength, oscl
            In case of (B), it converts as much as possible to the output buffer and adds a terminated '\0'
            at the end of the output UTF8 byte sequence"(no '\0' added if outLength is less than or
            equal to 0, return 0)", and returns 0.
+     Please note that Unicode character exceeding U+FFFF are not supported.
 
     \param input            Ptr to an input Unicode string. '\0' termanation is not neccesary.
     \param inLength         The length of the input Unicode string, without counting terminated '\0'(if any).
