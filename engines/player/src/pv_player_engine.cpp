@@ -4708,16 +4708,12 @@ PVMFStatus PVPlayerEngine::DoSourceNodeQueryTrackSelIF(PVCommandId aCmdId, OsclA
             }
             else
             {
-                if (retval == PVMFErrNotSupported)
-                {
-                    // dont ignore update failure for clips index == 0
-                    if (clipIndex == 0)
-                    {
-                        return PVMFFailure;
-                    }
-                }
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceNodeQueryTrackSelIF() SetSourceInitializationData failed errcode %d", retval));
-
+                // dont ignore update failure for clips index == 0
+                if (clipIndex == 0)
+                {
+                    return PVMFFailure;
+                }
             }
         }
         // Set Playback Clock
