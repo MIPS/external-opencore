@@ -667,7 +667,7 @@ class PVMFMP4FFParserNode
         bool oIsAACFramesFragmented;
 
         int32 iPlayBackDirection;
-        uint64 iStartForNextTSSearch;
+        int64 iStartForNextTSSearch;
         uint64 iPrevSampleTS;
         bool iParseAudioDuringFF;
         bool iParseAudioDuringREW;
