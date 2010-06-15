@@ -70,6 +70,8 @@ static const char PVAACMETADATA_FORMATID3V11[] = "format=id3v1.1";
 static const char PVAACMETADATA_TIMESCALE1000[] = ";timescale=1000";
 static const char PVAACMETADATA_INDEX0[] = "index=0";
 static const char PVAACMETADATA_RANDOM_ACCESS_DENIED_KEY[] = "random-access-denied";
+static const char PVAACMETADATA_CHANNELS_KEY[] = "channels";
+static const char PVAACMETADATA_PROFILE_KEY[] = "profile";
 static const char PVAACMETADATA_UNKNOWN[] = "unknown";
 
 #define PVMF_AAC_PARSER_NODE_MAX_AUDIO_DATA_MEM_POOL_SIZE   64*1024

@@ -509,7 +509,7 @@ int32 AACBitstreamObject::find_adts_syncword(uint8 *pBuffer)
 }
 
 //! get clip information: file size, format(ADTS or ADIF) and sampling rate index
-int32 AACBitstreamObject::getFileInfo(int32& fileSize, TAACFormat& format, uint8& sampleFreqIndex, uint32& bitRate, uint32& HeaderLen, OSCL_wString&/*aClip*/)
+int32 AACBitstreamObject::getFileInfo(int32& fileSize, TAACFormat& format, uint8& sampleFreqIndex, uint32& bitRate, uint32& HeaderLen, uint8& channels, uint8& profile, OSCL_wString&/*aClip*/)
 {
     uint32 id;
     uint32 bitstreamType;
@@ -1343,6 +1343,17 @@ int32 AACBitstreamObject::getFileInfo(int32& fileSize, TAACFormat& format, uint8
                     // get sample frequency index
                     iSampleFreqIndex = sampleFreqIndex = (uint8)((pBuffer[2 + index] & 0x3c) >> 2);
 
+                    //get profile index
+                    iProfile = (uint8)((pBuffer[2+index] & 0xc0) >> 6);
+                    profile = iProfile;
+
+                    //get channel index
+                    {
+                        iChannels = (uint8)((pBuffer[2+index] & 0x01) << 2);
+                        iChannels |= (uint8)((pBuffer[3+index] & 0xc0) >> 6);
+                        channels = iChannels;
+                    }
+
                     // check the crc_check field
                     ibCRC_Check = ((pBuffer[1 + index] & 0x01) ? false : true);
 
@@ -1528,6 +1539,8 @@ class AutoPtrArrayContainer
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF CAACFileParser::CAACFileParser(void) :
         iAACDuration(0),
+        iAACProfile(0),
+        iAACChannels(0),
         iAACSampleFrequency(0),
         iAACBitRate(0),
         iAACHeaderLen(0),
@@ -1653,7 +1666,7 @@ OSCL_EXPORT_REF bool CAACFileParser::InitAACFile(CAACFileParams& aParams,
 
     ParserErrorCode errCode = AAC_SUCCESS;
     PV_AAC_FF_NEW(NULL, AACBitstreamObject, (&iAACFile, errCode), ipBSO);
-    if (ipBSO->getFileInfo(iAACFileSize, iAACFormat, iSampleFreqTableIndex, iAACBitRate, iAACHeaderLen, aParams.iClip))
+    if (ipBSO->getFileInfo(iAACFileSize, iAACFormat, iSampleFreqTableIndex, iAACBitRate, iAACHeaderLen, iAACChannels, iAACProfile, aParams.iClip))
     {
         return false;
     }
@@ -1840,6 +1853,8 @@ OSCL_EXPORT_REF bool CAACFileParser::RetrieveFileInfo(TPVAacFileInfo& aInfo)
     aInfo.iBitrate = iAACBitRate;
     aInfo.iFormat = iAACFormat;
     aInfo.iFileSize = iAACFileSize;
+    aInfo.iChannels = iAACChannels;
+    aInfo.iProfile = iAACProfile;
     PVMF_AACPARSER_LOGDIAGNOSTICS((0, "CAACFileParser::RetrieveFileInfo- duration = %d, bitrate = %d, filesize = %d", iAACDuration, iAACBitRate, iAACFileSize));
 
     return true;
@@ -2546,7 +2561,7 @@ OSCL_EXPORT_REF ParserErrorCode CAACFileParser::getAACHeaderLen(CAACFileParams& 
     {
         formatTemp = EAACRaw;
     }
-    if (ipBSOTemp->getFileInfo(iAACFileSizeTemp, formatTemp, sampleFreqTableValueTemp, bitRateValueTemp, tempHeaderLenValue, aParams.iClip))
+    if (ipBSOTemp->getFileInfo(iAACFileSizeTemp, formatTemp, sampleFreqTableValueTemp, bitRateValueTemp, tempHeaderLenValue, iAACChannels, iAACProfile, aParams.iClip))
     {
         iAACFileTemp.Close();
         PV_AAC_FF_DELETE(NULL, AACBitstreamObject, ipBSOTemp);

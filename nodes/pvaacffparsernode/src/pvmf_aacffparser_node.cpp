@@ -215,6 +215,20 @@ uint32 PVMFAACFFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
             // Increment the counter for the number of values found so far
             ++numvalentries;
         }
+        else if (!oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAACMETADATA_PROFILE_KEY) &&
+                 iAACFileInfo.iProfile > 0)
+        {
+            // Profile
+            // Increment the counter for the number of values found so far
+            ++numvalentries;
+        }
+        else if (!oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAACMETADATA_CHANNELS_KEY) &&
+                 iAACFileInfo.iChannels > 0)
+        {
+            // Channels
+            // Increment the counter for the number of values found so far
+            ++numvalentries;
+        }
         else if (!oscl_strcmp((*keylistptr)[lcv].get_cstr(),  PVAACMETADATA_RANDOM_ACCESS_DENIED_KEY))
         {
             // random-acess-denied
@@ -807,6 +821,11 @@ PVMFStatus PVMFAACFFParserNode::ParseAACFile()
         leavecode = 0;
         OSCL_TRY(leavecode, iAvailableMetadataKeys.push_back(PVAACMETADATA_RANDOM_ACCESS_DENIED_KEY));
 
+        leavecode = 0;
+        OSCL_TRY(leavecode, iAvailableMetadataKeys.push_back(PVAACMETADATA_CHANNELS_KEY));
+
+        leavecode = 0;
+        OSCL_TRY(leavecode, iAvailableMetadataKeys.push_back(PVAACMETADATA_PROFILE_KEY));
 
         if (iAACFileInfo.iBitrate > 0)
         {
@@ -1782,6 +1801,76 @@ PVMFStatus PVMFAACFFParserNode::DoGetMetadataValues()
                     retval = PVMFCreateKVPUtils::CreateKVPForCharStringValue(
                                  KeyVal,
                                  PVAACMETADATA_DURATION_KEY,
+                                 PVAACMETADATA_UNKNOWN);
+                }
+
+                if (retval != PVMFSuccess && retval != PVMFErrArgument)
+                {
+                    break;
+                }
+
+            }
+
+        }
+        else if (!oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAACMETADATA_CHANNELS_KEY))
+        {
+            // Channels
+            // Increment the counter for the number of values found so far
+            ++numvalentries;
+
+            // Create a value entry if past the starting index
+            if (numvalentries > starting_index)
+            {
+                uint32 channels = (uint32)iAACFileInfo.iChannels;
+                PVMFStatus retval = PVMFSuccess;
+                if (channels > 0)
+                {
+                    retval = PVMFCreateKVPUtils::CreateKVPForUInt32Value(
+                                 KeyVal,
+                                 PVAACMETADATA_CHANNELS_KEY,
+                                 channels,
+                                 NULL);
+                }
+                else
+                {
+                    retval = PVMFCreateKVPUtils::CreateKVPForCharStringValue(
+                                 KeyVal,
+                                 PVAACMETADATA_CHANNELS_KEY,
+                                 PVAACMETADATA_UNKNOWN);
+                }
+
+                if (retval != PVMFSuccess && retval != PVMFErrArgument)
+                {
+                    break;
+                }
+
+            }
+
+        }
+        else if (!oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAACMETADATA_PROFILE_KEY))
+        {
+            // Profile
+            // Increment the counter for the number of values found so far
+            ++numvalentries;
+
+            // Create a value entry if past the starting index
+            if (numvalentries > starting_index)
+            {
+                uint32 profile = (uint32)iAACFileInfo.iProfile;
+                PVMFStatus retval = PVMFSuccess;
+                if (profile > 0)
+                {
+                    retval = PVMFCreateKVPUtils::CreateKVPForUInt32Value(
+                                 KeyVal,
+                                 PVAACMETADATA_PROFILE_KEY,
+                                 profile,
+                                 NULL);
+                }
+                else
+                {
+                    retval = PVMFCreateKVPUtils::CreateKVPForCharStringValue(
+                                 KeyVal,
+                                 PVAACMETADATA_PROFILE_KEY,
                                  PVAACMETADATA_UNKNOWN);
                 }
 

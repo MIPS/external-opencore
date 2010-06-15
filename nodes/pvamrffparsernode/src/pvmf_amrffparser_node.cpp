@@ -33,6 +33,7 @@ static const char PVAMRMETADATA_NUMTRACKS_KEY[] = "num-tracks";
 static const char PVAMRMETADATA_TRACKINFO_BITRATE_KEY[] = "track-info/bit-rate";
 static const char PVAMRMETADATA_TRACKINFO_SELECTED_KEY[] = "track-info/selected";
 static const char PVAMRMETADATA_TRACKINFO_AUDIO_FORMAT_KEY[] = "track-info/audio/format";
+static const char PVAMRMETADATA_CHANNEL_KEY[] = "channel";
 static const char PVAMRMETADATA_CLIP_TYPE_KEY[] = "clip-type";
 static const char PVAMRMETADATA_LOCAL_CLIP_TYPE_KEY[] = "local";
 static const char PVAMRMETADATA_RANDOM_ACCESS_DENIED_KEY[] = "random-access-denied";
@@ -347,6 +348,29 @@ PVMFStatus PVMFAMRFFParserNode::DoGetNodeMetadataValues()
             }
 
         }
+
+        else if ((oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAMRMETADATA_CHANNEL_KEY) == 0) && iAMRFileInfo.iChannel > 0)
+        {
+            // Channel
+            // Increment the counter for the number of values found so far
+            ++numvalentries;
+            int32 retval = 0;
+            // Create a value entry if past the starting index
+            if (numvalentries > starting_index)
+            {
+                char indexparam[16];
+                oscl_snprintf(indexparam, 16, ";%s" , PVAMRMETADATA_INDEX0);
+                indexparam[15] = '\0';
+                uint32 channel = iAMRFileInfo.iChannel;
+                retval = PVMFCreateKVPUtils::CreateKVPForUInt32Value(KeyVal, PVAMRMETADATA_CHANNEL_KEY, channel);
+            }
+            if (retval != PVMFSuccess && retval != PVMFErrArgument)
+            {
+                break;
+            }
+        }
+
+
         else if ((oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAMRMETADATA_TRACKINFO_SELECTED_KEY) == 0))
         {
             // Increment the counter for the number of values found so far
@@ -1546,6 +1570,12 @@ uint32 PVMFAMRFFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
             // Format
             ++numvalentries;
         }
+        else if ((oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAMRMETADATA_CHANNEL_KEY) == 0) &&
+                 iAMRFileInfo.iChannel > 0)
+        {
+            // Number of Channels
+            ++numvalentries;
+        }
         else if (oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAMRMETADATA_RANDOM_ACCESS_DENIED_KEY) == 0)
         {
             /*
@@ -1838,6 +1868,11 @@ PVMFStatus PVMFAMRFFParserNode::InitMetaData()
     if (iAMRFileInfo.iFileSize > 0)
     {
         // Populate the metadata key vector based on info available
+        if (iAMRFileInfo.iChannel > 0)
+        {
+            PushToAvailableMetadataKeysList(PVAMRMETADATA_CHANNEL_KEY);
+
+        }
         PushToAvailableMetadataKeysList(PVAMRMETADATA_NUMTRACKS_KEY);
         if (iAMRFileInfo.iDuration > 0)
         {
