@@ -111,6 +111,7 @@
 <tr><td class="memItemLeft" align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="osclconfig__io_8h.html#a129236b63ed6858e42e3d3d153faed24">OSCL_SOCKOPT_IP_ADDMEMBERSHIP</a>&nbsp;&nbsp;&nbsp;IP_ADD_MEMBERSHIP</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="osclconfig__io_8h.html#a6d349d0756cfa6603cbcd5d21c356cb8">OSCL_SOCKOPT_IP_TOS</a>&nbsp;&nbsp;&nbsp;IP_TOS</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="osclconfig__io_8h.html#a77dfde1cce4f1d8cb0654a28a0292bbc">OSCL_SOCKOPT_SOL_REUSEADDR</a>&nbsp;&nbsp;&nbsp;SO_REUSEADDR</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="osclconfig__io_8h.html#ae2e368e9e35022dad95afb071e396ae4">MAX_TOSCLFILEOFFSET_VALUE</a>&nbsp;&nbsp;&nbsp;0x7FFFFFFFFFFFFFFFLL;</td></tr>
 <tr><td colspan="2"><h2>Typedefs</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">typedef int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="osclconfig__io_8h.html#a6f124ae8d366b927862ea9c21d534d0c">TOsclSocket</a></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">typedef struct sockaddr_in&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="osclconfig__io_8h.html#a0637dc7e8c32201f83831f3222e2d702">TOsclSockAddr</a></td></tr>
@@ -123,6 +124,19 @@
 <p>This file contains common typedefs based on the ANSI C limits.h header. </p>
 <p>This header file should work for any ANSI C compiler to determine the proper native C types to use for OSCL integer types. </p>
 <hr/><h2>Define Documentation</h2>
+<a class="anchor" id="ae2e368e9e35022dad95afb071e396ae4"></a><!-- doxytag: member="osclconfig_io.h::MAX_TOSCLFILEOFFSET_VALUE" ref="ae2e368e9e35022dad95afb071e396ae4" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define MAX_TOSCLFILEOFFSET_VALUE&nbsp;&nbsp;&nbsp;0x7FFFFFFFFFFFFFFFLL;</td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
 <a class="anchor" id="a2d125023bf4f61b697c372bd360a50b8"></a><!-- doxytag: member="osclconfig_io.h::OSCL_AF_INET" ref="a2d125023bf4f61b697c372bd360a50b8" args="" -->
 <div class="memitem">
 <div class="memproto">
@@ -1787,7 +1801,7 @@ nbytes=recvfrom(s,(<span class="keywordtype">void</span>*)(buf),(<span class="ke
 </div>
 </div>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_9.000.1.1_RC3 </small>
+<address style="align: left;"><small>Posting Version: CORE_9.002.1.1 </small>
 </small></address>
 </body>
 </html>

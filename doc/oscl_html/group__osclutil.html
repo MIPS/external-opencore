@@ -261,9 +261,9 @@
 <tr><td class="memItemLeft" align="right" valign="top">OSCL_IMPORT_REF int32&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__osclutil.html#gad1cd8f6df6902345d593b3f6d9b9a4a4">oscl_str_escape_xml</a> (const char *str_buf_in, char *str_buf_out, uint32 max_out_buf_bytes, uint32 max_bytes=0, uint32 *num_bytes_written=NULL)</td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Escape any of the following special characters in the string Special ASCII characters: &amp;, &lt;, &gt;, ', ".  <a href="#gad1cd8f6df6902345d593b3f6d9b9a4a4"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">OSCL_IMPORT_REF int32&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__osclutil.html#ga88763bd6cc2869671c1c54496464f2c8">oscl_UTF8ToUnicode</a> (const char *input, int32 inLength, <a class="el" href="group__osclbase.html#gad3f9ec9db55ebd4760c877b17eb596ec">oscl_wchar</a> *output, int32 outLength)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Convert UTF8 byte sequence to Unicode string.  <a href="#ga88763bd6cc2869671c1c54496464f2c8"></a><br/></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Convert UTF8 byte sequence to Unicode UTF-16 string.  <a href="#ga88763bd6cc2869671c1c54496464f2c8"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">OSCL_IMPORT_REF int32&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__osclutil.html#ga3f43ae7f69969dd386646fba13ea5544">oscl_UnicodeToUTF8</a> (const <a class="el" href="group__osclbase.html#gad3f9ec9db55ebd4760c877b17eb596ec">oscl_wchar</a> *input, int32 inLength, char *output, int32 outLength)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Convert Unicode string to UTF8 byte sequence.  <a href="#ga3f43ae7f69969dd386646fba13ea5544"></a><br/></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Convert UTF-16 Unicode string to UTF8 byte sequence.  <a href="#ga3f43ae7f69969dd386646fba13ea5544"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classBufferFragment.html">BufferFragment</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__osclutil.html#gaace82700f1ecb7355d6f5827ab74128a">BufFragGroup::GetFragment</a> (const int32 idx)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classBufferState.html">BufferState</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__osclutil.html#ga1222de78fc96691d5f927a7dc2ef36af">BufFragGroup::GetBufferState</a> (const int32 idx)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">uint32&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__osclutil.html#ga0116709dfbf289ce8eed3ae87bf75919">OSCL_HeapString::get_size</a> () const </td></tr>
@@ -2335,9 +2335,9 @@ template&lt;uint32 MaxBufSize&gt; </div>
 </div>
 <div class="memdoc">
 
-<p>Convert Unicode string to UTF8 byte sequence. </p>
+<p>Convert UTF-16 Unicode string to UTF8 byte sequence. </p>
 <p>The function converts Unicode string to UTF8 byte sequence. The length of input Unicode string is specified. It stops at two conditions: (A) Whole input Unicode string is successfully converted. (B) Destination buferr is not enough for output. In case of (A), it adds a terminated '' at the end of the output UTF8 byte sequence. and returns length of the output UTF8 byte sequence(without counting terminated ''). In case of (B), it converts as much as possible to the output buffer and adds a terminated '' at the end of the output UTF8 byte sequence"(no '\0' added if outLength is less than or
-           equal to 0, return 0)", and returns 0.</p>
+           equal to 0, return 0)", and returns 0. Please note that Unicode character exceeding U+FFFF are not supported.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"></td><td valign="top"><em>input</em>&nbsp;</td><td>Ptr to an input Unicode string. '' termanation is not neccesary. </td></tr>
@@ -2388,9 +2388,9 @@ template&lt;uint32 MaxBufSize&gt; </div>
 </div>
 <div class="memdoc">
 
-<p>Convert UTF8 byte sequence to Unicode string. </p>
-<p>The function converts UTF8 byte sequence (or ASCII sequence) to Unicode string. The length of input UTF8 byte sequence is specified. It stops at two conditions: (A) Whole input UTF8 byte sequence is successfully converted. (B) Output buferr is not enough for output, or parse error. In case of (A), it adds a terminated '' at the end of the output Unicode string, and returns length of the output Unicode string(without counting terminated ''). In case of (B), it converts as much as possible to the output buffer and adds a terminated '' at the end of the output Unicode string"(no '\0' added if outLength is less than or
-           equal to 0, return 0)", and returns 0.</p>
+<p>Convert UTF8 byte sequence to Unicode UTF-16 string. </p>
+<p>The function converts UTF8 byte sequence (or ASCII sequence) to UTF-16 string. The length of input UTF8 byte sequence is specified. It stops at two conditions: (A) Whole input UTF8 byte sequence is successfully converted. (B) Output buferr is not enough for output, or parse error. In case of (A), it adds a terminated '' at the end of the output Unicode string, and returns length of the output Unicode string(without counting terminated ''). In case of (B), it converts as much as possible to the output buffer and adds a terminated '' at the end of the output Unicode string"(no '\0' added if outLength is less than or
+           equal to 0, return 0)", and returns 0. Please note that Unicode character exceeding U+FFFF are not supported.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"></td><td valign="top"><em>input</em>&nbsp;</td><td>Ptr to an input UTF8 byte sequence. '' termanation is not neccesary. </td></tr>
@@ -3586,7 +3586,7 @@ template&lt;uint32 MaxBufSize&gt; </div>
 </div>
 </div>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_9.000.1.1_RC3 </small>
+<address style="align: left;"><small>Posting Version: CORE_9.002.1.1 </small>
 </small></address>
 </body>
 </html>

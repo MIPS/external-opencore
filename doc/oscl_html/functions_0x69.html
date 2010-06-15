@@ -195,7 +195,8 @@ Here is a list of all struct and union fields with links to the structures/union
 : <a class="el" href="classOsclComponentRegistry.html#aa3aabbe9193bf68522bf0e2d12d02437">OsclComponentRegistry</a>
 </li>
 <li>iDebugLogger
-: <a class="el" href="classOsclExecSchedulerCommonBase.html#a181d2ad948cff079e1bc5935d5958fad">OsclExecSchedulerCommonBase</a>
+: <a class="el" href="classOsclMemPoolResizableAllocator.html#a0853aab840b804e93f6c3d5c68535a07">OsclMemPoolResizableAllocator</a>
+, <a class="el" href="classOsclExecSchedulerCommonBase.html#a181d2ad948cff079e1bc5935d5958fad">OsclExecSchedulerCommonBase</a>
 </li>
 <li>iDefAlloc
 : <a class="el" href="classOsclExecSchedulerCommonBase.html#ac3f6a2dc22e92538ca9ac2389612e202">OsclExecSchedulerCommonBase</a>
@@ -225,8 +226,8 @@ Here is a list of all struct and union fields with links to the structures/union
 : <a class="el" href="classOsclExecSchedulerCommonBase.html#a8245dbb88be38ebd465b4a66cd022436">OsclExecSchedulerCommonBase</a>
 </li>
 <li>iEnableNullPtrReturn
-: <a class="el" href="classOsclMemPoolFixedChunkAllocator.html#a9acc4106bf01a589ce15ef0c8daef5b1">OsclMemPoolFixedChunkAllocator</a>
-, <a class="el" href="classOsclMemPoolResizableAllocator.html#afb318b658dd5a11d84445ff07031b409">OsclMemPoolResizableAllocator</a>
+: <a class="el" href="classOsclMemPoolResizableAllocator.html#afb318b658dd5a11d84445ff07031b409">OsclMemPoolResizableAllocator</a>
+, <a class="el" href="classOsclMemPoolFixedChunkAllocator.html#a9acc4106bf01a589ce15ef0c8daef5b1">OsclMemPoolFixedChunkAllocator</a>
 </li>
 <li>iEndAddr
 : <a class="el" href="structOsclMemPoolResizableAllocator_1_1MemPoolBufferInfo.html#a8dbde4914e37b792c2bddccfa502419c">OsclMemPoolResizableAllocator::MemPoolBufferInfo</a>
@@ -355,6 +356,9 @@ Here is a list of all struct and union fields with links to the structures/union
 <li>iMemPoolBufferSize
 : <a class="el" href="classOsclMemPoolResizableAllocator.html#a16a3eb265a1e0d5dab7bb7655cc13724">OsclMemPoolResizableAllocator</a>
 </li>
+<li>iMemPoolPrevAllocBufferIndex
+: <a class="el" href="classOsclMemPoolResizableAllocator.html#a9853b3055f4c806d08d1fba0246408ce">OsclMemPoolResizableAllocator</a>
+</li>
 <li>iMimeString
 : <a class="el" href="classOsclRegistryAccessElement.html#ab02b5130ba58235c34a5e57b28937fbd">OsclRegistryAccessElement</a>
 </li>
@@ -385,9 +389,9 @@ Here is a list of all struct and union fields with links to the structures/union
 : <a class="el" href="classBufferState.html#a1349a0c3b3d1a031dec9a0afcfade7d0">BufferState</a>
 </li>
 <li>iNext
-: <a class="el" href="classOsclDoubleRunner.html#aebac642bfeab2603679a3c89ee6b010e">OsclDoubleRunner&lt; T &gt;</a>
-, <a class="el" href="classOsclTrapStackItem.html#ad9c7aa0d677c91492e26457d7bc492cd">OsclTrapStackItem</a>
+: <a class="el" href="classOsclTrapStackItem.html#ad9c7aa0d677c91492e26457d7bc492cd">OsclTrapStackItem</a>
 , <a class="el" href="classOsclDoubleLink.html#a4ecd1212e2fa6fff680bf9d4917eeaac">OsclDoubleLink</a>
+, <a class="el" href="classOsclDoubleRunner.html#aebac642bfeab2603679a3c89ee6b010e">OsclDoubleRunner&lt; T &gt;</a>
 </li>
 <li>iNextAvailableContextData
 : <a class="el" href="classOsclMemPoolFixedChunkAllocator.html#a8e04b825c9b908fccb59e44ef0e3c958">OsclMemPoolFixedChunkAllocator</a>
@@ -422,7 +426,7 @@ Here is a list of all struct and union fields with links to the structures/union
 , <a class="el" href="classOscl__Linked__List.html#a9abda095077c27553c8473fc63257e11">Oscl_Linked_List&lt; LLClass, Alloc &gt;</a>
 </li>
 <li>insert_unique()
-: <a class="el" href="classOscl__Rb__Tree.html#acf8c81d5eee9703c1b945b5c35445c47">Oscl_Rb_Tree&lt; Key, Value, KeyOfValue, Compare, Alloc &gt;</a>
+: <a class="el" href="classOscl__Rb__Tree.html#adf068ddc76bc9b85d81aedfd2e9c2d01">Oscl_Rb_Tree&lt; Key, Value, KeyOfValue, Compare, Alloc &gt;</a>
 </li>
 <li>InsertAfter()
 : <a class="el" href="classOsclDoubleLink.html#ae92dc3ad55fae06e1f5d40d676164ff5">OsclDoubleLink</a>
@@ -503,12 +507,12 @@ Here is a list of all struct and union fields with links to the structures/union
 </li>
 <li>iObserver
 : <a class="el" href="classOsclIPSocketI.html#ab540be3f3756b1eb42df323135a3160b">OsclIPSocketI</a>
-, <a class="el" href="classOsclMemPoolFixedChunkAllocator.html#aacc809944eca0f2ce5d0bc2207161025">OsclMemPoolFixedChunkAllocator</a>
 , <a class="el" href="classOsclMemPoolResizableAllocator.html#a555e870a36d26be233bebe9c28810971">OsclMemPoolResizableAllocator</a>
+, <a class="el" href="classOsclMemPoolFixedChunkAllocator.html#aacc809944eca0f2ce5d0bc2207161025">OsclMemPoolFixedChunkAllocator</a>
 </li>
 <li>iOffset
-: <a class="el" href="classOsclDoubleRunner.html#a0f98c3ccb94c101fc88a3f30ddf6ef1f">OsclDoubleRunner&lt; T &gt;</a>
-, <a class="el" href="classOsclDoubleListBase.html#afa47c4a84d6a8dce975adeb378d83148">OsclDoubleListBase</a>
+: <a class="el" href="classOsclDoubleListBase.html#afa47c4a84d6a8dce975adeb378d83148">OsclDoubleListBase</a>
+, <a class="el" href="classOsclDoubleRunner.html#a0f98c3ccb94c101fc88a3f30ddf6ef1f">OsclDoubleRunner&lt; T &gt;</a>
 </li>
 <li>iOpCount
 : <a class="el" href="classOsclFileStatsItem.html#a84128c9bdf320932c11916b421ac6636">OsclFileStatsItem</a>
@@ -541,8 +545,8 @@ Here is a list of all struct and union fields with links to the structures/union
 : <a class="el" href="classOsclNetworkAddress.html#a8d08171d7c23b63a81c1a3e1a87c8989">OsclNetworkAddress</a>
 </li>
 <li>iParam
-: <a class="el" href="classOsclSocketRequestAO.html#a5c3cba8bca77dae432b8aa4efd968fc3">OsclSocketRequestAO</a>
-, <a class="el" href="classOsclFileStatsItem.html#a8200d961a155b593115e38e7eb19ab88">OsclFileStatsItem</a>
+: <a class="el" href="classOsclFileStatsItem.html#a8200d961a155b593115e38e7eb19ab88">OsclFileStatsItem</a>
+, <a class="el" href="classOsclSocketRequestAO.html#a5c3cba8bca77dae432b8aa4efd968fc3">OsclSocketRequestAO</a>
 </li>
 <li>iParam2
 : <a class="el" href="classOsclFileStatsItem.html#a706324ef91c352ee610149665b49b8ee">OsclFileStatsItem</a>
@@ -556,6 +560,9 @@ Here is a list of all struct and union fields with links to the structures/union
 <li>iPrev
 : <a class="el" href="classOsclDoubleLink.html#a1270afcb27c1a2f677c0ad8fdf68c2cc">OsclDoubleLink</a>
 </li>
+<li>iPrevAllocBlock
+: <a class="el" href="structOsclMemPoolResizableAllocator_1_1MemPoolBufferInfo.html#aaa05f368ba6b00ba2b0f2dd04d685e65">OsclMemPoolResizableAllocator::MemPoolBufferInfo</a>
+</li>
 <li>iPrevFreeBlock
 : <a class="el" href="structOsclMemPoolResizableAllocator_1_1MemPoolBlockInfo.html#a293cace29c02526aacbc72f1809568fe">OsclMemPoolResizableAllocator::MemPoolBlockInfo</a>
 </li>
@@ -563,8 +570,8 @@ Here is a list of all struct and union fields with links to the structures/union
 : <a class="el" href="classOsclPriorityLink.html#a29f8e1a271b87399e737d0b1d421f54f">OsclPriorityLink</a>
 </li>
 <li>iPtr
-: <a class="el" href="classPVSockBufRecv.html#ae5cfb0829a815fac5ae14307af04c680">PVSockBufRecv</a>
-, <a class="el" href="classPVSockBufSend.html#afd51e0c5b893a9a9649b77d013c90bed">PVSockBufSend</a>
+: <a class="el" href="classPVSockBufSend.html#afd51e0c5b893a9a9649b77d013c90bed">PVSockBufSend</a>
+, <a class="el" href="classPVSockBufRecv.html#ae5cfb0829a815fac5ae14307af04c680">PVSockBufRecv</a>
 </li>
 <li>iPVReadyQLink
 : <a class="el" href="classPVActiveBase.html#a6be20b0c4b53659ff2e5da66c9850c3c">PVActiveBase</a>
@@ -593,8 +600,8 @@ Here is a list of all struct and union fields with links to the structures/union
 : <a class="el" href="classOsclExecSchedulerCommonBase.html#a7faa589d0ddb1a78aac1e915371dc03a">OsclExecSchedulerCommonBase</a>
 </li>
 <li>is_writable()
-: <a class="el" href="classOSCL__String.html#ac7ce7e5ea762b007358f94076c246f9f">OSCL_String</a>
-, <a class="el" href="classOSCL__wString.html#a3725b6841a51b7fbf228578ef582bed3">OSCL_wString</a>
+: <a class="el" href="classOSCL__wString.html#a3725b6841a51b7fbf228578ef582bed3">OSCL_wString</a>
+, <a class="el" href="classOSCL__String.html#ac7ce7e5ea762b007358f94076c246f9f">OSCL_String</a>
 </li>
 <li>is_zero()
 : <a class="el" href="classTimeValue.html#abf7e1154e1fdf8d766bfc5a1584953ef">TimeValue</a>
@@ -625,9 +632,9 @@ Here is a list of all struct and union fields with links to the structures/union
 : <a class="el" href="classOsclSelect.html#a9377445b59fe51432cddddaa65318b2b">OsclSelect</a>
 </li>
 <li>isCIEquivalentTo()
-: <a class="el" href="structStrCSumPtrLen.html#a79b77a9316376dcd88f7b44e11c49745">StrCSumPtrLen</a>
+: <a class="el" href="structWStrPtrLen.html#ae5b1d400919167216c5a340387ea070b">WStrPtrLen</a>
 , <a class="el" href="structStrPtrLen.html#ac0eb82b330ee8eb501381f675d5fe51d">StrPtrLen</a>
-, <a class="el" href="structWStrPtrLen.html#ae5b1d400919167216c5a340387ea070b">WStrPtrLen</a>
+, <a class="el" href="structStrCSumPtrLen.html#a79b77a9316376dcd88f7b44e11c49745">StrCSumPtrLen</a>
 </li>
 <li>isCIPrefixOf()
 : <a class="el" href="structStrPtrLen.html#a1d14bd27f8841fbb52494eea92444db2">StrPtrLen</a>
@@ -651,8 +658,8 @@ Here is a list of all struct and union fields with links to the structures/union
 : <a class="el" href="classOsclFileCacheBuffer.html#aa9ec8d60abc8fe0489790733ffaf975a">OsclFileCacheBuffer</a>
 </li>
 <li>IsHead()
-: <a class="el" href="classOsclDoubleList.html#a271ed65d5cd68f8ab70126d244523874">OsclDoubleList&lt; T &gt;</a>
-, <a class="el" href="classOsclPriorityList.html#a4df4c843ca1d512e81073b340e897593">OsclPriorityList&lt; T &gt;</a>
+: <a class="el" href="classOsclPriorityList.html#a4df4c843ca1d512e81073b340e897593">OsclPriorityList&lt; T &gt;</a>
+, <a class="el" href="classOsclDoubleList.html#a271ed65d5cd68f8ab70126d244523874">OsclDoubleList&lt; T &gt;</a>
 </li>
 <li>IsIn()
 : <a class="el" href="classOsclReadyQ.html#a628e4e938c04eb5c2762d7c39492566e">OsclReadyQ</a>
@@ -694,8 +701,8 @@ Here is a list of all struct and union fields with links to the structures/union
 </li>
 <li>iSocketServ
 : <a class="el" href="classOsclDNSIBase.html#a4b37e5c8e9bf9c74c87ffda7a27912d9">OsclDNSIBase</a>
-, <a class="el" href="classOsclIPSocketI.html#a6408f39a3dcc27b46f39380b0a421c91">OsclIPSocketI</a>
 , <a class="el" href="classOsclSocketIBase.html#a5e65590d42e4c0b308d66b19b765048b">OsclSocketIBase</a>
+, <a class="el" href="classOsclIPSocketI.html#a6408f39a3dcc27b46f39380b0a421c91">OsclIPSocketI</a>
 </li>
 <li>IsOpen()
 : <a class="el" href="classOsclSocketIBase.html#aadd8029ea2c1cae79c7e4ab5fdc0044b">OsclSocketIBase</a>
@@ -746,19 +753,19 @@ Here is a list of all struct and union fields with links to the structures/union
 <li>iTAny
 : <a class="el" href="classOsclTrapStackItem.html#aa7afd358b53262132861a4804c74cff8">OsclTrapStackItem</a>
 </li>
-<li>iterator
-: <a class="el" href="classOscl__Map.html#a12b0e0245655a77ed14ab92d00f22d79">Oscl_Map&lt; Key, T, Alloc, Compare &gt;</a>
+<li>iterator()
+: <a class="el" href="structOscl__TagTree_1_1iterator.html#a49c1dd5882bc510ddfb167d26af912d0">Oscl_TagTree&lt; T, Alloc &gt;::iterator</a>
+, <a class="el" href="classOscl__Map.html#a12b0e0245655a77ed14ab92d00f22d79">Oscl_Map&lt; Key, T, Alloc, Compare &gt;</a>
 , <a class="el" href="classOscl__Linked__List__Base.html#a4dee13e15b3dc0f6bc6529cb7ea617fd">Oscl_Linked_List_Base</a>
-, <a class="el" href="classOscl__Rb__Tree.html#a5157f5b936d49b6d28ac52e5a826d37f">Oscl_Rb_Tree&lt; Key, Value, KeyOfValue, Compare, Alloc &gt;</a>
-, <a class="el" href="structOscl__TagTree_1_1iterator.html#a49c1dd5882bc510ddfb167d26af912d0">Oscl_TagTree&lt; T, Alloc &gt;::iterator</a>
-, <a class="el" href="classOscl__Vector.html#a504c7c506b4014f9b99c1cc38b8a179d">Oscl_Vector&lt; T, Alloc &gt;</a>
-, <a class="el" href="structOscl__Rb__Tree__Iterator.html#a342ae0d7908efe2de74b87282097729b">Oscl_Rb_Tree_Iterator&lt; Value &gt;</a>
-, <a class="el" href="structOscl__TagTree_1_1iterator.html#a377c7030f8246bee48972448dae8f2ea">Oscl_TagTree&lt; T, Alloc &gt;::iterator</a>
 , <a class="el" href="classOsclPriorityQueue.html#ae1bf3c9417f5c1287795ca15ef1c39fe">OsclPriorityQueue&lt; Qelem, Alloc, Container, Compare &gt;</a>
+, <a class="el" href="structOscl__Rb__Tree__Iterator.html#a342ae0d7908efe2de74b87282097729b">Oscl_Rb_Tree_Iterator&lt; Value &gt;</a>
+, <a class="el" href="classOscl__Vector.html#a504c7c506b4014f9b99c1cc38b8a179d">Oscl_Vector&lt; T, Alloc &gt;</a>
+, <a class="el" href="classOscl__Rb__Tree.html#a5157f5b936d49b6d28ac52e5a826d37f">Oscl_Rb_Tree&lt; Key, Value, KeyOfValue, Compare, Alloc &gt;</a>
+, <a class="el" href="structOscl__TagTree_1_1iterator.html#a377c7030f8246bee48972448dae8f2ea">Oscl_TagTree&lt; T, Alloc &gt;::iterator</a>
 </li>
 <li>iThreadContext
-: <a class="el" href="classPVActiveBase.html#ab4158cbb39a8565ef6a0962203aa5ef4">PVActiveBase</a>
-, <a class="el" href="classOsclExecSchedulerCommonBase.html#a6ec0af700332d8a58efb374bc12066b7">OsclExecSchedulerCommonBase</a>
+: <a class="el" href="classOsclExecSchedulerCommonBase.html#a6ec0af700332d8a58efb374bc12066b7">OsclExecSchedulerCommonBase</a>
+, <a class="el" href="classPVActiveBase.html#ab4158cbb39a8565ef6a0962203aa5ef4">PVActiveBase</a>
 </li>
 <li>iTimeCompareThreshold
 : <a class="el" href="classOsclExecSchedulerCommonBase.html#a9b7f64984df6b3b75cb704367404a27b">OsclExecSchedulerCommonBase</a>
@@ -782,13 +789,13 @@ Here is a list of all struct and union fields with links to the structures/union
 : <a class="el" href="classOsclComponentRegistryData.html#ab25a24413a760e7332e897451e8e9ddf">OsclComponentRegistryData</a>
 </li>
 <li>iXferLen
-: <a class="el" href="classSendToParam.html#ab0ef7fb918e5a50952db3e5a0f9983aa">SendToParam</a>
-, <a class="el" href="classSendParam.html#a94f9259d7d735d00bf31aaa2d7177087">SendParam</a>
+: <a class="el" href="classSendParam.html#a94f9259d7d735d00bf31aaa2d7177087">SendParam</a>
+, <a class="el" href="classSendToParam.html#ab0ef7fb918e5a50952db3e5a0f9983aa">SendToParam</a>
 </li>
 </ul>
 </div>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_9.000.1.1_RC3 </small>
+<address style="align: left;"><small>Posting Version: CORE_9.002.1.1 </small>
 </small></address>
 </body>
 </html>

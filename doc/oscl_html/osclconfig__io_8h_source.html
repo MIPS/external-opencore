@@ -300,17 +300,19 @@
 <a name="l00282"></a>00282 <span class="comment">// file IO support</span>
 <a name="l00283"></a>00283 <span class="preprocessor">#if (OSCL_HAS_LARGE_FILE_SUPPORT)</span>
 <a name="l00284"></a><a class="code" href="osclconfig__io_8h.html#a97cda56383fc49167372a11658c80483">00284</a> <span class="preprocessor"></span><span class="keyword">typedef</span> off64_t <a class="code" href="osclconfig__io_8h.html#a97cda56383fc49167372a11658c80483">TOsclFileOffset</a>;
-<a name="l00285"></a>00285 <span class="preprocessor">#else</span>
-<a name="l00286"></a>00286 <span class="preprocessor"></span><span class="keyword">typedef</span> int32 <a class="code" href="osclconfig__io_8h.html#a97cda56383fc49167372a11658c80483">TOsclFileOffset</a>;
-<a name="l00287"></a>00287 <span class="preprocessor">#endif</span>
-<a name="l00288"></a>00288 <span class="preprocessor"></span>
-<a name="l00289"></a>00289 <span class="preprocessor">#include &quot;<a class="code" href="osclconfig__io__check_8h.html">osclconfig_io_check.h</a>&quot;</span>
-<a name="l00290"></a>00290 
-<a name="l00291"></a>00291 <span class="preprocessor">#endif</span>
-<a name="l00292"></a>00292 <span class="preprocessor"></span>
+<a name="l00285"></a><a class="code" href="osclconfig__io_8h.html#ae2e368e9e35022dad95afb071e396ae4">00285</a> <span class="preprocessor">#define MAX_TOSCLFILEOFFSET_VALUE 0x7FFFFFFFFFFFFFFFLL;</span>
+<a name="l00286"></a>00286 <span class="preprocessor"></span><span class="preprocessor">#else</span>
+<a name="l00287"></a>00287 <span class="preprocessor"></span><span class="keyword">typedef</span> int32 <a class="code" href="osclconfig__io_8h.html#a97cda56383fc49167372a11658c80483">TOsclFileOffset</a>;
+<a name="l00288"></a>00288 <span class="preprocessor">#define MAX_TOSCLFILEOFFSET_VALUE 0x7FFFFFFF;</span>
+<a name="l00289"></a>00289 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
+<a name="l00290"></a>00290 <span class="preprocessor"></span>
+<a name="l00291"></a>00291 <span class="preprocessor">#include &quot;<a class="code" href="osclconfig__io__check_8h.html">osclconfig_io_check.h</a>&quot;</span>
+<a name="l00292"></a>00292 
+<a name="l00293"></a>00293 <span class="preprocessor">#endif</span>
+<a name="l00294"></a>00294 <span class="preprocessor"></span>
 </pre></div></div>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_9.000.1.1_RC3 </small>
+<address style="align: left;"><small>Posting Version: CORE_9.002.1.1 </small>
 </small></address>
 </body>
 </html>
