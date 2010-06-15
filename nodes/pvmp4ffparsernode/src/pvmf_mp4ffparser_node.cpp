@@ -7890,11 +7890,11 @@ PVMFStatus PVMFMP4FFParserNode::CheckForMP4HeaderAvailability()
                 }
                 else if (iExternalDownload == true)
                 {
-                    uint32 maxSize = MAX_TOSCLFILEOFFSET_VALUE;
+                    TOsclFileOffset maxSize = MAX_TOSCLFILEOFFSET_VALUE;
                     iRequestReadCapacityNotificationID =
                         iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
                                 *this,
-                                maxSize);
+                                (uint32)maxSize);
                     iDataStreamRequestPending = true;
                     PVMF_MP4FFPARSERNODE_LOGDATATRAFFIC((0, "PVMFMP4FFParserNode::CheckForMP4HeaderAvailability() - Auto Pause Triggered - Waiting on download complete"));
                     return PVMFPending;
