@@ -551,12 +551,6 @@ class PvmfAssetInfo3GPPLocationStruct
 //
 //audio format strings as defined in pvmf_format_type.h
 #define MOUT_AUDIO_FORMAT_KEY "x-pvmf/audio/render/media_format;valtype=char*"
-//audio sampling rate in Hz
-#define MOUT_AUDIO_SAMPLING_RATE_KEY "x-pvmf/audio/render/sampling_rate;valtype=uint32"
-//audio number of channels (1 for mono, 2 for stereo)
-#define MOUT_AUDIO_NUM_CHANNELS_KEY "x-pvmf/audio/render/channels;valtype=uint32"
-//audio number of bits per sample
-#define MOUT_AUDIO_BITS_PER_SAMPLE "x-pvmf/audio/render/bits_per_sample;valtype=uint32"
 
 // Key to configure the Number of frames required in a Media msg
 #define PVMF_NUM_DECODED_FRAMES_CONFIG_KEY "x-pvmf/audio/render/num_decoded_frames;valtype=uint32"
@@ -573,15 +567,8 @@ class PvmfAssetInfo3GPPLocationStruct
 //
 //video format strings as defined in pvmf_format_type.h
 #define MOUT_VIDEO_FORMAT_KEY "x-pvmf/video/render/media_format;valtype=char*"
-// video sub-format (e.g. YUV420-planar etc.)
-#define MOUT_VIDEO_SUBFORMAT_KEY "x-pvmf/video/render/media_subformat;valtype=char*"
 
 //video dimensions in pixels
-#define MOUT_VIDEO_WIDTH_KEY "x-pvmf/video/render/width;valtype=uint32"
-#define MOUT_VIDEO_HEIGHT_KEY "x-pvmf/video/render/height;valtype=uint32"
-//video display dimensions in pixels.
-#define MOUT_VIDEO_DISPLAY_WIDTH_KEY "x-pvmf/video/render/display_width;valtype=uint32"
-#define MOUT_VIDEO_DISPLAY_HEIGHT_KEY "x-pvmf/video/render/display_height;valtype=uint32"
 #define MOUT_VIDEO_OUTPUT_WIDTH_KEY "x-pvmf/video/render/output_width;valtype=uint32"
 #define MOUT_VIDEO_OUTPUT_HEIGHT_KEY "x-pvmf/video/render/output_height;valtype=uint32"
 #define MOUT_VIDEO_DISPLAY_ROTATION_KEY "x-pvmf/video/render/display_rotation;valtype=uint32"

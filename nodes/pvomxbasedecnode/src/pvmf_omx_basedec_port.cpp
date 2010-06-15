@@ -285,17 +285,13 @@ OSCL_EXPORT_REF void PVMFOMXDecPort::setParametersSync(PvmiMIOSession aSession,
         return;
     }
 
-    // if port connect needs display width
-    if (aParameters && pv_mime_strcmp(aParameters->key, MOUT_VIDEO_DISPLAY_WIDTH_KEY) == 0)
+    // if port connect needs display width and height
+    if (aParameters && pv_mime_strcmp(aParameters->key, PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV) == 0)
     {
-        iDspWidth = aParameters->value.int32_value;
-        return;
-    }
+        PVMFYuvFormatSpecificInfo0* yuvInfo = (PVMFYuvFormatSpecificInfo0*)aParameters->value.key_specific_value;
 
-    // if port connect needs display height
-    if (aParameters && pv_mime_strcmp(aParameters->key, MOUT_VIDEO_DISPLAY_HEIGHT_KEY) == 0)
-    {
-        iDspHeight = aParameters->value.int32_value;
+        iDspWidth = (int32)yuvInfo->viewable_width;
+        iDspHeight = (int32)yuvInfo->viewable_height;
         return;
     }
 

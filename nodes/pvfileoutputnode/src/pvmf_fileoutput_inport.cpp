@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -667,16 +667,6 @@ PVMFStatus PVMFFileOutputInPort::VerifyAndSetParameter(PvmiKvp* aKvp, bool aSetP
     else if (pv_mime_strcmp(aKvp->key, MOUT_AUDIO_FORMAT_KEY) == 0)
     {
         LOG_DEBUG((0, "PVMFFileOutputInPort::VerifyAndSetParameter: Got audio format key"));
-        return PVMFSuccess;
-    }
-    else if (pv_mime_strcmp(aKvp->key, MOUT_AUDIO_SAMPLING_RATE_KEY) == 0)
-    {
-        LOG_DEBUG((0, "PVMFFileOutputInPort::VerifyAndSetParameter: Audio sample rate=%d", aKvp->value.uint32_value));
-        return PVMFSuccess;
-    }
-    else if (pv_mime_strcmp(aKvp->key, MOUT_AUDIO_NUM_CHANNELS_KEY) == 0)
-    {
-        LOG_DEBUG((0, "PVMFFileOutputInPort::VerifyAndSetParameter: Audio num channels=%d", aKvp->value.uint32_value));
         return PVMFSuccess;
     }
     else if (pv_mime_strcmp(aKvp->key, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)

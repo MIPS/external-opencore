@@ -685,35 +685,15 @@ void DummyOutputMIO::setParametersSync(PvmiMIOSession aSession,
         {
             //Do nothing since this is a dummy
         }
-        else if (pv_mime_strcmp(aParameters[i].key, MOUT_AUDIO_SAMPLING_RATE_KEY) == 0)
+        else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_SPECIFIC_INFO_KEY_PCM) == 0)
         {
-            //Do nothing since this is a dummy
-        }
-        else if (pv_mime_strcmp(aParameters[i].key, MOUT_AUDIO_NUM_CHANNELS_KEY) == 0)
-        {
-            //Do nothing since this is a dummy
+            //Do nothing since this a dummy
         }
         else if (pv_mime_strcmp(aParameters[i].key, PVMF_FORMAT_SPECIFIC_INFO_KEY) == 0)
         {
             //We simply check it to make sure that an error isn't returned for this key.
         }
         else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_FORMAT_KEY) == 0)
-        {
-            //Do nothing since this is a dummy
-        }
-        else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_WIDTH_KEY) == 0)
-        {
-            //Do nothing since this is a dummy
-        }
-        else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_HEIGHT_KEY) == 0)
-        {
-            //Do nothing since this is a dummy
-        }
-        else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_DISPLAY_HEIGHT_KEY) == 0)
-        {
-            //Do nothing since this is a dummy
-        }
-        else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_DISPLAY_WIDTH_KEY) == 0)
         {
             //Do nothing since this is a dummy
         }

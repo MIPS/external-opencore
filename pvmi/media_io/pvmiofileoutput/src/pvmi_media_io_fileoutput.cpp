@@ -1602,22 +1602,6 @@ void PVRefFileOutput::setParametersSync(PvmiMIOSession aSession,
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVRefFileOutput::setParametersSync() Audio Format Key, Value %s", iAudioFormatString.get_str()));
         }
-        else if (pv_mime_strcmp(aParameters[i].key, MOUT_AUDIO_SAMPLING_RATE_KEY) == 0)
-        {
-            iAudioSamplingRate = (int32)aParameters[i].value.uint32_value;
-            iAudioSamplingRateValid = true;
-            iFmtSubchunk.sampleRate = iAudioSamplingRate;
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVRefFileOutput::setParametersSync() Audio Sampling Rate Key, Value %d", iAudioSamplingRate));
-        }
-        else if (pv_mime_strcmp(aParameters[i].key, MOUT_AUDIO_NUM_CHANNELS_KEY) == 0)
-        {
-            iAudioNumChannels = (int32)aParameters[i].value.uint32_value;
-            iAudioNumChannelsValid = true;
-            iFmtSubchunk.numChannels = iAudioNumChannels;
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVRefFileOutput::setParametersSync() Audio Num Channels Key, Value %d", iAudioNumChannels));
-        }
         //Check against known video parameter keys...
         else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_FORMAT_KEY) == 0)
         {
@@ -1638,40 +1622,6 @@ void PVRefFileOutput::setParametersSync(PvmiMIOSession aSession,
             iVideoFormatString = iVideoFormat.getMIMEStrPtr();
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVRefFileOutput::setParametersSync() Video Format Key, Value %s", iVideoFormatString.get_str()));
-        }
-        else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_SUBFORMAT_KEY) == 0)
-        {
-            iVideoSubFormat = aParameters[i].value.pChar_value;
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVRefFileOutput::setParametersSync() Video SubFormat Key, Value %s", iVideoSubFormat.getMIMEStrPtr()));
-        }
-        else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_WIDTH_KEY) == 0)
-        {
-            iVideoWidth = (int32)aParameters[i].value.uint32_value;
-            iVideoWidthValid = true;
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVRefFileOutput::setParametersSync() Video Width Key, Value %d", iVideoWidth));
-        }
-        else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_HEIGHT_KEY) == 0)
-        {
-            iVideoHeight = (int32)aParameters[i].value.uint32_value;
-            iVideoHeightValid = true;
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVRefFileOutput::setParametersSync() Video Height Key, Value %d", iVideoHeight));
-        }
-        else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_DISPLAY_HEIGHT_KEY) == 0)
-        {
-            iVideoDisplayHeight = (int32)aParameters[i].value.uint32_value;
-            iVideoDisplayHeightValid = true;
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVRefFileOutput::setParametersSync() Video Display Height Key, Value %d", iVideoDisplayHeight));
-        }
-        else if (pv_mime_strcmp(aParameters[i].key, MOUT_VIDEO_DISPLAY_WIDTH_KEY) == 0)
-        {
-            iVideoDisplayWidth = (int32)aParameters[i].value.uint32_value;
-            iVideoDisplayWidthValid = true;
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                            (0, "PVRefFileOutput::setParametersSync() Video Display Width Key, Value %d", iVideoDisplayWidth));
         }
         //Check against known text parameter keys...
         else if (pv_mime_strcmp(aParameters[i].key, MOUT_TEXT_FORMAT_KEY) == 0)

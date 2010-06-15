@@ -2203,39 +2203,36 @@ PVMFStatus  PVMFWAVFFParserNode::NegotiateSettings(PvmiCapabilityAndConfig* conf
 
     kvp.length = kvp.capacity = 0;
 
-    // set the sample rate
-    kvp.value.uint32_value = wavinfo.SampleRate;
-
-    oscl_strncpy(buf, MOUT_AUDIO_SAMPLING_RATE_KEY, WAVFF_MAX_PARAM_KEYLEN);
-    buf[WAVFF_MAX_PARAM_KEYLEN-1] = 0;
-
-    kvp.key = buf;
-
-    err = 0;
-    retKvp = NULL;
-    OSCL_TRY(err, configInterface->setParametersSync(0, &kvp, 1, retKvp););
-
-    if (err != OsclErrNone || retKvp)
+    // Set the FSI and send it to MIO
+    channelSampleInfo *pcmInfo = (channelSampleInfo*)OSCL_MALLOC(sizeof(channelSampleInfo));
+    if (pcmInfo != NULL)
     {
-        return PVMFFailure;
+        oscl_strncpy(buf, PVMF_FORMAT_SPECIFIC_INFO_KEY_PCM, WAVFF_MAX_PARAM_KEYLEN);
+        buf[WAVFF_MAX_PARAM_KEYLEN -1] = 0;
+
+        kvp.key = buf;
+
+        pcmInfo->bitsPerSample = wavinfo.BitsPerSample;
+        pcmInfo->desiredChannels = wavinfo.NumChannels;
+        pcmInfo->samplingRate = wavinfo.SampleRate;
+        pcmInfo->buffer_size = 0;
+        pcmInfo->num_buffers = 0;
+
+        kvp.value.key_specific_value = (OsclAny*)pcmInfo;
+
+        OSCL_TRY(err, configInterface->setParametersSync(0, &kvp, 1, retKvp););
+        if (OsclErrNone != err || retKvp)
+        {
+            OSCL_FREE(pcmInfo);
+            return PVMFFailure;
+        }
+        OSCL_FREE(pcmInfo);
     }
-
-    // set the number of channels
-
-    kvp.value.uint32_value = wavinfo.NumChannels;
-
-    oscl_strncpy(buf, MOUT_AUDIO_NUM_CHANNELS_KEY, WAVFF_MAX_PARAM_KEYLEN);
-    buf[WAVFF_MAX_PARAM_KEYLEN-1] = 0;
-
-    kvp.key = buf;
-
-    err = 0;
-    retKvp = NULL;
-    OSCL_TRY(err, configInterface->setParametersSync(0, &kvp, 1, retKvp););
-
-    if (err != OsclErrNone || retKvp)
+    else
     {
-        return PVMFFailure;
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PVMFWAVFFParserNode::NegotiateSettings() - Problem allocating memory to send out FSI"));
+        return PVMFErrNoMemory;
     }
 
     return PVMFSuccess;

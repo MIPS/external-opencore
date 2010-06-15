@@ -7461,11 +7461,11 @@ PVMFStatus PVPlayerEngine::DoVerifyTrackInfo(PVPlayerEngineTrackSelection &aTrac
                         {
 
                             // record width and height of the video track
-                            if (pv_mime_strcmp(kvpPtr[ii].key, MOUT_VIDEO_WIDTH_KEY) >= 0)
+                            if (pv_mime_strcmp(kvpPtr[ii].key, "x-pvmf/video/render/width;valtype=uint32") >= 0)
                             {
                                 aTrack->setTrackWidth(kvpPtr[0].value.uint32_value);
                             }
-                            if (pv_mime_strcmp(kvpPtr[ii].key, MOUT_VIDEO_HEIGHT_KEY) >= 0)
+                            if (pv_mime_strcmp(kvpPtr[ii].key, "x-pvmf/video/render/height;valtype=uint32") >= 0)
                             {
                                 aTrack->setTrackHeight(kvpPtr[1].value.uint32_value);
                             }

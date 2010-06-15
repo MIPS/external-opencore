@@ -659,47 +659,64 @@ PVMFStatus CPV2WayDatapath::PortStatusChange(PVMFNodeInterface *aNode,
                     portParamsReturn = NULL;
                     if (format.isAudio())
                     {
-                        portParams.key = OSCL_CONST_CAST(char*, MOUT_AUDIO_SAMPLING_RATE_KEY);
-                        portParams.value.uint32_value = 8000;
-                        portParams.length = oscl_strlen(portParams.key);
-                        portParams.capacity = portParams.length;
-                        error = SetParametersSync((PvmiCapabilityAndConfig *)configPtr,
-                                                  &portParams, portParamsReturn);
-                        if (error && portParamsReturn != NULL)
+                        channelSampleInfo *pcmInfo = OSCL_NEW(channelSampleInfo, ());
+                        if (pcmInfo != NULL)
                         {
-                            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0,
-                                            "CPV2WayDatapath::PortStatusChange setParametersSync failed %d at parameter %x!\n",
-                                            error, portParamsReturn));
-                            return PVMFFailure;
+                            pcmInfo->samplingRate = 8000;
+                            pcmInfo->desiredChannels = 1;
+                            pcmInfo->bitsPerSample = 16;
+                            pcmInfo->num_buffers = 0;
+                            pcmInfo->buffer_size = 0;
+
+                            portParams.key = OSCL_CONST_CAST(char*, PVMF_FORMAT_SPECIFIC_INFO_KEY_PCM);
+                            portParams.value.key_specific_value = (OsclAny*)pcmInfo;
+                            error = SetParametersSync((PvmiCapabilityAndConfig *)configPtr,
+                                                      &portParams, portParamsReturn);
+                            if (error && portParamsReturn != NULL)
+                            {
+                                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0,
+                                                "CPV2WayDatapath::PortStatusChange setParametersSync failed %d at parameter %x!\n",
+                                                error, portParamsReturn));
+                                OSCL_DELETE(pcmInfo);
+                                return PVMFFailure;
+                            }
+
+                            OSCL_DELETE(pcmInfo);
                         }
-                        portParams.key = OSCL_CONST_CAST(char*, MOUT_AUDIO_NUM_CHANNELS_KEY);
-                        portParams.value.uint32_value = 1;
-                        portParams.length = oscl_strlen(portParams.key);
-                        portParams.capacity = portParams.length;
-                        error = SetParametersSync((PvmiCapabilityAndConfig *)configPtr,
-                                                  &portParams, portParamsReturn);
-                        if (error && portParamsReturn != NULL)
+                        else
                         {
                             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0,
-                                            "CPV2WayDatapath::PortStatusChange setParametersSync failed %d at parameter %x!\n",
-                                            error, portParamsReturn));
-                            return PVMFFailure;
+                                            "CPV2WayDatapath::PortStatusChange setParametersSync failed, No Memory"));
+                            return PVMFErrNoMemory;
                         }
                     }
                     else
                     {
-                        portParams.key = OSCL_CONST_CAST(char*, MOUT_VIDEO_HEIGHT_KEY);
-                        portParams.value.uint32_value = 176;
-                        portParams.length = oscl_strlen(portParams.key);
-                        portParams.capacity = portParams.length;
-                        error = SetParametersSync((PvmiCapabilityAndConfig *)configPtr,
-                                                  &portParams, portParamsReturn);
-                        if (error && portParamsReturn != NULL)
+                        PVMFYuvFormatSpecificInfo0 *yuvInfo = OSCL_NEW(PVMFYuvFormatSpecificInfo0, ());
+                        if (yuvInfo != NULL)
+                        {
+                            yuvInfo->buffer_height = 176;
+
+                            portParams.key = OSCL_CONST_CAST(char*, PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV);
+                            portParams.value.key_specific_value = (OsclAny*)yuvInfo;
+
+                            error = SetParametersSync((PvmiCapabilityAndConfig *)configPtr,
+                                                      &portParams, portParamsReturn);
+                            if (error && portParamsReturn != NULL)
+                            {
+                                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0,
+                                                "CPV2WayDatapath::PortStatusChange setParametersSync failed %d at parameter %x!\n",
+                                                error, portParamsReturn));
+                                OSCL_DELETE(yuvInfo);
+                                return PVMFFailure;
+                            }
+                            OSCL_DELETE(yuvInfo);
+                        }
+                        else
                         {
                             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0,
-                                            "CPV2WayDatapath::PortStatusChange setParametersSync failed %d at parameter %x!\n",
-                                            error, portParamsReturn));
-                            return PVMFFailure;
+                                            "CPV2WayDatapath::PortStatusChange setParametersSync failed, No Memory"));
+                            return PVMFErrNoMemory;
                         }
                     }
                 }
