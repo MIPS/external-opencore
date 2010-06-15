@@ -28,7 +28,8 @@ SRCS := \
     pvmf_sync_util.cpp \
     pvmf_timestamp.cpp \
     pvmi_config_and_capability_utils.cpp \
-    pvmi_kvp_util.cpp
+    pvmi_kvp_util.cpp \
+    pvmi_oscl_file_data_stream.cpp
 
 HDRS :=  \
     pv_interface.h \
@@ -85,6 +86,8 @@ HDRS :=  \
     pvmi_media_io_observer.h \
     pvmi_mio_control.h \
     pvmi_port_config_kvp.h \
-    pvmf_fileinput_settings.h
+    pvmf_fileinput_settings.h \
+    pvmi_ds_basic_interface.h \
+    pvmi_data_stream.h
 
 include $(MK)/library.mk

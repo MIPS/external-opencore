@@ -79,7 +79,8 @@ typedef enum
     PVDS_UNSUPPORTED_RANDOM_ACCESS,
     PVDS_END_OF_STREAM,
     PVDS_PENDING,
-    PVDS_NO_MEMORY
+    PVDS_NO_MEMORY,
+    PVDS_INVALID_STATE
 } PvmiDataStreamStatus;
 
 typedef enum

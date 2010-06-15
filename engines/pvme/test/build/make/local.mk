@@ -90,7 +90,11 @@ else
         pvamrffrecognizer \
         pvaacffrecognizer \
         divxrecognizer_utility \
-        pvplsffrecognizer
+        pvplsffrecognizer \
+	pvcommonparsernode \
+	wavparser \
+	amrparser \
+	audioparser
 # playreadyutility will be linked between these two sets of libs in case it is selected
     LIBS := $(LIBS_SET1) $(LIBS_SET2)
 endif

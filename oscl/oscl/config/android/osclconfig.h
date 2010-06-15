@@ -34,6 +34,9 @@
 // system includes for dynamic registry
 #include <dirent.h>
 #include <dlfcn.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #define OSCL_HAS_ANDROID_SUPPORT 1
 #define OSCL_HAS_ANDROID_FILE_IO_SUPPORT 1

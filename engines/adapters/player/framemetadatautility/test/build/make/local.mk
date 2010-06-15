@@ -173,7 +173,11 @@ LIBS := pvframemetadatautility \
         pvmpeg2ff \
         pvmpeg2ffrecognizer \
         mpeg2recognizer_utility \
-        pv_m3u_parser
+	pv_m3u_parser \
+	pvcommonparsernode \
+	wavparser \
+	amrparser \
+	audioparser
 
 
 SYSLIBS += $(SYS_THREAD_LIB)

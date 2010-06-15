@@ -108,6 +108,7 @@ derive AGGREGATE_LIBDIRS_pvplayerservice from (pvplayer_engine_m_mk.pvaudiotrack
                        pvamrffparsernode_m_mk.pvamrffrecognizer_m_mk.pvgsmamrparser_m_mk.
                        pvrmffparsernode_m_mk.pvrmffrecognizer_m_mk.pvrmffrecognizer_utility_m_mk.pvrmff_m_mk.
                        pvmfrecognizer_m_mk.
+		       pvcommonparsernode_m_mk.audioparser_m_mk.amrparser_m_mk.wavparser_m_mk.
                        cpm_m_mk.scsp_m_mk.pvfileparserutils_m_mk.pvid3parcom_m_mk.
                        pvomxaudiodecnode_m_mk.pvomxbasedecnode_m_mk.omx_mastercore_m_mk.
                        pvlatmpayloadparser_m_mk.scsp_m_mk.
@@ -143,6 +144,7 @@ derive AGGREGATE_LIBDIRS_pv from (LIBDIR_oscl_shared.
                        pvaacparser_m_mk.pvaacffparsernode_m_mk.pvaacffrecognizer_m_mk.
                        pvmp3ff_m_mk.pvmp3ffparsernode_m_mk.pvmp3ffrecognizer_m_mk.
                        pvasfffparsernode_m_mk.pvasfffrecognizer_m_mk.
+		       pvcommonparsernode_m_mk.audioparser_m_mk.amrparser_m_mk.wavparser_m_mk.
                        pvomxvideodecnode_m_mk.pvomxaudiodecnode_m_mk.pvomxbasedecnode_m_mk.
                        realaudio_deinterleaver_m_mk.
                        pvwavffparsernode_m_mk.pvwavffrecognizer_m_mk.
@@ -170,6 +172,7 @@ derive AGGREGATE_LIBDIRS_opencore_player from (pv_aac_dec_imp_m_mk.
                        pvmp4ff_m_mk.pvmp4ffopencore_m_mk.mp4recognizer_utility_m_mk.
                        pvaacparser_m_mk.pvaacffparsernode_m_mk.pvaacffrecognizer_m_mk.
                        pvwavffparsernode_m_mk.pvwavffrecognizer_m_mk.
+		       pvcommonparsernode_m_mk.audioparser_m_mk.amrparser_m_mk.wavparser_m_mk.
                        pvpvrff_m_mk.pvpvr_m_mk.pvpvrnode_m_mk.pvmfrecognizer_m_mk.
                        pvrtppacketsourcenode_m_mk.packetsources_default_m_mk.
                        pvframemetadatautility_m_mk.pvplayer_engine_m_mk)

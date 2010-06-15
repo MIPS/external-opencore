@@ -85,6 +85,9 @@ pvrmffrecognizer_utility_lib=n
 flvrecognizer_utility_lib=n
 pvmpeg2ff_lib=n
 mpeg2recognizer_utility_lib=n
+audioparser_lib=m
+amrparser_lib=m
+wavparser_lib=m
 
 
 #
@@ -270,6 +273,7 @@ pvstillimagenode_lib=n
 g726decnode_lib=n
 pvflvffparsernode_lib=n
 pvmpeg2ffparsernode_lib=n
+pvcommonparsernode_lib=m
 
 
 #
@@ -405,10 +409,10 @@ BUILD_OMX_AUDIO_DEC_NODE=y
 BUILD_G726_DEC_NODE=n
 BUILD_MP4_FF_PARSER_NODE=n
 BUILD_MPEG2_FF_PARSER_NODE=n
-BUILD_AMR_FF_PARSER_NODE=y
+BUILD_AMR_FF_PARSER_NODE=n
 BUILD_AAC_FF_PARSER_NODE=y
 BUILD_MP3_FF_PARSER_NODE=y
-BUILD_WAV_FF_PARSER_NODE=y
+BUILD_WAV_FF_PARSER_NODE=n
 BUILD_ASF_FF_PARSER_NODE=n
 BUILD_RM_FF_PARSER_NODE=n
 BUILD_STREAMING_MANAGER_NODE=n
@@ -428,6 +432,7 @@ BUILD_DIVX_FF_REC=n
 BUILD_PLS_FF_REC=y
 BUILD_FLV_FF_PARSER_NODE=n
 BUILD_FLV_FF_REC=n
+BUILD_COMMON_PARSER_NODE=y
 
 
 
