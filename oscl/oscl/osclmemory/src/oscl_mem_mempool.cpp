@@ -17,6 +17,165 @@
  */
 #include "oscl_mem_mempool.h"
 
+#define ENABLE_OSCL_MEM_POOL_RESIZEABLE_ALLOCATOR_DEBUG_LOG 0
+
+#if ENABLE_OSCL_MEM_POOL_RESIZEABLE_ALLOCATOR_DEBUG_LOG
+#ifndef PVLOGGER_H_INCLUDED
+#include "pvlogger.h"
+#endif
+
+#define PVMF_POOLALLOC_LOGERROR(m)  PVLOGGER_LOGMSG(PVLOGMSG_INST_REL,iLogger,PVLOGMSG_ERR,m);
+
+class OsclMemPoolResizableAllocatorLogger
+{
+    public:
+
+        OsclMemPoolResizableAllocatorLogger()
+        {
+            iLogger = PVLogger::GetLoggerObject("OsclMemPoolResizableAllocator");
+            iAllocCount = 0;
+            iMemPoolUsedBlockList.clear();
+        }
+
+        ~OsclMemPoolResizableAllocatorLogger()
+        {
+            while (iMemPoolUsedBlockList.empty() == false)
+            {
+                iMemPoolUsedBlockList.erase(iMemPoolUsedBlockList.begin());
+            }
+            iLogger = NULL;
+        }
+
+        void logInitialPool(Oscl_Vector<OsclMemPoolResizableAllocator::MemPoolBufferInfo*, OsclMemAllocator>& aMemPoolBufferList)
+        {
+            PVMF_POOLALLOC_LOGERROR((0, "*******"))
+            PVMF_POOLALLOC_LOGERROR((0, "OsclMemPoolResizableAllocatorLogger::logInitialPool() this 0x%x", this));
+            PVMF_POOLALLOC_LOGERROR((0, "Free list: aMemPoolBufferList length %d", aMemPoolBufferList.size()));
+            for (uint32 i = 0; i < aMemPoolBufferList.size(); ++i)
+            {
+                OsclMemPoolResizableAllocator::MemPoolBufferInfo* bufferinfo = aMemPoolBufferList[i];
+                PVMF_POOLALLOC_LOGERROR((0, "aMemPoolBufferList[%d] MemPoolBufferInfo 0x%x", i, bufferinfo));
+                OsclMemPoolResizableAllocator::MemPoolBlockInfo* blockinfo = bufferinfo->iNextFreeBlock;
+                while (blockinfo != NULL)
+                {
+                    PVMF_POOLALLOC_LOGERROR((0, "aMemPoolBufferList[%d] MemPoolBlockInfo 0x%x size %d (last byte 0x%x)",
+                                             i, blockinfo, blockinfo->iBlockSize, (uint32)blockinfo + blockinfo->iBlockSize - 1));
+                    // Go to the next free block
+                    blockinfo = blockinfo->iNextFreeBlock;
+                }
+            }
+            PVMF_POOLALLOC_LOGERROR((0, "*******"))
+        }
+
+        void logFreeAndUsedBlocks(Oscl_Vector<OsclMemPoolResizableAllocator::MemPoolBufferInfo*, OsclMemAllocator>& aMemPoolBufferList, uint32 aMemPoolPrevAllocBufferIndex, bool aPeriodic)
+        {
+            bool logOK = false;
+            if (aPeriodic)
+            {
+                /*
+                ((iAllocCount == 5) || (iAllocCount == 10) || (iAllocCount == 15) ||
+                 (iAllocCount == 20) || (iAllocCount == 25) || (iAllocCount == 30) ||
+                 (iAllocCount == 35) || (iAllocCount == 40) || (iAllocCount == 45) ||
+                 (iAllocCount % 50 == 0)))
+                */
+                // log every 10th alloc
+                if (iAllocCount % 10 == 0)
+                {
+                    logOK = true;
+                }
+            }
+            else
+            {
+                logOK = true;
+            }
+
+            // MBDS holds onto many used blocks, thus we can isolate MBDS usecase by checking the vector size
+            if (logOK /* && (iMemPoolUsedBlockList.size() > 4) */)
+            {
+                PVMF_POOLALLOC_LOGERROR((0, "@@@@@@@"))
+                if (aPeriodic)
+                {
+                    PVMF_POOLALLOC_LOGERROR((0, "OsclMemPoolResizableAllocatorLogger::logFreeAndUsedBlocks() alloc count %d this 0x%x", iAllocCount, this));
+                }
+                else
+                {
+                    PVMF_POOLALLOC_LOGERROR((0, "OsclMemPoolResizableAllocatorLogger::logFreeAndUsedBlocks() NO FREE BLOCKS alloc count %d this 0x%x", iAllocCount, this));
+
+                }
+                PVMF_POOLALLOC_LOGERROR((0, "Free list: aMemPoolBufferList length %d aMemPoolPrevAllocBufferIndex %d",
+                                         aMemPoolBufferList.size(), aMemPoolPrevAllocBufferIndex));
+                for (uint32 i = 0; i < aMemPoolBufferList.size(); ++i)
+                {
+                    OsclMemPoolResizableAllocator::MemPoolBufferInfo* bufferinfo = aMemPoolBufferList[i];
+                    PVMF_POOLALLOC_LOGERROR((0, "aMemPoolBufferList[%d] MemPoolBufferInfo 0x%x iPrevAllocBlock 0x%x",
+                                             i, bufferinfo, bufferinfo->iPrevAllocBlock));
+                    if (bufferinfo)
+                    {
+                        OsclMemPoolResizableAllocator::MemPoolBlockInfo* blockinfo = bufferinfo->iNextFreeBlock;
+                        while (blockinfo != NULL)
+                        {
+                            PVMF_POOLALLOC_LOGERROR((0, "aMemPoolBufferList[%d] MemPoolBlockInfo 0x%x size %d (next free block 0x%x)",
+                                                     i, blockinfo, blockinfo->iBlockSize, (uint32)blockinfo + blockinfo->iBlockSize));
+                            // Go to the next free block
+                            blockinfo = blockinfo->iNextFreeBlock;
+                        }
+                    }
+                }
+                PVMF_POOLALLOC_LOGERROR((0, "Used list: iMemPoolUsedBlockList length %d", iMemPoolUsedBlockList.size()));
+                OsclMemPoolResizableAllocator::MemPoolBlockInfo* nextblock = NULL;
+                uint32 gapCount = 0;
+                for (i = 0; i < iMemPoolUsedBlockList.size(); ++i)
+                {
+                    OsclMemPoolResizableAllocator::MemPoolBlockInfo* blockinfo = iMemPoolUsedBlockList[i];
+                    if ((nextblock != NULL) && (blockinfo != nextblock))
+                    {
+                        PVMF_POOLALLOC_LOGERROR((0, "Gap between iMemPoolUsedBlockList[%d] 0x%x and iMemPoolUsedBlockList[%d] 0x%x",
+                                                 i - 1, nextblock, i, blockinfo));
+                    }
+                    PVMF_POOLALLOC_LOGERROR((0, "iMemPoolUsedBlockList[%d] MemPoolBlockInfo 0x%x size %d (next block 0x%x)",
+                                             i, blockinfo, blockinfo->iBlockSize, (uint32)blockinfo + blockinfo->iBlockSize));
+
+                    nextblock = (OsclMemPoolResizableAllocator::MemPoolBlockInfo*)((uint32)blockinfo + blockinfo->iBlockSize);
+                }
+                PVMF_POOLALLOC_LOGERROR((0, "@@@@@@@"))
+            }
+
+        }
+
+        void addUsedBlockToList(OsclMemPoolResizableAllocator::MemPoolBlockInfo* aUsedBlock)
+        {
+            // add to used list
+            iMemPoolUsedBlockList.push_back(aUsedBlock);
+        }
+
+        void removeUsedBlockToList(OsclMemPoolResizableAllocator::MemPoolBlockInfo* aUsedBlock)
+        {
+            // remove from used list
+            for (uint32 i = 0; i < iMemPoolUsedBlockList.size(); ++i)
+            {
+                OsclMemPoolResizableAllocator::MemPoolBlockInfo* blockinfo = iMemPoolUsedBlockList[i];
+                if (iMemPoolUsedBlockList[i] == aUsedBlock)
+                {
+                    // remove from list
+                    iMemPoolUsedBlockList.erase(&iMemPoolUsedBlockList[i]);
+                    break;
+                }
+            }
+        }
+
+        void incrementAllocCount()
+        {
+            // update count
+            iAllocCount++;
+        }
+
+    private:
+        Oscl_Vector<OsclMemPoolResizableAllocator::MemPoolBlockInfo*, OsclMemAllocator> iMemPoolUsedBlockList;
+        PVLogger *iLogger;
+        uint32 iAllocCount;
+};
+
+#endif
 
 /**
  *  OsclMemPoolFixedChunkAllocator section
@@ -312,6 +471,7 @@ OSCL_EXPORT_REF OsclMemPoolResizableAllocator::OsclMemPoolResizableAllocator(uin
         iMemPoolBufferNumLimit(aMemPoolBufferNumLimit),
         iExpectedNumBlocksPerBuffer(aExpectedNumBlocksPerBuffer),
         iMemPoolBufferAllocator(gen_alloc),
+        iMemPoolPrevAllocBufferIndex(0xFFFFFFFF),
         iCheckNextAvailable(false),
         iRequestedNextAvailableSize(0),
         iNextAvailableContextData(NULL),
@@ -321,7 +481,8 @@ OSCL_EXPORT_REF OsclMemPoolResizableAllocator::OsclMemPoolResizableAllocator(uin
         iFreeMemContextData(NULL),
         iFreeMemPoolObserver(NULL),
         iRefCount(1),
-        iEnableNullPtrReturn(false)
+        iEnableNullPtrReturn(false),
+        iDebugLogger(NULL)
 {
     OSCL_ASSERT(aMemPoolBufferSize > OSCLMEMPOOLRESIZABLEALLOCATOR_MIN_BUFFERSIZE);
 
@@ -352,7 +513,29 @@ OSCL_EXPORT_REF OsclMemPoolResizableAllocator::OsclMemPoolResizableAllocator(uin
     }
 
     addnewmempoolbuffer(buffersize);
+
+#if ENABLE_OSCL_MEM_POOL_RESIZEABLE_ALLOCATOR_DEBUG_LOG
+    iDebugLogger = OSCL_NEW(OsclMemPoolResizableAllocatorLogger, ());
+    // log pool info
+    if (NULL != iDebugLogger)
+    {
+        iDebugLogger->logInitialPool(iMemPoolBufferList);
+    }
+#endif
 }
+
+OsclMemPoolResizableAllocator::~OsclMemPoolResizableAllocator()
+{
+    destroyallmempoolbuffers();
+
+#if ENABLE_OSCL_MEM_POOL_RESIZEABLE_ALLOCATOR_DEBUG_LOG
+    if (NULL != iDebugLogger)
+    {
+        OSCL_DELETE(iDebugLogger);
+    }
+#endif
+}
+
 
 OSCL_EXPORT_REF void OsclMemPoolResizableAllocator::enablenullpointerreturn()
 {
@@ -526,6 +709,13 @@ OSCL_EXPORT_REF OsclAny* OsclMemPoolResizableAllocator::allocate(const uint32 aN
     OsclAny* bufptr = allocateblock(*freeblock, alignednumbytes);
     if (bufptr)
     {
+#if ENABLE_OSCL_MEM_POOL_RESIZEABLE_ALLOCATOR_DEBUG_LOG
+        // add to used list
+        if (NULL != iDebugLogger)
+        {
+            iDebugLogger->addUsedBlockToList(freeblock);
+        }
+#endif
         addRef();
         ++(freeblock->iParentBuffer->iNumOutstanding);
     }
@@ -547,6 +737,14 @@ OSCL_EXPORT_REF void OsclMemPoolResizableAllocator::deallocate(OsclAny* aPtr)
     OSCL_ASSERT(retblock != NULL);
     OSCL_ASSERT(retblock->iBlockPreFence == OSCLMEMPOOLRESIZABLEALLOCATOR_PREFENCE_PATTERN);
     OSCL_ASSERT(retblock->iBlockPostFence == OSCLMEMPOOLRESIZABLEALLOCATOR_POSTFENCE_PATTERN);
+
+#if ENABLE_OSCL_MEM_POOL_RESIZEABLE_ALLOCATOR_DEBUG_LOG
+    // remove from used list
+    if (NULL != iDebugLogger)
+    {
+        iDebugLogger->removeUsedBlockToList(retblock);
+    }
+#endif
 
     // Return the block to the memory pool buffer
     deallocateblock(*retblock);
@@ -797,6 +995,7 @@ OsclMemPoolResizableAllocator::MemPoolBufferInfo* OsclMemPoolResizableAllocator:
     newbufferinfo->iNextFreeBlock = (MemPoolBlockInfo*)(newbufferinfo->iStartAddr);
     newbufferinfo->iAllocatedSz = 0;
     newbufferinfo->iBufferPostFence = OSCLMEMPOOLRESIZABLEALLOCATOR_POSTFENCE_PATTERN;
+    newbufferinfo->iPrevAllocBlock = NULL;
 
     // Put in one free block in the new buffer
     MemPoolBlockInfo* freeblockinfo = (MemPoolBlockInfo*)(newbufferinfo->iStartAddr);
@@ -808,8 +1007,10 @@ OsclMemPoolResizableAllocator::MemPoolBufferInfo* OsclMemPoolResizableAllocator:
     freeblockinfo->iParentBuffer = newbufferinfo;
     freeblockinfo->iBlockPostFence = OSCLMEMPOOLRESIZABLEALLOCATOR_POSTFENCE_PATTERN;
 
-    // Add the new buffer to the list
-    iMemPoolBufferList.push_front(newbufferinfo);
+    // Add the new buffer to the end of list
+    iMemPoolBufferList.push_back(newbufferinfo);
+
+    iMemPoolPrevAllocBufferIndex = iMemPoolBufferList.size() - 1;
 
     return newbufferinfo;
 }
@@ -846,6 +1047,24 @@ OsclMemPoolResizableAllocator::MemPoolBlockInfo* OsclMemPoolResizableAllocator::
     OSCL_ASSERT(aBlockAlignedSize > 0);
     OSCL_ASSERT(aBlockAlignedSize == oscl_mem_aligned_size(aBlockAlignedSize));
 
+    // Treat the mem pool of as if it is one circular buffer
+    // to prevent fragmentation of the pool
+    // In most cases, the caller deallocates the blocks in the order that they were allocated
+    // If we skip around in the mem pool during allocation, because of resizable nature,
+    // we will be leaving holes if different sizes in the mem pool.
+    // The deallocated blocks are put back into the pool in address order.
+    // iMemPoolPrevAllocBuffer keeps track of which buffer the previous allocation was made
+    // MemPoolBufferInfo field iPrevAllocBlock keeps track of which block the previous allocation was made
+    // Start from iMemPoolPrevAllocBuffer + iPrevAllocBlock for the next allocate
+
+#if ENABLE_OSCL_MEM_POOL_RESIZEABLE_ALLOCATOR_DEBUG_LOG
+    // free list and used list info periodically
+    if (NULL != iDebugLogger)
+    {
+        iDebugLogger->logFreeAndUsedBlocks(iMemPoolBufferList, iMemPoolPrevAllocBufferIndex, true);
+    }
+#endif
+
     // Go through each mempool buffer and return the first free block that
     // is bigger than the specified size
 
@@ -856,23 +1075,82 @@ OsclMemPoolResizableAllocator::MemPoolBlockInfo* OsclMemPoolResizableAllocator::
         // OSCL_UNUSED_RETURN(NULL);    This statement was removed to avoid compiler warning for Unreachable Code
     }
 
-    for (uint32 i = 0; i < iMemPoolBufferList.size(); ++i)
+    // the free blocks in each buffer are linked together in ascending order,
+    // starting from the beginning of the buffer to end of the buffer
+    uint32 numBuffers = iMemPoolBufferList.size();
+    uint32 index = iMemPoolPrevAllocBufferIndex;
+    while (numBuffers > 0)
     {
-        MemPoolBufferInfo* bufferinfo = iMemPoolBufferList[i];
-        MemPoolBlockInfo* blockinfo = bufferinfo->iNextFreeBlock;
-        while (blockinfo != NULL)
-        {
-            if ((blockinfo->iBlockSize/* - iBlockInfoAlignedSize*/) >= aBlockAlignedSize)
-            {
-                // This free block fits the request
-                return blockinfo;
-            }
+        MemPoolBufferInfo* bufferinfo = iMemPoolBufferList[index];
 
+        MemPoolBlockInfo* freeblockinfo = bufferinfo->iNextFreeBlock;
+        MemPoolBlockInfo* prevblockinfo = bufferinfo->iPrevAllocBlock;
+        // look first at the free blocks from iPrevAllocBlock to the end of the buffer
+        // but note if there is a block that will fit somewhere
+        bool blockFits = false;
+        MemPoolBlockInfo* firstFreeBlock = NULL;
+        while (freeblockinfo != NULL)
+        {
+            if ((freeblockinfo->iBlockSize/* - iBlockInfoAlignedSize*/) >= aBlockAlignedSize)
+            {
+                if (freeblockinfo > prevblockinfo)
+                {
+#if ENABLE_OSCL_MEM_POOL_RESIZEABLE_ALLOCATOR_DEBUG_LOG
+                    // update count
+                    if (NULL != iDebugLogger)
+                    {
+                        iDebugLogger->incrementAllocCount();
+                    }
+#endif
+                    // This free block fits the request
+                    // remember where this block is allocated from
+                    // so the mem pool can be treated as a circular buffer
+                    // to prevent fragmentation
+                    bufferinfo->iPrevAllocBlock = freeblockinfo;
+                    return freeblockinfo;
+                }
+                else if (firstFreeBlock == NULL)
+                {
+                    // save this block ptr
+                    blockFits = true;
+                    firstFreeBlock = freeblockinfo;
+                }
+            }
             // Go to the next free block
-            blockinfo = blockinfo->iNextFreeBlock;
+            freeblockinfo = freeblockinfo->iNextFreeBlock;
+        }
+
+        // did not find a free block from iPrevAllocBlock to end of buffer,
+        // if we know there is a block that will fit,
+        // look then from the beginning of the buffer
+        // otherwise move on to the next buffer
+        if (blockFits)
+        {
+            // remember where this block is allocated from
+            // so the mem pool can be treated as a circular buffer
+            // to prevent fragmentation
+            bufferinfo->iPrevAllocBlock = firstFreeBlock;
+            return firstFreeBlock;
+        }
+
+        // did not find anything in this buffer
+        // look at the next buffer
+        numBuffers--;
+        index++;
+        if (index >= iMemPoolBufferList.size())
+        {
+            // wrap around to the first buffer if needed
+            index = 0;
         }
     }
 
+#if ENABLE_OSCL_MEM_POOL_RESIZEABLE_ALLOCATOR_DEBUG_LOG
+    // free list and used list info
+    if (NULL != iDebugLogger)
+    {
+        iDebugLogger->logFreeAndUsedBlocks(iMemPoolBufferList, iMemPoolPrevAllocBufferIndex, false);
+    }
+#endif
     return NULL;
 }
 
@@ -1283,3 +1561,6 @@ uint32 OsclMemPoolResizableAllocator::memoryPoolBufferMgmtOverhead() const
     }
     return overheadBytes;
 }
+
+
+

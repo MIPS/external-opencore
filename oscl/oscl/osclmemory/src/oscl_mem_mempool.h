@@ -48,6 +48,7 @@
 #include "oscl_vector.h"
 #endif
 
+class OsclMemPoolResizableAllocatorLogger;
 
 /** \class allocator
 ** A memory allocator class which allocates and deallocates from a fixed size memory pool;
@@ -61,7 +62,6 @@ class OsclMemPoolFixedChunkAllocatorObserver
         virtual void freechunkavailable(OsclAny* aContextData) = 0;
         virtual ~OsclMemPoolFixedChunkAllocatorObserver() {}
 };
-
 
 class OsclMemPoolFixedChunkAllocator : public Oscl_DefAlloc
 {
@@ -299,7 +299,6 @@ class OsclMemPoolResizableAllocator : public Oscl_DefAlloc
           */
         OSCL_IMPORT_REF void removeRef();
 
-
         struct MemPoolBlockInfo;
 
         struct MemPoolBufferInfo
@@ -310,6 +309,7 @@ class OsclMemPoolResizableAllocator : public Oscl_DefAlloc
             uint32 iBufferSize;         // Total size of the memory pool buffer including the buffer info header
             uint32 iNumOutstanding;     // Number of outstanding blocks from this memory pool buffer
             MemPoolBlockInfo* iNextFreeBlock; // Pointer to the next free memory block
+            MemPoolBlockInfo* iPrevAllocBlock; // Pointer to the previouly allocated memory block
             uint32 iAllocatedSz;        //Number of butes allocated from the mempool
             uint32 iBufferPostFence;    // Post-fence to check for memory corruption
         };
@@ -325,14 +325,12 @@ class OsclMemPoolResizableAllocator : public Oscl_DefAlloc
             uint32 iBlockPostFence;     // Post-fence to check for memory corruption
         };
 
+
     protected:
 
         /** The destructor for the memory pool. Should not be called directly. Use removeRef() instead.
           */
-        virtual ~OsclMemPoolResizableAllocator()
-        {
-            destroyallmempoolbuffers();
-        }
+        virtual ~OsclMemPoolResizableAllocator();
 
         MemPoolBufferInfo* addnewmempoolbuffer(uint32 aBufferSize);
         void destroyallmempoolbuffers();
@@ -347,6 +345,7 @@ class OsclMemPoolResizableAllocator : public Oscl_DefAlloc
         uint32 iMaxNewMemPoolBufferSz;
         Oscl_DefAlloc* iMemPoolBufferAllocator;
         Oscl_Vector<MemPoolBufferInfo*, OsclMemAllocator> iMemPoolBufferList;
+        uint32 iMemPoolPrevAllocBufferIndex;
 
         uint32 iBufferInfoAlignedSize;
         uint32 iBlockInfoAlignedSize;
@@ -369,6 +368,8 @@ class OsclMemPoolResizableAllocator : public Oscl_DefAlloc
         uint32 getMemPoolBufferAllocatedSize(MemPoolBufferInfo* aBufferInfo) const;
         //To compute the addition bytes which were allocated while createing the memory pool for the buffer.
         uint32 memoryPoolBufferMgmtOverhead() const;
+
+        OsclMemPoolResizableAllocatorLogger* iDebugLogger;
 };
 
 #endif
