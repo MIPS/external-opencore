@@ -419,8 +419,7 @@ OSCL_EXPORT_REF Int PVMP4AudioDecodeFrame(
         }
 
 
-        if ((pExt->extendedAudioObjectType != pVars->mc_info.ExtendedAudioObjectType) ||
-                (pExt->audioObjectType != pVars->mc_info.audioObjectType) ||
+        if ((pExt->audioObjectType != pVars->mc_info.audioObjectType) ||
                 (pExt->encodedChannels != pVars->mc_info.nch))
         {
             status = MP4AUDEC_INVALID_FRAME;
