@@ -271,9 +271,8 @@ void AndroidAudioOutput::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aPa
         while (iAudioThreadCreatedSem->Wait() != OsclProcStatus::SUCCESS_ERROR)
             ;
 
-        if (OsclProcStatus::SUCCESS_ERROR == ret)
+        if ((OsclProcStatus::SUCCESS_ERROR == ret) && (true == iAudioThreadCreatedAndMIOConfigured))
         {
-            iAudioThreadCreatedAndMIOConfigured = true;
             if (iObserver)
             {
                 LOGV("event PVMFMIOConfigurationComplete to peer");
@@ -282,7 +281,6 @@ void AndroidAudioOutput::setParametersSync(PvmiMIOSession aSession, PvmiKvp* aPa
         }
         else
         {
-            iAudioThreadCreatedAndMIOConfigured = false;
             if (iObserver)
             {
                 LOGE("event PVMFErrResourceConfiguration to peer");
@@ -356,7 +354,9 @@ int AndroidAudioOutput::audout_thread_func()
 
     if (iAudioNumChannelsValid == false || iAudioSamplingRateValid == false || iAudioFormat == PVMF_MIME_FORMAT_UNKNOWN)
     {
+        iAudioThreadCreatedAndMIOConfigured = false;
         LOGE("channel count or sample rate is invalid");
+        iAudioThreadCreatedSem->Signal();
         return -1;
     }
 
@@ -369,6 +369,7 @@ int AndroidAudioOutput::audout_thread_func()
     {
         iAudioThreadCreatedAndMIOConfigured = false;
         LOGE("Error creating AudioTrack");
+        iAudioThreadCreatedSem->Signal();
         return -1;
     }
 
@@ -382,6 +383,7 @@ int AndroidAudioOutput::audout_thread_func()
     iActiveTiming->setFrameRate(msecsPerFrame);
     iActiveTiming->setDriverLatency(latency);
 
+    iAudioThreadCreatedAndMIOConfigured = true;
     iAudioThreadCreatedSem->Signal();
     // this must be set after iActiveTiming->setFrameRate to prevent race
     // condition in Run()
