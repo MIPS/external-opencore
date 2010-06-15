@@ -286,8 +286,7 @@ typedef struct hostent TOsclHostent;
 
 // file IO support
 #if (OSCL_HAS_LARGE_FILE_SUPPORT)
-#define _FILE_OFFSET_BITS 64
-typedef off_t TOsclFileOffset;
+typedef off64_t TOsclFileOffset;
 #define MAX_TOSCLFILEOFFSET_VALUE 0x7FFFFFFFFFFFFFFFLL;
 #else
 typedef int32 TOsclFileOffset;
