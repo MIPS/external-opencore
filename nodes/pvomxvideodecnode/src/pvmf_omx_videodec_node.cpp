@@ -1335,8 +1335,8 @@ PVMFStatus PVMFOMXVideoDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
     uint8 *tmp_ptr;
     PVMFFormatType Format = PVMF_MIME_FORMAT_UNKNOWN;
     PVMFStatus status = PVMFSuccess;
-    uint8* initbuffer = ((PVMFOMXDecPort*)iInPort)->getTrackConfig();
-    int32 initbufsize = (int32)((PVMFOMXDecPort*)iInPort)->getTrackConfigSize();
+    uint8* initbuffer = iTrackConfigDataBuffer; // this was set earlier either from the port or from in-band config data;
+    int32 initbufsize = iTrackConfigDataBufferSize;
 
 
 

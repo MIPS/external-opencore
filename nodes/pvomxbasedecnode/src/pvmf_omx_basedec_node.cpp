@@ -373,6 +373,13 @@ OSCL_EXPORT_REF PVMFOMXBaseDecNode::PVMFOMXBaseDecNode(int32 aPriority, const ch
     iFirstPieceOfPartialFrame = true;
     iObtainNewInputBuffer = true;
     iFirstDataMsgAfterBOS = true;
+    iDoInBandReconfigReset = false;
+    iDoInBandReconfigStart = false;
+    iDoInBandReconfigReset_FlushIssued = false;
+    iDoInBandReconfigReset_LoadedReached = false;
+    iDoInBandReconfigStart_IdleReached = false;
+    iDoInBandReconfigStart_ExeReached = false;
+
     iKeepDroppingMsgsUntilMarkerBit = false;
     sendFsi = true;
 
@@ -389,6 +396,9 @@ OSCL_EXPORT_REF PVMFOMXBaseDecNode::PVMFOMXBaseDecNode(int32 aPriority, const ch
     iPVVideoFrameParserInput.SeqHeaderInfo = NULL;
 
 
+    iTrackConfigDataBuffer = NULL;
+    iTrackConfigDataBufferSize = 0;
+
 
 }
 
@@ -399,10 +409,25 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::Run()
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "%s::Run() In", iName.Str()));
 
+    // NOTE: this method handles a mini state machine for in-band reconfiguration
+    // which consists of 2 phases - a) reset (exe->idle->loaded->freehandle)
+    // and b) restart (gethandle->idle->exe (optional->pause)
+
+    // Reset phase does not begin until all buffers are back and during this wait time
+    // other commands can be processed. Stop or Reset cmds will cancel in-band reconfig
+    // Pause cmd will pause the component, but allows in-band reconfig to proceed.
+    // If reconfig is done before resume cmd arrives, then Start phase will also transition component to paused state
+    // Once Reset phase is complete, restart phase begins and in this phase no other commands are processed until restart phase is complete
+
+    if (iDoInBandReconfigReset || iDoInBandReconfigStart)
+        HandleInBandReconfig();
+
+
+
     // if reset is in progress, call DoReset again until Reset Msg is sent
     if ((iResetInProgress == true) &&
             (iResetMsgSent == false) &&
-            (PVMF_GENERIC_NODE_RESET == iCurrentCommand.iCmd)
+            ((PVMF_GENERIC_NODE_RESET == iCurrentCommand.iCmd) || iDoInBandReconfigReset)
        )
     {
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "%s::Run() - Calling DoReset", iName.Str()));
@@ -412,10 +437,29 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::Run()
 
         if (status != PVMFPending)
         {
-            CommandComplete(iCurrentCommand, status);
+            if (!iDoInBandReconfigReset)
+            {
+                CommandComplete(iCurrentCommand, status);
+            }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "%s::Run() - DoReset for reconfig is done, delete component and recreate", iName.Str()));
+
+                iDoInBandReconfigReset_LoadedReached = true;
+                Reschedule();
+            }
         }
         return; // don't do anything else
     }
+
+    if (iDoInBandReconfigStart)
+    {
+        // don't do anything - just wait for this complete and make sure there is no
+        // interference (e.g. other commands).
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "%s::Run() -  Waiting for reconfig to complete, don't do anything", iName.Str()));
+        return;
+    }
+
     //Check for NODE commands...
     if (!iInputCommands.empty())
     {
@@ -672,6 +716,106 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::Run()
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "%s::Run() Out", iName.Str()));
 }
 
+void PVMFOMXBaseDecNode::HandleInBandReconfig()
+{
+
+    if (iDoInBandReconfigReset_FlushIssued)
+    {
+        // wait until all buffers are back before asking component to go exe->idle->loaded
+        if ((iNumOutstandingOutputBuffers == 0) && (iNumOutstandingInputBuffers == 0))
+        {
+            iDoInBandReconfigReset_FlushIssued = false;
+            PVMFStatus status = PVMFFailure;
+            status = DoReset();
+
+            if (status != PVMFPending)
+            {
+
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
+                                (0, "%s::HandleInBandReconfig() - DoReset for reconfig is done, delete component and recreate", iName.Str()));
+
+                iDoInBandReconfigReset_LoadedReached = true;
+            }
+
+
+
+        }
+    }
+
+    if (iDoInBandReconfigReset_LoadedReached)
+    {
+        iDoInBandReconfigReset_LoadedReached = false;
+
+        DeleteOMXBaseDecoder();
+
+        // no need to delete mempools etc. they will be deleted when DoPrepare is called.
+        // done with Reset, now start the opposite
+        iDoInBandReconfigReset = false;
+        iDoInBandReconfigStart = true;
+
+        // issue commands right away, and let them unfold
+        PVMFStatus status = DoPrepare();
+        if (status != PVMFPending)
+        {
+            iDoInBandReconfigStart = false;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "%s::HandleInBandReconfig: Error trying to recreate and reinit the component during in-band reconfiguration ", iName.Str()));
+            SetState(EPVMFNodeError);
+            ReportErrorEvent(PVMFErrResourceConfiguration);
+        }
+    }
+
+    if (iDoInBandReconfigStart_IdleReached)
+    {
+        iDoInBandReconfigStart_IdleReached = false;
+        // when in idle state, proceed to executing state to complete in-band reconfig
+        iDoNotSendOutputBuffersDownstreamFlag = false; // or if output was not being sent downstream due to state changes
+
+        // re-enable sending output
+        OMX_ERRORTYPE err = OMX_SendCommand(iOMXDecoder, OMX_CommandStateSet, OMX_StateExecuting, NULL);
+        if (err != OMX_ErrorNone)
+        {
+            //Error condition report
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "%s::HandleInBandReconfig Can't send StateSet command to decoder while doing In-band reconfig!", iName.Str()));
+            SetState(EPVMFNodeError);
+            ReportErrorEvent(PVMFErrResourceConfiguration);
+        }
+
+    }
+
+
+    if (iDoInBandReconfigStart_ExeReached)
+    {
+        iDoInBandReconfigStart_ExeReached = false;
+
+        // done with in-band reconfiguration
+        iDoInBandReconfigStart = false;
+        // need to send the config info to decoder
+        iProcessingState = EPVMFOMXBaseDecNodeProcessingState_InitDecoder;
+
+        // also, if the node is in paused state currently, we need to transition the component into paused state as well
+        if (iInterfaceState == EPVMFNodePaused)
+        {
+            iPauseCommandWasSentToComponent = true;
+            OMX_ERRORTYPE err = OMX_SendCommand(iOMXDecoder, OMX_CommandStateSet, OMX_StatePause, NULL);
+            if (err != OMX_ErrorNone)
+            {
+                //Error condition report
+                //Error condition report
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "%s::HandleComponentStateChage: Can't send StateSet command to decoder while doing In-band reconfig!", iName.Str()));
+                SetState(EPVMFNodeError);
+                ReportErrorEvent(PVMFErrResourceConfiguration);
+            }
+        }
+
+    }
+
+
+
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // This routine will process incomming message from the port
 /////////////////////////////////////////////////////////////////////////////
@@ -782,6 +926,7 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::ProcessIncomingMsg(PVMFPortInterface* a
 
         // needed to init the sequence numbers and timestamp for partial frame assembly
         iFirstDataMsgAfterBOS = true;
+
         iKeepDroppingMsgsUntilMarkerBit = false;
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -806,6 +951,7 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::ProcessIncomingMsg(PVMFPortInterface* a
 
     convertToPVMFMediaData(iDataIn, msg);
 
+
     // Check if sample duration is available
     if (iDataIn->getMarkerInfo() & PVMF_MEDIA_DATA_MARKER_INFO_DURATION_AVAILABLE_BIT)
     {
@@ -822,6 +968,49 @@ OSCL_EXPORT_REF bool PVMFOMXBaseDecNode::ProcessIncomingMsg(PVMFPortInterface* a
         iTSOfFirstDataMsgAfterBOS = msg->getTimestamp();
         iInputTimestampClock_LH = iTSOfFirstDataMsgAfterBOS;
         iInputTimestampClock_UH = 0;
+
+
+        // if the first data message after BOS contains FSI, then it's time to do reconfiguration
+
+        // get FSI
+
+        OsclRefCounterMemFrag DataFrag;
+        msg->getFormatSpecificInfo(DataFrag);
+
+        //get pointer to the data fragment
+        iTrackConfigDataBuffer = (uint8 *) DataFrag.getMemFragPtr();
+        iTrackConfigDataBufferSize = (int32) DataFrag.getMemFragSize();
+
+        // prevent doing in-band reconfig the very first time after component setup
+        if ((iTrackConfigDataBuffer != NULL) && (iTrackConfigDataBufferSize > 0)
+                && (iProcessingState != EPVMFOMXBaseDecNodeProcessingState_InitDecoder))
+        {
+            iDoInBandReconfigReset = true;
+            iProcessingState = EPVMFOMXBaseDecNodeProcessingState_InBandReconfiguration;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "%s::ProcessIncomingMsg() Received frame with reconfig data. Need to do reconfig", iName.Str()));
+            // send command to flush all ports (arg is OMX_ALL)
+            OMX_ERRORTYPE err = OMX_SendCommand(iOMXDecoder, OMX_CommandFlush, OMX_ALL, NULL);
+            if (err != OMX_ErrorNone)
+            {
+                //Error condition report
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "%s::ProcessIncomingMsg : Can't send flush command  - while trying to do reconfig!", iName.Str()));
+
+
+                ReportErrorEvent(PVMFErrResourceConfiguration);
+                ChangeNodeState(EPVMFNodeError);
+                return false;
+            }
+            iDoInBandReconfigReset_FlushIssued = true;
+        }
+
+        if ((NULL == iTrackConfigDataBuffer) || (0 == iTrackConfigDataBufferSize))
+        {
+            iTrackConfigDataBuffer = (uint8*)((PVMFOMXDecPort*)iInPort)->iTrackConfig;
+            iTrackConfigDataBufferSize = (int32)((PVMFOMXDecPort*)iInPort)->iTrackConfigSize;
+        }
+
+
     }
 
     iCurrFragNum = 0; // for new message, reset the fragment counter
@@ -1257,6 +1446,11 @@ PVMFStatus PVMFOMXBaseDecNode::HandleProcessingState()
         case EPVMFOMXBaseDecNodeProcessingState_WaitForOutgoingQueue:
             status = PVMFPending;
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "%s::HandleProcessingState() Do nothing since waiting for output port queue to become available", iName.Str()));
+            break;
+
+        case EPVMFOMXBaseDecNodeProcessingState_InBandReconfiguration:
+            status = PVMFPending;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "%s::HandleProcessingState() Do nothing since waiting for in-band-reconfiguration to complete", iName.Str()));
             break;
 
         default:
@@ -3509,14 +3703,23 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
                 CommandComplete(iCurrentCommand, PVMFSuccess);
                 Reschedule();
             }
-            else if (PVMF_GENERIC_NODE_RESET == iCurrentCommand.iCmd)
+            else if ((PVMF_GENERIC_NODE_RESET == iCurrentCommand.iCmd) || iDoInBandReconfigReset)
             {
                 // State change to Idle was initiated due to Reset. First need to reach idle, and then loaded
                 // Once Idle is reached, we need to initiate idle->loaded transition
                 iStopInResetMsgSent = false;
                 Reschedule();
             }
-            break;
+            else if (iDoInBandReconfigStart)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "%s::HandleComponentStateChange: Reconfig - (in idle state) is almost done, move to executing state", iName.Str()));
+
+                iDoInBandReconfigStart_IdleReached = true;
+                Reschedule();
+            }
+
+
         }//end of case OMX_StateIdle
 
         case OMX_StateExecuting:
@@ -3537,6 +3740,16 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
                 CommandComplete(iCurrentCommand, PVMFSuccess);
                 Reschedule();
             }
+            else if (iDoInBandReconfigStart)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                (0, "%s::HandleComponentStateChange: Reconfig - complete, send config data to component if necessary", iName.Str()));
+
+
+                iDoInBandReconfigStart_ExeReached = true;
+                Reschedule();
+            }
+
 
             break;
         }//end of case OMX_StateExecuting
@@ -3571,8 +3784,9 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
                 iPauseCommandWasSentToComponent = false;
                 //Complete the pending command and reschedule
                 CommandComplete(iCurrentCommand, PVMFSuccess);
-                Reschedule();
             }
+            Reschedule();
+
 
             break;
         }//end of case OMX_StatePause
@@ -3594,27 +3808,11 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "%s::HandleComponentStateChange: OMX_StateLoaded reached", iName.Str()));
             //Check if command's response is pending
-            if (PVMF_GENERIC_NODE_RESET == iCurrentCommand.iCmd)
+            if ((PVMF_GENERIC_NODE_RESET == iCurrentCommand.iCmd) || iDoInBandReconfigReset)
             {
 
-                // move this here
-                if (iInPort)
-                {
-                    OSCL_DELETE(((PVMFOMXDecPort*)iInPort));
-                    iInPort = NULL;
-                }
-
-                if (iOutPort)
-                {
-                    OSCL_DELETE(((PVMFOMXDecPort*)iOutPort));
-                    iOutPort = NULL;
-                }
-
-                iDataIn.Unbind();
-
-                // Reset the metadata key list
-                iAvailableMetadataKeys.clear();
-
+                iResetInProgress = false;
+                iResetMsgSent = false;
 
                 iEndOfDataReached = false;
                 iIsEOSSentToComponent = false;
@@ -3632,12 +3830,44 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
                 iDynamicReconfigInProgress = false;
 
 
-                iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Idle;
-                //logoff & go back to Created state.
-                SetState(EPVMFNodeIdle);
-                CommandComplete(iCurrentCommand, PVMFSuccess);
-                iResetInProgress = false;
-                iResetMsgSent = false;
+                if (!iDoInBandReconfigReset)
+                {
+
+                    if (iInPort)
+                    {
+                        OSCL_DELETE(((PVMFOMXDecPort*)iInPort));
+                        iInPort = NULL;
+                    }
+
+                    if (iOutPort)
+                    {
+                        OSCL_DELETE(((PVMFOMXDecPort*)iOutPort));
+                        iOutPort = NULL;
+                    }
+
+                    iDataIn.Unbind();
+
+                    // Reset the metadata key list
+                    iAvailableMetadataKeys.clear();
+                    iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Idle;
+                    //logoff & go back to Created state.
+                    SetState(EPVMFNodeIdle);
+                    CommandComplete(iCurrentCommand, PVMFSuccess);
+                }
+                else
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                                    (0, "%s::HandleComponentStateChange: Reconfig - in loaded state, remove component and recreate again", iName.Str()));
+
+                    // do a cleanup
+                    //Clearup decoder
+                    iDoInBandReconfigReset_LoadedReached = true;
+                    Reschedule(); // do processing in ::Run
+                }
+
+
+
+
             }
 
             break;
@@ -3661,6 +3891,14 @@ OSCL_EXPORT_REF void PVMFOMXBaseDecNode::HandleComponentStateChange(OMX_U32 deco
             DeleteOMXBaseDecoder();
             //Stop using OMX component
             iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Idle;
+
+            // cancel in-band reconfig
+            iDoInBandReconfigReset = false;
+            iDoInBandReconfigStart = false;
+            iDoInBandReconfigReset_FlushIssued = false;
+            iDoInBandReconfigReset_LoadedReached = false;
+            iDoInBandReconfigStart_IdleReached = false;
+            iDoInBandReconfigStart_ExeReached = false;
 
             if (PVMF_GENERIC_NODE_RESET == iCurrentCommand.iCmd)
             {
@@ -4117,8 +4355,15 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPrepare()
     OMXConfigParserInputs inputParameters;
 
 
-    inputParameters.inPtr = (uint8*)((PVMFOMXDecPort*)iInPort)->iTrackConfig;
-    inputParameters.inBytes = (int32)((PVMFOMXDecPort*)iInPort)->iTrackConfigSize;
+    // if track config has not been assigned yet, read from the port
+    if ((NULL == iTrackConfigDataBuffer) || (0 == iTrackConfigDataBufferSize))
+    {
+        iTrackConfigDataBuffer = (uint8*)((PVMFOMXDecPort*)iInPort)->iTrackConfig;
+        iTrackConfigDataBufferSize = (int32)((PVMFOMXDecPort*)iInPort)->iTrackConfigSize;
+    }
+
+    inputParameters.inPtr = iTrackConfigDataBuffer;
+    inputParameters.inBytes = iTrackConfigDataBufferSize;
 
     if (inputParameters.inBytes == 0 || inputParameters.inPtr == NULL)
     {
@@ -4552,41 +4797,44 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPrepare()
     //      The Flag iIsComponentMultiThreaded decides which mechanism is used for callbacks.
     //      This flag is set by looking at component capabilities (or to true by default)
 
-    if (iThreadSafeHandlerEventHandler)
+    if (!iDoInBandReconfigStart) // if we're doing in-band reconfig - this already exists, and should not be
+        // recreated. Trying to recreate it may result in problems
     {
-        OSCL_DELETE(iThreadSafeHandlerEventHandler);
-        iThreadSafeHandlerEventHandler = NULL;
-    }
-    // substitute default parameters: observer(this node),queuedepth(3),nameAO for logging
-    // Get the priority of the dec node, and set the threadsafe callback AO priority to 1 higher
-    iThreadSafeHandlerEventHandler = OSCL_NEW(EventHandlerThreadSafeCallbackAO, (this, 10, "EventHandlerAO", Priority() + 2));
+        if (iThreadSafeHandlerEventHandler)
+        {
+            OSCL_DELETE(iThreadSafeHandlerEventHandler);
+            iThreadSafeHandlerEventHandler = NULL;
+        }
+        // substitute default parameters: observer(this node),queuedepth(3),nameAO for logging
+        // Get the priority of the dec node, and set the threadsafe callback AO priority to 1 higher
+        iThreadSafeHandlerEventHandler = OSCL_NEW(EventHandlerThreadSafeCallbackAO, (this, 10, "EventHandlerAO", Priority() + 2));
 
-    if (iThreadSafeHandlerEmptyBufferDone)
-    {
-        OSCL_DELETE(iThreadSafeHandlerEmptyBufferDone);
-        iThreadSafeHandlerEmptyBufferDone = NULL;
-    }
-    // use queue depth of iNumInputBuffers to prevent deadlock
-    iThreadSafeHandlerEmptyBufferDone = OSCL_NEW(EmptyBufferDoneThreadSafeCallbackAO, (this, iNumInputBuffers, "EmptyBufferDoneAO", Priority() + 1));
+        if (iThreadSafeHandlerEmptyBufferDone)
+        {
+            OSCL_DELETE(iThreadSafeHandlerEmptyBufferDone);
+            iThreadSafeHandlerEmptyBufferDone = NULL;
+        }
+        // use queue depth of iNumInputBuffers to prevent deadlock
+        iThreadSafeHandlerEmptyBufferDone = OSCL_NEW(EmptyBufferDoneThreadSafeCallbackAO, (this, iNumInputBuffers, "EmptyBufferDoneAO", Priority() + 1));
 
-    if (iThreadSafeHandlerFillBufferDone)
-    {
-        OSCL_DELETE(iThreadSafeHandlerFillBufferDone);
-        iThreadSafeHandlerFillBufferDone = NULL;
-    }
-    // use queue depth of iNumOutputBuffers to prevent deadlock
-    iThreadSafeHandlerFillBufferDone = OSCL_NEW(FillBufferDoneThreadSafeCallbackAO, (this, iNumOutputBuffers, "FillBufferDoneAO", Priority() + 1));
+        if (iThreadSafeHandlerFillBufferDone)
+        {
+            OSCL_DELETE(iThreadSafeHandlerFillBufferDone);
+            iThreadSafeHandlerFillBufferDone = NULL;
+        }
+        // use queue depth of iNumOutputBuffers to prevent deadlock
+        iThreadSafeHandlerFillBufferDone = OSCL_NEW(FillBufferDoneThreadSafeCallbackAO, (this, iNumOutputBuffers, "FillBufferDoneAO", Priority() + 1));
 
-    if ((iThreadSafeHandlerEventHandler == NULL) ||
-            (iThreadSafeHandlerEmptyBufferDone == NULL) ||
-            (iThreadSafeHandlerFillBufferDone == NULL)
-       )
-    {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                        (0, "%s::Can't get threadsafe callbacks for decoder!", iName.Str()));
-        iOMXDecoder = NULL;
+        if ((iThreadSafeHandlerEventHandler == NULL) ||
+                (iThreadSafeHandlerEmptyBufferDone == NULL) ||
+                (iThreadSafeHandlerFillBufferDone == NULL)
+           )
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "%s::Can't get threadsafe callbacks for decoder!", iName.Str()));
+            iOMXDecoder = NULL;
+        }
     }
-
     // ONLY FOR AVC FILE PLAYBACK WILL 1 FRAGMENT CONTAIN ONE FULL NAL
     //This will be true for AAC and Real Audio format as well
     if ((format == PVMF_MIME_H264_VIDEO) || (format == PVMF_MIME_H264_VIDEO_MP4) || (format == PVMF_MIME_H264_VIDEO_RAW)
@@ -4605,7 +4853,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoPrepare()
     if (format == PVMF_MIME_WMV)
     {
 
-        pv_get_wmv_seq_hdr_info((uint8*)((PVMFOMXDecPort*)iInPort)->iTrackConfig, (int)((PVMFOMXDecPort*)iInPort)->iTrackConfigSize, &iWmvSeqHeaderInfo);
+        pv_get_wmv_seq_hdr_info(iTrackConfigDataBuffer, (int) iTrackConfigDataBufferSize, &iWmvSeqHeaderInfo);
 
     }
     if (iNodeConfig.iKeyFrameOnlyMode || iNodeConfig.iSkipNUntilKeyFrame)
@@ -4786,6 +5034,13 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoStop()
 
     // Stop data source
     // This will also prevent execution of HandleProcessingState
+
+
+    // if stop command has to be executed, and in-band reconfig is in progress
+    // it means that stop command came while waiting for all the outstanding buffers to come back
+    // no need to proceed with in-band reconfig. Just do plain stop
+    iDoInBandReconfigReset = false;
+
 
     iDataIn.Unbind();
     // Clear queued messages in ports
@@ -4982,6 +5237,14 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset()
 
     PVMFStatus status = PVMFPending;
 
+    // if reset command is in progress, and in-band reconfig is in progress
+    // it means that reset command came while waiting for all the outstanding buffers to come back
+    // no need to proceed with in-band reconfig. Just do plain reset
+    if (PVMF_GENERIC_NODE_RESET == iCurrentCommand.iCmd)
+    {
+        iDoInBandReconfigReset = false;
+    }
+
     //Check if decoder is initilized
     if (iOMXDecoder != NULL)
     {
@@ -5023,24 +5286,31 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset()
             }
             else
             {
-                //delete all ports and notify observer.
-                if (iInPort)
+                if (!iDoInBandReconfigReset)
                 {
-                    OSCL_DELETE(((PVMFOMXDecPort*)iInPort));
-                    iInPort = NULL;
+                    //delete all ports and notify observer.
+                    if (iInPort)
+                    {
+                        OSCL_DELETE(((PVMFOMXDecPort*)iInPort));
+                        iInPort = NULL;
+                    }
+
+                    if (iOutPort)
+                    {
+                        OSCL_DELETE(((PVMFOMXDecPort*)iOutPort));
+                        iOutPort = NULL;
+                    }
+
+                    iDataIn.Unbind();
+
+
+                    // Reset the metadata key list
+                    iAvailableMetadataKeys.clear();
+                    iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Idle;
+
+                    iEOCReceived = false;
+                    iBOCReceived = false;
                 }
-
-                if (iOutPort)
-                {
-                    OSCL_DELETE(((PVMFOMXDecPort*)iOutPort));
-                    iOutPort = NULL;
-                }
-
-                iDataIn.Unbind();
-
-
-                // Reset the metadata key list
-                iAvailableMetadataKeys.clear();
 
                 // clear the flags requiring codec config processing completion
                 iIsConfigDataProcessingCompletionNeeded = false;
@@ -5051,8 +5321,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset()
                 iEndOfDataReached = false;
                 iIsEOSSentToComponent = false;
                 iIsEOSReceivedFromComponent = false;
-                iEOCReceived = false;
-                iBOCReceived = false;
+
 
                 if (iOMXComponentUsesFullAVCFrames)
                 {
@@ -5065,7 +5334,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset()
                 iSecondPortReportedChange = false;
                 iDynamicReconfigInProgress = false;
 
-                iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Idle;
+
                 return PVMFSuccess;
             }
         }
@@ -5166,8 +5435,11 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset()
                 iIsEOSSentToComponent = false;
                 iIsEOSReceivedFromComponent = false;
 
-                iEOCReceived = false;
-                iBOCReceived = false;
+                if (!iDoInBandReconfigReset)
+                {
+                    iEOCReceived = false;
+                    iBOCReceived = false;
+                }
 
 
 
@@ -5191,27 +5463,31 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset()
 
             if (!iStopInResetMsgSent)
             {
-                // replicate behavior of stop cmd
-                iDataIn.Unbind();
-                // Clear queued messages in ports
-                if (iInPort)
+                if (!iDoInBandReconfigReset)
                 {
-                    iInPort->ClearMsgQueues();
-                }
+                    // replicate behavior of stop cmd
+                    iDataIn.Unbind();
+                    // Clear queued messages in ports
+                    if (iInPort)
+                    {
+                        iInPort->ClearMsgQueues();
+                    }
 
-                if (iOutPort)
-                {
-                    iOutPort->ClearMsgQueues();
-                }
+                    if (iOutPort)
+                    {
+                        iOutPort->ClearMsgQueues();
+                    }
 
+                    iEOCReceived = false;
+                    iBOCReceived = false;
+
+                }
                 // Clear the data flags
 
                 iEndOfDataReached = false;
                 iIsEOSSentToComponent = false;
                 iIsEOSReceivedFromComponent = false;
 
-                iEOCReceived = false;
-                iBOCReceived = false;
 
 
                 iDoNotSendOutputBuffersDownstreamFlag = true; // stop sending output buffers downstream
@@ -5252,21 +5528,31 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset()
         }//end of if (sState == OMX_StateLoaded)
     }//end of if (iOMXDecoder != NULL)
 
-    //delete all ports and notify observer.
-    if (iInPort)
+    if (!iDoInBandReconfigReset)
     {
-        OSCL_DELETE(((PVMFOMXDecPort*)iInPort));
-        iInPort = NULL;
+        //delete all ports and notify observer.
+        if (iInPort)
+        {
+            OSCL_DELETE(((PVMFOMXDecPort*)iInPort));
+            iInPort = NULL;
+        }
+
+        if (iOutPort)
+        {
+            OSCL_DELETE(((PVMFOMXDecPort*)iOutPort));
+            iOutPort = NULL;
+        }
+
+        iDataIn.Unbind();
+        // Reset the metadata key list
+        iAvailableMetadataKeys.clear();
+        iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Idle;
+
+        // don't touch these flags in case of in-band reconfig
+        iEOCReceived = false;
+        iBOCReceived = false;
+
     }
-
-    if (iOutPort)
-    {
-        OSCL_DELETE(((PVMFOMXDecPort*)iOutPort));
-        iOutPort = NULL;
-    }
-
-    iDataIn.Unbind();
-
 
     iIsConfigDataProcessingCompletionNeeded = false;
     iIsThereMoreConfigDataToBeSent = false;
@@ -5274,15 +5560,12 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset()
     iConfigDataBuffersOutstanding = 0;
 
 
-    // Reset the metadata key list
-    iAvailableMetadataKeys.clear();
+
 
     iEndOfDataReached = false;
     iIsEOSSentToComponent = false;
     iIsEOSReceivedFromComponent = false;
 
-    iEOCReceived = false;
-    iBOCReceived = false;
 
     iComputeSamplesPerFrame = true;
 
@@ -5297,7 +5580,7 @@ OSCL_EXPORT_REF PVMFStatus PVMFOMXBaseDecNode::DoReset()
     iSecondPortReportedChange = false;
     iDynamicReconfigInProgress = false;
 
-    iProcessingState = EPVMFOMXBaseDecNodeProcessingState_Idle;
+
 
     status = PVMFFailure;
 
@@ -5999,6 +6282,14 @@ OMX_ERRORTYPE PVMFOMXBaseDecNode::EventHandlerProcessing(OMX_OUT OMX_HANDLETYPE 
             }
             else
             {
+                // cancel in-band reconfig
+                iDoInBandReconfigReset = false;
+                iDoInBandReconfigStart = false;
+                iDoInBandReconfigReset_FlushIssued = false;
+                iDoInBandReconfigReset_LoadedReached = false;
+                iDoInBandReconfigStart_IdleReached = false;
+                iDoInBandReconfigStart_ExeReached = false;
+
 
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "%s::EventHandlerProcessing: OMX_EventError", iName.Str()));

@@ -175,6 +175,7 @@ PVMFStatus PVMFOMXAudioDecNode::CheckIfIncomingMsgIsCmd(PVMFSharedMediaMsgPtr ms
 
         // needed to init the sequence numbers and timestamp for partial frame assembly
         iFirstDataMsgAfterBOS = true;
+
         iKeepDroppingMsgsUntilMarkerBit = false;
 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
@@ -415,6 +416,61 @@ bool PVMFOMXAudioDecNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
 
     // if we end up here, the msg is a data message
 
+    // do this check regardless of whether it's latm or not
+    if (iFirstDataMsgAfterBOS)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDataPathLogger, PVLOGMSG_INFO,
+                        (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: iTSOfFirstDataMsgAfterBOS = %d", msg->getTimestamp()));
+        iTSOfFirstDataMsgAfterBOS = msg->getTimestamp();
+        iInputTimestampClock_LH = iTSOfFirstDataMsgAfterBOS;
+        iInputTimestampClock_UH = 0;
+
+
+        // if the first data message after BOS contains FSI, then it's time to do reconfiguration
+
+        // get FSI
+
+        OsclRefCounterMemFrag DataFrag;
+        msg->getFormatSpecificInfo(DataFrag);
+
+        //get pointer to the data fragment
+        iTrackConfigDataBuffer = (uint8 *) DataFrag.getMemFragPtr();
+        iTrackConfigDataBufferSize = (int32) DataFrag.getMemFragSize();
+
+        // prevent doing in-band reconfig the very first time after component setup
+        if ((iTrackConfigDataBuffer != NULL) && (iTrackConfigDataBufferSize > 0)
+                && (iProcessingState != EPVMFOMXBaseDecNodeProcessingState_InitDecoder))
+        {
+            iDoInBandReconfigReset = true;
+            iProcessingState = EPVMFOMXBaseDecNodeProcessingState_InBandReconfiguration;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg() Received frame with reconfig data. Need to do reconfig"));
+            // send command to flush all ports (arg is OMX_ALL)
+            OMX_ERRORTYPE err = OMX_SendCommand(iOMXDecoder, OMX_CommandFlush, OMX_ALL, NULL);
+            if (err != OMX_ErrorNone)
+            {
+                //Error condition report
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: Can't send flush command  for in-band reconfig !", iName.Str()));
+
+
+                ReportErrorEvent(PVMFErrResourceConfiguration);
+                ChangeNodeState(EPVMFNodeError);
+                return false;
+            }
+            iDoInBandReconfigReset_FlushIssued = true;
+        }
+
+        // if track config is not present, revert to the port values just in case we need to use it
+        if ((NULL == iTrackConfigDataBuffer) || (0 == iTrackConfigDataBufferSize))
+        {
+            iTrackConfigDataBuffer = (uint8*)((PVMFOMXDecPort*)iInPort)->iTrackConfig;
+            iTrackConfigDataBufferSize = (int32)((PVMFOMXDecPort*)iInPort)->iTrackConfigSize;
+        }
+
+
+
+    }
+
 
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -440,27 +496,16 @@ bool PVMFOMXAudioDecNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
                 return true;
             }
 
-            // get FSI
-            OsclRefCounterMemFrag DataFrag;
-            msg->getFormatSpecificInfo(DataFrag);
-
-            //get pointer to the data fragment
-            uint8* initbuffer = (uint8 *) DataFrag.getMemFragPtr();
-            uint32 initbufsize = (int32) DataFrag.getMemFragSize();
+            uint8 *initbuffer = iTrackConfigDataBuffer;
+            int32 initbufsize = iTrackConfigDataBufferSize;
 
             iLATMConfigBufferSize = initbufsize;
             iLATMConfigBuffer = iLATMParser->ParseStreamMuxConfig(initbuffer, (int32 *) & iLATMConfigBufferSize);
-            if (iLATMConfigBuffer == NULL)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg() LATM Stream MUX config parsing failed"));
-                OSCL_ASSERT(false);
-                ReportErrorEvent(PVMFErrResourceConfiguration);
-                ChangeNodeState(EPVMFNodeError);
-                return true;
-            }
+
 
         }
+
+
 
         do
         {
@@ -566,14 +611,7 @@ bool PVMFOMXAudioDecNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDataPathLogger, PVLOGMSG_INFO,
                         (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: TS=%d, SEQNUM= %d", msg->getTimestamp(), msg->getSeqNum()));
 
-        if (iFirstDataMsgAfterBOS)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDataPathLogger, PVLOGMSG_INFO,
-                            (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: iTSOfFirstDataMsgAfterBOS = %d", msg->getTimestamp()));
-            iTSOfFirstDataMsgAfterBOS = msg->getTimestamp();
-            iInputTimestampClock_LH = iTSOfFirstDataMsgAfterBOS;
-            iInputTimestampClock_UH = 0;
-        }
+
         convertToPVMFMediaData(iDataIn, msg);
         ((PVMFOMXDecPort*)aPort)->iNumFramesConsumed++;
     }
@@ -1163,8 +1201,8 @@ bool PVMFOMXAudioDecNode::NegotiateComponentParameters(OMX_PTR aOutputParameters
     pvAudioConfigParserInputs aInputs;
     AudioOMXConfigParserOutputs *pOutputParameters;
 
-    aInputs.inPtr = (uint8*)((PVMFOMXDecPort*)iInPort)->iTrackConfig;
-    aInputs.inBytes = (int32)((PVMFOMXDecPort*)iInPort)->iTrackConfigSize;
+    aInputs.inPtr = iTrackConfigDataBuffer; // this was set previously either to port or in-band value
+    aInputs.inBytes = iTrackConfigDataBufferSize;
     aInputs.iMimeType = ((PVMFOMXDecPort*)iInPort)->iFormat;
     pOutputParameters = (AudioOMXConfigParserOutputs *)aOutputParameters;
 
@@ -2066,21 +2104,25 @@ PVMFStatus PVMFOMXAudioDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
 
     OsclRefCounterMemFrag DataFrag;
     OsclRefCounterMemFrag refCtrMemFragOut;
-    uint8* initbuffer = NULL;
-    uint32 initbufsize = 0;
+    uint8* initbuffer = iTrackConfigDataBuffer;     // this was earlier set to either port value or reconfig value
+    uint32 initbufsize = iTrackConfigDataBufferSize;
     PVMFStatus status = PVMFSuccess;
 
     // NOTE: the component may not start decoding without providing the Output buffer to it,
     //      here, we're sending input/config buffers.
-    //      Then, we'll go to ReadyToDecode state and send output as well
+
 
     if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_LATM)
     {
-        // must have the LATM config buffer and size already present
         if (iLATMConfigBuffer != NULL)
         {
+            // NOTE: we must have the LATM config buffer  ahead of time (pre-parsed) - this is a special case
+            // NOTE: In-band Reconfig does not work for LATM
             initbuffer = iLATMConfigBuffer;
             initbufsize = iLATMConfigBufferSize;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                            (0, "PVMFOMXAudioDecNode::InitDecoder() LATM header (Size=%d)", iLATMConfigBufferSize));
+
         }
         else
         {
@@ -2089,38 +2131,19 @@ PVMFStatus PVMFOMXAudioDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
             return PVMFFailure;
         }
     }
-    else if (((PVMFOMXDecPort*)iInPort)->iFormat ==  PVMF_MIME_MPEG4_AUDIO ||
-             ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_3640 ||
-             ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_ADIF ||
-             ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_ASF_MPEG4_AUDIO ||
-             ((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_AAC_SIZEHDR) // for testing
+    else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_ASF_MPEG4_AUDIO)
     {
-        // get format specific info and send it as config data:
-        DataIn->getFormatSpecificInfo(DataFrag);
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXAudioDecNode::InitDecoder() VOL header (Size=%d)", DataFrag.getMemFragSize()));
 
-        //get pointer to the data fragment
-        initbuffer = (uint8 *) DataFrag.getMemFragPtr();
-        initbufsize = (int32) DataFrag.getMemFragSize();
-
-        // in case of ASF_MPEG4 audio need to create aac config header
-        if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_ASF_MPEG4_AUDIO)
+        if (!CreateAACConfigDataFromASF(initbuffer, initbufsize, &iAACConfigData[0], iAACConfigDataLength))
         {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFOMXAudioDecNode::InitDecoder() Error in creating AAC ASF Codec Config data"));
 
-
-            if (!CreateAACConfigDataFromASF(initbuffer, initbufsize, &iAACConfigData[0], iAACConfigDataLength))
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PVMFOMXAudioDecNode::InitDecoder() Error in creating AAC Codec Config data"));
-
-                return PVMFFailure;
-            }
-
-            initbuffer  = &iAACConfigData[0];
-            initbufsize = iAACConfigDataLength;
+            return PVMFFailure;
         }
 
+        initbuffer  = &iAACConfigData[0];
+        initbufsize = iAACConfigDataLength;
 
     }           // in some cases, initbufsize may be 0, and initbuf= NULL. Config is done after 1st frame of data
     else if (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_AMR_IF2 ||
@@ -2134,20 +2157,22 @@ PVMFStatus PVMFOMXAudioDecNode::InitDecoder(PVMFSharedMediaDataPtr& DataIn)
         initbufsize = 0;
     }
 
-    else if ((((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_WMA) ||
-             (((PVMFOMXDecPort*)iInPort)->iFormat == PVMF_MIME_REAL_AUDIO))
-    {
-        // in case of WMA, get config parameters from the port
-        initbuffer = ((PVMFOMXDecPort*)iInPort)->getTrackConfig();
-        initbufsize = (int32)((PVMFOMXDecPort*)iInPort)->getTrackConfigSize();
 
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                        (0, "PVMFOMXAudioDecNode::InitDecoder() for WMA Decoder. Initialization data Size %d.", initbufsize));
-    }
+    // All of these use track config data without modifications
+    // PVMF_MIME_MPEG4_AUDIO
+    // PVMF_MIME_3640
+    // PVMF_MIME_ADIF
+    // PVMF_MIME_AAC_SIZEHDR // for testing
+    // PVMF_MIME_WMA
+    // PVMF_MIME_REAL_AUDIO
+
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFOMXAudioDecNode::InitDecoder() Initialization data Size %d.", initbufsize));
+
 
     if (initbufsize > 0)
     {
-
 
         status = SendConfigBufferToOMXComponent(initbuffer, initbufsize);
         if (status != PVMFSuccess)
