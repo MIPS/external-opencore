@@ -602,7 +602,7 @@ PVMFMemoryBufferReadDataStreamImpl::Read(PvmiDataStreamSession aSessionID, uint8
     iWriteDataStream->SetReadPointerCacheLocation(iSessionID, inTempCache);
     iWriteDataStream->SetReadPointerPosition(iSessionID, iFilePtrPos);
 
-    if (0 != bytesRead && 0 != firstEntry)
+    if ((0 != bytesRead && 0 != firstEntry) && (!inCache))
     {
         // there may be some entries in the cache that can be released
         iWriteDataStream->ManageCache();
@@ -768,7 +768,8 @@ PVMFMemoryBufferReadDataStreamImpl::Seek(PvmiDataStreamSession aSessionID, int32
                 uint32 lastTempByteOffset = 0;
                 iTempCache->GetFileOffsets(firstTempByteOffset, lastTempByteOffset);
 
-                if ((skipTo >= firstTempByteOffset) &&
+                if ((0 != firstTempByteOffset && 0 != lastTempByteOffset) &&
+                        (skipTo >= firstTempByteOffset) &&
                         (lastTempByteOffset + PV_MBDS_FWD_SEEKING_NO_GET_REQUEST_THRESHOLD >= skipTo))
                 {
                     // Seeking forward,, eed to see if the data may be coming shortly before sending request
@@ -1177,7 +1178,8 @@ PVMFMemoryBufferReadDataStreamImpl::GetCurrentByteRange(uint32& aCurrentFirstByt
         uint32 lastPermByteOffset = 0;
         iPermCache->GetFileOffsets(firstPermByteOffset, lastPermByteOffset);
 
-        if (firstTempByteOffset == (lastPermByteOffset + 1))
+
+        if (firstTempByteOffset <= lastPermByteOffset)
         {
             aCurrentFirstByteOffset = firstPermByteOffset;
         }
@@ -1779,6 +1781,10 @@ PVMFMemoryBufferWriteDataStreamImpl::Write(PvmiDataStreamSession aSessionID, Osc
         uint32 firstPermReadOffset = 0;
         uint32 lastPermReadOffset = 0;
         iPermCache->GetFileOffsets(firstPermReadOffset, lastPermReadOffset);
+        if (0 != lastPermReadOffset)
+        {
+            lastPermReadOffset -= 1;
+        }
 
         uint32 permEntries = iPermCache->GetNumEntries();
 

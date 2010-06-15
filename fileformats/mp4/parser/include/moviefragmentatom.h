@@ -43,12 +43,19 @@
 #include "moviefragmentheaderatom.h"
 #endif
 
+struct TrackIndexStruct
+{
+    uint32  iTrackId ;
+    uint32  iIndex;
+};
+
 class MovieFragmentAtom : public Atom
 {
 
     public:
 
         MovieFragmentAtom(MP4_FF_FILE *fp,
+                          Oscl_Vector<MP4_FF_FILE *, OsclMemAllocator> *pTrackFpVec,
                           uint32 &size,
                           uint32 type,
                           TrackDurationContainer *trackDurationContainer,
@@ -56,7 +63,8 @@ class MovieFragmentAtom : public Atom
                           bool &parseMoofCompletely,
                           bool &moofParsingCompleted,
                           uint32 &countOfTrunsParsed,
-                          const TrackEncryptionBoxContainer* apTrackEncryptionBox);
+                          const TrackEncryptionBoxContainer* apTrackEncryptionBox
+                         );
 
 
         virtual ~MovieFragmentAtom();
@@ -74,9 +82,10 @@ class MovieFragmentAtom : public Atom
                            TrackDurationContainer *trackDurationContainer,
                            Oscl_Vector<TrackExtendsAtom*, OsclMemAllocator> *trackExtendAtomVec,
                            bool &moofParsingCompleted,
-                           uint32 &countOfTrunsParsed);
-
-
+                           uint32 &countOfTrunsParsed,
+                           const uint32 trackID);
+        uint32 getIndexForTrackId(const uint32 trackID);
+        void setIndexForTrackID(uint32 trackID);
         uint64 getDataOffset();
         uint32 getSampleCount();
         uint64 getBaseDataOffset();
@@ -99,11 +108,13 @@ class MovieFragmentAtom : public Atom
         uint64 getCurrentTrafDuration(uint32 id);
         uint32 getTotalSampleInTraf(uint32 id);
         int32 getOffsetByTime(uint32 id, uint64 ts, TOsclFileOffset* sampleFileOffset);
+
     private:
         const TrackEncryptionBoxContainer*  ipTrackEncryptionBxCntr;
         MovieFragmentHeaderAtom * _pMovieFragmentHeaderAtom;
         TrackFragmentAtom *_pTrackFragmentAtom;
         Oscl_Vector<TrackFragmentAtom*, OsclMemAllocator> *_ptrackFragmentArray;
+        Oscl_Vector<MP4_FF_FILE *, OsclMemAllocator> *_pTrackFpVec;
         TOsclFileOffset _pMovieFragmentCurrentOffset;
         TOsclFileOffset _pMovieFragmentBaseOffset;
         uint32 _trafIndex;
@@ -112,7 +123,7 @@ class MovieFragmentAtom : public Atom
         bool trafParsingCompleted;
         uint32 sizeRemaining;
         uint32 atomtype;
-
+        Oscl_Vector<TrackIndexStruct, OsclMemAllocator> *_pTrackIndexVec;
 };
 
 #endif

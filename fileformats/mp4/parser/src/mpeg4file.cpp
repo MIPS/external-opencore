@@ -56,6 +56,7 @@
 
 typedef Oscl_Vector<TrackAtom*, OsclMemAllocator> trackAtomVecType;
 typedef Oscl_Vector<MovieFragmentAtom*, OsclMemAllocator> movieFragmentAtomVecType;
+typedef Oscl_Vector<MP4_FF_FILE*, OsclMemAllocator> moofFragmentAtomVecType;
 typedef Oscl_Vector<TOsclFileOffset, OsclMemAllocator> movieFragmentOffsetVecType;
 typedef Oscl_Vector<TrackDurationInfo*, OsclMemAllocator> trackDurationInfoVecType;
 typedef Oscl_Vector<MovieFragmentRandomAccessAtom*, OsclMemAllocator> movieFragmentRandomAccessAtomVecType;
@@ -80,6 +81,7 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
     _pMovieFragmentRandomAccessAtomVec = NULL;
     _pTrackExtendsAtomVec = NULL;
     _pMoofOffsetVec = NULL;
+    _pFileSessionsForMediaDataRetrievalVec = NULL;
     _ptrMoofEnds = 0;
     _parsing_mode = parsingMode;
     _pTrackDurationContainer = NULL;
@@ -117,12 +119,12 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
     numLyricist = 0;
     numComposer = 0;
     numVersion = 0;
-    iTotalMoofAtmsCnt = 0xFFFFFFFF;
-
+    iTotalMoofAtmsCnt = 0xFFFFFFFF;//Zero is a chosen to be sentinal because 0 is invalid value if mvex atom is present.
     // Create miscellaneous vector of atoms
     PV_MP4_FF_NEW(fp->auditCB, trackAtomVecType, (), _pTrackAtomVec);
     PV_MP4_FF_NEW(fp->auditCB, movieFragmentAtomVecType, (), _pMovieFragmentAtomVec);
     PV_MP4_FF_NEW(fp->auditCB, movieFragmentOffsetVecType, (), _pMoofOffsetVec);
+    PV_MP4_FF_NEW(fp->auditCB, moofFragmentAtomVecType, (), _pFileSessionsForMediaDataRetrievalVec);
     PV_MP4_FF_NEW(fp->auditCB, movieFragmentRandomAccessAtomVecType, (), _pMovieFragmentRandomAccessAtomVec);
 
 
@@ -140,6 +142,7 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
     _oPVContent = false;
     _oPVContentDownloadable = false;
     _commonFilePtr = NULL;
+
     _fileSize = fileSize;
 
     if (!aOpenFileOncePerTrack)
@@ -339,7 +342,6 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                         }
                     }
                 }
-
                 count -= _pFileTypeAtom->getSize();
             }
             else
@@ -352,8 +354,6 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
         }
         else if (atomType == MOVIE_ATOM)
         {
-
-
             //"moov"
             if (_pmovieAtom == NULL)
             {
@@ -376,13 +376,11 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                     _mp4ErrorCode = _pmovieAtom->GetMP4Error();
                     break;
                 }
-
                 _isMovieFragmentsPresent = _pmovieAtom->IsMovieFragmentPresent();
 
                 PV_MP4_FF_NEW(fp->auditCB, TrackIndexVecType, (), _moofFragmentIdx);
-
-
                 populateTrackDurationVec();
+
                 _pTrackExtendsAtomVec = _pmovieAtom->getTrackExtendsAtomVec();
 
                 if (_isMovieFragmentsPresent)
@@ -398,7 +396,6 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                             _ptrMoofEnds = (*_pMoofOffsetVec)[0];
                         }
                     }
-
                     OsclAny*ptr = oscl_malloc(sizeof(MP4_FF_FILE));
                     if (ptr == NULL)
                     {
@@ -408,8 +405,8 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                     }
                     _movieFragmentFilePtr = OSCL_PLACEMENT_NEW(ptr, MP4_FF_FILE());
                     _movieFragmentFilePtr->_fileServSession = fp->_fileServSession;
-                    _movieFragmentFilePtr ->_pvfile.SetCPM(fp->_pvfile.GetCPM());
-                    _movieFragmentFilePtr ->_pvfile.SetFileHandle(fp->_pvfile.iFileHandle);
+                    _movieFragmentFilePtr->_pvfile.SetCPM(fp->_pvfile.GetCPM());
+                    _movieFragmentFilePtr->_pvfile.SetFileHandle(fp->_pvfile.iFileHandle);
 
                     if (AtomUtils::OpenMP4File(filename,
                                                Oscl_File::MODE_READ | Oscl_File::MODE_BINARY,
@@ -418,9 +415,8 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                         _success = false;
                         _mp4ErrorCode = FILE_OPEN_FAILED;
                     }
-
-
-                    _movieFragmentFilePtr ->_fileSize = fp->_fileSize;
+                    _movieFragmentFilePtr->_fileSize = fp->_fileSize;
+                    OpenSessionForMoofMediaDataRetrieval(fp, filename);
                 }
                 count -= _pmovieAtom->getSize();
                 _scalability = _pmovieAtom->getScalability();
@@ -433,25 +429,10 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                         parseMFRA();
 
                         if (!oMfraFound)
-                        {
-                            // mfra not found neither at the beginning
-                            // nor the end of the file. Continue searching
-                            // it.
                             continue;
-                        }
-
-
                     }
                     break;
                 }
-                if (!_isMovieFragmentsPresent)
-                {
-                    //no moofs, exit the parsing loop since
-                    //we are done parsing the moov atom
-                    break;
-                }
-
-
             }
             else
             { //after the change above, we will never hit here.
@@ -462,8 +443,14 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
         }
         else if (atomType == MOVIE_FRAGMENT_ATOM)
         {
+
             TOsclFileOffset moofStartOffset = AtomUtils::getCurrentFilePosition(fp);
             moofStartOffset -= DEFAULT_ATOM_SIZE;
+            if (parsingMode != 0)
+            {
+                AtomUtils::seekFromStart(fp, moofStartOffset);
+                break;
+            }
             _pMoofOffsetVec->push_back(moofStartOffset);
 
             if (_pmovieAtom == NULL)
@@ -474,10 +461,8 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
             }
             else
             {
-
-
                 MovieFragmentAtom *pMovieFragmentAtom = NULL;
-                PV_MP4_FF_NEW(fp->auditCB, MovieFragmentAtom, (fp, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed, ipTrckEncryptnBxCntr), pMovieFragmentAtom);
+                PV_MP4_FF_NEW(fp->auditCB, MovieFragmentAtom, (fp, _pFileSessionsForMediaDataRetrievalVec, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed, ipTrckEncryptnBxCntr), pMovieFragmentAtom);
 
                 if (!pMovieFragmentAtom->MP4Success())
                 {
@@ -491,13 +476,6 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                 _pMovieFragmentAtomVec->push_back(pMovieFragmentAtom);
             }
         }
-
-
-
-
-
-
-
         else if (atomType == MOVIE_FRAGMENT_RANDOM_ACCESS_ATOM)
         {
             if (_pmovieAtom == NULL)
@@ -526,8 +504,6 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                 if ((_pmovieAtom != NULL) && (_parsing_mode != 0))
                     break;
             }
-
-
         }
         else
         {
@@ -578,7 +554,7 @@ Mpeg4File::Mpeg4File(MP4_FF_FILE *fp,
                         // get the first sample file offset of each track
                         for (int32 i = 0; i < numMediaTracks; i++)
                         {
-                            int32 retVal = _pmovieAtom->getOffsetByTime(idList[i], 0, &offsetList[i]);
+                            int32 retVal = getOffsetByTime(idList[i], 0, &offsetList[i], 0);
                             if (DEFAULT_ERROR == retVal)
                             {
                                 _success = false;
@@ -1528,6 +1504,22 @@ Mpeg4File::~Mpeg4File()
         PV_MP4_FF_TEMPLATED_DELETE(NULL, movieFragmentOffsetVecType, Oscl_Vector, _pMoofOffsetVec);
 
 
+    if (_pFileSessionsForMediaDataRetrievalVec != NULL)
+    {
+        for (i = 0; i < _pFileSessionsForMediaDataRetrievalVec->size(); i++)
+        {
+            MP4_FF_FILE *temp = (*_pFileSessionsForMediaDataRetrievalVec)[i];
+            if (temp->IsOpen())
+            {
+                AtomUtils::CloseMP4File(temp);
+            }
+            oscl_free(temp);
+        }
+
+        PV_MP4_FF_TEMPLATED_DELETE(NULL, moofFragmentAtomVecType, Oscl_Vector, _pFileSessionsForMediaDataRetrievalVec);
+        _pFileSessionsForMediaDataRetrievalVec = NULL;
+    }
+
     if (_pMfraOffsetAtom != NULL)
     {
         PV_MP4_FF_DELETE(NULL, MfraOffsetAtom, _pMfraOffsetAtom);
@@ -2370,6 +2362,7 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
     if (_pmovieAtom != NULL)
     {
         int32 ret = _pmovieAtom->getNextBundledAccessUnits(trackID, n, pgau);
+
         if (ret == END_OF_TRACK)
         {
             if (!_isMovieFragmentsPresent)
@@ -2461,7 +2454,7 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
 
                     while (!oAllMoofParsed)
                     {
-                        if (moofParsingCompleted)
+                        if (moofParsingCompleted | isResetPlayBackCalled)
                         {
                             uint32 moofIndex = 0;
                             bool moofToBeParsed = false;
@@ -2478,7 +2471,69 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                 }
                                 else if (isResetPlayBackCalled)
                                 {
-                                    isResetPlayBackCalled = false;
+                                    uint32 seqNum = pMovieFragmentAtom->getSequenceNumber();
+                                    if (seqNum == _movieFragmentSeqIdx[moofIdx])
+                                    {
+                                        TrackFragmentAtom *trackfragment = pMovieFragmentAtom->getTrackFragmentforID(trackID);
+                                        if (trackfragment != NULL)
+                                        {
+                                            if (trackfragment->getTrackId() == trackID)
+                                            {
+
+                                                if (return1 != END_OF_TRACK)
+                                                {
+                                                    if (samplesTobeRead >= *n)
+                                                        *n = samplesTobeRead - *n;
+                                                }
+                                                return1 = pMovieFragmentAtom->getNextBundledAccessUnits(trackID, n, totalSampleRead, pgau, apSampleDecryptionInfoVect);
+                                                totalSampleRead += *n;
+                                                if (return1 != END_OF_TRACK)
+                                                {
+                                                    *n = totalSampleRead;
+                                                    return return1;
+                                                }
+                                            }
+                                        }
+                                        _movieFragmentSeqIdx[moofIdx]++;
+                                        if (samplesTobeRead >= *n)
+                                        {
+                                            samplesTobeRead = samplesTobeRead - *n;
+                                            *n = samplesTobeRead;
+                                            if (_movieFragmentIdx[moofIdx] < _pMovieFragmentAtomVec->size())
+                                            {
+                                                _movieFragmentIdx[moofIdx]++;
+
+                                                if (_pMovieFragmentAtomVec->size() == _movieFragmentIdx[moofIdx])
+                                                {
+                                                    uint32 i = idx + 1;
+                                                    while (i < _pMovieFragmentAtomVec->size())
+                                                    {
+                                                        idx++;
+                                                        i++;
+                                                    }
+                                                    TOsclFileOffset moof_start_offset = (*_pMoofOffsetVec)[idx];
+                                                    AtomUtils::seekFromStart(_movieFragmentFilePtr, moof_start_offset);
+                                                    uint32 atomType = UNKNOWN_ATOM;
+                                                    uint32 atomSize = 0;
+                                                    AtomUtils::getNextAtomType(_movieFragmentFilePtr, atomSize, atomType);
+                                                    if (atomType == MOVIE_FRAGMENT_ATOM)
+                                                    {
+                                                        atomSize -= DEFAULT_ATOM_SIZE;
+                                                        AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, atomSize);
+                                                        _ptrMoofEnds = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+                                                    }
+
+                                                }
+
+
+                                            }
+                                        }
+                                        continue;
+                                    }
+                                    else
+                                    {
+                                        isResetPlayBackCalled = false;
+                                    }
 
                                     // if moofs are already parsed, so go to the end of MOOF Vector.
 
@@ -2497,7 +2552,6 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                         AtomUtils::seekFromStart(_movieFragmentFilePtr, _ptrMoofEnds);
                                     }
 
-                                    idx = currMoofNum - 1;
                                     uint32 i = idx + 1;
                                     while (i < _pMovieFragmentAtomVec->size())
                                     {
@@ -2505,18 +2559,7 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                         pMovieFragmentAtom = (*_pMovieFragmentAtomVec)[idx];
                                         if (pMovieFragmentAtom == NULL)
                                         {
-                                            TOsclFileOffset moof_start_offset = (*_pMoofOffsetVec)[idx-1];
-                                            AtomUtils::seekFromStart(_movieFragmentFilePtr, moof_start_offset);
-                                            uint32 atomType = UNKNOWN_ATOM;
-                                            uint32 atomSize = 0;
-                                            AtomUtils::getNextAtomType(_movieFragmentFilePtr, atomSize, atomType);
-                                            if (atomType == MOVIE_FRAGMENT_ATOM)
-                                            {
-                                                atomSize -= DEFAULT_ATOM_SIZE;
-                                                AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, atomSize);
-                                                _ptrMoofEnds = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
-                                            }
-                                            isResetPlayBackCalled = true;
+                                            //isResetPlayBackCalled = true;
                                             moofToBeParsed = true;
                                             moofIndex = idx;
                                             break;
@@ -2524,11 +2567,24 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                         pMovieFragmentAtom->resetPlayback();
                                         i++;
                                     }
-                                    TOsclFileOffset moof_start_offset = (*_pMoofOffsetVec)[idx];
+
+                                    TOsclFileOffset moof_start_offset = (*_pMoofOffsetVec)[_movieFragmentIdx[moofIdx]];
+                                    uint32 bufCap = AtomUtils::getFileBufferingCapacity(_movieFragmentFilePtr);
+                                    if (bufCap)
+                                    {
+                                        TOsclFileOffset bufStart = 0, bufEnd = 0;
+                                        _movieFragmentFilePtr->_pvfile.GetCurrentByteRange(bufStart, bufEnd);
+                                        if ((moof_start_offset < bufStart) || ((moof_start_offset + DEFAULT_ATOM_SIZE) > bufEnd))
+                                        {
+                                            return INSUFFICIENT_DATA;
+                                        }
+                                    }
                                     AtomUtils::seekFromStart(_movieFragmentFilePtr, moof_start_offset);
                                     uint32 atomType = UNKNOWN_ATOM;
                                     uint32 atomSize = 0;
+
                                     AtomUtils::getNextAtomType(_movieFragmentFilePtr, atomSize, atomType);
+
                                     if (atomType == MOVIE_FRAGMENT_ATOM)
                                     {
                                         atomSize -= DEFAULT_ATOM_SIZE;
@@ -2537,6 +2593,11 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                     }
                                 }
                             }
+                            else
+                            {
+                                isResetPlayBackCalled = false;
+                            }
+
 
                             TOsclFileOffset fileSize = 0;
                             AtomUtils::getCurrentFileSize(_movieFragmentFilePtr, fileSize);
@@ -2552,13 +2613,25 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                             }
                             TOsclFileOffset filePointer = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
                             TOsclFileOffset count = (fileSize - filePointer);// -DEFAULT_ATOM_SIZE;
-
                             while (count > 0)
                             {
+                                TOsclFileOffset currPos = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+                                uint32 bufCap = AtomUtils::getFileBufferingCapacity(_movieFragmentFilePtr);
+                                if (bufCap)
+                                {
+                                    TOsclFileOffset bufStart = 0, bufEnd = 0;
+                                    _movieFragmentFilePtr->_pvfile.GetCurrentByteRange(bufStart, bufEnd);
+                                    fileSize = bufEnd + 1;
+                                    if ((currPos < bufStart) || ((currPos + DEFAULT_ATOM_SIZE) > bufEnd))
+                                    {
+                                        return INSUFFICIENT_DATA;
+                                    }
+                                }
                                 uint32 atomType = UNKNOWN_ATOM;
                                 uint32 atomSize = 0;
-                                TOsclFileOffset currPos = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+
                                 AtomUtils::getNextAtomType(_movieFragmentFilePtr, atomSize, atomType);
+
                                 if ((currPos + (TOsclFileOffset)atomSize) > fileSize)
                                 {
                                     AtomUtils::seekFromStart(_movieFragmentFilePtr, currPos);
@@ -2566,6 +2639,7 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                     {
                                         // dont report insufficient data as we still have a moof/moofs to
                                         // retrieve data. So just go and retrieve the data.
+
                                         break;
                                     }
                                     else
@@ -2573,7 +2647,7 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                         // We have run out of MOOF atoms so report insufficient data.
                                         if (totalSampleRead == 0)
                                         {
-                                            return  INSUFFICIENT_DATA;
+                                            return INSUFFICIENT_DATA;
                                         }
                                         else
                                         {
@@ -2581,6 +2655,7 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                         }
                                     }
                                 }
+
 
                                 if (atomType == MOVIE_FRAGMENT_ATOM)
                                 {
@@ -2592,7 +2667,8 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                     moofCount = count;
                                     _ptrMoofEnds = moofStartOffset + atomSize;
 
-                                    PV_MP4_FF_NEW(_movieFragmentFilePtr->auditCB, MovieFragmentAtom, (_movieFragmentFilePtr, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed, ipTrckEncryptnBxCntr), _pMovieFragmentAtom);
+                                    PV_MP4_FF_NEW(_movieFragmentFilePtr->auditCB, MovieFragmentAtom, (_movieFragmentFilePtr, _pFileSessionsForMediaDataRetrievalVec, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed, ipTrckEncryptnBxCntr), _pMovieFragmentAtom);
+
                                     moofSize = atomSize;
                                     moofPtrPos = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
 
@@ -2606,6 +2682,8 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                     {
                                         _pMoofOffsetVec->push_back(moofStartOffset);
                                         _pMovieFragmentAtomVec->push_back(_pMovieFragmentAtom);
+
+
                                     }
 
                                     if (moofParsingCompleted)
@@ -2619,7 +2697,6 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                         }
                                         _pMovieFragmentAtom->setParent(this);
                                         count -= _pMovieFragmentAtom->getSize();
-
                                         break;
                                     }
 
@@ -2635,33 +2712,27 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                             Oscl_Int64_Utils::get_uint64_lower32(largeSize);
                                         count -= size;
                                         size -= 8; //for large size
-                                        size -= DEFAULT_ATOM_SIZE;
-                                        AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, size);
+                                        atomSize = size;
                                     }
                                     else
                                     {
                                         if (atomSize < DEFAULT_ATOM_SIZE)
                                         {
-                                            _success = false;
-                                            _mp4ErrorCode = ZERO_OR_NEGATIVE_ATOM_SIZE;
                                             oAllMoofExhausted = true;
                                             break;
                                         }
                                         if (count < (int32)atomSize)
                                         {
-                                            _success = false;
-                                            _mp4ErrorCode = INSUFFICIENT_DATA;
-                                            ret = _mp4ErrorCode;
+                                            ret = INSUFFICIENT_DATA;
                                             oAllMoofExhausted = true;
                                             AtomUtils::seekFromStart(_movieFragmentFilePtr, currPos);
                                             break;
                                         }
                                         count -= atomSize;
-                                        atomSize -= DEFAULT_ATOM_SIZE;
-                                        AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, atomSize);
                                     }
+                                    atomSize -= DEFAULT_ATOM_SIZE;
+                                    AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, atomSize);
                                 }
-
                                 else
                                 {
                                     if (count > 0)
@@ -2670,7 +2741,6 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                         atomSize -= DEFAULT_ATOM_SIZE;
                                         AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, atomSize);
                                     }
-
                                 }
                             }
                             if (count <= 0)
@@ -2684,9 +2754,9 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                         {
                             if (currMoofNum != (uint32) _pMovieFragmentAtom->getSequenceNumber())
                             {
-                                uint32 size = _pMovieFragmentAtomVec->size();
-                                _pMovieFragmentAtom = (*_pMovieFragmentAtomVec)[size - 1];
+                                _pMovieFragmentAtom = (*_pMovieFragmentAtomVec)[_pMovieFragmentAtomVec->size() - 1];
                             }
+
                             TOsclFileOffset currPos = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
                             if (currPos > moofPtrPos)
                             {
@@ -2699,14 +2769,24 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                 AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, offset);
                             }
 
-                            _pMovieFragmentAtom->ParseMoofAtom(_movieFragmentFilePtr, moofSize, moofType, _pTrackDurationContainer, _pTrackExtendsAtomVec, moofParsingCompleted, countOfTrunsParsed);
+                            TOsclFileOffset filePointer = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+                            uint32 bufCap = AtomUtils::getFileBufferingCapacity(_movieFragmentFilePtr);
+                            if (bufCap)
+                            {
+                                TOsclFileOffset bufStart = 0, bufEnd = 0;
+                                _movieFragmentFilePtr->_pvfile.GetCurrentByteRange(bufStart, bufEnd);
+                                if ((filePointer < bufStart) || ((TOsclFileOffset)(filePointer + moofSize) > bufEnd))
+                                {
+                                    return INSUFFICIENT_DATA;
+                                }
+                            }
+                            _pMovieFragmentAtom->ParseMoofAtom(_movieFragmentFilePtr, moofSize, moofType, _pTrackDurationContainer, _pTrackExtendsAtomVec, moofParsingCompleted, countOfTrunsParsed, trackID);
+
                             moofPtrPos = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
                             if (moofParsingCompleted)
                             {
                                 if (!_pMovieFragmentAtom->MP4Success())
                                 {
-                                    _success = false;
-                                    _mp4ErrorCode = _pMovieFragmentAtom->GetMP4Error();
                                     oAllMoofExhausted = true;
                                     break;
                                 }
@@ -2722,7 +2802,7 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                             else
                             {
                                 TOsclFileOffset offset = (moofPtrPos - currPos);
-                                AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, -((int32)offset));
+                                AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, -offset);
                             }
 
                             if (moofCount <= 0)
@@ -2747,7 +2827,6 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                     {
                         pMovieFragmentAtom = (*_pMovieFragmentAtomVec)[movieFragmentIdx];
                     }
-
                     if (pMovieFragmentAtom != NULL)
                     {
                         uint32 seqNum = pMovieFragmentAtom->getSequenceNumber();
@@ -2817,6 +2896,7 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                 {
                                     if (movieFragmentIdx2 < _pMovieFragmentAtomVec->size())
                                     {
+
                                         if ((movieFragmentIdx2 == (_pMovieFragmentAtomVec->size() - 1)) && moofParsingCompleted)
                                         {
                                             _movieFragmentIdx[moofIdx]++;
@@ -2826,9 +2906,12 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                                         {
                                             _movieFragmentIdx[moofIdx]++;
                                             _movieFragmentSeqIdx[moofIdx]++;
+
                                             *n = 0;
                                             return NO_SAMPLE_IN_CURRENT_MOOF;
                                         }
+
+
                                     }
                                 }
                             }
@@ -2896,6 +2979,7 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                         }
                         else if (oAllMoofParsed)
                         {
+
                             if (MoreMoofAtomsExpected(_movieFragmentSeqIdx[moofIdx]))
                             {
                                 //We have run out of moofs and theres no data to be parsed
@@ -3145,7 +3229,18 @@ int32 Mpeg4File::getOffsetByTime(uint32 id, uint64 ts, TOsclFileOffset* sampleFi
 
                             while (!moofParsingCompleted)
                             {
-                                _pMovieFragmentAtom->ParseMoofAtom(_movieFragmentFilePtr, moofSize, moofType, _pTrackDurationContainer, _pTrackExtendsAtomVec, moofParsingCompleted, countOfTrunsParsed);
+                                TOsclFileOffset filePointer = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+                                uint32 bufCap = AtomUtils::getFileBufferingCapacity(_movieFragmentFilePtr);
+                                if (bufCap)
+                                {
+                                    TOsclFileOffset bufStart = 0, bufEnd = 0;
+                                    _movieFragmentFilePtr->_pvfile.GetCurrentByteRange(bufStart, bufEnd);
+                                    if ((filePointer < bufStart) || ((TOsclFileOffset)(filePointer + moofSize) > bufEnd))
+                                    {
+                                        return INSUFFICIENT_DATA;
+                                    }
+                                }
+                                _pMovieFragmentAtom->ParseMoofAtom(_movieFragmentFilePtr, moofSize, moofType, _pTrackDurationContainer, _pTrackExtendsAtomVec, moofParsingCompleted, countOfTrunsParsed, id);
                             }
 
                             if (moofParsingCompleted)
@@ -3255,7 +3350,7 @@ int32 Mpeg4File::getOffsetByTime(uint32 id, uint64 ts, TOsclFileOffset* sampleFi
                             _pMoofOffsetVec->push_back(moofStartOffset);
                             parseMoofCompletely = true;
 
-                            PV_MP4_FF_NEW(_movieFragmentFilePtr->auditCB, MovieFragmentAtom, (_movieFragmentFilePtr, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed, ipTrckEncryptnBxCntr), _pMovieFragmentAtom);
+                            PV_MP4_FF_NEW(_movieFragmentFilePtr->auditCB, MovieFragmentAtom, (_movieFragmentFilePtr, _pFileSessionsForMediaDataRetrievalVec, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed, ipTrckEncryptnBxCntr), _pMovieFragmentAtom);
 
                             if (!_pMovieFragmentAtom->MP4Success())
                             {
@@ -3370,28 +3465,56 @@ int32 Mpeg4File::getOffsetByTime(uint32 id, uint64 ts, TOsclFileOffset* sampleFi
 
 int32 Mpeg4File::getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint64 *tsBuf, uint32* numBuf, TOsclFileOffset *offsetBuf)
 {
-    if (_pmovieAtom != NULL)
-    {
-        uint32 requestedSamples = *num, delta = 0, returnedSampleFromMoov = 0;
-        uint32 ret =  _pmovieAtom->getTimestampForRandomAccessPoints(id, num, tsBuf, numBuf, offsetBuf);
-        if (ret == 1)
-        {
-            returnedSampleFromMoov = *num;
-            if (requestedSamples != 0)
-            {
-                if (requestedSamples == returnedSampleFromMoov)
-                    return ret;
+    if (_pmovieAtom == NULL)
+        return 0;
 
-                if (requestedSamples > returnedSampleFromMoov)
-                {
-                    delta = requestedSamples - returnedSampleFromMoov;
-                }
+    uint32 requestedSamples = *num, delta = 0, returnedSampleFromMoov = 0;
+    uint32 ret =  _pmovieAtom->getTimestampForRandomAccessPoints(id, num, tsBuf, numBuf, offsetBuf);
+    if (ret == 1)
+    {
+        returnedSampleFromMoov = *num;
+        if (requestedSamples != 0)
+        {
+            if (requestedSamples == returnedSampleFromMoov)
+                return ret;
+
+            if (requestedSamples > returnedSampleFromMoov)
+            {
+                delta = requestedSamples - returnedSampleFromMoov;
+            }
+        }
+
+    }
+    else
+        delta = *num;
+
+    if (_isMovieFragmentsPresent)
+    {
+        if (_pMovieFragmentRandomAccessAtomVec != NULL)
+        { // Only one mfra possible in a clip so this loop will run only once
+            for (uint32 idx = 0; idx < _pMovieFragmentRandomAccessAtomVec->size(); idx++)
+            {
+                MovieFragmentRandomAccessAtom *pMovieFragmentRandomAccessAtom = (*_pMovieFragmentRandomAccessAtomVec)[idx];
+                ret = pMovieFragmentRandomAccessAtom->getTimestampForRandomAccessPoints(id, &delta, tsBuf, numBuf, offsetBuf, returnedSampleFromMoov);
+                *num = delta;
+                return ret;
             }
 
         }
-        else
-            delta = *num;
+    }
+    return ret;
+}
 
+int32 Mpeg4File::getTimestampForRandomAccessPointsBeforeAfter(uint32 id, uint64 ts, uint64 *tsBuf, uint32* numBuf,
+        uint32& numsamplestoget,
+        uint32 howManyKeySamples)
+{
+    if (_pmovieAtom == NULL)
+        return 0;
+
+    int32 ret = _pmovieAtom->getTimestampForRandomAccessPointsBeforeAfter(id, ts, tsBuf, numBuf, numsamplestoget, howManyKeySamples);
+    if (ret != 1)
+    {
         if (_isMovieFragmentsPresent)
         {
             if (_pMovieFragmentRandomAccessAtomVec != NULL)
@@ -3399,53 +3522,20 @@ int32 Mpeg4File::getTimestampForRandomAccessPoints(uint32 id, uint32 *num, uint6
                 for (uint32 idx = 0; idx < _pMovieFragmentRandomAccessAtomVec->size(); idx++)
                 {
                     MovieFragmentRandomAccessAtom *pMovieFragmentRandomAccessAtom = (*_pMovieFragmentRandomAccessAtomVec)[idx];
-                    ret = pMovieFragmentRandomAccessAtom->getTimestampForRandomAccessPoints(id, &delta, tsBuf, numBuf, offsetBuf, returnedSampleFromMoov);
-                    *num = delta;
+                    ret = pMovieFragmentRandomAccessAtom->getTimestampForRandomAccessPointsBeforeAfter(id, ts, tsBuf, numBuf, numsamplestoget, howManyKeySamples);
                     return ret;
                 }
 
             }
         }
-        return ret;
     }
-    return 0;
-}
-
-int32 Mpeg4File::getTimestampForRandomAccessPointsBeforeAfter(uint32 id, uint64 ts, uint64 *tsBuf, uint32* numBuf,
-        uint32& numsamplestoget,
-        uint32 howManyKeySamples)
-{
-    if (_pmovieAtom != NULL)
-    {
-        int32 ret = _pmovieAtom->getTimestampForRandomAccessPointsBeforeAfter(id, ts, tsBuf, numBuf, numsamplestoget, howManyKeySamples);
-        if (ret != 1)
-        {
-            if (_isMovieFragmentsPresent)
-            {
-                if (_pMovieFragmentRandomAccessAtomVec != NULL)
-                { // Only one mfra possible in a clip so this loop will run only once
-                    for (uint32 idx = 0; idx < _pMovieFragmentRandomAccessAtomVec->size(); idx++)
-                    {
-                        MovieFragmentRandomAccessAtom *pMovieFragmentRandomAccessAtom = (*_pMovieFragmentRandomAccessAtomVec)[idx];
-                        ret = pMovieFragmentRandomAccessAtom->getTimestampForRandomAccessPointsBeforeAfter(id, ts, tsBuf, numBuf, numsamplestoget, howManyKeySamples);
-                        return ret;
-                    }
-
-                }
-            }
-        }
-        return ret;
-
-    }
-    else
-    {
-        return 0;
-    }
+    return ret;
 }
 
 void Mpeg4File::resetAllMovieFragments()
 {
     uint64 trackDuration = 0;
+
     if (_isMovieFragmentsPresent)
     {
         if (_pMovieFragmentAtomVec != NULL)
@@ -3490,6 +3580,30 @@ void Mpeg4File::resetAllMovieFragments()
     }
 }
 
+void Mpeg4File::OpenSessionForMoofMediaDataRetrieval(MP4_FF_FILE *fp, OSCL_wString& filename)
+{
+    //Open seperate sesssion for each track, required specially incase of Moof PS
+    for (int32 i = 0; i < _pmovieAtom->getNumTracks(); i++)
+    {
+        OsclAny*ptr1 = oscl_malloc(sizeof(MP4_FF_FILE));
+        if (ptr1 == NULL)
+            return;
+
+        MP4_FF_FILE *temp = OSCL_PLACEMENT_NEW(ptr1, MP4_FF_FILE());
+        temp->_fileServSession = fp->_fileServSession;
+        temp->_pvfile.SetCPM(fp->_pvfile.GetCPM());
+        temp->_pvfile.SetFileHandle(fp->_pvfile.iFileHandle);
+        if (AtomUtils::OpenMP4File(filename,
+                                   Oscl_File::MODE_READ | Oscl_File::MODE_BINARY,
+                                   temp) != 0)
+        {
+            _success = false;
+            _mp4ErrorCode = FILE_OPEN_FAILED;
+        }
+        temp->_fileSize = fp->_fileSize;
+        _pFileSessionsForMediaDataRetrievalVec->push_back(temp);
+    }
+}
 
 uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList, bool bResetToIFrame)
 {
@@ -3497,7 +3611,9 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
 
     if (0 == time)
     {
+
         resetPlayback();
+        resetAllMovieFragments();
         return 0;
     }
 
@@ -3527,7 +3643,6 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
             isResetPlayBackCalled = true;
         }
     }
-
     if (getTrackMediaType(trackID) == MEDIA_TYPE_VISUAL)
     {
         if (repositionFromMoof(time, trackID))
@@ -3634,7 +3749,7 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                                             moofPtrPos = 0;
                                         }
 
-                                        PV_MP4_FF_NEW(_movieFragmentFilePtr->auditCB, MovieFragmentAtom, (_movieFragmentFilePtr, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed, ipTrckEncryptnBxCntr), _pMovieFragmentAtom);
+                                        PV_MP4_FF_NEW(_movieFragmentFilePtr->auditCB, MovieFragmentAtom, (_movieFragmentFilePtr, _pFileSessionsForMediaDataRetrievalVec, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed, ipTrckEncryptnBxCntr), _pMovieFragmentAtom);
 
                                         if (!_pMovieFragmentAtom->MP4Success())
                                         {
@@ -3753,7 +3868,6 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                         return 0;
                     }
                 }
-
             }
             else
                 return 0;
@@ -3767,7 +3881,6 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
             {
                 modifiedTimeStamp = timestamp;
             }
-
         }
         else
         {
@@ -3920,7 +4033,7 @@ uint32 Mpeg4File::resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList
                                     moofPtrPos = 0;
                                 }
 
-                                PV_MP4_FF_NEW(_movieFragmentFilePtr->auditCB, MovieFragmentAtom, (_movieFragmentFilePtr, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed, ipTrckEncryptnBxCntr), _pMovieFragmentAtom);
+                                PV_MP4_FF_NEW(_movieFragmentFilePtr->auditCB, MovieFragmentAtom, (_movieFragmentFilePtr, _pFileSessionsForMediaDataRetrievalVec, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed, ipTrckEncryptnBxCntr), _pMovieFragmentAtom);
 
                                 if (!_pMovieFragmentAtom->MP4Success())
                                 {
@@ -4304,6 +4417,8 @@ int32 Mpeg4File::parseMFRA()
     uint32 atomSize = 0;
     AtomUtils::getNextAtomType(_movieFragmentFilePtr, atomSize, atomType);
 
+    TOsclFileOffset curr = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+
     if (atomType == MOVIE_FRAGMENT_RANDOM_ACCESS_OFFSET_ATOM)
     {
         if (_pMfraOffsetAtom == NULL)
@@ -4316,11 +4431,12 @@ int32 Mpeg4File::parseMFRA()
                 return _mp4ErrorCode;
             }
             MfraStartOffset = _pMfraOffsetAtom->getSizeStoredInmfro();
-
         }
     }
     AtomUtils::rewindFilePointerByN(_movieFragmentFilePtr, MfraStartOffset);
     AtomUtils::getNextAtomType(_movieFragmentFilePtr, atomSize, atomType);
+    curr = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+
     if (atomType == MOVIE_FRAGMENT_RANDOM_ACCESS_ATOM)
     {
         if (_pMovieFragmentRandomAccessAtomVec->size() == 0)
@@ -4366,6 +4482,7 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
     if (_pmovieAtom != NULL)
     {
         uint32 ret = (_pmovieAtom->peekNextBundledAccessUnits(trackID, n, mInfo));
+
         if (ret == END_OF_TRACK)
         {
             if (!_isMovieFragmentsPresent)
@@ -4450,6 +4567,7 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
                         }
                         else
                         {
+                            *n = totalSampleRead;
                             return1 = EVERYTHING_FINE;
                         }
                     }
@@ -4490,13 +4608,28 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
                         TOsclFileOffset filePointer = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
                         TOsclFileOffset count = fileSize - filePointer;// -DEFAULT_ATOM_SIZE;
 
-                        PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "filePointer=%d, fileSize=%d, count=%d",
-                                (uint32)filePointer, (uint32)fileSize, (uint32)count));
+//                        PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "filePointer=%d, fileSize=%d, count=%d",
+//                              (uint32)filePointer, (uint32)fileSize, (uint32)count));
 
                         while (count > 0)
                         {
+                            /////////////////////////////////////////
+                            TOsclFileOffset filePointer = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
+                            count = (fileSize - filePointer);// -DEFAULT_ATOM_SIZE;
+                            uint32 bufCap = AtomUtils::getFileBufferingCapacity(_movieFragmentFilePtr);
+                            if (bufCap)
+                            {
+                                TOsclFileOffset bufStart = 0, bufEnd = 0;
+                                _movieFragmentFilePtr->_pvfile.GetCurrentByteRange(bufStart, bufEnd);
+                                fileSize = bufEnd + 1;
+                                if ((filePointer < bufStart) || ((filePointer + DEFAULT_ATOM_SIZE) > bufEnd))
+                                {
+                                    return INSUFFICIENT_DATA;
+                                }
+                            }
                             uint32 atomType = UNKNOWN_ATOM;
                             uint32 atomSize = 0;
+
                             TOsclFileOffset currPos = AtomUtils::getCurrentFilePosition(_movieFragmentFilePtr);
                             AtomUtils::getNextAtomType(_movieFragmentFilePtr, atomSize, atomType);
 
@@ -4512,6 +4645,7 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
                                 }
                                 else
                                 {
+                                    *n = totalSampleRead;
                                     return EVERYTHING_FINE;
                                 }
                             }
@@ -4524,7 +4658,7 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
 
                                 parseMoofCompletely = true;
 
-                                PV_MP4_FF_NEW(_movieFragmentFilePtr->auditCB, MovieFragmentAtom, (_movieFragmentFilePtr, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed, ipTrckEncryptnBxCntr), _pMovieFragmentAtom);
+                                PV_MP4_FF_NEW(_movieFragmentFilePtr->auditCB, MovieFragmentAtom, (_movieFragmentFilePtr, _pFileSessionsForMediaDataRetrievalVec, atomSize, atomType, _pTrackDurationContainer, _pTrackExtendsAtomVec, parseMoofCompletely, moofParsingCompleted, countOfTrunsParsed, ipTrckEncryptnBxCntr), _pMovieFragmentAtom);
 
                                 if (!_pMovieFragmentAtom->MP4Success())
                                 {
@@ -4559,8 +4693,7 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
                                         Oscl_Int64_Utils::get_uint64_lower32(largeSize);
                                     count -= size;
                                     size -= 8; //for large size
-                                    size -= DEFAULT_ATOM_SIZE;
-                                    AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, size);
+                                    atomSize = size;
                                 }
                                 else
                                 {
@@ -4581,10 +4714,11 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
                                         break;
                                     }
                                     count -= atomSize;
-                                    atomSize -= DEFAULT_ATOM_SIZE;
-                                    AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, atomSize);
                                     PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "atomType=MediaData"));
                                 }
+                                atomSize -= DEFAULT_ATOM_SIZE;
+                                AtomUtils::seekFromCurrPos(_movieFragmentFilePtr, atomSize);
+
                             }
 
                             else
@@ -4678,6 +4812,7 @@ int32 Mpeg4File::peekNextBundledAccessUnits(const uint32 trackID,
                 }
                 else
                 {
+                    *n = totalSampleRead;
                     ret = EVERYTHING_FINE;
                 }
             }
@@ -4817,6 +4952,8 @@ void Mpeg4File::resetPlayback()
     if (_pmovieAtom == NULL)
         return;
 
+    isResetPlayBackCalled = true;
+
     _pmovieAtom->resetPlayback();
 
     if (_isMovieFragmentsPresent)
@@ -4838,14 +4975,34 @@ void Mpeg4File::resetPlayback()
                 _movieFragmentSeqIdx[moofIdx] = 1;
                 _peekMovieFragmentSeqIdx[moofIdx] = 1;
             }
+            currMoofNum = 1;
             oscl_free(trackList);
+
             for (uint32 idx = 0; idx < _pMovieFragmentAtomVec->size(); idx++)
             {
                 MovieFragmentAtom *pMovieFragmentAtom = (*_pMovieFragmentAtomVec)[idx];
                 if (pMovieFragmentAtom != NULL)
                     pMovieFragmentAtom->resetPlayback();
-
             }
+
+            if (moofParsingCompleted)
+            {
+            }
+            else
+            {
+                _ptrMoofEnds = (*_pMoofOffsetVec)[_pMoofOffsetVec->size()-1];
+                uint32 i = _pMovieFragmentAtomVec->size();
+                _pMoofOffsetVec->pop_back();
+                _pMovieFragmentAtomVec->pop_back();
+                PV_MP4_FF_DELETE(NULL, MovieFragmentAtom , (*_pMovieFragmentAtomVec)[i-1]);
+                parseMoofCompletely = true;
+                moofParsingCompleted = true;
+                moofSize = 0;
+                moofType = UNKNOWN_ATOM;
+                moofCount = 0;
+                moofPtrPos = 0;
+            }
+
         }
     }
 }
