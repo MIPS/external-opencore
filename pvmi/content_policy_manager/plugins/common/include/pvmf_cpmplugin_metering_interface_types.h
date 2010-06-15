@@ -25,37 +25,8 @@
 #include "oscl_types.h"
 #endif
 
-#define PVMF_CPM_METER_ID_SIZE  16
+#include "pvmf_cpmplugin_license_interface_types.h"
 
-//A class to hold a metering ID.
-class PVMFCPMMeterId
-{
-    public:
-        PVMFCPMMeterId()
-        {
-            oscl_memset(data, 0, PVMF_CPM_METER_ID_SIZE);
-        }
-        PVMFCPMMeterId(const PVMFCPMMeterId &aId)
-        {
-            Set((uint8*)aId.data);
-        }
-
-        PVMFCPMMeterId operator=(const PVMFCPMMeterId &aId)
-        {
-            Set((uint8*)aId.data);
-            return *this;
-        }
-
-        void Set(uint8 *aData)
-        {
-            if (aData)
-            {
-                oscl_memcpy(data, aData, PVMF_CPM_METER_ID_SIZE);
-            }
-        }
-
-        uint8 data [PVMF_CPM_METER_ID_SIZE];
-};
 
 //A class to hold information about a metering certificate
 class PVMFCPMMeterCertInfo
@@ -77,7 +48,7 @@ class PVMFCPMMeterCertInfo
         {
             iValid = false;
             iURL = _STRLIT_WCHAR("");
-            oscl_memset(iMeterId.data, 0, sizeof(iMeterId.data));
+            oscl_memset(iMeterId.iData, 0, sizeof(iMeterId.iData));
         }
         void Set(const PVMFCPMMeterCertInfo& aInfo)
         {
