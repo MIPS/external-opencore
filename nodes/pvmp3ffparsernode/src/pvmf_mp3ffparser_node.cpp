@@ -3467,12 +3467,12 @@ PVMFStatus PVMFMP3FFParserNode::CheckForMP3HeaderAvailability(int32 aClipIndex)
     // if there's lack of data request more data
     if (NULL != iDataStreamInterface)
     {
-        if (retVal == PVMFErrUnderflow)
+        if (retVal == PVMFPending)
         {
             minBytesRequired = parserObj->GetMinBytesRequired();
             // available data wasnt sufficient to get to first valid audio frame
             // get more data
-            if (currCapacity < minBytesRequired)
+            if (currCapacity < iMP3MetaDataSize + minBytesRequired)
             {
                 iRequestReadCapacityNotificationID =
                     iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
@@ -3487,6 +3487,14 @@ PVMFStatus PVMFMP3FFParserNode::CheckForMP3HeaderAvailability(int32 aClipIndex)
             }
         }
     }
+    else
+    {
+        // underflow during Init for a local clip means that,
+        // the clip doesnt have valid audio data to playback.
+        if (retVal != PVMFSuccess)
+            return PVMFFailure;
+    }
+
     // if local playback, retrieve gapless metadata if present
     if (NULL == iDataStreamInterface)
     {

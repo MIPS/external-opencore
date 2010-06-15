@@ -42,11 +42,13 @@
  * Constant Defines
  ***********************************************************************/
 // Maximum debug message length
-#define KMAXMSGSIZE     1024
+#define KMAXMSGSIZE                     1024
 #define KMAX_MP3FRAME_LENGTH_IN_BYTES   2884
 // Initial search range, resetted to the file size once valid mp3
 // frame is found
 #define KMAX_INITIAL_SEARCH_FILE_SIZE_IN_BYTES  500000
+// Default sync buffer size, for 192 kbps, 44.1 kHz */
+#define KSYNC_BUFFER_SIZE               627
 
 /***********************************************************************
  * Global constant definitions
@@ -341,6 +343,8 @@ MP3Parser::MP3Parser(PVFile* aFileHandle)
     //minimum bytes required for init
     iMinBytesRequiredForInit = KMAX_MP3FRAME_LENGTH_IN_BYTES;
     iFirstFrameAfterReposition = true;
+    //default sync buffer size
+    iMaxSyncBufferSize = 0;
 
     iSamplesPerFrame = 0;
     iSamplingRate = 0;
@@ -2318,7 +2322,10 @@ uint32 MP3Parser::SeekPointFromTimestamp(uint32 &timestamp)
 MP3ErrorType MP3Parser::mp3FindSync(uint32 seekPoint, uint32 &syncOffset, PVFile* aFile)
 {
     syncOffset = 0;
-    iMaxSyncBufferSize = 627;   /* default for 192 kbps, 44.1 kHz */
+    if (iLocalFileSize > 0)
+        iMaxSyncBufferSize = OSCL_MIN(KSYNC_BUFFER_SIZE, iLocalFileSize);
+    else
+        iMaxSyncBufferSize = KSYNC_BUFFER_SIZE;
 
     if (aFile->GetCPM() != NULL)
     {
