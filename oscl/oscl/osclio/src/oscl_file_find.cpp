@@ -212,7 +212,7 @@ OSCL_EXPORT_REF const oscl_wchar *Oscl_FileFind::FindFirst(const oscl_wchar *dir
     }
     // non-symbain OSs are converted to char type FindFirst()
     char* convpattern = (char*) OSCL_MALLOC(oscl_strlen(pattern) + 1);
-    char* convdir = (char*) OSCL_MALLOC((oscl_strlen(directory) * MAX_NUMBER_OF_BYTE_PER_UTF8) + 1);
+    char* convdir = (char*) OSCL_MALLOC(oscl_strlen(directory) + 1);
     char* utf8buf = (char*) OSCL_MALLOC(buflen / sizeof(chartype));
     if (!(convpattern && convdir && utf8buf))
     {
@@ -222,7 +222,7 @@ OSCL_EXPORT_REF const oscl_wchar *Oscl_FileFind::FindFirst(const oscl_wchar *dir
         OSCL_FREE(utf8buf);
         return NULL;
     }
-    if ((0 == oscl_UnicodeToUTF8(directory, oscl_strlen(directory), convdir, (oscl_strlen(directory) * MAX_NUMBER_OF_BYTE_PER_UTF8) + 1)
+    if ((0 == oscl_UnicodeToUTF8(directory, oscl_strlen(directory), convdir, oscl_strlen(directory) + 1)
             && oscl_strlen(directory))
             || (0 == oscl_UnicodeToUTF8(pattern, oscl_strlen(pattern), convpattern, oscl_strlen(pattern) + 1)
                 && oscl_strlen(pattern)))
