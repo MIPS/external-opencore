@@ -7890,7 +7890,7 @@ PVMFStatus PVMFMP4FFParserNode::CheckForMP4HeaderAvailability()
                 }
                 else if (iExternalDownload == true)
                 {
-                    uint32 maxSize = MAX32BITUINT;
+                    uint32 maxSize = MAX_TOSCLFILEOFFSET_VALUE;
                     iRequestReadCapacityNotificationID =
                         iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
                                 *this,
