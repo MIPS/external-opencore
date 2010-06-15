@@ -69,6 +69,8 @@ class PVMFParserNodeTrackPortInfo: public OsclMemPoolFixedChunkAllocatorObserver
         }
 
         PVMFParserNodeTrackPortInfo(const PVMFParserNodeTrackPortInfo& aSrc)
+                : OsclMemPoolFixedChunkAllocatorObserver(aSrc)
+                , OsclMemPoolResizableAllocatorObserver(aSrc)
         {
             iTrackId = aSrc.iTrackId;
             iSeqNum = aSrc.iSeqNum;
