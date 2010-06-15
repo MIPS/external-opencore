@@ -84,6 +84,7 @@ Inheritance diagram for OsclMemPoolResizableAllocator:</div>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classOscl__DefAlloc.html">Oscl_DefAlloc</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classOsclMemPoolResizableAllocator.html#a398665f3f43e3c5d92d1214487307c78">iMemPoolBufferAllocator</a></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classOscl__Vector.html">Oscl_Vector</a>&lt; <a class="el" href="structOsclMemPoolResizableAllocator_1_1MemPoolBufferInfo.html">MemPoolBufferInfo</a> <br class="typebreak"/>
 *, <a class="el" href="classOsclMemAllocator.html">OsclMemAllocator</a> &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classOsclMemPoolResizableAllocator.html#a6f369b95e8b165832aaec357f290658d">iMemPoolBufferList</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">uint32&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classOsclMemPoolResizableAllocator.html#a9853b3055f4c806d08d1fba0246408ce">iMemPoolPrevAllocBufferIndex</a></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">uint32&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classOsclMemPoolResizableAllocator.html#a8a803d161dfacd97df67888386e8b5b8">iBufferInfoAlignedSize</a></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">uint32&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classOsclMemPoolResizableAllocator.html#a6c079597381bb81efa698e4166028a8c">iBlockInfoAlignedSize</a></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classOsclMemPoolResizableAllocator.html#a078951ff910fc4fe5995d3d330a40b2a">iCheckNextAvailable</a></td></tr>
@@ -96,6 +97,7 @@ Inheritance diagram for OsclMemPoolResizableAllocator:</div>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classOsclMemPoolResizableAllocatorMemoryObserver.html">OsclMemPoolResizableAllocatorMemoryObserver</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classOsclMemPoolResizableAllocator.html#a92e932af64e42902a0239f2ea94b7255">iFreeMemPoolObserver</a></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">int32&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classOsclMemPoolResizableAllocator.html#a1da691c3534d69dc96a0cb70e6143af5">iRefCount</a></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classOsclMemPoolResizableAllocator.html#afb318b658dd5a11d84445ff07031b409">iEnableNullPtrReturn</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">OsclMemPoolResizableAllocatorLogger *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classOsclMemPoolResizableAllocator.html#a0853aab840b804e93f6c3d5c68535a07">iDebugLogger</a></td></tr>
 </table>
 <hr/><h2>Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="a77779263d44aebb0946c15135cbf1502"></a><!-- doxytag: member="OsclMemPoolResizableAllocator::OsclMemPoolResizableAllocator" ref="a77779263d44aebb0946c15135cbf1502" args="(uint32 aMemPoolBufferSize, uint32 aMemPoolBufferNumLimit=0, uint32 aExpectedNumBlocksPerBuffer=0, Oscl_DefAlloc *gen_alloc=NULL)" -->
@@ -148,14 +150,12 @@ Inheritance diagram for OsclMemPoolResizableAllocator:</div>
           <td>(</td>
           <td class="paramname"></td>
           <td>&nbsp;)&nbsp;</td>
-          <td><code> [inline, protected, virtual]</code></td>
+          <td><code> [protected, virtual]</code></td>
         </tr>
       </table>
 </div>
 <div class="memdoc">
 <p>The destructor for the memory pool. Should not be called directly. Use <a class="el" href="classOsclMemPoolResizableAllocator.html#acb66b5eb7a1b9cb2998dc9ffdfc75fdc">removeRef()</a> instead. </p>
-
-<p>References <a class="el" href="classOsclMemPoolResizableAllocator.html#a77c24eb3e7864995893d650d6ff8c2c8">destroyallmempoolbuffers()</a>.</p>
 
 </div>
 </div>
@@ -336,8 +336,6 @@ Inheritance diagram for OsclMemPoolResizableAllocator:</div>
       </table>
 </div>
 <div class="memdoc">
-
-<p>Referenced by <a class="el" href="oscl__mem__mempool_8h_source.html#l00315">~OsclMemPoolResizableAllocator()</a>.</p>
 
 </div>
 </div>
@@ -708,6 +706,19 @@ Inheritance diagram for OsclMemPoolResizableAllocator:</div>
 
 </div>
 </div>
+<a class="anchor" id="a0853aab840b804e93f6c3d5c68535a07"></a><!-- doxytag: member="OsclMemPoolResizableAllocator::iDebugLogger" ref="a0853aab840b804e93f6c3d5c68535a07" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">OsclMemPoolResizableAllocatorLogger* <a class="el" href="classOsclMemPoolResizableAllocator.html#a0853aab840b804e93f6c3d5c68535a07">OsclMemPoolResizableAllocator::iDebugLogger</a><code> [protected]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
 <a class="anchor" id="afb318b658dd5a11d84445ff07031b409"></a><!-- doxytag: member="OsclMemPoolResizableAllocator::iEnableNullPtrReturn" ref="afb318b658dd5a11d84445ff07031b409" args="" -->
 <div class="memitem">
 <div class="memproto">
@@ -825,6 +836,19 @@ Inheritance diagram for OsclMemPoolResizableAllocator:</div>
 
 </div>
 </div>
+<a class="anchor" id="a9853b3055f4c806d08d1fba0246408ce"></a><!-- doxytag: member="OsclMemPoolResizableAllocator::iMemPoolPrevAllocBufferIndex" ref="a9853b3055f4c806d08d1fba0246408ce" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint32 <a class="el" href="classOsclMemPoolResizableAllocator.html#a9853b3055f4c806d08d1fba0246408ce">OsclMemPoolResizableAllocator::iMemPoolPrevAllocBufferIndex</a><code> [protected]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
 <a class="anchor" id="a7fb5033a78c6feff68998dd89b6fd749"></a><!-- doxytag: member="OsclMemPoolResizableAllocator::iNextAvailableContextData" ref="a7fb5033a78c6feff68998dd89b6fd749" args="" -->
 <div class="memitem">
 <div class="memproto">
@@ -895,7 +919,7 @@ Inheritance diagram for OsclMemPoolResizableAllocator:</div>
 </ul>
 </div>
 <hr size="1"><img src="pvlogo_small.jpg"><address style="align: right;"><small>OSCL API</small>
-<address style="align: left;"><small>Posting Version: CORE_9.000.1.1_RC3 </small>
+<address style="align: left;"><small>Posting Version: CORE_9.002.1.1 </small>
 </small></address>
 </body>
 </html>

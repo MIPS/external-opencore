@@ -38,6 +38,7 @@ typedef Oscl_Vector<uint32, OsclMemAllocator> fragmentptrOffsetVecType;
 
 // Constructor
 TrackFragmentAtom::TrackFragmentAtom(MP4_FF_FILE *fp,
+                                     MP4_FF_FILE *Moof_fp,
                                      uint32 &size,
                                      uint32 type,
                                      TOsclFileOffset movieFragmentCurrentOffset,
@@ -86,12 +87,12 @@ TrackFragmentAtom::TrackFragmentAtom(MP4_FF_FILE *fp,
         _mp4ErrorCode = MEMORY_ALLOCATION_FAILED;
         return;
     }
-    _pinput = OSCL_PLACEMENT_NEW(ptr, MP4_FF_FILE(*fp));
+    _pinput = OSCL_PLACEMENT_NEW(ptr, MP4_FF_FILE());
+    _pinput->_fileServSession = Moof_fp->_fileServSession;
+    _pinput->_pvfile.SetCPM(Moof_fp->_pvfile.GetCPM());
+    _pinput->_pvfile.SetFileHandle(Moof_fp->_pvfile.iFileHandle);
+    _pinput->_pvfile.Copy(Moof_fp->_pvfile);
 
-    _pinput->_fileServSession = fp->_fileServSession;
-    _pinput->_pvfile.SetCPM(fp->_pvfile.GetCPM());
-    _pinput->_fileSize = fp->_fileSize;
-    _pinput->_pvfile.Copy(fp->_pvfile);
 
     TOsclFileOffset trun_start = 0;
     uint32 count = size - DEFAULT_ATOM_SIZE;
@@ -589,6 +590,7 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
                                    uint32 *n, uint32 totalSampleRead,
                                    GAU    *pgau, Oscl_Vector<PVPIFFProtectedSampleDecryptionInfo, OsclMemAllocator>*  apSampleDecryptionInfoVect)
 {
+
     uint32  numSamplesInCurrentTrackFragmentRun = 0;
     uint64 currTSBase = 0;
     uint32 samplesLeftInChunk = 0;
@@ -620,11 +622,14 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
     totalnumSamples = getTotalNumSampleInTraf();
     if (sampleNum >= totalnumSamples)
     {
+
         _currentTrackFragmentRunSampleNumber = 0;
         *n = 0;
         _mp4ErrorCode = END_OF_TRACK;
         return (_mp4ErrorCode);
     }
+
+
 
     PV_MP4_FF_NEW(fp->auditCB, fragmentptrOffsetVecType, (), _pFragmentptrOffsetVec);
     for (i = 0; i < samplesReadBefore; i++)
@@ -692,6 +697,7 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
         uint32 sampleLeft = (numSamples + StartReadingFromSampleNum);
 
         uint32 baseSampleNum  = StartReadingFromSampleNum;
+
         while (StartReadingFromSampleNum < sampleLeft)
         {
             if (StartReadingFromSampleNum >= numSamplesInCurrentTrackFragmentRun)
@@ -740,6 +746,7 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
                 PV_MP4_FF_TEMPLATED_DELETE(NULL, fragmentptrOffsetVecType,
                                            Oscl_Vector, _pFragmentptrOffsetVec);
 
+
                 return (_mp4ErrorCode);
             }
 
@@ -762,10 +769,83 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
         }
 
 
-
         Oscl_Int64_Utils::set_uint64(pgau->SampleOffset, 0, (uint32)sampleFileOffset);
 
         AtomUtils::getCurrentFileSize(_pinput, _fileSize);
+
+        uint32 bufCap = AtomUtils::getFileBufferingCapacity(_pinput);
+        if (bufCap)
+        {
+
+            TOsclFileOffset bufStart = 0;
+            TOsclFileOffset bufEnd = _fileSize;
+
+            // progressive playback
+            // MBDS contains only a range of bytes
+            // first byte is not always 0
+            AtomUtils::getCurrentByteRange(_pinput, bufStart, bufEnd);
+
+
+            // bufEnd is the offset of the last byte
+            // need to turn it into a length, like _fileSize above
+            bufEnd++;
+
+            uint32 start = 0;
+            uint32 totalFragmentLength = 0;
+            for (k = start; k < end; k++)
+            {
+                totalFragmentLength += tempgauPtr->buf.fragments[k].len;
+            }
+
+
+            if (((TOsclFileOffset)sampleFileOffset < bufStart) || ((TOsclFileOffset)(sigmaSampleSize + sampleFileOffset) > bufEnd))
+            {
+                _mp4ErrorCode = INSUFFICIENT_DATA;
+
+            }
+            else if (totalFragmentLength < sigmaSampleSize)
+            {
+                _mp4ErrorCode = INSUFFICIENT_BUFFER_SIZE;
+
+            }
+            if (INSUFFICIENT_DATA == _mp4ErrorCode || INSUFFICIENT_BUFFER_SIZE == _mp4ErrorCode)
+            {
+
+                // if MBDS, may need to kick of a http request
+                uint32 contentLength = AtomUtils::getContentLength(_pinput);
+                if ((0 != contentLength) && ((sigmaSampleSize + sampleFileOffset) > contentLength))
+                {
+                    // do not skip beyond end of clip
+                    // if content length is known
+                    _mp4ErrorCode = READ_FAILED;
+                }
+                else
+                {
+
+                    AtomUtils::skipFromStart(_pinput, (TOsclFileOffset)sampleFileOffset);
+
+                }
+
+                *n = 0;
+
+                _currentTrackFragmentRunSampleNumber = startSampleNum;
+                for (uint32 i = 0; i < pgau->numMediaSamples; i++)
+                {
+
+                    pgau->info[i].len         = 0;
+                    pgau->info[i].ts          = 0;
+                    pgau->info[i].sample_info = 0;
+                }
+
+                PV_MP4_FF_TEMPLATED_DELETE(NULL, fragmentptrOffsetVecType,
+                                           Oscl_Vector, _pFragmentptrOffsetVec);
+
+                return (_mp4ErrorCode);
+            }
+        }
+
+
+
         if ((sampleFileOffset + (TOsclFileOffset)sigmaSampleSize) > _fileSize)
         {
             _mp4ErrorCode = INSUFFICIENT_DATA;
@@ -780,11 +860,12 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
             PV_MP4_FF_TEMPLATED_DELETE(NULL, fragmentptrOffsetVecType,
                                        Oscl_Vector, _pFragmentptrOffsetVec);
 
+
             return (_mp4ErrorCode);
         }
 
         if (sampleFileOffset != 0)
-            AtomUtils::seekFromStart(_pinput, sampleFileOffset);
+            AtomUtils::seekFromStart(_pinput, (TOsclFileOffset)sampleFileOffset);
 
         for (k = start; k < end; k++)
         {
@@ -796,6 +877,7 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
                 (tempgauPtr->buf.fragments[k].len > sigmaSampleSize) ? sigmaSampleSize : tempgauPtr->buf.fragments[k].len;
             if (tmpSize)
             {
+
                 if (!AtomUtils::readByteData(_pinput, tmpSize,
                                              (uint8 *)(read_fragment_ptr)))
                 {
@@ -806,6 +888,7 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
                                                Oscl_Vector, _pFragmentptrOffsetVec);
 
 
+                    PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "End of TrackFragmentAtom::getNextNSamples"));
                     return (_mp4ErrorCode);
                 }
                 tempgauPtr->buf.fragments[k].len -= tmpSize;
@@ -851,6 +934,7 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
             _mp4ErrorCode = END_OF_TRACK;
             break;
         }
+
     }
 
     if (_currentTrackFragmentRunSampleNumber == (uint32)sampleBeforeGet)
@@ -869,7 +953,6 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
     PV_MP4_FF_TEMPLATED_DELETE(NULL, fragmentptrOffsetVecType,
                                Oscl_Vector, _pFragmentptrOffsetVec);
 
-    PVMF_MP4FFPARSER_LOGMEDIASAMPELSTATEVARIABLES((0, "TrackFragmentAtom::getNextNSamples- Track Fragment Run Start sampel Num %d _currentPlaybackSampleTimestamp[%d]", startSampleNum, _currentPlaybackSampleTimestamp));
 
     if (apSampleDecryptionInfoVect && ipSampleEncryptionBox && (EVERYTHING_FINE == _mp4ErrorCode))
     {
@@ -880,6 +963,7 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
             *n = 0;
         }
     }
+
     return (_mp4ErrorCode);
 }
 
@@ -1349,6 +1433,7 @@ void TrackFragmentAtom::resetPlayback()
     _peekPlaybackSampleNumber = 0;
     _startTrackFragmentTSOffset = 0;
     _currentPlaybackSampleTimestamp = _startTrackFragmentTSOffset;
+
 }
 
 uint64 TrackFragmentAtom::getCurrentTrafDuration()

@@ -433,7 +433,8 @@ PVMFStatus PVMFDownloadManagerNode::SetSourceInitializationData(OSCL_wString& aS
     if (aSourceFormat == PVMF_MIME_DATA_SOURCE_HTTP_URL ||
             aSourceFormat == PVMF_MIME_DATA_SOURCE_RTMP_STREAMING_URL ||
             aSourceFormat == PVMF_MIME_DATA_SOURCE_DTCP_URL ||
-            aSourceFormat == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL)
+            aSourceFormat == PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL ||
+            aSourceFormat == PVMF_MIME_DATA_SOURCE_ALS_URL)
     {
         if (!iSourceData)
         {
@@ -1292,6 +1293,12 @@ void PVMFDownloadManagerNode::ContinueFromDownloadTrackSelectionPoint()
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,
                             "PVMFDownloadManagerNode::ContinueFromDownloadTrackSelectionPoint Setting format to FLV"));
             iMimeType = PVMF_MIME_FLVFF;
+        }
+        else if (iSourceFormat == PVMF_MIME_DATA_SOURCE_ALS_URL)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0,
+                            "PVMFDownloadManagerNode::ContinueFromDownloadTrackSelectionPoint Setting format to MPEG-2"));
+            iMimeType = PVMF_MIME_MPEG2FF;
         }
         else
         {
@@ -3816,7 +3823,9 @@ PVMFStatus PVMFDownloadManagerNode::ParsePLSFile(OSCL_wString& aPLSFile)
     iPLSSessionContextData->DownloadHTTPData()->bIsNewSession = true;
     iPLSSessionContextData->DownloadHTTPData()->iConfigFileName = NULL;
     iPLSSessionContextData->DownloadHTTPData()->iDownloadFileName = NULL;
-    iPLSSessionContextData->DownloadHTTPData()->iMaxFileSize = 0xFFFFFFFF;
+
+    iPLSSessionContextData->DownloadHTTPData()->iMaxFileSize = (TOsclFileOffset)MAX_TOSCLFILEOFFSET_VALUE;
+
     iPLSSessionContextData->DownloadHTTPData()->iProxyName = _STRLIT_CHAR("");
     iPLSSessionContextData->DownloadHTTPData()->iProxyPort = 0;
     iPLSSessionContextData->DownloadHTTPData()->iPlaybackControl = PVMFSourceContextDataDownloadHTTP::ENoSaveToFile;

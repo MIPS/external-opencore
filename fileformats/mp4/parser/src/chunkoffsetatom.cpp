@@ -237,7 +237,7 @@ bool ChunkOffsetAtom::ParseEntryUnit(uint32 sample_cnt)
 
     if (_parsingMode)
     {
-        const uint32 threshold = 512;
+        const uint32 threshold = TABLE_ENTRIES_THRESHOLD_FILE;
         sample_cnt += threshold;
 
         if (sample_cnt > _entryCount)

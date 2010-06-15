@@ -13,16 +13,18 @@ TARGET := pv_frame_metadata_utility_test
 
 XCPPFLAGS := -DBUILD_OMX_DEC_NODE
 
-XINCDIRS := ../../config/common ../../../../../../../extern_libs_v2/khronos/openmax/include
+XINCDIRS := ../../../../../../../extern_libs_v2/khronos/openmax/include ../../../../../../../extern_libs_v2/wmdrm/common/include ../../../../../../../extern_libs_v2/wmdrm/playready/include ../../../../../../../pvmi/content_policy_manager/plugins/common/include  ../../../../../../playready_utility/include
+
+XINCDIRS += ../../config/common
 
 SRCDIR := ../../src
 INCSRCDIR := ../../src
 
 SRCS := test_pv_frame_metadata_utility.cpp \
         test_pv_frame_metadata_utility_testset1.cpp \
-        test_pv_frame_metadata_utility_testset_januscpm.cpp
-
-LIBS :=  pvframemetadatautility \
+        test_pv_frame_metadata_utility_testset_wmdrmcpm.cpp
+        
+LIBS := pvframemetadatautility \
         colorconvert \
         pvplayer_engine \
         pvfileoutputnode \
@@ -170,7 +172,12 @@ LIBS :=  pvframemetadatautility \
         pvmpeg2ffparsernode \
         pvmpeg2ff \
         pvmpeg2ffrecognizer \
-        mpeg2recognizer_utility
+        mpeg2recognizer_utility \
+	pv_m3u_parser \
+	pvcommonparsernode \
+	wavparser \
+	amrparser \
+	audioparser
 
 
 SYSLIBS += $(SYS_THREAD_LIB)
@@ -179,6 +186,6 @@ TEST_ARGS := -all
 
 SOURCE_ARGS := -source ../../../../../../../extern_libs_v2/wmdrmmd/samples/MD220x176_96_384s_clear_wmv.asf 
 
-
+include $(LOCAL_PATH)/playready.mk
 include $(MK)/prog.mk
 

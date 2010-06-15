@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,10 @@
  */
 #ifndef PV_PLAYER_TYPES_H_INCLUDED
 #define PV_PLAYER_TYPES_H_INCLUDED
+
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
 
 /**
  * An enumeration of the major states of the pvPlayer engine.
@@ -71,7 +75,7 @@ typedef union PVPPlaybackPositionValueUnion
     uint8 smpte_value[4];
     uint8 percent_value;
     uint32 samplenum_value;
-    uint32 datapos_value;
+    TOsclFileOffset datapos_value;
 } _PVPPlaybackPositionValueUnion;
 
 typedef enum _PVPPlaybackPositionUnit

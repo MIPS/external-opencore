@@ -52,7 +52,10 @@
 #include "impeg4file.h"
 #endif
 
-FILE* file;
+#ifndef UT_H_INCLUDED
+#include "ut.h"
+#endif
+
 
 // Default input settings
 const uint32 KVideoBitrate = 52000;
@@ -175,17 +178,17 @@ void PVAuthorEngineTest::test()
                 MM_Stats_t* stats = auditCB.pAudit->MM_GetStats("");
                 if (stats)
                 {
-                    fprintf(file, "  Mem stats: TotalAllocs(%d), TotalBytes(%d),\n             AllocFailures(%d), AllocLeak(%d)\n",
+                    fprintf(iStdOut, "  Mem stats: TotalAllocs(%d), TotalBytes(%d),\n             AllocFailures(%d), AllocLeak(%d)\n",
                             stats->totalNumAllocs - iTotalAlloc, stats->totalNumBytes - iTotalBytes, stats->numAllocFails - iAllocFails, stats->numAllocs - iNumAllocs);
                 }
                 else
                 {
-                    fprintf(file, "Retrieving memory statistics after running test case failed! Memory statistics result is not available.\n");
+                    fprintf(iStdOut, "Retrieving memory statistics after running test case failed! Memory statistics result is not available.\n");
                 }
             }
             else
             {
-                fprintf(file, "Memory audit not available! Memory statistics result is not available.\n");
+                fprintf(iStdOut, "Memory audit not available! Memory statistics result is not available.\n");
             }
 #endif
         }
@@ -206,12 +209,12 @@ void PVAuthorEngineTest::test()
             }
             else
             {
-                fprintf(file, "Retrieving memory statistics before running test case failed! Memory statistics result would be invalid.\n");
+                fprintf(iStdOut, "Retrieving memory statistics before running test case failed! Memory statistics result would be invalid.\n");
             }
         }
         else
         {
-            fprintf(file, "Memory audit not available! Memory statistics result would be invalid.\n");
+            fprintf(iStdOut, "Memory audit not available! Memory statistics result would be invalid.\n");
         }
 #endif
         if (iNextTestCase > iLastTest)
@@ -226,7 +229,7 @@ void PVAuthorEngineTest::test()
                     || (iNextTestCase == CompressedLongetivityTestBegin) || (CompressedNormalTestEnd == iNextTestCase)
                     || (iNextTestCase == KCompressed_Errorhandling_TestBegin))
             {
-                fprintf(file, "\nPlace Holder Not actual testcase %d: ", iNextTestCase);
+                fprintf(iStdOut, "\nPlace Holder Not actual testcase %d: ", iNextTestCase);
                 iNextTestCase++;//go to next test
             }
             if ((iNextTestCase >= CompressedNormalTestEnd && iNextTestCase <= CompressedLongetivityTestBegin) && (iLastTest >= CompressedLongetivityTestBegin))
@@ -241,12 +244,12 @@ void PVAuthorEngineTest::test()
             }//stop at last test of selected range.
             else if ((Compressed_LongetivityTestEnd == iNextTestCase) || (KCompressed_Errorhandling_TestEnd == iNextTestCase))
             {
-                fprintf(file, "\nPlace Holder Not actual testcase %d: ", iNextTestCase);
+                fprintf(iStdOut, "\nPlace Holder Not actual testcase %d: ", iNextTestCase);
                 iNextTestCase = Invalid_Test;
             }
             else
             {
-                fprintf(file, "\nStarting Test %d: ", iNextTestCase);
+                fprintf(iStdOut, "\nStarting Test %d: ", iNextTestCase);
                 InitLoggerScheduler();
             }
         }
@@ -268,11 +271,11 @@ void PVAuthorEngineTest::test()
                 OSCL_TRY(err, sched->StartScheduler(););
 #endif
                 uint32 time  = OsclTickCount::TicksToMsec(OsclTickCount::TickCount()) - m_starttime;
-                fprintf(file, "  Time taken by the test:  %d\n", time);
+                fprintf(iStdOut, "  Time taken by the test:  %d\n", time);
             }
             else
             {
-                fprintf(file, "ERROR! Scheduler is not available. Test case could not run.");
+                fprintf(iStdOut, "ERROR! Scheduler is not available. Test case could not run.");
                 iNextTestCase++;
             }
         }
@@ -534,8 +537,8 @@ void PVAuthorEngineTest::CompleteTest(test_case &tc)
     test_result tr = tc.last_result();
     tr.set_elapsed_time(OsclTickCount::TicksToMsec(OsclTickCount::TickCount()) - m_starttime);
     m_last_result.add_result(tr);
-    fprintf(file, "  Successes %d, Failures %d\n", tr.success_count(), tr.failures().size());
-    fflush(file);
+    fprintf(iStdOut, "  Successes %d, Failures %d\n", tr.success_count(), tr.failures().size());
+    fflush(iStdOut);
 
     // Go to next test
     ++iNextTestCase;
@@ -1776,8 +1779,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
                 aSdkInfo.iLabel.get_cstr(), aSdkInfo.iDate);
     }
 
-    file = filehandle;
-    fprintf(file, "PVAuthorEngine Unit Test\n\n");
+    fprintf(filehandle, "PVAuthorEngine Unit Test\n\n");
 
     bool oPrintDetailedMemLeakInfo = false;
     FindMemMgmtRelatedCmdLineParams(command_line, oPrintDetailedMemLeakInfo, filehandle);
@@ -1790,7 +1792,7 @@ int local_main(FILE* filehandle, cmd_line* command_line)
     //Show any exception.
     if (err != 0)
     {
-        fprintf(file, "Error!  Leave %d\n", err);
+        fprintf(filehandle, "Error!  Leave %d\n", err);
     }
 #if USE_OMX_ENC_NODE
     OMX_MasterDeinit();
@@ -1806,15 +1808,15 @@ int local_main(FILE* filehandle, cmd_line* command_line)
             MM_Stats_t *stats = auditCB.pAudit->MM_GetStats("");
             if (stats)
             {
-                fprintf(file, "\nMemory Stats:\n");
-                fprintf(file, "  peakNumAllocs %d\n", stats->peakNumAllocs);
-                fprintf(file, "  peakNumBytes %d\n", stats->peakNumBytes);
-                fprintf(file, "  totalNumAllocs %d\n", stats->totalNumAllocs);
-                fprintf(file, "  totalNumBytes %d\n", stats->totalNumBytes);
-                fprintf(file, "  numAllocFails %d\n", stats->numAllocFails);
+                fprintf(filehandle, "\nMemory Stats:\n");
+                fprintf(filehandle, "  peakNumAllocs %d\n", stats->peakNumAllocs);
+                fprintf(filehandle, "  peakNumBytes %d\n", stats->peakNumBytes);
+                fprintf(filehandle, "  totalNumAllocs %d\n", stats->totalNumAllocs);
+                fprintf(filehandle, "  totalNumBytes %d\n", stats->totalNumBytes);
+                fprintf(filehandle, "  numAllocFails %d\n", stats->numAllocFails);
                 if (stats->numAllocs)
                 {
-                    fprintf(file, "  ERROR: Memory Leaks! numAllocs %d, numBytes %d\n", stats->numAllocs, stats->numBytes);
+                    fprintf(filehandle, "  ERROR: Memory Leaks! numAllocs %d, numBytes %d\n", stats->numAllocs, stats->numBytes);
                 }
             }
             uint32 leaks = auditCB.pAudit->MM_GetNumAllocNodes();
@@ -1823,22 +1825,22 @@ int local_main(FILE* filehandle, cmd_line* command_line)
                 retVal = 1;
                 if (oPrintDetailedMemLeakInfo)
                 {
-                    fprintf(file, "ERROR: %d Memory leaks detected!\n", leaks);
+                    fprintf(filehandle, "ERROR: %d Memory leaks detected!\n", leaks);
                     MM_AllocQueryInfo*info = auditCB.pAudit->MM_CreateAllocNodeInfo(leaks);
                     uint32 leakinfo = auditCB.pAudit->MM_GetAllocNodeInfo(info, leaks, 0);
                     if (leakinfo != leaks)
                     {
-                        fprintf(file, "ERROR: Leak info is incomplete.\n");
+                        fprintf(filehandle, "ERROR: Leak info is incomplete.\n");
                     }
                     for (uint32 ii = 0; ii < leakinfo; ii++)
                     {
-                        fprintf(file, "Leak Info:\n");
-                        fprintf(file, "  allocNum %d\n", info[ii].allocNum);
-                        fprintf(file, "  fileName %s\n", info[ii].fileName);
-                        fprintf(file, "  lineNo %d\n", info[ii].lineNo);
-                        fprintf(file, "  size %d\n", info[ii].size);
-                        fprintf(file, "  pMemBlock 0x%x\n", (uint32)info[ii].pMemBlock);
-                        fprintf(file, "  tag %s\n", info[ii].tag);
+                        fprintf(filehandle, "Leak Info:\n");
+                        fprintf(filehandle, "  allocNum %d\n", info[ii].allocNum);
+                        fprintf(filehandle, "  fileName %s\n", info[ii].fileName);
+                        fprintf(filehandle, "  lineNo %d\n", info[ii].lineNo);
+                        fprintf(filehandle, "  size %d\n", info[ii].size);
+                        fprintf(filehandle, "  pMemBlock %p\n", info[ii].pMemBlock);
+                        fprintf(filehandle, "  tag %s\n", info[ii].tag);
                     }
                     auditCB.pAudit->MM_ReleaseAllocNodeInfo(info);
                 }
@@ -2019,7 +2021,7 @@ void FindSourceFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
         // Unknown so set to unknown try to have the player engine recognize
         else
         {
-            fprintf(file, "Source type unknown so setting to unknown and have the player engine recognize it\n");
+            fprintf(aFile, "Source type unknown so setting to unknown and have the player engine recognize it\n");
             aInputFileFormatType = PVMF_MIME_FORMAT_UNKNOWN;
         }
     }
@@ -2423,54 +2425,6 @@ void FindXmlResultsFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator
     }
 }
 
-void WriteInitialXmlSummary(OSCL_HeapString<OsclMemAllocator> &xmlresultsfile)
-{
-    // Only print an xml summary if requested.
-    if (xmlresultsfile.get_size() > 0)
-    {
-        Oscl_File xmlfile(0);
-        Oscl_FileServer iFileServer;
-        iFileServer.Connect();
-        if (0 == xmlfile.Open(xmlresultsfile.get_str(), Oscl_File::MODE_READWRITE | Oscl_File::MODE_TEXT, iFileServer))
-        {
-            xml_test_interpreter xml_interp;
-            _STRING xml_results = xml_interp.unexpected_termination_interpretation("PVAuthorEngineUnitTest");
-            xmlfile.Write(xml_results.c_str(), sizeof(char), oscl_strlen(xml_results.c_str()));
-            xmlfile.Close();
-            iFileServer.Close();
-        }
-        else
-        {
-            fprintf(file, "ERROR: Failed to open XML test summary log file: %s!\n", xmlresultsfile.get_cstr());
-        }
-    }
-}
-
-
-void WriteFinalXmlSummary(OSCL_HeapString<OsclMemAllocator> &xmlresultsfile, const test_result& result)
-{
-    // Print out xml summary if requested
-    if (xmlresultsfile.get_size() > 0)
-    {
-        Oscl_File xmlfile(0);
-        Oscl_FileServer iFileServer;
-        iFileServer.Connect();
-        if (0 == xmlfile.Open(xmlresultsfile.get_str(), Oscl_File::MODE_READWRITE | Oscl_File::MODE_TEXT, iFileServer))
-        {
-            xml_test_interpreter xml_interp;
-            _STRING xml_results = xml_interp.interpretation(result, "PVAuthorEngineUnitTest");
-            fprintf(file, "\nWrote XML test summary to: %s.\n", xmlresultsfile.get_cstr());
-            xmlfile.Write(xml_results.c_str(), sizeof(char), oscl_strlen(xml_results.c_str()));
-            xmlfile.Close();
-            iFileServer.Close();
-        }
-        else
-        {
-            fprintf(file, "ERROR: Failed to open XML test summary log file: %s!\n", xmlresultsfile.get_cstr());
-        }
-    }
-}
-
 
 OSCL_HeapString<OsclMemAllocator> FindComposerType(OSCL_HeapString<OsclMemAllocator> aFileName, FILE* aFile)
 {
@@ -2494,18 +2448,19 @@ OSCL_HeapString<OsclMemAllocator> FindComposerType(OSCL_HeapString<OsclMemAlloca
 
 int RunCompressedTest(cmd_line *aCommandLine, int32 &iFirstTest, int32 &iLastTest, FILE *afilehandle)
 {
-    int retVal = 1;
-    file = afilehandle;
-    int32 err;
+    OSCL_HeapString<OsclMemAllocator> xmlresultsfile;
+    FindXmlResultsFile(aCommandLine, xmlresultsfile, afilehandle);
 
-    OSCL_HeapString<OsclMemAllocator> audiofilenameinfo = NULL;
-    OSCL_HeapString<OsclMemAllocator> videofilenameinfo = NULL;
-    OSCL_HeapString<OsclMemAllocator> textfilenameinfo = NULL;
-    OSCL_HeapString<OsclMemAllocator> outputfilenameinfo = NULL;
+    FILE* pOutputStream = 0;
+    UT::CM::InitializeReporting("PVAuthorEngineUnitTest", xmlresultsfile, afilehandle, pOutputStream);
 
-    OSCL_HeapString<OsclMemAllocator> audioconfigfilename = NULL;
-    OSCL_HeapString<OsclMemAllocator> videoconfigfilename = NULL;
-    OSCL_HeapString<OsclMemAllocator> xmlresultsfile = NULL;
+    OSCL_HeapString<OsclMemAllocator> audiofilenameinfo;
+    OSCL_HeapString<OsclMemAllocator> videofilenameinfo;
+    OSCL_HeapString<OsclMemAllocator> textfilenameinfo;
+    OSCL_HeapString<OsclMemAllocator> outputfilenameinfo;
+
+    OSCL_HeapString<OsclMemAllocator> audioconfigfilename;
+    OSCL_HeapString<OsclMemAllocator> videoconfigfilename;
     AVTConfig aAVTConfig;
 
     //Hard Coded Audio/Video values
@@ -2520,16 +2475,14 @@ int RunCompressedTest(cmd_line *aCommandLine, int32 &iFirstTest, int32 &iLastTes
     // Check -audio, -video and -output tag if user wants to use command line given compressed inputs
     if (iFirstTest == iLastTest)
     {
-        FindAudioSourceFile(aCommandLine, audiofilenameinfo, file);
+        FindAudioSourceFile(aCommandLine, audiofilenameinfo, pOutputStream);
 
-        FindVideoSourceFile(aCommandLine, videofilenameinfo, file);
+        FindVideoSourceFile(aCommandLine, videofilenameinfo, pOutputStream);
 
-        FindTextSourceFile(aCommandLine, textfilenameinfo, aAVTConfig.iTextLogFile, aAVTConfig.iTextConfigFile,  file);
+        FindTextSourceFile(aCommandLine, textfilenameinfo, aAVTConfig.iTextLogFile, aAVTConfig.iTextConfigFile, pOutputStream);
 
-        FindOutputFile(aCommandLine, outputfilenameinfo, file);
+        FindOutputFile(aCommandLine, outputfilenameinfo, pOutputStream);
     }
-
-    FindXmlResultsFile(aCommandLine, xmlresultsfile, file);
 
     PVAETestInputType aAudioInputType = INVALID_INPUT_TYPE; // param1
     PVAETestInputType aVideoInputType = INVALID_INPUT_TYPE; // param2
@@ -2557,7 +2510,7 @@ int RunCompressedTest(cmd_line *aCommandLine, int32 &iFirstTest, int32 &iLastTes
                                       aAVTConfig,
                                       audioconfigfilename,
                                       videoconfigfilename,
-                                      file) == false)
+                                      pOutputStream) == false)
         {
             return 1;
         }
@@ -2566,18 +2519,19 @@ int RunCompressedTest(cmd_line *aCommandLine, int32 &iFirstTest, int32 &iLastTes
     if ((iLastTest >= CompressedLongetivityTestBegin) && (iFirstTest <= Compressed_LongetivityTestEnd))
 
     {
-        FindAuthoringTime(aCommandLine, AuthoringTime, file);
+        FindAuthoringTime(aCommandLine, AuthoringTime, pOutputStream);
         aAVTConfig.iLoopingEnable = true;
     }
 
-    fprintf(file, "  \nInput audio file name:%s\n  Input video filename:%s\n  Output filename:%s \n", audiofilenameinfo.get_cstr(), videofilenameinfo.get_cstr(), outputfilenameinfo.get_cstr());
-    fprintf(file, "  Audio Configfile name:%s\n  Video Configfilename:%s\n", audioconfigfilename.get_cstr(), videoconfigfilename.get_cstr());
-    fprintf(file, "  Test case range %d to %d\n", iFirstTest, iLastTest);
+    fprintf(pOutputStream, "  \nInput audio file name:%s\n  Input video filename:%s\n  Output filename:%s \n", audiofilenameinfo.get_cstr(), videofilenameinfo.get_cstr(), outputfilenameinfo.get_cstr());
+    fprintf(pOutputStream, "  Audio Configfile name:%s\n  Video Configfilename:%s\n", audioconfigfilename.get_cstr(), videoconfigfilename.get_cstr());
+    fprintf(pOutputStream, "  Test case range %d to %d\n", iFirstTest, iLastTest);
+
+    int retVal = 1;
+    int32 err;
 
     OSCL_TRY(err,
-             WriteInitialXmlSummary(xmlresultsfile);
-
-             PVAuthorEngineTestSuite* testSuite     = new PVAuthorEngineTestSuite(file, iFirstTest, iLastTest,
+             PVAuthorEngineTestSuite* ts = new PVAuthorEngineTestSuite(pOutputStream, iFirstTest, iLastTest,
                      audiofilenameinfo.get_cstr(), videofilenameinfo.get_cstr(), textfilenameinfo.get_cstr(),
                      outputfilenameinfo.get_cstr(), aAVTConfig,
                      aAudioInputType, aVideoInputType, aTextInputType,
@@ -2586,23 +2540,19 @@ int RunCompressedTest(cmd_line *aCommandLine, int32 &iFirstTest, int32 &iLastTes
 
              const uint32 starttick = OsclTickCount::TickCount();   // get start time
 
-             testSuite->run_test();                         // run author engine test
+             ts->run_test();                         // run author engine test
 
-             test_result tr = testSuite->last_result();
+             test_result tr = ts->last_result();
              tr.set_elapsed_time(OsclTickCount::TicksToMsec(OsclTickCount::TickCount()) - OsclTickCount::TicksToMsec(starttick));
-             WriteFinalXmlSummary(xmlresultsfile, tr);
-             text_test_interpreter interp;
-             _STRING rs = interp.interpretation(tr);
-             fprintf(file, "%s", rs.c_str());
+             UT::CM::FinalizeReporting("PVAuthorEngineUnitTest", xmlresultsfile, tr, afilehandle, pOutputStream);;
              retVal = (int)(tr.success_count() != tr.total_test_count());
-
-             delete testSuite;
-             testSuite = NULL;
+             delete ts;
+             ts = 0;
             );
     // end if statement if ((iFirstTest <= CompressedNormalTestEnd))
     if (err != OSCL_ERR_NONE)
     {
-        fprintf(file, "ERROR: Leave Occurred! Reason %d \n", err);
+        fprintf(afilehandle, "ERROR: Leave Occurred! Reason %d \n", err);
         return 1;
     }
     return retVal;
@@ -2611,9 +2561,11 @@ int RunCompressedTest(cmd_line *aCommandLine, int32 &iFirstTest, int32 &iLastTes
 
 int RunUnCompressedTest(cmd_line *aCommandLine, int32 &aFirstTest, int32 &aLastTest, FILE *afilehandle)
 {
-    int retVal = 1;
-    file = afilehandle;
-    int32 err;
+    OSCL_HeapString<OsclMemAllocator> xmlresultsfile;
+    FindXmlResultsFile(aCommandLine, xmlresultsfile, afilehandle);
+
+    FILE* pOutputStream = 0;
+    UT::CM::InitializeReporting("PVAuthorEngineUnitTest", xmlresultsfile, afilehandle, pOutputStream);
 
     OSCL_HeapString<OsclMemAllocator> filenameinfo;
     OSCL_HeapString<OsclMemAllocator> outputfilenameinfo;
@@ -2625,25 +2577,23 @@ int RunUnCompressedTest(cmd_line *aCommandLine, int32 &aFirstTest, int32 &aLastT
     PVMediaInputAuthorEngineTestParam testparam;
 
 
-    FindSourceFile(aCommandLine, filenameinfo, inputformattype, file);
-    FindOutputFile(aCommandLine, outputfilenameinfo, file);
-    FindVideoEncoder(aCommandLine, videoencoderinfo, file);
-    FindAudioEncoder(aCommandLine, audioencoderinfo, file);
-    FindAacAudioType(aCommandLine, aacencoderprofileinfo, file);
+    FindSourceFile(aCommandLine, filenameinfo, inputformattype, pOutputStream);
+    FindOutputFile(aCommandLine, outputfilenameinfo, pOutputStream);
+    FindVideoEncoder(aCommandLine, videoencoderinfo, pOutputStream);
+    FindAudioEncoder(aCommandLine, audioencoderinfo, pOutputStream);
+    FindAacAudioType(aCommandLine, aacencoderprofileinfo, pOutputStream);
 
-    OSCL_HeapString<OsclMemAllocator> xmlresultsfile;
-    FindXmlResultsFile(aCommandLine, xmlresultsfile, file);
 
     testparam.iFirstTest = aFirstTest;
     testparam.iLastTest = aLastTest;
-    testparam.iMediainputParam.iFile = file;
+    testparam.iMediainputParam.iFile = pOutputStream;
     testparam.iMediainputParam.iInputFormat = inputformattype;
     testparam.iMediainputParam.iIPFileInfo = filenameinfo;
     testparam.iMediainputParam.iOPFileInfo = outputfilenameinfo;
     testparam.iMediainputParam.iVideoEncInfo = videoencoderinfo;
     testparam.iMediainputParam.iAudioEncInfo = audioencoderinfo;
     testparam.iMediainputParam.iAacEncProfileInfo = aacencoderprofileinfo;
-    testparam.iMediainputParam.iComposerInfo = FindComposerType(outputfilenameinfo, file);
+    testparam.iMediainputParam.iComposerInfo = FindComposerType(outputfilenameinfo, pOutputStream);
 
     //setting the default configuration info
     testparam.iMediainputParam.iAudioBitrate = 0;
@@ -2652,12 +2602,12 @@ int RunUnCompressedTest(cmd_line *aCommandLine, int32 &aFirstTest, int32 &aLastT
     testparam.iMediainputParam.iSamplingRate = 0;
 
     //checks authoring mode (-realtime).By default is ASAP mode
-    testparam.iMediainputParam.iRealTimeAuthoring = FindAuthoringMode(aCommandLine, file);
+    testparam.iMediainputParam.iRealTimeAuthoring = FindAuthoringMode(aCommandLine, pOutputStream);
 
     // Load video configuration
-    if (FindAVIConfigFile(aCommandLine, configfileinfo, file))
+    if (FindAVIConfigFile(aCommandLine, configfileinfo, pOutputStream))
     {
-        LoadAVIConfiguration(configfileinfo, testparam, file);
+        LoadAVIConfiguration(configfileinfo, testparam, pOutputStream);
     }
 
     //iAsap is used when we run testcases in one go i.e running TC 0 to TC 569
@@ -2670,90 +2620,88 @@ int RunUnCompressedTest(cmd_line *aCommandLine, int32 &aFirstTest, int32 &aLastT
         testparam.iAsap = true;
     }
 
-    FindAuthoringTime(aCommandLine, testparam.iMediainputParam.iLoopTime, file);
+    FindAuthoringTime(aCommandLine, testparam.iMediainputParam.iLoopTime, pOutputStream);
     if ((PVMediaInput_ErrorHandling_Test_WrongFormat != aFirstTest)
             && (PVMediaInput_ErrorHandling_Test_WrongIPFileName != aFirstTest))
     {
         if (testparam.iMediainputParam.iIPFileInfo.get_size() != 0)
         {
-            fprintf(file, "Input File: %s\n", testparam.iMediainputParam.iIPFileInfo.get_cstr());
+            fprintf(pOutputStream, "Input File: %s\n", testparam.iMediainputParam.iIPFileInfo.get_cstr());
         }
         else
         {
-            fprintf(file, "Input File: DEFAULT (Refer TC documentation)\n");
+            fprintf(pOutputStream, "Input File: DEFAULT (Refer TC documentation)\n");
         }
         if (testparam.iMediainputParam.iOPFileInfo.get_size() != 0)
         {
-            fprintf(file, "Output File: %s\n", testparam.iMediainputParam.iOPFileInfo.get_cstr());
+            fprintf(pOutputStream, "Output File: %s\n", testparam.iMediainputParam.iOPFileInfo.get_cstr());
         }
         else
         {
-            fprintf(file, "Output File: DEFAULT (Refer TC documentation)\n");
+            fprintf(pOutputStream, "Output File: DEFAULT (Refer TC documentation)\n");
         }
         if (testparam.iMediainputParam.iVideoEncInfo.get_size() != 0)
         {
-            fprintf(file, "Video Encoder: %s\n", testparam.iMediainputParam.iVideoEncInfo.get_cstr());
+            fprintf(pOutputStream, "Video Encoder: %s\n", testparam.iMediainputParam.iVideoEncInfo.get_cstr());
         }
         else
         {
             //we set it to M4V here, later on this might get overridden in some testcases
             testparam.iMediainputParam.iVideoEncInfo = SOURCENAME_PREPEND_STRING;
             testparam.iMediainputParam.iVideoEncInfo += KMp4EncMimeType;
-            fprintf(file, "Video Encoder: DEFAULT (Refer TC documentation)\n");
+            fprintf(pOutputStream, "Video Encoder: DEFAULT (Refer TC documentation)\n");
         }
         if (testparam.iMediainputParam.iAudioEncInfo.get_size() != 0)
         {
-            fprintf(file, "Audio Encoder: %s\n", testparam.iMediainputParam.iAudioEncInfo.get_cstr());
+            fprintf(pOutputStream, "Audio Encoder: %s\n", testparam.iMediainputParam.iAudioEncInfo.get_cstr());
         }
         else
         {
             //we set it to AMR here, later on this might get overridden in some testcases
             testparam.iMediainputParam.iAudioEncInfo = SOURCENAME_PREPEND_STRING;
             testparam.iMediainputParam.iAudioEncInfo += KAMRNbEncMimeType;
-            fprintf(file, "Audio Encoder: DEFAULT (Refer TC documentation)\n");
+            fprintf(pOutputStream, "Audio Encoder: DEFAULT (Refer TC documentation)\n");
         }
         if (testparam.iMediainputParam.iAacEncProfileInfo.get_size() != 0)
         {
-            fprintf(file, "AAC Encoder Profile: %s\n", testparam.iMediainputParam.iAacEncProfileInfo.get_cstr());
+            fprintf(pOutputStream, "AAC Encoder Profile: %s\n", testparam.iMediainputParam.iAacEncProfileInfo.get_cstr());
         }
         else
         {
             //we set it to AAC LC here, later on this might get overridden in some testcases
             testparam.iMediainputParam.iAacEncProfileInfo = SOURCENAME_PREPEND_STRING;
             testparam.iMediainputParam.iAacEncProfileInfo += KAACEncProfileType;
-            fprintf(file, "Aac Encoder Profile: DEFAULT (Refer TC documentation)\n");
+            fprintf(pOutputStream, "Aac Encoder Profile: DEFAULT (Refer TC documentation)\n");
         }
         if (testparam.iMediainputParam.iComposerInfo.get_size() != 0)
         {
-            fprintf(file, "Composer: %s\n", testparam.iMediainputParam.iComposerInfo.get_cstr());
+            fprintf(pOutputStream, "Composer: %s\n", testparam.iMediainputParam.iComposerInfo.get_cstr());
         }
         else
         {
-            fprintf(file, "Composer: DEFAULT (Refer TC documentation)\n");
+            fprintf(pOutputStream, "Composer: DEFAULT (Refer TC documentation)\n");
         }
     }
 
+    int retVal = 1;
+    int32 err;
 
     OSCL_TRY(err,
-             WriteInitialXmlSummary(xmlresultsfile);
-             PVMediaInputAuthorEngineTestSuite* test_suite =
+             PVMediaInputAuthorEngineTestSuite* ts =
                  new PVMediaInputAuthorEngineTestSuite(testparam);
              const uint32 starttick = OsclTickCount::TickCount();   // get start time
-             test_suite->run_test();
-             test_result tr = test_suite->last_result();
+             ts->run_test();
+             test_result tr = ts->last_result();
              tr.set_elapsed_time(OsclTickCount::TicksToMsec(OsclTickCount::TickCount()) - OsclTickCount::TicksToMsec(starttick));
-             WriteFinalXmlSummary(xmlresultsfile, tr);
-             text_test_interpreter interp;
-             _STRING rs = interp.interpretation(tr);
-             fprintf(file, "%s", rs.c_str());
+             UT::CM::FinalizeReporting("PVAuthorEngineUnitTest", xmlresultsfile, tr, afilehandle, pOutputStream);
              retVal = (int)(tr.success_count() != tr.total_test_count());
 
-             delete test_suite;
-             test_suite = NULL;
+             delete ts;
+             ts = 0;
             );
     if (err != OSCL_ERR_NONE)
     {
-        fprintf(file, "ERROR: Leave Occurred! Reason %d \n", err);
+        fprintf(afilehandle, "ERROR: Leave Occurred! Reason %d \n", err);
         return 1;
     }
     return retVal;
@@ -2764,22 +2712,21 @@ int RunUnCompressedTest(cmd_line *aCommandLine, int32 &aFirstTest, int32 &aLastT
 int _local_main(FILE *filehandle, cmd_line *command_line)
 {
     int retVal = 1;
-    file = filehandle;
 
     // Print out the extension for help if no argument
     int32 firsttest, lasttest;
     if (command_line->get_count() == 0)
     {
-        fprintf(file, "****Specify '-help' to get CommandLine arguments information options****\n\n");
-        fprintf(file, "****Running all Author test cases****\n\n");
+        fprintf(filehandle, "****Specify '-help' to get CommandLine arguments information options****\n\n");
+        fprintf(filehandle, "****Running all Author test cases****\n\n");
         //return 0;
         firsttest = 0;
         lasttest = KUnCompressed_Errorhandling_TestEnd;
     }
     else
     {
-        FindTestRange(command_line, firsttest, lasttest, file);
-        fprintf(file, "[test range from: %d to: %d]\n\n", firsttest, lasttest);
+        FindTestRange(command_line, firsttest, lasttest, filehandle);
+        fprintf(filehandle, "[test range from: %d to: %d]\n\n", firsttest, lasttest);
     }
 
     PVMFFormatType formaterr = PVMF_MIME_FORMAT_UNKNOWN;
@@ -2790,25 +2737,25 @@ int _local_main(FILE *filehandle, cmd_line *command_line)
     if (Invalid_Test == firsttest)
     {
         //functions called to print command line arguments.
-        fprintf(file, "CMD LINE ARGS FOR COMPRESSED TESTS [test range from: %d to: %d]\n\n", AMR_Input_AOnly_3gpTest, Compressed_LongetivityTestEnd);
+        fprintf(filehandle, "CMD LINE ARGS FOR COMPRESSED TESTS [test range from: %d to: %d]\n\n", AMR_Input_AOnly_3gpTest, Compressed_LongetivityTestEnd);
 
-        FindAudioSourceFile(command_line, filenameinfo, file);
-        FindVideoSourceFile(command_line, filenameinfo, file);
-        FindOutputFile(command_line, filenameinfo, file);
-        FindAuthoringTime(command_line, (uint32&)err, file);
+        FindAudioSourceFile(command_line, filenameinfo, filehandle);
+        FindVideoSourceFile(command_line, filenameinfo, filehandle);
+        FindOutputFile(command_line, filenameinfo, filehandle);
+        FindAuthoringTime(command_line, (uint32&)err, filehandle);
 
-        fprintf(file, "CMD LINE ARGS FOR UNCOMPRESSED TESTS(with AVI/WAV inputs)[test range from %d to %d]\n\n", UnCompressed_NormalTestBegin, UnCompressed_LongetivityTestEnd);
+        fprintf(filehandle, "CMD LINE ARGS FOR UNCOMPRESSED TESTS(with AVI/WAV inputs)[test range from %d to %d]\n\n", UnCompressed_NormalTestBegin, UnCompressed_LongetivityTestEnd);
 
-        FindSourceFile(command_line, filenameinfo, (PVMFFormatType&)formaterr, file);
-        FindOutputFile(command_line, filenameinfo, file);
-        FindVideoEncoder(command_line, filenameinfo, file);
-        FindAudioEncoder(command_line, filenameinfo, file);
-        FindAacAudioType(command_line, filenameinfo, file);
-        FindAuthoringTime(command_line, (uint32&)err, file);
-        FindXmlResultsFile(command_line, filenameinfo, file);
+        FindSourceFile(command_line, filenameinfo, (PVMFFormatType&)formaterr, filehandle);
+        FindOutputFile(command_line, filenameinfo, filehandle);
+        FindVideoEncoder(command_line, filenameinfo, filehandle);
+        FindAudioEncoder(command_line, filenameinfo, filehandle);
+        FindAacAudioType(command_line, filenameinfo, filehandle);
+        FindAuthoringTime(command_line, (uint32&)err, filehandle);
+        FindXmlResultsFile(command_line, filenameinfo, filehandle);
 
-        fprintf(file, "NO CMD LINE ARGS WERE REQUIRED TO RUN COMPRESSED ERROR HANDLING TESTS [test range from:%d to %d]\n\n", KCompressed_Errorhandling_TestBegin, KCompressed_Errorhandling_TestEnd);
-        fprintf(file, "NO CMD LINE ARGS WERE REQUIRED TO RUN UNCOMPRESSED ERROR HANDLING TESTS [test range from:%d to %d]\n\n", KUnCompressed_Errorhandling_TestBegin, KUnCompressed_Errorhandling_TestEnd);
+        fprintf(filehandle, "NO CMD LINE ARGS WERE REQUIRED TO RUN COMPRESSED ERROR HANDLING TESTS [test range from:%d to %d]\n\n", KCompressed_Errorhandling_TestBegin, KCompressed_Errorhandling_TestEnd);
+        fprintf(filehandle, "NO CMD LINE ARGS WERE REQUIRED TO RUN UNCOMPRESSED ERROR HANDLING TESTS [test range from:%d to %d]\n\n", KUnCompressed_Errorhandling_TestBegin, KUnCompressed_Errorhandling_TestEnd);
 
         return 0;
     }
@@ -2816,7 +2763,7 @@ int _local_main(FILE *filehandle, cmd_line *command_line)
     ///////////////////////Normal Compressed tests//////////////////////
     if (firsttest <= Compressed_LongetivityTestEnd)
     {
-        retVal = RunCompressedTest(command_line, firsttest, lasttest, file);
+        retVal = RunCompressedTest(command_line, firsttest, lasttest, filehandle);
     }
     ///////End of Normal Compressed tests///////////////////////////////////////
 
@@ -2824,7 +2771,7 @@ int _local_main(FILE *filehandle, cmd_line *command_line)
     if (((firsttest >= UnCompressed_NormalTestBegin) && (firsttest <= UnCompressed_LongetivityTestEnd))
             || ((firsttest <= UnCompressed_NormalTestBegin) && (lasttest > UnCompressed_NormalTestBegin)))
     {
-        retVal = RunUnCompressedTest(command_line, firsttest, lasttest, file);
+        retVal = RunUnCompressedTest(command_line, firsttest, lasttest, filehandle);
     }
     //////////////////End of AVI normal and longetivity tests////////////////////
 
@@ -2838,7 +2785,7 @@ int _local_main(FILE *filehandle, cmd_line *command_line)
             firsttest = KCompressed_Errorhandling_TestBegin;
         }
 
-        retVal = RunCompressedTest(command_line, firsttest, lasttest, file);
+        retVal = RunCompressedTest(command_line, firsttest, lasttest, filehandle);
 
     }//////////////////Compressed Errorhandling test end/////////////////////
 
@@ -2851,7 +2798,7 @@ int _local_main(FILE *filehandle, cmd_line *command_line)
         {
             firsttest = KUnCompressed_Errorhandling_TestBegin;
         }
-        retVal = RunUnCompressedTest(command_line, firsttest, lasttest, file);
+        retVal = RunUnCompressedTest(command_line, firsttest, lasttest, filehandle);
 
     }
     return retVal;

@@ -107,7 +107,7 @@ MP3ErrorType MP3Utils::SeektoOffset(PVFile *aFP, int32 aOffset, Oscl_File::seek_
             break;
     }
 
-    if (aOffset <= 0 || currFileSize >= (uint32) aOffset)
+    if (aOffset <= 0 || (int32)currFileSize >= aOffset)
     {
         if (aFP->Seek(seekOffset, Oscl_File::SEEKCUR) != 0)
         {

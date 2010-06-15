@@ -37,6 +37,11 @@
 #include "oscl_string_containers.h"
 #endif
 
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
+
 class PVDlCfgFile
 {
     public:
@@ -104,29 +109,29 @@ class PVDlCfgFile
             return iProxyPort;
         };
 
-        void SetMaxAllowedFileSize(uint32 aFileSize)
+        void SetMaxAllowedFileSize(TOsclFileOffset aFileSize)
         {
             iMaxAllowedFileSize = aFileSize;
         };
-        uint32 GetMaxAllowedFileSize(void)
+        TOsclFileOffset GetMaxAllowedFileSize(void)
         {
             return iMaxAllowedFileSize;
         };
 
-        void SetOverallFileSize(uint32 aFileSize)
+        void SetOverallFileSize(TOsclFileOffset aFileSize)
         {
             iOverallFileSize = aFileSize;
         };
-        uint32 GetOverallFileSize(void)
+        TOsclFileOffset GetOverallFileSize(void)
         {
             return iOverallFileSize;
         };
 
-        void SetCurrentFileSize(uint32 aFileSize)
+        void SetCurrentFileSize(TOsclFileOffset aFileSize)
         {
             iCurrentFileSize = aFileSize;
         };
-        uint32 GetCurrentFileSize(void)
+        TOsclFileOffset GetCurrentFileSize(void)
         {
             return iCurrentFileSize;
         };
@@ -384,11 +389,11 @@ class PVDlCfgFile
         uint32  iProxyPort;
 
         //client only downloads the clip which is smaller than this size
-        uint32 iMaxAllowedFileSize;
+        TOsclFileOffset iMaxAllowedFileSize;
         //the file size after it is completly downloaded.
-        uint32  iOverallFileSize;
+        TOsclFileOffset  iOverallFileSize;
         //for FastTrack, this would be the accumulated bytes downloaded
-        uint32  iCurrentFileSize;
+        TOsclFileOffset  iCurrentFileSize;
         //flag of whether to have content length for the previous download
         // boolean variable, but intentionally choose uint32 instead of bool, for consistency with other variables
         uint32 iHasContentLength;

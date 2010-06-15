@@ -19,6 +19,10 @@
 #ifndef PVMF_PROTOCOLENGINE_NODE_COMMON_H_INCLUDED
 #define PVMF_PROTOCOLENGINE_NODE_COMMON_H_INCLUDED
 
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
 #ifndef OSCL_MEM_MEMPOOL_H_INCLUDED
 #include "oscl_mem_mempool.h"
 #endif
@@ -87,8 +91,9 @@
 #endif
 
 
-//#define PVMF_PROTOCOL_ENGINE_LOG_MS_STREAMING_OUTPUT
 
+
+//#define PVMF_PROTOCOL_ENGINE_LOG_MS_STREAMING_OUTPUT
 
 
 //memory allocator type for this node.
@@ -154,7 +159,8 @@ enum NetworkTimerType
     WALL_CLOCK_TIMER_ID,
     // a timer to report buffer status periodically, say at every up to 2sec, at least buffer status has to be reported
     // which tells our system is running
-    BUFFER_STATUS_TIMER_ID
+    BUFFER_STATUS_TIMER_ID,
+    PLAYLIST_REFRESH_TIMER_ID
 };
 
 enum PVHttpProtocol
@@ -229,6 +235,7 @@ class ProtocolContainerObserver
         virtual PVMFNodeCommand* FindPendingCmd(int32 aCmdId) = 0;
         virtual void CompletePendingCmd(PVMFStatus aStatus) = 0;
         virtual void ReportEvent(PVMFEventType aEventType, OsclAny* aEventData = NULL, const int32 aEventCode = 0, OsclAny* aEventLocalBuffer = NULL, const uint32 aEventLocalBufferSize = 0) = 0;
+        virtual void ReportEvent(PVMFAsyncEvent& aEvent) = 0;
         virtual void NewIncomingMessage(PVMFSharedMediaMsgPtr& aMsg) = 0;
 };
 
@@ -1072,7 +1079,7 @@ class PVMFProtocolEngineNodeOutput
             OSCL_UNUSED_ARG(aFrag);
             return false;
         };
-        virtual void setContentLength(uint32 aLength)
+        virtual void setContentLength(TOsclFileOffset aLength)
         {
             OSCL_UNUSED_ARG(aLength);
         };
@@ -1088,18 +1095,18 @@ class PVMFProtocolEngineNodeOutput
         {
             ;
         }
-        virtual bool seekDataStream(const uint32 aSeekOffset)
+        virtual bool seekDataStream(const TOsclFileOffset aSeekOffset)
         {
             OSCL_UNUSED_ARG(aSeekOffset);
             return true;
         };
 
         // get info from output object to serve as the basis for status update
-        uint32 getCurrentOutputSize()
+        TOsclFileOffset getCurrentOutputSize()
         {
             return iCurrTotalOutputSize;
         }
-        void setCurrentOutputSize(const uint32 aCurrentSize)
+        void setCurrentOutputSize(const TOsclFileOffset aCurrentSize)
         {
             iCurrTotalOutputSize = aCurrentSize;    // used in resume download
         }
@@ -1108,9 +1115,9 @@ class PVMFProtocolEngineNodeOutput
             return 0;
         }
         // in case of progressive streaming, the following two sizes mean available cache size and maximum cache size
-        virtual uint32 getAvailableOutputSize()
+        virtual TOsclFileOffset getAvailableOutputSize()
         {
-            return 0xFFFFFFFF;
+            return (TOsclFileOffset)MAX_TOSCLFILEOFFSET_VALUE;
         }
         virtual uint32 getMaxAvailableOutputSize()
         {
@@ -1156,7 +1163,7 @@ class PVMFProtocolEngineNodeOutput
         PVMFProtocolEngineNodeOutputObserver *iObserver;
 
         // current total output size, serves as the basis for status update
-        uint32 iCurrTotalOutputSize;
+        TOsclFileOffset iCurrTotalOutputSize;
 
         PVLogger* iLogger;
         PVLogger* iDataPathLogger;
@@ -1179,7 +1186,8 @@ enum DownloadControlSupportObjectType
     DownloadControlSupportObjectType_MetaDataObject,
     DownloadControlSupportObjectType_ManifestFileContainer,
     DownloadControlSupportObjectType_AudioDataPath,
-    DownloadControlSupportObjectType_VideoDataPath
+    DownloadControlSupportObjectType_VideoDataPath,
+    DownloadControlSupportObjectType_PlayListFileContainer
 };
 
 // The intent of introducing this download ocntrol interface is to make streaming counterpart as a NULL object,
@@ -1201,7 +1209,7 @@ class DownloadControlInterface
         // From PVMFDownloadProgressInterface API
         virtual void setClipDuration(const uint32 aClipDurationMsec) = 0;
         // for auto-resume control for resume download
-        virtual void setPrevDownloadSize(uint32 aPrevDownloadSize = 0) = 0;
+        virtual void setPrevDownloadSize(TOsclFileOffset aPrevDownloadSize = 0) = 0;
         virtual void clear() = 0;
 
         // for progressive playback repositioning
@@ -1496,11 +1504,11 @@ class InterfacingObjectContainer
         }
 
         // set and get file size
-        void setFileSize(const uint32 aFileSize)
+        void setFileSize(const TOsclFileOffset aFileSize)
         {
             iFileSize = aFileSize;
         }
-        uint32 getFileSize() const
+        TOsclFileOffset getFileSize() const
         {
             return iFileSize;
         }
@@ -1744,7 +1752,7 @@ class InterfacingObjectContainer
         char iHttpHeaderBuffer[PVHTTPDOWNLOADOUTPUT_CONTENTDATA_CHUNKSIZE+1]; // to hold http header
         uint32 iHttpHeaderLength;
         // get from GetFileSize()
-        uint32 iFileSize;
+        TOsclFileOffset iFileSize;
 
         // socket connect flags
         bool iCurrSocketConnection; // true means the connection is up and on ; false means the connection is downn

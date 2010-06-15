@@ -143,10 +143,13 @@
 #include "oscl_string_utils.h"
 #endif
 
+#ifndef UT_H_INCLUDED
+#include "ut.h"
+#endif
+
 
 
 static bool bHelp = false;
-FILE *file;
 
 template <typename T>
 class CmdLinePopulator
@@ -174,8 +177,8 @@ class CmdLinePopulator
         }
 
 
-        bool PopulateCmdLine(Oscl_File* apFile, cmd_line* apCommandLine);
-        bool PopulateCmdLine(oscl_wchar* apFileName, cmd_line* apCommandLine);
+        bool PopulateCmdLine(Oscl_File* apFile, cmd_line* apCommandLine, FILE*);
+        bool PopulateCmdLine(oscl_wchar* apFileName, cmd_line* apCommandLine, FILE*);
 
         uint32 iNumArgs;
         enum ArgListAttributes
@@ -186,13 +189,13 @@ class CmdLinePopulator
         T* iArgArr[MAXNUMARGS];
 };
 
-template <typename T> bool CmdLinePopulator<T>::PopulateCmdLine(Oscl_File* apFile, cmd_line* apCommandLine)
+template <typename T> bool CmdLinePopulator<T>::PopulateCmdLine(Oscl_File* apFile, cmd_line* apCommandLine, FILE* aFileHandleSTDOUT)
 {
 
     return false;
 }
 
-template <typename T> bool CmdLinePopulator<T>::PopulateCmdLine(oscl_wchar* apFileName, cmd_line* apCommandLine)
+template <typename T> bool CmdLinePopulator<T>::PopulateCmdLine(oscl_wchar* apFileName, cmd_line* apCommandLine, FILE* aFileHandleSTDOUT)
 {
     int32 err = 0;
     bool retval = false;
@@ -334,7 +337,7 @@ template <typename T> bool CmdLinePopulator<T>::PopulateCmdLine(oscl_wchar* apFi
             {
                 char filename[255] = {0};
                 oscl_UnicodeToUTF8(apFileName, oscl_strlen(apFileName), filename, 255);
-                fprintf(file, "Could not locate the file %s", filename);
+                fprintf(aFileHandleSTDOUT, "Could not locate the file %s", filename);
             }
             OSCL_DELETE(pFilePtr);
         }
@@ -791,7 +794,7 @@ void FindSourceFile(cmd_line* command_line, OSCL_HeapString<OsclMemAllocator> &a
         // Unknown so set to unknown try to have the player engine recognize
         else
         {
-            fprintf(file, "Source type unknown so setting to unknown and have the player engine recognize it\n");
+            fprintf(aFile, "Source type unknown so setting to unknown and have the player engine recognize it\n");
             aInputFileFormatType = PVMF_MIME_FORMAT_UNKNOWN;
         }
     }
@@ -1922,53 +1925,6 @@ void FindMaxTestTimeTimerTimeout(cmd_line* command_line, uint32& maxTestTime, FI
     }
 }
 
-void WriteInitialXmlSummary(OSCL_HeapString<OsclMemAllocator> &xmlresultsfile)
-{
-    // Only print an xml summary if requested.
-    if (xmlresultsfile.get_size() > 0)
-    {
-        Oscl_File xmlfile(0);
-        Oscl_FileServer iFileServer;
-        iFileServer.Connect();
-        if (0 == xmlfile.Open(xmlresultsfile.get_str(), Oscl_File::MODE_READWRITE | Oscl_File::MODE_TEXT, iFileServer))
-        {
-            xml_test_interpreter xml_interp;
-            _STRING xml_results = xml_interp.unexpected_termination_interpretation("PVPlayerEngineUnitTest");
-            xmlfile.Write(xml_results.c_str(), sizeof(char), oscl_strlen(xml_results.c_str()));
-            xmlfile.Close();
-            iFileServer.Close();
-        }
-        else
-        {
-            fprintf(file, "ERROR: Failed to open XML test summary log file: %s!\n", xmlresultsfile.get_cstr());
-        }
-    }
-}
-
-void WriteFinalXmlSummary(OSCL_HeapString<OsclMemAllocator> &xmlresultsfile, const test_result& result)
-{
-    // Only print an xml summary if requested.
-    if (xmlresultsfile.get_size() > 0)
-    {
-        Oscl_File xmlfile(0);
-        Oscl_FileServer iFileServer;
-        iFileServer.Connect();
-        if (0 == xmlfile.Open(xmlresultsfile.get_str(), Oscl_File::MODE_READWRITE | Oscl_File::MODE_TEXT, iFileServer))
-        {
-            xml_test_interpreter xml_interp;
-            _STRING xml_results = xml_interp.interpretation(result, "PVPlayerEngineUnitTest");
-            fprintf(file, "\nWrote XML test summary to: %s.\n", xmlresultsfile.get_cstr());
-            xmlfile.Write(xml_results.c_str(), sizeof(char), oscl_strlen(xml_results.c_str()));
-            xmlfile.Close();
-            iFileServer.Close();
-        }
-        else
-        {
-            fprintf(file, "ERROR: Failed to open XML test summary log file: %s!\n", xmlresultsfile.get_cstr());
-        }
-    }
-}
-
 
 int _local_main(FILE *filehandle, cmd_line* command_line, bool&);
 
@@ -1983,15 +1939,6 @@ int local_main(FILE *filehandle, cmd_line* command_line)
     OMX_MasterInit();
 
 
-    {
-        PVSDKInfo aSdkInfo;
-        PVPlayerInterface::GetSDKInfo(aSdkInfo);
-        fprintf(filehandle, "Version: %s generated on %x\n\n",               // display SDK info
-                aSdkInfo.iLabel.get_cstr(), aSdkInfo.iDate);
-        fprintf(filehandle, "Test Program for pvPlayer engine class.\n");
-    }
-
-
     bool oPrintDetailedMemLeakInfo = false;
 
     //Run the test under a trap
@@ -2003,7 +1950,7 @@ int local_main(FILE *filehandle, cmd_line* command_line)
     //Show any exception.
     if (err != 0)
     {
-        fprintf(file, "Error!  Leave %d\n", err);
+        fprintf(filehandle, "Error!  Leave %d\n", err);
     }
     //Cleanup
     OMX_MasterDeinit();
@@ -2017,15 +1964,15 @@ int local_main(FILE *filehandle, cmd_line* command_line)
         MM_Stats_t *stats = auditCB.pAudit->MM_GetStats("");
         if (stats)
         {
-            fprintf(file, "\nMemory Stats:\n");
-            fprintf(file, "  peakNumAllocs %d\n", stats->peakNumAllocs);
-            fprintf(file, "  peakNumBytes %d\n", stats->peakNumBytes);
-            fprintf(file, "  totalNumAllocs %d\n", stats->totalNumAllocs);
-            fprintf(file, "  totalNumBytes %d\n", stats->totalNumBytes);
-            fprintf(file, "  numAllocFails %d\n", stats->numAllocFails);
+            fprintf(filehandle, "\nMemory Stats:\n");
+            fprintf(filehandle, "  peakNumAllocs %d\n", stats->peakNumAllocs);
+            fprintf(filehandle, "  peakNumBytes %d\n", stats->peakNumBytes);
+            fprintf(filehandle, "  totalNumAllocs %d\n", stats->totalNumAllocs);
+            fprintf(filehandle, "  totalNumBytes %d\n", stats->totalNumBytes);
+            fprintf(filehandle, "  numAllocFails %d\n", stats->numAllocFails);
             if (stats->numAllocs)
             {
-                fprintf(file, "  ERROR: Memory Leaks! numAllocs %d, numBytes %d\n", stats->numAllocs, stats->numBytes);
+                fprintf(filehandle, "  ERROR: Memory Leaks! numAllocs %d, numBytes %d\n", stats->numAllocs, stats->numBytes);
             }
         }
         uint32 leaks = auditCB.pAudit->MM_GetNumAllocNodes();
@@ -2034,23 +1981,23 @@ int local_main(FILE *filehandle, cmd_line* command_line)
             result = 1;
             if (oPrintDetailedMemLeakInfo)
             {
-                fprintf(file, "ERROR: %d Memory leaks detected!\n", leaks);
+                fprintf(filehandle, "ERROR: %d Memory leaks detected!\n", leaks);
                 MM_AllocQueryInfo*info = auditCB.pAudit->MM_CreateAllocNodeInfo(leaks);
                 uint32 leakinfo = auditCB.pAudit->MM_GetAllocNodeInfo(info, leaks, 0);
                 if (leakinfo != leaks)
                 {
-                    fprintf(file, "ERROR: Leak info is incomplete.\n");
+                    fprintf(filehandle, "ERROR: Leak info is incomplete.\n");
                 }
                 for (uint32 i = 0; i < leakinfo; i++)
                 {
-                    fprintf(file, "Leak Info:\n");
-                    fprintf(file, "  allocNum %d\n", info[i].allocNum);
-                    fprintf(file, "  fileName %s\n", info[i].fileName);
-                    fprintf(file, "  lineNo %d\n", info[i].lineNo);
-                    fprintf(file, "  size %d\n", info[i].size);
+                    fprintf(filehandle, "Leak Info:\n");
+                    fprintf(filehandle, "  allocNum %d\n", info[i].allocNum);
+                    fprintf(filehandle, "  fileName %s\n", info[i].fileName);
+                    fprintf(filehandle, "  lineNo %d\n", info[i].lineNo);
+                    fprintf(filehandle, "  size %d\n", info[i].size);
                     uint32 ptrAddr = (uint32)info[i].pMemBlock;
-                    fprintf(file, "  pMemBlock 0x%x\n", ptrAddr);
-                    fprintf(file, "  tag %s\n", info[i].tag);
+                    fprintf(filehandle, "  pMemBlock 0x%x\n", ptrAddr);
+                    fprintf(filehandle, "  tag %s\n", info[i].tag);
                 }
                 auditCB.pAudit->MM_ReleaseAllocNodeInfo(info);
             }
@@ -2065,32 +2012,38 @@ int local_main(FILE *filehandle, cmd_line* command_line)
     return result;
 }
 
-int CreateTestSuiteAndRun(char *aFileName,
-                          PVMFFormatType aFileType,
-                          int32 aFirstTest,
-                          int32 aLastTest,
-                          bool aCompV,
-                          bool aCompA,
-                          bool aFileInput,
-                          bool aBCS,
-                          bool aLogCfgFile,
-                          int32 aLogLevel,
-                          int32 aLogNode,
-                          int32 aLogText,
-                          int32 aLogMem,
-                          int32 aFileFormatType,
-                          bool aProxyEnabled,
-                          uint32 aDownloadRateInKbps,
-                          bool aSplitLogFile,
-                          OSCL_HeapString<OsclMemAllocator> &afilenameinfo,
-                          CmdLinePopulator<char> *aasciiCmdLinePopulator,
-                          CmdLinePopulator<oscl_wchar> *awcharCmdLinePopulator,
-                          test_result *atestResult,
-                          uint32 aMaxTestTimeTimerTimeout,
-                          bool aRunPRUtilityNoSchedulerTC)
+int CreateTestSuiteAndRun
+(
+    FILE* aFileHandleStdOut,
+    char *aFileName,
+    PVMFFormatType aFileType,
+    int32 aFirstTest,
+    int32 aLastTest,
+    bool aCompV,
+    bool aCompA,
+    bool aFileInput,
+    bool aBCS,
+    bool aLogCfgFile,
+    int32 aLogLevel,
+    int32 aLogNode,
+    int32 aLogText,
+    int32 aLogMem,
+    int32 aFileFormatType,
+    bool aProxyEnabled,
+    uint32 aDownloadRateInKbps,
+    bool aSplitLogFile,
+    OSCL_HeapString<OsclMemAllocator> &afilenameinfo,
+    CmdLinePopulator<char> *aasciiCmdLinePopulator,
+    CmdLinePopulator<oscl_wchar> *awcharCmdLinePopulator,
+    test_result *atestResult,
+    uint32 aMaxTestTimeTimerTimeout,
+    bool aRunPRUtilityNoSchedulerTC
+)
 {
+    FILE*& STDOUT = aFileHandleStdOut;
     int retval = 1;
-    pvplayer_engine_test_suite* pTestSuite = new pvplayer_engine_test_suite(aFileName,
+    pvplayer_engine_test_suite* pTestSuite = new pvplayer_engine_test_suite(STDOUT,
+            aFileName,
             aFileType,
             aFirstTest,
             aLastTest,
@@ -2117,7 +2070,7 @@ int CreateTestSuiteAndRun(char *aFileName,
         pTestSuite->run_test();                           // run the engine test
 
         double time = OsclTickCount::TicksToMsec(OsclTickCount::TickCount()) - OsclTickCount::TicksToMsec(starttick);
-        fprintf(file, "Total Execution time for file %s is : %f seconds", afilenameinfo.get_cstr(), time / 1000);
+        fprintf(STDOUT, "Total Execution time for file %s is : %f seconds", afilenameinfo.get_cstr(), time / 1000);
 
         test_result tr = pTestSuite->last_result();
         tr.set_elapsed_time(static_cast<int>(time));
@@ -2129,7 +2082,7 @@ int CreateTestSuiteAndRun(char *aFileName,
     }
     else
     {
-        fprintf(file, "ERROR! pvplayer_engine_test_suite could not be instantiated.\n");
+        fprintf(STDOUT, "ERROR! pvplayer_engine_test_suite could not be instantiated.\n");
     }
 
     if (0 != aasciiCmdLinePopulator)
@@ -2150,14 +2103,12 @@ int CreateTestSuiteAndRun(char *aFileName,
 
 int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMemLeakInfo)
 {
-    file = filehandle;
-
     CmdLinePopulator<char> *asciiCmdLinePopulator = NULL;
     CmdLinePopulator<oscl_wchar> *wcharCmdLinePopulator = NULL;
     // Print out the extension for help if no argument
     if (command_line->get_count() == 0)
     {
-        fprintf(file, "  No command line options available.. goin to read the cmdlineparamsconfigfile.txt(if exists) file to get input \n\n");
+        fprintf(filehandle, "  No command line options available.. goin to read the cmdlineparamsconfigfile.txt(if exists) file to get input \n\n");
         //Check if theres input file available to get the params...
         oscl_wchar cmdLineParamsConfigFile[255] = {0};
         oscl_strncpy(cmdLineParamsConfigFile, SOURCENAME_PREPEND_WSTRING, oscl_strlen(SOURCENAME_PREPEND_WSTRING));
@@ -2167,19 +2118,32 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
         if (command_line->is_wchar())
         {
             wcharCmdLinePopulator = new CmdLinePopulator<oscl_wchar>();
-            wcharCmdLinePopulator->PopulateCmdLine(cmdLineParamsConfigFile, command_line);
+            wcharCmdLinePopulator->PopulateCmdLine(cmdLineParamsConfigFile, command_line, filehandle);
         }
         else
         {
             asciiCmdLinePopulator = new CmdLinePopulator<char>();
-            asciiCmdLinePopulator->PopulateCmdLine(cmdLineParamsConfigFile, command_line);
+            asciiCmdLinePopulator->PopulateCmdLine(cmdLineParamsConfigFile, command_line, filehandle);
         }
 
         if (command_line->get_count() == 0)
         {
             bHelp = true;
-            fprintf(file, "  Specify '-help' first to get help information on options\n\n");
+            fprintf(filehandle, "  Specify '-help' first to get help information on options\n\n");
         }
+    }
+
+    OSCL_HeapString<OsclMemAllocator> xmlresultsfile;
+    FindXmlResultsFile(command_line, xmlresultsfile, filehandle);
+    FILE* file = 0;
+    UT::CM::InitializeReporting("PVPlayerEngineUnitTest", xmlresultsfile, filehandle, file);
+
+    {
+        PVSDKInfo aSdkInfo;
+        PVPlayerInterface::GetSDKInfo(aSdkInfo);
+        fprintf(file, "Version: %s generated on %x\n\n",               // display SDK info
+                aSdkInfo.iLabel.get_cstr(), aSdkInfo.iDate);
+        fprintf(file, "Test Program for pvPlayer engine class.\n");
     }
 
     OSCL_HeapString<OsclMemAllocator> filenameinfo;
@@ -2191,7 +2155,7 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
     filenameinfo += DEFAULTSOURCEFILENAME;
     inputformattype = DEFAULTSOURCEFORMATTYPE;
 
-    FindMemMgmtRelatedCmdLineParams(command_line, aPrintDetailedMemLeakInfo, filehandle);
+    FindMemMgmtRelatedCmdLineParams(command_line, aPrintDetailedMemLeakInfo, file);
     //FindSourceType(command_line, filenameinfo, inputformattype, iFileFormatType, file); //Added with an additional argument
     FindSourceFile(command_line, filenameinfo, inputformattype, file);
 
@@ -2237,10 +2201,6 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
     uint32 downloadrateinkbps = 0;
     FindProxyEnabled(command_line, proxyenabled, file, downloadrateinkbps);
 
-    OSCL_HeapString<OsclMemAllocator> xmlresultsfile;
-    FindXmlResultsFile(command_line, xmlresultsfile, file);
-    WriteInitialXmlSummary(xmlresultsfile);
-
     uint32 maxTestTimeTimerTimeout = 0;
     FindMaxTestTimeTimerTimeout(command_line, maxTestTimeTimerTimeout, file);
 
@@ -2260,7 +2220,8 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
     if (!ListFound)
     {
         //regular testing, when a range is being provided
-        result = CreateTestSuiteAndRun(filenameinfo.get_str(),
+        result = CreateTestSuiteAndRun(file,
+                                       filenameinfo.get_str(),
                                        inputformattype,
                                        firsttest,
                                        lasttest,
@@ -2293,7 +2254,8 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
         {
             it = List.begin();
             fprintf(file, "Remaining PVTests %s", (*it)->GetTestName().get_cstr());
-            tempResult = CreateTestSuiteAndRun(filenameinfo.get_str(),
+            tempResult = CreateTestSuiteAndRun(file,
+                                               filenameinfo.get_str(),
                                                inputformattype,
                                                (*it)->GetFirstTest(),
                                                (*it)->GetLastTest(),
@@ -2326,106 +2288,113 @@ int _local_main(FILE *filehandle, cmd_line *command_line, bool& aPrintDetailedMe
             List.erase(List.begin());
         }
     }
-    //display results summary
-    WriteFinalXmlSummary(xmlresultsfile, tr);
-    text_test_interpreter interp;
-    _STRING rs = interp.interpretation(tr);
-    fprintf(file, "%s", rs.c_str());
+
+    UT::CM::FinalizeReporting("PVPlayerEngineUnitTest", xmlresultsfile, tr, filehandle, file);
     return result;
 }
 
 
-pvplayer_engine_test_suite::pvplayer_engine_test_suite(char *aFileName,
-        PVMFFormatType aFileType,
-        int32 aFirstTest,
-        int32 aLastTest,
-        bool aCompV,
-        bool aCompA,
-        bool aFileInput,
-        bool aBCS,
-        bool aLogCfgFile,
-        int32 aLogLevel,
-        int32 aLogNode,
-        int32 aLogText,
-        int32 aLogMem,
-        int32 aFileFormatType,
-        bool aProxyEnabled,
-        uint32 aDownloadRateInKbps,
-        bool aSplitLogFile,
-        uint32 aMaxTestTimeTimerTimeout,
-        bool aRunPRUtilityNoSchedulerTC)
+pvplayer_engine_test_suite::pvplayer_engine_test_suite
+(
+    FILE* aFilehandleSTDOUT,
+    char *aFileName,
+    PVMFFormatType aFileType,
+    int32 aFirstTest,
+    int32 aLastTest,
+    bool aCompV,
+    bool aCompA,
+    bool aFileInput,
+    bool aBCS,
+    bool aLogCfgFile,
+    int32 aLogLevel,
+    int32 aLogNode,
+    int32 aLogText,
+    int32 aLogMem,
+    int32 aFileFormatType,
+    bool aProxyEnabled,
+    uint32 aDownloadRateInKbps,
+    bool aSplitLogFile,
+    uint32 aMaxTestTimeTimerTimeout,
+    bool aRunPRUtilityNoSchedulerTC
+)
 {
-    adopt_test_case(new pvplayer_engine_test(aFileName,
-                    aFileType,
-                    aFirstTest,
-                    aLastTest,
-                    aCompV,
-                    aCompA,
-                    aFileInput,
-                    aBCS,
-                    aLogCfgFile,
-                    aLogLevel,
-                    aLogNode,
-                    aLogText,
-                    aLogMem,
-                    aFileFormatType,
-                    aProxyEnabled,
-                    aDownloadRateInKbps,
-                    aSplitLogFile,
-                    aMaxTestTimeTimerTimeout,
-                    aRunPRUtilityNoSchedulerTC));
+    adopt_test_case(new pvplayer_engine_test(
+                        aFilehandleSTDOUT,
+                        aFileName,
+                        aFileType,
+                        aFirstTest,
+                        aLastTest,
+                        aCompV,
+                        aCompA,
+                        aFileInput,
+                        aBCS,
+                        aLogCfgFile,
+                        aLogLevel,
+                        aLogNode,
+                        aLogText,
+                        aLogMem,
+                        aFileFormatType,
+                        aProxyEnabled,
+                        aDownloadRateInKbps,
+                        aSplitLogFile,
+                        aMaxTestTimeTimerTimeout,
+                        aRunPRUtilityNoSchedulerTC));
 }
 
 
 
-pvplayer_engine_test::pvplayer_engine_test(char *aFileName,
-        PVMFFormatType aFileType,
-        int32 aFirstTest,
-        int32 aLastTest,
-        bool aCompV,
-        bool aCompA,
-        bool aFileInput,
-        bool aBCS,
-        bool aLogCfgFile,
-        int32 aLogLevel,
-        int32 aLogNode,
-        int32 aLogFile,
-        int32 aLogMem,
-        int32 aFileFormatType,
-        bool aProxyEnabled,
-        uint32 aDownloadRateInKbps,
-        bool aSplitLogFile,
-        uint32 aMaxTestTimeTimerTimeout,
-        bool aRunPRUtilityNoSchedulerTC)
+pvplayer_engine_test::pvplayer_engine_test
+(
+    FILE* aFileHandleSTDOUT,
+    char *aFileName,
+    PVMFFormatType aFileType,
+    int32 aFirstTest,
+    int32 aLastTest,
+    bool aCompV,
+    bool aCompA,
+    bool aFileInput,
+    bool aBCS,
+    bool aLogCfgFile,
+    int32 aLogLevel,
+    int32 aLogNode,
+    int32 aLogFile,
+    int32 aLogMem,
+    int32 aFileFormatType,
+    bool aProxyEnabled,
+    uint32 aDownloadRateInKbps,
+    bool aSplitLogFile,
+    uint32 aMaxTestTimeTimerTimeout,
+    bool aRunPRUtilityNoSchedulerTC
+)
+        : iFileHandleSTDOUT(aFileHandleSTDOUT)
+        , iFileName(aFileName)
+        , iFileType(aFileType)
+        , iCurrentTestNumber(0)
+        , iCurrentTest(0)
+        , iFirstTest(aFirstTest)
+        , iLastTest(aLastTest)
+        , iCompressedVideoOutput(aCompV)
+        , iCompressedAudioOutput(aCompA)
+        , iFileInput(aFileInput)
+        , iBCS(aBCS)
+        , iProxyEnabled(aProxyEnabled)
+        , iLogCfgFile(aLogCfgFile)
+        , iLogLevel(aLogLevel)
+        , iLogNode(aLogNode)
+        , iLogFile(aLogFile)
+        , iLogMem(aLogMem)
+        , iSplitLogFile(aSplitLogFile)
+        , iTotalAlloc(0)
+        , iTotalBytes(0)
+        , iAllocFails(0)
+        , iNumAllocs(0)
+        , iFileFormatType(aFileFormatType)
+        , iDownloadRateInKbps(aDownloadRateInKbps)
+        , iMaxTestTimeTimerTimeout(aMaxTestTimeTimerTimeout)
+        , iRunPRUtilityNoSchedulerTC(aRunPRUtilityNoSchedulerTC)
+        , iTimer(0)
+        , iStarttick(0)
 {
-    iFileName = aFileName;
-    iFileType = aFileType;
-    iCurrentTestNumber = 0;
-    iCurrentTest = NULL;
-    iFirstTest = aFirstTest;
-    iLastTest = aLastTest;
-    iCompressedVideoOutput = aCompV;
-    iCompressedAudioOutput = aCompA;
-    iFileInput = aFileInput;
-    iBCS = aBCS;
-    iLogCfgFile = aLogCfgFile;
-    iLogLevel = aLogLevel;
-    iLogNode = aLogNode;
-    iLogFile = aLogFile;
-    iLogMem = aLogMem;
-    iSplitLogFile = aSplitLogFile;
-    iMaxTestTimeTimerTimeout = aMaxTestTimeTimerTimeout;
-    iTotalAlloc = 0;
-    iTotalBytes = 0;
-    iAllocFails = 0;
-    iNumAllocs = 0;
-    iProxyEnabled = aProxyEnabled;
-    iFileFormatType = aFileFormatType;
-    iDownloadRateInKbps = aDownloadRateInKbps;
-    iRunPRUtilityNoSchedulerTC = aRunPRUtilityNoSchedulerTC;
-    iTimer = NULL;
-    m_starttick = 0;
-
 #ifdef BUILD_N_ARM
     OMX_Init(CONFIG_FILE_NAME);
 #endif
@@ -2627,12 +2596,12 @@ void pvplayer_engine_test::TestCompleted(test_case &tc)
 {
     // Print out the result for this test case
     test_result tr = tc.last_result();
-    tr.set_elapsed_time(OsclTickCount::TicksToMsec(OsclTickCount::TickCount()) - OsclTickCount::TicksToMsec(m_starttick));
+    tr.set_elapsed_time(OsclTickCount::TicksToMsec(OsclTickCount::TickCount()) - OsclTickCount::TicksToMsec(iStarttick));
     m_last_result.add_result(tr);
-    fprintf(file, "Results for Test Case %d:\n", iCurrentTestNumber);
-    fprintf(file, "  Successes %d, Failures %d\n"
+    fprintf(iFileHandleSTDOUT, "Results for Test Case %d:\n", iCurrentTestNumber);
+    fprintf(iFileHandleSTDOUT, "  Successes %d, Failures %d\n"
             , tr.success_count(), tr.failures().size());
-    fflush(file);
+    fflush(iFileHandleSTDOUT);
 
     // Go to next test
     ++iCurrentTestNumber;
@@ -2660,7 +2629,7 @@ void pvplayer_engine_test::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
     {
         if (iCurrentTest != NULL)
         {
-            fprintf(file, "Maximum test time timer timed out after %d seconds while running test #%d!\n",
+            fprintf(iFileHandleSTDOUT, "Maximum test time timer timed out after %d seconds while running test #%d!\n",
                     timeoutInfo, iCurrentTestNumber);
 
             // Mark a test failure
@@ -2673,7 +2642,7 @@ void pvplayer_engine_test::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
         }
         else
         {
-            fprintf(file, "Maximum test time timer timed out after %d seconds.\n",
+            fprintf(iFileHandleSTDOUT, "Maximum test time timer timed out after %d seconds.\n",
                     timeoutInfo);
         }
 
@@ -2688,7 +2657,7 @@ void pvplayer_engine_test::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
     {
         // An unknown timer timed out.  Print a short message and assert to
         // raise awareness of a possible coding error.
-        fprintf(file, "Unknown timer timeout: timerID = %d, timeoutInfo = %d.\n", timerID, timeoutInfo);
+        fprintf(iFileHandleSTDOUT, "Unknown timer timeout: timerID = %d, timeoutInfo = %d.\n", timerID, timeoutInfo);
         OSCL_ASSERT(false);
     }
 }
@@ -2696,6 +2665,8 @@ void pvplayer_engine_test::TimeoutOccurred(int32 timerID, int32 timeoutInfo)
 void pvplayer_engine_test::test()
 {
     bool AtleastOneExecuted = false;
+
+    FILE* file = iFileHandleSTDOUT;
 
     iTotalSuccess = iTotalFail = iTotalError = 0;
     iCurrentTestNumber = iFirstTest;           // specify the starting test case
@@ -3593,6 +3564,13 @@ void pvplayer_engine_test::test()
                 ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("MP4 Progressive Playback Start Pause Resume Seek Stop");
                 break;
 
+            case ProgPlaybackMPEG2UntilEOSTest:
+                testparam.iFileType = PVMF_MIME_DATA_SOURCE_ALS_URL;
+                iCurrentTest = new pvplayer_async_test_ppb_normal(testparam);
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->enablePlayUntilEOS();
+                ((pvplayer_async_test_ppb_normal*)iCurrentTest)->iTestCaseName = _STRLIT_CHAR("MPEG-2 Progressive Playback Until EOS");
+                break;
+
 
             case ShoutcastPlayback5MinuteTest:
                 testparam.iFileType = PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL;
@@ -4003,6 +3981,10 @@ void pvplayer_engine_test::test()
                 break;
 
             case DLA_OpenPlayStop_PlayReadyCPMTest_unprotected_H264_AAC:
+                fprintf(file, "PlayReady CPM tests not enabled\n");
+                break;
+
+            case DLA_OpenPlayStop_PlayReadyCPMTest_verifyOPLLevels:
                 fprintf(file, "PlayReady CPM tests not enabled\n");
                 break;
 
@@ -6577,37 +6559,70 @@ void pvplayer_engine_test::test()
             }
             break;
 
-            case DLA_StreamingOpenPlayUntilEOST_PlayReadyCPMTest:
+            case DLA_StreamingOpenPlayUntilEOST_WMA_PlayReadyCPMTest:
+            {
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+            }
+            break;
+            case DLA_StreamingOpenPlayUntilEOST_WMV_PlayReadyCPMTest:
             {
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
             }
             break;
 
-            case DLA_StreamingOpenPlayPausePlayUntilEOS_PlayReadyCPMTest:
+            case DLA_StreamingOpenPlayPausePlayUntilEOS_WMA_PlayReadyCPMTest:
+            {
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+            }
+            break;
+            case DLA_StreamingOpenPlayPausePlayUntilEOS_WMV_PlayReadyCPMTest:
             {
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
             }
             break;
 
-            case DLA_StreamingOpenPlaySeekPlayUntilEOS_PlayReadyCPMTest:
+            case DLA_StreamingOpenPlaySeekPlayUntilEOS_WMA_PlayReadyCPMTest:
+            {
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+            }
+            break;
+            case DLA_StreamingOpenPlaySeekPlayUntilEOS_WMV_PlayReadyCPMTest:
             {
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
             }
             break;
 
-            case DLA_StreamingMultiplePlayUntilEOS_PlayReadyCPMTest:
+            case DLA_StreamingMultiplePlayUntilEOS_WMA_PlayReadyCPMTest:
             {
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
             }
             break;
 
-            case DLA_StreamingProtocolRollOverTest_PlayReadyCPMTest:
+            case DLA_StreamingMultiplePlayUntilEOS_WMV_PlayReadyCPMTest:
             {
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
             }
             break;
 
-            case DLA_StreamingProtocolRollOverTestWithUnknownURLType_PlayReadyCPMTest:
+            case DLA_StreamingProtocolRollOverTest_WMA_PlayReadyCPMTest:
+            {
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+            }
+            break;
+
+            case DLA_StreamingProtocolRollOverTest_WMV_PlayReadyCPMTest:
+            {
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+            }
+            break;
+
+            case DLA_StreamingProtocolRollOverTestWithUnknownURLType_WMA_PlayReadyCPMTest:
+            {
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+            }
+            break;
+
+            case DLA_StreamingProtocolRollOverTestWithUnknownURLType_WMV_PlayReadyCPMTest:
             {
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
             }
@@ -7235,7 +7250,13 @@ void pvplayer_engine_test::test()
             }
             break;
 
-            case DLA_StreamingCancelAcquireLicense_PlayReadyCPMTest:
+            case DLA_StreamingCancelAcquireLicense_WMA_PlayReadyCPMTest:
+            {
+                fprintf(file, "PlayReady Streaming tests not enabled\n");
+            }
+            break;
+
+            case DLA_StreamingCancelAcquireLicense_WMV_PlayReadyCPMTest:
             {
                 fprintf(file, "PlayReady Streaming tests not enabled\n");
             }
@@ -7929,7 +7950,7 @@ void pvplayer_engine_test::test()
                     fprintf(file, "Started maximum test time timer for %d seconds.\n", iMaxTestTimeTimerTimeout);
                 }
 
-                m_starttick = OsclTickCount::TickCount();   // get start time
+                iStarttick = OsclTickCount::TickCount();   // get start time
                 // Start the scheduler so the test case would run
 #if USE_NATIVE_SCHEDULER
                 // Have PV scheduler use the scheduler native to the system

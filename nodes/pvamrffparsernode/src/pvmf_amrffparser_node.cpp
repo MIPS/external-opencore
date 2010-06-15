@@ -33,6 +33,7 @@ static const char PVAMRMETADATA_NUMTRACKS_KEY[] = "num-tracks";
 static const char PVAMRMETADATA_TRACKINFO_BITRATE_KEY[] = "track-info/bit-rate";
 static const char PVAMRMETADATA_TRACKINFO_SELECTED_KEY[] = "track-info/selected";
 static const char PVAMRMETADATA_TRACKINFO_AUDIO_FORMAT_KEY[] = "track-info/audio/format";
+static const char PVAMRMETADATA_CHANNEL_KEY[] = "channel";
 static const char PVAMRMETADATA_CLIP_TYPE_KEY[] = "clip-type";
 static const char PVAMRMETADATA_LOCAL_CLIP_TYPE_KEY[] = "local";
 static const char PVAMRMETADATA_RANDOM_ACCESS_DENIED_KEY[] = "random-access-denied";
@@ -347,6 +348,29 @@ PVMFStatus PVMFAMRFFParserNode::DoGetNodeMetadataValues()
             }
 
         }
+
+        else if ((oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAMRMETADATA_CHANNEL_KEY) == 0) && iAMRFileInfo.iChannel > 0)
+        {
+            // Channel
+            // Increment the counter for the number of values found so far
+            ++numvalentries;
+            int32 retval = 0;
+            // Create a value entry if past the starting index
+            if (numvalentries > starting_index)
+            {
+                char indexparam[16];
+                oscl_snprintf(indexparam, 16, ";%s" , PVAMRMETADATA_INDEX0);
+                indexparam[15] = '\0';
+                uint32 channel = iAMRFileInfo.iChannel;
+                retval = PVMFCreateKVPUtils::CreateKVPForUInt32Value(KeyVal, PVAMRMETADATA_CHANNEL_KEY, channel);
+            }
+            if (retval != PVMFSuccess && retval != PVMFErrArgument)
+            {
+                break;
+            }
+        }
+
+
         else if ((oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAMRMETADATA_TRACKINFO_SELECTED_KEY) == 0))
         {
             // Increment the counter for the number of values found so far
@@ -1546,6 +1570,12 @@ uint32 PVMFAMRFFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
             // Format
             ++numvalentries;
         }
+        else if ((oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAMRMETADATA_CHANNEL_KEY) == 0) &&
+                 iAMRFileInfo.iChannel > 0)
+        {
+            // Number of Channels
+            ++numvalentries;
+        }
         else if (oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAMRMETADATA_RANDOM_ACCESS_DENIED_KEY) == 0)
         {
             /*
@@ -1705,11 +1735,11 @@ PVMFStatus PVMFAMRFFParserNode::CheckForAMRHeaderAvailability()
          * First check if we have minimum number of bytes to recognize
          * the file and determine the header size.
          */
-        uint32 currCapacity = 0;
+        TOsclFileOffset currCapacity = 0;
         iDataStreamInterface->QueryReadCapacity(iDataStreamSessionID,
                                                 currCapacity);
 
-        if (currCapacity <  AMR_MIN_DATA_SIZE_FOR_RECOGNITION)
+        if (currCapacity < (TOsclFileOffset)AMR_MIN_DATA_SIZE_FOR_RECOGNITION)
         {
             iRequestReadCapacityNotificationID =
                 iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
@@ -1722,7 +1752,7 @@ PVMFStatus PVMFAMRFFParserNode::CheckForAMRHeaderAvailability()
         uint32 headerSize32 =
             Oscl_Int64_Utils::get_uint64_lower32(iAMRHeaderSize);
 
-        if (currCapacity < headerSize32)
+        if (currCapacity < (TOsclFileOffset)headerSize32)
         {
             iRequestReadCapacityNotificationID =
                 iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
@@ -1838,6 +1868,11 @@ PVMFStatus PVMFAMRFFParserNode::InitMetaData()
     if (iAMRFileInfo.iFileSize > 0)
     {
         // Populate the metadata key vector based on info available
+        if (iAMRFileInfo.iChannel > 0)
+        {
+            PushToAvailableMetadataKeysList(PVAMRMETADATA_CHANNEL_KEY);
+
+        }
         PushToAvailableMetadataKeysList(PVAMRMETADATA_NUMTRACKS_KEY);
         if (iAMRFileInfo.iDuration > 0)
         {
@@ -2306,12 +2341,12 @@ void PVMFAMRFFParserNode::CompleteGetMetaDataValues()
     CommandComplete(iCurrentCommand, PVMFSuccess);
 }
 
-void PVMFAMRFFParserNode::setFileSize(const uint32 aFileSize)
+void PVMFAMRFFParserNode::setFileSize(const TOsclFileOffset aFileSize)
 {
-    iDownloadFileSize = aFileSize;
+    iDownloadFileSize = (uint32)aFileSize;
 }
 
-int32 PVMFAMRFFParserNode::convertSizeToTime(uint32 aFileSize, uint32& aNPTInMS)
+int32 PVMFAMRFFParserNode::convertSizeToTime(TOsclFileOffset aFileSize, uint32& aNPTInMS)
 {
     OSCL_UNUSED_ARG(aFileSize);
     OSCL_UNUSED_ARG(aNPTInMS);
@@ -2637,7 +2672,7 @@ PVMFStatus PVMFAMRFFParserNode::RetrieveMediaSample(PVAMRFFNodeTrackPortInfo* aT
                 aTrackInfoPtr->oEOSReached = true;
                 return PVMFSuccess;
             }
-            iDownloadProgressInterface->requestResumeNotification(aTrackInfoPtr->iContinuousTimeStamp,
+            iDownloadProgressInterface->requestResumeNotification((uint32)aTrackInfoPtr->iContinuousTimeStamp,
                     iDownloadComplete);
             iAutoPaused = true;
             PVMF_AMRPARSERNODE_LOGERROR((0, "PVMFAMRParserNode::RetrieveMediaSample() - Auto Pause Triggered - TS=%d", aTrackInfoPtr->iContinuousTimeStamp));

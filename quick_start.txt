@@ -6,7 +6,7 @@ native linux toolchain.
 The following are the steps involved:
   NOTE 1: Assume <opencore> is the directory where you have downloaded the
   OpenCORE codebase
-  NOTE 2: The setup scripts are meant to be used in with the bash shell.
+  NOTE 2: The setup scripts are meant to be used with the bash shell.
     cd <opencore>/build_config/opencore_dynamic
     source setup.sh <opencore>
     make -j

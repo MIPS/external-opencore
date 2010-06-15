@@ -42,6 +42,7 @@
 #ifndef PVMI_KVP_H_INCLUDED
 #include "pvmi_kvp.h"
 #endif
+
 void pv_mediainput_async_test_opencomposestop::StartTest()
 {
     AddToScheduler();
@@ -1484,8 +1485,7 @@ bool pv_mediainput_async_test_opencomposestop::CapConfigSync()
         // set the parameter here
 
         // MIME string here "x-pvmf/encoder/audio/sampling_rate;valtype=uint32"
-        OSCL_StackString<64> paramkey4(_STRLIT_CHAR(MOUT_AUDIO_SAMPLING_RATE_KEY));
-        // MOUT_AUDIO_SAMPLING_RATE_KEY (MACRO defined in "pvmi_kvp.h")
+        OSCL_StackString<64> paramkey4(_STRLIT_CHAR(MIN_AUDIO_SAMPLING_RATE_KEY));
         // for amr encoder node
         paramkvp1.key = paramkey4.get_str();
         paramkvp1.value.int32_value = 8000;
@@ -1512,37 +1512,6 @@ bool pv_mediainput_async_test_opencomposestop::CapConfigSync()
             }
         }
 
-
-        // MIME for video encoder
-        // set the parameter frame width in the node (use combinations for width n height default is 176 by 144)
-
-        // MIME string here "x-pvmf/video/render/output_width;valtype=uint32"
-        OSCL_StackString<64> paramkey5(_STRLIT_CHAR(MOUT_VIDEO_OUTPUT_WIDTH_KEY));
-        // MACRO "MOUT_VIDEO_OUTPUT_WIDTH_KEY" been defined in "pvmi_kvp.h"
-        // for video encoder node
-        paramkvp1.key = paramkey5.get_str();
-        paramkvp1.value.uint32_value = 128;
-        // set the value in node using SetParameterSync f(n) here
-        iAuthorCapConfigIF->setParametersSync(NULL, &paramkvp1, 1, iErrorKVP);
-
-        if (iErrorKVP == NULL)
-        {
-            // Check by calling get
-            PvmiKvp* retparam = NULL;
-            int retnumparam = 0;
-            paramkey1 += _STRLIT_CHAR(";attr=cur");
-            // pass the string
-            // retrieve a MIME string back
-            iAuthorCapConfigIF->getParametersSync(NULL, paramkey5.get_str(), retparam, retnumparam, NULL);
-            if ((retparam != NULL) && (retnumparam == 1))
-            {
-                // release the parameters
-                if (iAuthorCapConfigIF->releaseParameters(NULL, retparam, retnumparam) != PVMFSuccess)
-                {
-                    return false;
-                }
-            }
-        }
 
         // MIME for AVC Encoder
         // set the parameter encoding mode

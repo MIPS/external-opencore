@@ -522,7 +522,7 @@ class MovieAtom : public Atom
 
         uint32 getNumAVCSampleEntries(uint32 trackID);
 
-        int32 getTrackTSStartOffset(uint32& aTSOffset, uint32 aTrackID);
+        int32 getTrackTSStartOffset(TOsclFileOffset& aTSOffset, uint32 aTrackID);
 
 
         OSCL_EXPORT_REF bool isMultipleSampleDescriptionAvailable(uint32 trackID);

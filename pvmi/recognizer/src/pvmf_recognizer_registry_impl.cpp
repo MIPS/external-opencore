@@ -416,7 +416,7 @@ void PVMFRecognizerRegistryImpl::CompleteCurrentRecRegCommand(PVMFStatus aStatus
     }
 }
 
-PVMFStatus PVMFRecognizerRegistryImpl::GetMaxRequiredSizeForRecognition(uint32& aMaxSize)
+PVMFStatus PVMFRecognizerRegistryImpl::GetMaxRequiredSizeForRecognition(TOsclFileOffset& aMaxSize)
 {
     if (iPlugInParamsVec.size() == 0) return PVMFFailure;
     aMaxSize = 0;
@@ -425,7 +425,7 @@ PVMFStatus PVMFRecognizerRegistryImpl::GetMaxRequiredSizeForRecognition(uint32& 
     {
         if ((*it)->iInUse == true)
         {
-            if ((*it)->iMinSizeRequiredForRecognition > aMaxSize)
+            if ((TOsclFileOffset)((*it)->iMinSizeRequiredForRecognition) > aMaxSize)
             {
                 aMaxSize = (*it)->iMinSizeRequiredForRecognition;
             }
@@ -498,7 +498,7 @@ PVMFStatus PVMFRecognizerRegistryImpl::ResetPluginParamsPerRecognizeCmd()
     return status;
 }
 
-PVMFStatus PVMFRecognizerRegistryImpl::GetRequestReadCapacityNotificationID(uint32 aMaxSize, uint32 aCapacity)
+PVMFStatus PVMFRecognizerRegistryImpl::GetRequestReadCapacityNotificationID(TOsclFileOffset aMaxSize, TOsclFileOffset aCapacity)
 {
     int32 errcode = 0;
     OSCL_TRY(errcode,
@@ -521,18 +521,18 @@ PVMFStatus PVMFRecognizerRegistryImpl::CheckForDataAvailability()
     if (iDataStream != NULL)
     {
         PVUuid uuid = PVMIDataStreamSyncInterfaceUuid;
-        uint32 maxSize = 0;
+        TOsclFileOffset maxSize = 0;
         retval = GetMaxRequiredSizeForRecognition(maxSize);
         if (retval == PVMFSuccess)
         {
-            uint32 capacity = 0;
+            TOsclFileOffset capacity = 0;
             PvmiDataStreamStatus status =
                 iDataStream->QueryReadCapacity(iDataStreamSessionID, capacity);
 
             if (capacity < maxSize)
             {
                 // Get total content size to deal with cases where file being recognized is less than maxSize
-                uint32 totalSize = iDataStream->GetContentLength();
+                TOsclFileOffset totalSize = iDataStream->GetContentLength();
                 if ((status == PVDS_END_OF_STREAM) || ((capacity == totalSize) && (capacity != 0)))
                 {
                     LOGINFO((0, "PVMFRecognizerRegistryImpl::CheckForDataAvailability - EOS - TotalSize=%d, Capacity=%d",
@@ -635,12 +635,12 @@ PVMFStatus PVMFRecognizerRegistryImpl::RunRecognitionPass(PVMFRecognizerResult& 
                     {
                         (*it)->iMinSizeRequiredForRecognition += aResult.iAdditionalBytesRequired;
                         //just make sure that recognizer does not need more data than content length
-                        uint32 capacity = 0;
+                        TOsclFileOffset capacity = 0;
                         PvmiDataStreamStatus status =
                             iDataStream->QueryReadCapacity(iDataStreamSessionID, capacity);
-                        uint32 totalSize = iDataStream->GetContentLength();
+                        TOsclFileOffset totalSize = iDataStream->GetContentLength();
                         if ((status == PVDS_END_OF_STREAM) ||
-                                ((capacity == totalSize) && ((*it)->iMinSizeRequiredForRecognition > totalSize)))
+                                ((capacity == totalSize) && ((TOsclFileOffset)(*it)->iMinSizeRequiredForRecognition > totalSize)))
                         {
                             //we pretty much have the complete file and if a recognizer still
                             //cannot make up its mind, then stop using it.

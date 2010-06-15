@@ -294,7 +294,7 @@ private:
     // Finish up a non-async command in such a way that
     // the event loop will keep running.
     void FinishNonAsyncCommand(author_command *ec);
- 
+
     // remove references to configurations
     void removeConfigRefs(author_command *ac);
 
@@ -388,6 +388,8 @@ private:
     int32            mVideo_bitrate_setting;
 
     FILE*       ifpOutput;
+    bool iIsInDevice;
+    int64_t iMaxFileSize;
 };
 
 class AuthorDriverWrapper

@@ -47,6 +47,11 @@
 
 #include "pv_2way_source_and_sinks_lipsync.h"
 
+#ifndef UT_H_INCLUDED
+#include "ut.h"
+#endif
+
+
 
 #define AUD_SRC_PAUSE_DURATION  1
 #define AUD_SRC_RESUME_DURATION 5
@@ -1410,13 +1415,12 @@ bool test_wrapper()
 
     OSCL_HeapString<OsclMemAllocator> xmlresultsfile;
     FindXmlResultsFile(global_cmd_line, xmlresultsfile, PV2WayUtil::GetFileHandle());
-    WriteInitialXmlSummary(xmlresultsfile, PV2WayUtil::GetFileHandle());
+    FILE* pOutputStream = 0;
+    UT::CM::InitializeReporting("PV2WayEngineUnitTest", xmlresultsfile, PV2WayUtil::GetFileHandle(), pOutputStream);
 
     // This result will be passed to all test suites
     // and it will be use to append all the results
     test_result tr;
-    printf(" >> >> >> >> Master test_result object %p\n", &tr);
-
 
     typedef bool (engine_test_suite::*fnctProxyTest)(const bool);
     fnctProxyTest testcase[] =
@@ -1443,10 +1447,8 @@ bool test_wrapper()
             retval = false;
     }
     tr.set_elapsed_time(OsclTickCount::TicksToMsec(OsclTickCount::TickCount()) - starttime);
-    WriteFinalXmlSummary(xmlresultsfile, tr, PV2WayUtil::GetFileHandle());
-    text_test_interpreter interp;
-    _STRING rs = interp.interpretation(tr);
-    PV2WayUtil::OutputInfo(rs.c_str());
+
+    UT::CM::FinalizeReporting("PV2WayEngineUnitTest", xmlresultsfile, tr, PV2WayUtil::GetFileHandle(), pOutputStream);
 
     /*!
 

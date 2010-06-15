@@ -116,7 +116,9 @@ AuthorDriver::AuthorDriver()
     mNumberOfChannels(0),
     mAudio_bitrate_setting(0),
     mVideo_bitrate_setting(0),
-    ifpOutput(NULL)
+    ifpOutput(NULL),
+    iIsInDevice(false),
+    iMaxFileSize(0)
 {
     mSyncSem = new OsclSemaphore();
     mSyncSem->Create();
@@ -634,6 +636,24 @@ void AuthorDriver::handleSetPreviewSurface(set_preview_surface_command *ac)
 
 void AuthorDriver::handleSetOutputFile(set_output_file_command *ac)
 {
+    LOGV("handleSetOutputFile In");
+    char filePath[1024];
+    int  pathLen=0;
+    char tempStr[20];
+    sprintf(tempStr,"/proc/self/fd/%d",ac->fd);
+    if ((pathLen = readlink(tempStr, filePath, sizeof(filePath)-1)) != -1){
+          filePath[pathLen] = '\0';
+          LOGV("FilePath is %s",filePath);
+    }
+    else{
+         LOGV("FilePath can't be retrieved");
+    }
+
+    if (strncmp("/sdcard", filePath, 7) != 0){
+         LOGV("Content is to be stored in Phone");
+         iIsInDevice=true;
+    }
+
     PVMFStatus ret = PVMFFailure;
     PvmfFileOutputNodeConfigInterface *config = NULL;
 
@@ -814,11 +834,27 @@ PVMFStatus AuthorDriver::setParameter(
                     max_duration_ms, true /* limit_is_duration */);
         }
     } else if (key == "max-filesize") {
-        int64_t max_filesize_bytes;
-        if (safe_strtoi64(value.string(), &max_filesize_bytes)) {
-            return setMaxDurationOrFileSize(
-                    max_filesize_bytes, false /* limit is filesize */);
-        }
+		struct statfs stfs;
+        if (safe_strtoi64(value.string(), &iMaxFileSize)) {
+            if(iIsInDevice){
+                LOGV("Device's MaxSize");
+                statfs("/data", &stfs);
+			}
+            else{
+                LOGV("Sdcard's MaxSize");
+                statfs("/sdcard", &stfs);
+            }
+            LOGI("AuthorDriver::handleSetOutputFormat sdcard bzise  0X%08x", stfs.f_bsize);
+            LOGI("AuthorDriver::handleSetOutputFormat sdcard blocks 0X%08llx",stfs.f_blocks);
+            LOGI("AuthorDriver::handleSetOutputFormat sdcard free  0X%08llx", stfs.f_bfree);
+            LOGI("AuthorDriver::handleSetOutputFormat sdcard avail 0X%08llx",stfs.f_bavail);
+            int64_t available_space = stfs.f_bsize * stfs.f_bfree;
+            if((iMaxFileSize <= 0) || (iMaxFileSize > available_space))
+                   return setMaxDurationOrFileSize(available_space , false);
+            else
+                  return setMaxDurationOrFileSize(iMaxFileSize , false);
+
+       }
     } else if (key == "audio-param-sampling-rate") {
         int64_t sampling_rate;
         if (safe_strtoi64(value.string(), &sampling_rate)) {
@@ -1322,6 +1358,28 @@ void AuthorDriver::CommandCompleted(const PVCmdResponse& aResponse)
     if (ac->which == AUTHOR_SET_OUTPUT_FORMAT) {
         mSelectedComposer = aResponse.GetResponseData();
     }
+
+    if (ac->which == AUTHOR_PREPARE) {
+        LOGV("Prepare CommandComplete");
+        struct statfs stfs;
+        if(iIsInDevice){
+            LOGV("Device's MaxSize");
+            statfs("/data", &stfs);
+         }
+         else{
+            LOGV("Sdcard's MaxSize");
+            statfs("/sdcard", &stfs);
+         }
+         LOGI("AuthorDriver::handleSetOutputFormat sdcard bzise  0X%08x", stfs.f_bsize);
+         LOGI("AuthorDriver::handleSetOutputFormat sdcard blocks 0X%08llx",stfs.f_blocks);
+         LOGI("AuthorDriver::handleSetOutputFormat sdcard free  0X%08llx", stfs.f_bfree);
+         LOGI("AuthorDriver::handleSetOutputFormat sdcard avail 0X%08llx",stfs.f_bavail);
+         int64_t available_space = stfs.f_bsize * stfs.f_bfree;
+         if((iMaxFileSize <= 0) || (iMaxFileSize > available_space))
+              setMaxDurationOrFileSize(available_space , false);
+         else
+              setMaxDurationOrFileSize(iMaxFileSize , false);
+     }
 
     if (ac->which == AUTHOR_SET_VIDEO_ENCODER) {
         switch(mVideoEncoder) {

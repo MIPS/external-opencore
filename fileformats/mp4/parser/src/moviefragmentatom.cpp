@@ -30,14 +30,16 @@
 #include "trackfragmentatom.h"
 #include "atomdefs.h"
 #include "atomutils.h"
-
 #include "piffboxes.h"
 
 class TrackExtendsAtom;
 
 typedef Oscl_Vector<TrackFragmentAtom*, OsclMemAllocator> trackFragmentAtomVecType;
+typedef Oscl_Vector<TrackIndexStruct, OsclMemAllocator> trackIndexVecType;
+
 // Constructor
 MovieFragmentAtom::MovieFragmentAtom(MP4_FF_FILE *fp,
+                                     Oscl_Vector<MP4_FF_FILE *, OsclMemAllocator> *pTrackFpVec,
                                      uint32 &size,
                                      uint32 type,
                                      TrackDurationContainer *trackDurationContainer,
@@ -55,11 +57,13 @@ MovieFragmentAtom::MovieFragmentAtom(MP4_FF_FILE *fp,
     _pMovieFragmentBaseOffset       = 0;
     _currentTrackFragmentOffset     = 0;
     _trafIndex = 0;
+    _pTrackIndexVec = NULL;
 
     parseTrafCompletely = true;
     trafParsingCompleted = true;
     sizeRemaining = 0;
     atomtype = UNKNOWN_ATOM;
+    _ptrackFragmentArray = NULL;
 
     _pMovieFragmentBaseOffset = AtomUtils::getCurrentFilePosition(fp);
     _pMovieFragmentCurrentOffset = _pMovieFragmentBaseOffset;
@@ -68,8 +72,9 @@ MovieFragmentAtom::MovieFragmentAtom(MP4_FF_FILE *fp,
     iStateVarLogger = PVLogger::GetLoggerObject("mp4ffparser_mediasamplestats");
     iParsedDataLogger = PVLogger::GetLoggerObject("mp4ffparser_parseddata");
 
+    _pTrackFpVec = pTrackFpVec;
     uint32 count = size - DEFAULT_ATOM_SIZE;
-
+    uint32 index = 0;
     if (_success)
     {
         PV_MP4_FF_NEW(fp->auditCB, trackFragmentAtomVecType, (), _ptrackFragmentArray);
@@ -109,7 +114,7 @@ MovieFragmentAtom::MovieFragmentAtom(MP4_FF_FILE *fp,
                     parseTrafCompletely = false;
                 }
 
-                PV_MP4_FF_NEW(fp->auditCB, TrackFragmentAtom, (fp, atomSize,
+                PV_MP4_FF_NEW(fp->auditCB, TrackFragmentAtom, (fp, (*_pTrackFpVec)[index++], atomSize,
                               atomType, _pMovieFragmentCurrentOffset,
                               _pMovieFragmentBaseOffset,
                               size, trackDurationContainer,
@@ -118,6 +123,7 @@ MovieFragmentAtom::MovieFragmentAtom(MP4_FF_FILE *fp,
                               trafParsingCompleted,
                               countOfTrunsParsed, ipTrackEncryptionBxCntr),
                               _pTrackFragmentAtom);
+
                 if (trafParsingCompleted)
                 {
                     if (!_pTrackFragmentAtom->MP4Success())
@@ -153,6 +159,7 @@ MovieFragmentAtom::MovieFragmentAtom(MP4_FF_FILE *fp,
                     }
                 }
 
+                setIndexForTrackID(_pTrackFragmentAtom->trackId);
                 if (!parseMoofCompletely)
                 {
                     moofParsingCompleted = false;
@@ -185,7 +192,8 @@ void MovieFragmentAtom::ParseMoofAtom(MP4_FF_FILE *fp,
                                       TrackDurationContainer *trackDurationContainer,
                                       Oscl_Vector<TrackExtendsAtom*, OsclMemAllocator> *trackExtendAtomVec,
                                       bool &moofParsingCompleted,
-                                      uint32 &countOfTrunsParsed)
+                                      uint32 &countOfTrunsParsed,
+                                      const uint32 trackID)
 {
     OSCL_UNUSED_ARG(type);
     uint32 count = size;
@@ -241,7 +249,11 @@ void MovieFragmentAtom::ParseMoofAtom(MP4_FF_FILE *fp,
 
                 if (atomType == TRACK_FRAGMENT_ATOM)
                 {
-                    PV_MP4_FF_NEW(fp->auditCB, TrackFragmentAtom, (fp, atomSize,
+
+
+                    uint32 index = getIndexForTrackId(trackID);
+
+                    PV_MP4_FF_NEW(fp->auditCB, TrackFragmentAtom, (fp, (*_pTrackFpVec)[index], atomSize,
                                   atomType, _pMovieFragmentCurrentOffset,
                                   _pMovieFragmentBaseOffset,
                                   size, trackDurationContainer,
@@ -304,7 +316,6 @@ void MovieFragmentAtom::ParseMoofAtom(MP4_FF_FILE *fp,
         _mp4ErrorCode = READ_MOVIE_FRAGMENT_ATOM_FAILED;
     }
 }
-
 
 int32
 MovieFragmentAtom::getNextBundledAccessUnits(uint32 id,
@@ -403,6 +414,16 @@ MovieFragmentAtom::~MovieFragmentAtom()
     }
     PV_MP4_FF_TEMPLATED_DELETE(NULL, trackFragmentAtomVecType, Oscl_Vector, _ptrackFragmentArray);
 
+    if (_pTrackFpVec != NULL)
+    {
+        _pTrackFpVec = NULL;
+    }
+    if (_pTrackIndexVec != NULL)
+    {
+        PV_MP4_FF_TEMPLATED_DELETE(NULL, trackIndexVecType, Oscl_Vector, _pTrackIndexVec);
+        _pTrackIndexVec = NULL;
+    }
+
 }
 
 uint64
@@ -466,3 +487,42 @@ MovieFragmentAtom::getTrackFragmentforID(uint32 id)
     }
     return NULL;
 }
+
+uint32 MovieFragmentAtom::getIndexForTrackId(const uint32 trackID)
+{
+    if (_pTrackIndexVec == NULL)
+        return 0;
+
+    uint32 size  = _pTrackIndexVec->size();
+
+    if (!size)
+        return 0;
+
+    for (uint32 i = 0; i < size; i++)
+    {
+        if ((*_pTrackIndexVec)[i].iTrackId == trackID)
+            return (*_pTrackIndexVec)[i].iIndex;
+    }
+    return (*_pTrackIndexVec)[size-1].iIndex + 1;
+
+}
+void MovieFragmentAtom::setIndexForTrackID(uint32 trackID)
+{
+    if (_pTrackIndexVec == NULL)
+    {
+        PV_MP4_FF_NEW(fp->auditCB, trackIndexVecType, (), _pTrackIndexVec);
+    }
+
+    uint32 size  = _pTrackIndexVec->size();
+
+    TrackIndexStruct temp;
+    temp.iTrackId = trackID;
+
+    if (size == 0)
+        temp.iIndex = 0;
+    else
+        temp.iIndex = (*_pTrackIndexVec)[size-1].iIndex + 1;
+
+    _pTrackIndexVec->push_back(temp);
+}
+

@@ -18,7 +18,7 @@
 #ifndef PVMF_PROTOCOL_ENGINE_NODE_TUNABLES_H_INCLUDED
 #define PVMF_PROTOCOL_ENGINE_NODE_TUNABLES_H_INCLUDED
 
-#define PDL_HTTP_USER_AGENT         _STRLIT_CHAR("CORE/9.000.1.1_RC4 OpenCORE/2.07")
+#define PDL_HTTP_USER_AGENT         _STRLIT_CHAR("CORE/9.002.1.1 OpenCORE/2.07")
 #define PDL_HTTP_VERSION_NUMBER     0 // 0 => Http Version1.0 ; 1 => Http Version1.1
 
 // macros for memory pool

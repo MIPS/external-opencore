@@ -346,7 +346,7 @@ class PVMP4FFNodeTrackPortInfo : public OsclMemPoolFixedChunkAllocatorObserver,
         bool iNoSampleInCurrentMoof;
 
         // no-render related
-        uint32 iTargetNPTInMediaTimeScale;
+        uint64 iTargetNPTInMediaTimeScale;
 
         // for matching AAC encoding params in audio-only playlists
         uint32 iAACNumChans;

@@ -215,6 +215,20 @@ uint32 PVMFAACFFParserNode::GetNumMetadataValues(PVMFMetadataList& aKeyList)
             // Increment the counter for the number of values found so far
             ++numvalentries;
         }
+        else if (!oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAACMETADATA_PROFILE_KEY) &&
+                 iAACFileInfo.iProfile > 0)
+        {
+            // Profile
+            // Increment the counter for the number of values found so far
+            ++numvalentries;
+        }
+        else if (!oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAACMETADATA_CHANNELS_KEY) &&
+                 iAACFileInfo.iChannels > 0)
+        {
+            // Channels
+            // Increment the counter for the number of values found so far
+            ++numvalentries;
+        }
         else if (!oscl_strcmp((*keylistptr)[lcv].get_cstr(),  PVAACMETADATA_RANDOM_ACCESS_DENIED_KEY))
         {
             // random-acess-denied
@@ -597,7 +611,7 @@ PVMFStatus PVMFAACFFParserNode::RetrieveMediaSample(PVAACFFNodeTrackPortInfo* aT
                 return PVMFInfoEndOfData;
             }
 
-            iDownloadProgressInterface->requestResumeNotification(aTrackInfoPtr->iPrevSampleTimeStamp,
+            iDownloadProgressInterface->requestResumeNotification((uint32)aTrackInfoPtr->iPrevSampleTimeStamp,
                     iDownloadComplete);
             iAutoPaused = true;
             PVMF_AACPARSERNODE_LOGERROR((0, "PVMFAACParserNode::RetrieveMediaSample() - Auto Pause Triggered - TS=%d", aTrackInfoPtr->iPrevSampleTimeStamp));
@@ -685,11 +699,11 @@ PVMFStatus PVMFAACFFParserNode::CheckForAACHeaderAvailability()
          * First check if we have minimum number of bytes to recognize
          * the file and determine the header size.
          */
-        uint32 currCapacity = 0;
+        TOsclFileOffset currCapacity = 0;
         iDataStreamInterface->QueryReadCapacity(iDataStreamSessionID,
                                                 currCapacity);
 
-        if (currCapacity <  AAC_MIN_DATA_SIZE_FOR_RECOGNITION)
+        if (currCapacity < (TOsclFileOffset)AAC_MIN_DATA_SIZE_FOR_RECOGNITION)
         {
             iRequestReadCapacityNotificationID =
                 iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
@@ -709,7 +723,7 @@ PVMFStatus PVMFAACFFParserNode::CheckForAACHeaderAvailability()
         }
         if (AAC_SUCCESS == iAACParser->getAACHeaderLen(params, false, &headerSize32))
         {
-            if (currCapacity < headerSize32)
+            if (currCapacity < (TOsclFileOffset)headerSize32)
             {
                 iRequestReadCapacityNotificationID =
                     iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
@@ -764,7 +778,7 @@ PVMFStatus PVMFAACFFParserNode::ParseAACFile()
 
     if (iDataStreamInterface)
     {
-        uint32 currCapacity = 0;
+        TOsclFileOffset currCapacity = 0;
         iDataStreamInterface->QueryReadCapacity(iDataStreamSessionID,
                                                 currCapacity);
 
@@ -807,6 +821,11 @@ PVMFStatus PVMFAACFFParserNode::ParseAACFile()
         leavecode = 0;
         OSCL_TRY(leavecode, iAvailableMetadataKeys.push_back(PVAACMETADATA_RANDOM_ACCESS_DENIED_KEY));
 
+        leavecode = 0;
+        OSCL_TRY(leavecode, iAvailableMetadataKeys.push_back(PVAACMETADATA_CHANNELS_KEY));
+
+        leavecode = 0;
+        OSCL_TRY(leavecode, iAvailableMetadataKeys.push_back(PVAACMETADATA_PROFILE_KEY));
 
         if (iAACFileInfo.iBitrate > 0)
         {
@@ -1782,6 +1801,76 @@ PVMFStatus PVMFAACFFParserNode::DoGetMetadataValues()
                     retval = PVMFCreateKVPUtils::CreateKVPForCharStringValue(
                                  KeyVal,
                                  PVAACMETADATA_DURATION_KEY,
+                                 PVAACMETADATA_UNKNOWN);
+                }
+
+                if (retval != PVMFSuccess && retval != PVMFErrArgument)
+                {
+                    break;
+                }
+
+            }
+
+        }
+        else if (!oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAACMETADATA_CHANNELS_KEY))
+        {
+            // Channels
+            // Increment the counter for the number of values found so far
+            ++numvalentries;
+
+            // Create a value entry if past the starting index
+            if (numvalentries > starting_index)
+            {
+                uint32 channels = (uint32)iAACFileInfo.iChannels;
+                PVMFStatus retval = PVMFSuccess;
+                if (channels > 0)
+                {
+                    retval = PVMFCreateKVPUtils::CreateKVPForUInt32Value(
+                                 KeyVal,
+                                 PVAACMETADATA_CHANNELS_KEY,
+                                 channels,
+                                 NULL);
+                }
+                else
+                {
+                    retval = PVMFCreateKVPUtils::CreateKVPForCharStringValue(
+                                 KeyVal,
+                                 PVAACMETADATA_CHANNELS_KEY,
+                                 PVAACMETADATA_UNKNOWN);
+                }
+
+                if (retval != PVMFSuccess && retval != PVMFErrArgument)
+                {
+                    break;
+                }
+
+            }
+
+        }
+        else if (!oscl_strcmp((*keylistptr)[lcv].get_cstr(), PVAACMETADATA_PROFILE_KEY))
+        {
+            // Profile
+            // Increment the counter for the number of values found so far
+            ++numvalentries;
+
+            // Create a value entry if past the starting index
+            if (numvalentries > starting_index)
+            {
+                uint32 profile = (uint32)iAACFileInfo.iProfile;
+                PVMFStatus retval = PVMFSuccess;
+                if (profile > 0)
+                {
+                    retval = PVMFCreateKVPUtils::CreateKVPForUInt32Value(
+                                 KeyVal,
+                                 PVAACMETADATA_PROFILE_KEY,
+                                 profile,
+                                 NULL);
+                }
+                else
+                {
+                    retval = PVMFCreateKVPUtils::CreateKVPForCharStringValue(
+                                 KeyVal,
+                                 PVAACMETADATA_PROFILE_KEY,
                                  PVAACMETADATA_UNKNOWN);
                 }
 
@@ -2970,9 +3059,9 @@ void PVMFAACFFParserNode::playResumeNotification(bool aDownloadComplete)
 
 }
 
-void PVMFAACFFParserNode::setFileSize(const uint32 aFileSize)
+void PVMFAACFFParserNode::setFileSize(const TOsclFileOffset aFileSize)
 {
-    iDownloadFileSize = aFileSize;
+    iDownloadFileSize = (uint32)aFileSize;
 }
 
 void PVMFAACFFParserNode::setDownloadProgressInterface(PVMFDownloadProgressInterface* aInterface)
@@ -2984,7 +3073,7 @@ void PVMFAACFFParserNode::setDownloadProgressInterface(PVMFDownloadProgressInter
     iDownloadProgressInterface = aInterface;
 }
 
-int32 PVMFAACFFParserNode::convertSizeToTime(uint32 aFileSize, uint32& aNPTInMS)
+int32 PVMFAACFFParserNode::convertSizeToTime(TOsclFileOffset aFileSize, uint32& aNPTInMS)
 {
     OSCL_UNUSED_ARG(aFileSize);
     OSCL_UNUSED_ARG(aNPTInMS);

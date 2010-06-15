@@ -227,6 +227,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
         bool repositionFromMoof(uint32 time, uint32 trackID);
 
         void resetAllMovieFragments();
+        void OpenSessionForMoofMediaDataRetrieval(MP4_FF_FILE *fp, OSCL_wString& filename);
 
 
         virtual uint32 resetPlayback(uint32 time, uint16 numTracks, uint32 *trackList, bool bResetToIFrame);
@@ -897,7 +898,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
 
         MP4_ERROR_CODE GetCurrentFileSize(TOsclFileOffset& aFileSize);
 
-        int32 getTrackTSStartOffset(uint32& aTSOffset, uint32 aTrackID)
+        int32 getTrackTSStartOffset(TOsclFileOffset& aTSOffset, uint32 aTrackID)
         {
             if (_pmovieAtom != NULL)
             {
@@ -1415,6 +1416,7 @@ class Mpeg4File : public IMpeg4File, public Parentable
         bool _isMovieFragmentsPresent;
         TOsclFileOffset _pointerMovieAtomEnd;
         MP4_FF_FILE *_movieFragmentFilePtr;
+        Oscl_Vector<MP4_FF_FILE *, OsclMemAllocator> *_pFileSessionsForMediaDataRetrievalVec;
         Oscl_Vector<MovieFragmentAtom*, OsclMemAllocator> *_pMovieFragmentAtomVec;
         Oscl_Vector<MovieFragmentRandomAccessAtom*, OsclMemAllocator> *_pMovieFragmentRandomAccessAtomVec;
         MfraOffsetAtom *_pMfraOffsetAtom;

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,6 +143,7 @@ typedef struct
     int32 iDuration;
     int32 iFileSize;
     int32 iAmrFormat;
+    int8 iChannel;
 } TPVAmrFileInfo;
 
 //----------------------------------------------------------------------------
@@ -236,7 +237,7 @@ class bitstreamObject
         * @param frame_type Frame type
         * @returns Result of operation: EVERYTHING_OK, READ_FAILED, etc.
         */
-        int32  getFileInfo(int32& fileSize, int32& format, int32& frame_type);
+        int32  getFileInfo(int32& fileSize, int32& format, int32& frame_type, int8& channel);
 
         /**
         * @brief Retrieves one frame data plus frame type, used in getNextBundledAccessUnits().
@@ -288,6 +289,7 @@ class bitstreamObject
             iPos = bitstreamObject::MAIN_BUFF_SIZE + bitstreamObject::SECOND_BUFF_SIZE;
             iAmrFormat = iFrame_type = 0;
             iInitFilePos = 0;
+            iAmrChannel = 0;
 
             if (ipAMRFile)
             {
@@ -330,6 +332,7 @@ class bitstreamObject
         int32 iAmrFormat;       // 0 : WMF ; 1 : IF2 ; >=2 : IETF(AMR, AMR_WB, AMR_MC, AMR_WB_MC)
         uint32 iInitFilePos;    // For IETF bitstream, iInitFilePos = IETF header size
         int32 iFrame_type;      // frame type got from the very first frame
+        int8 iAmrChannel;
 
         uint8 *iBuffer;
         PVFile* ipAMRFile; // bitstream file
@@ -450,6 +453,7 @@ class CAMRFileParser
         int32           iAMRFormat;
         int32           iAMRFileSize;
         int32           iTotalNumFramesRead;
+        int8            iAMRChannel;
         bool            iEndOfFileReached;
         bitstreamObject *ipBSO;
         Oscl_Vector<int32, alloc_type> iRPTable; // table containing sync indexes for repositioning

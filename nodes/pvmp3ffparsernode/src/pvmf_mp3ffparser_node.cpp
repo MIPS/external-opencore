@@ -512,13 +512,13 @@ PVMFStatus PVMFMP3FFParserNode::DoPrepare()
     {
         // check for download complete
         // if download is not complete, request to be notified when data is ready
-        uint32 bytesReady = 0;
+        TOsclFileOffset bytesReady = 0;
         PvmiDataStreamStatus status = iDataStreamInterface->QueryReadCapacity(iDataStreamSessionID, bytesReady);
         if (status == PVDS_END_OF_STREAM)
         {
             if (!iFileSizeRecvd)
             {
-                iFileSize = bytesReady;
+                iFileSize = (uint32)bytesReady;
                 iFileSizeRecvd = true;
             }
             return PVMFSuccess;
@@ -915,14 +915,14 @@ PVMFMP3FFParserNode::PassDatastreamReadCapacityObserver(PVMFDataStreamReadCapaci
     iDataStreamReadCapacityObserver = aObserver;
 }
 
-int32 PVMFMP3FFParserNode::convertSizeToTime(uint32 aFileSize, uint32& aNPTInMS)
+int32 PVMFMP3FFParserNode::convertSizeToTime(TOsclFileOffset aFileSize, uint32& aNPTInMS)
 {
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                     (0, "PVMFMP3FFParserNode::ConvertSizeToTime() aFileSize=%d, aNPTInMS=%d", aFileSize, aNPTInMS));
 
     if (iPlaybackParserObj)
     {
-        return iPlaybackParserObj->ConvertSizeToTime(aFileSize, aNPTInMS);
+        return iPlaybackParserObj->ConvertSizeToTime((uint32)aFileSize, aNPTInMS);
     }
     return -1;
 }
@@ -969,9 +969,9 @@ bool PVMFMP3FFParserNode::setProtocolInfo(Oscl_Vector<PvmiKvp*, OsclMemAllocator
     return true;
 }
 
-void PVMFMP3FFParserNode::setFileSize(const uint32 aFileSize)
+void PVMFMP3FFParserNode::setFileSize(const TOsclFileOffset aFileSize)
 {
-    iFileSize = aFileSize;
+    iFileSize = (uint32)aFileSize;
     iFileSizeRecvd = true;
 }
 
@@ -1660,7 +1660,7 @@ void PVMFMP3FFParserNode::ResetTrack()
 
     // if this is shoutcast session,
     // reset the stream and read pointers
-    if ((GetClipFormatTypeAt(iPlaybackClipIndex) == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL) && (iSCSPFactory != NULL))
+    if ((GetClipFormatTypeAt(0) == PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL) && (iSCSPFactory != NULL))
     {
         iSCSPFactory->ResetShoutcastStream();
     }
@@ -3408,7 +3408,7 @@ PVMFStatus PVMFMP3FFParserNode::CheckForMP3HeaderAvailability(int32 aClipIndex)
         return PVMFFailure;
     }
 
-    uint32 currCapacity = 0;
+    TOsclFileOffset currCapacity = 0;
     uint32 minBytesRequired = 0;
 
     // in local playback these variables will not be used.
@@ -3425,7 +3425,7 @@ PVMFStatus PVMFMP3FFParserNode::CheckForMP3HeaderAvailability(int32 aClipIndex)
         PvmiDataStreamStatus status = iDataStreamInterface->QueryReadCapacity(iDataStreamSessionID,
                                       currCapacity);
 
-        if ((PVDS_SUCCESS == status) && (currCapacity <  minBytesRequired))
+        if ((PVDS_SUCCESS == status) && (currCapacity < (TOsclFileOffset)minBytesRequired))
         {
             iRequestReadCapacityNotificationID =
                 iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
@@ -3442,7 +3442,7 @@ PVMFStatus PVMFMP3FFParserNode::CheckForMP3HeaderAvailability(int32 aClipIndex)
             {
                 /* Fetch the id3 tag size, if any and make it persistent in cache*/
                 iDataStreamInterface->MakePersistent(0, iMP3MetaDataSize);
-                if (currCapacity < iMP3MetaDataSize)
+                if (currCapacity < (TOsclFileOffset)iMP3MetaDataSize)
                 {
                     iRequestReadCapacityNotificationID =
                         iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
@@ -3467,12 +3467,12 @@ PVMFStatus PVMFMP3FFParserNode::CheckForMP3HeaderAvailability(int32 aClipIndex)
     // if there's lack of data request more data
     if (NULL != iDataStreamInterface)
     {
-        if (retVal == PVMFErrUnderflow)
+        if (retVal == PVMFPending)
         {
             minBytesRequired = parserObj->GetMinBytesRequired();
             // available data wasnt sufficient to get to first valid audio frame
             // get more data
-            if (currCapacity < minBytesRequired)
+            if (currCapacity < (TOsclFileOffset)(iMP3MetaDataSize + minBytesRequired))
             {
                 iRequestReadCapacityNotificationID =
                     iDataStreamInterface->RequestReadCapacityNotification(iDataStreamSessionID,
@@ -3487,6 +3487,14 @@ PVMFStatus PVMFMP3FFParserNode::CheckForMP3HeaderAvailability(int32 aClipIndex)
             }
         }
     }
+    else
+    {
+        // underflow during Init for a local clip means that,
+        // the clip doesnt have valid audio data to playback.
+        if (retVal != PVMFSuccess)
+            return PVMFFailure;
+    }
+
     // if local playback, retrieve gapless metadata if present
     if (NULL == iDataStreamInterface)
     {

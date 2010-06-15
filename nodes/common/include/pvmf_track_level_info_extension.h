@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -164,7 +164,7 @@ class PVMFTrackLevelInfoExtensionInterface : public PVInterface
         * @return PVMFSuccess if timestamp is returned for the specified data position, PVMFErrInvalidState if the information
         * is not available, else PVMFFailure for any other errors
         */
-        virtual PVMFStatus GetTimestampForDataPosition(PVMFTrackInfo& aTrackInfo, uint32 aDataPosition, PVMFTimestamp& aTimestamp) = 0;
+        virtual PVMFStatus GetTimestampForDataPosition(PVMFTrackInfo& aTrackInfo, TOsclFileOffset aDataPosition, PVMFTimestamp& aTimestamp) = 0;
 
         /**
         * Provides the data position for the specified timestamp in a specific track
@@ -181,7 +181,7 @@ class PVMFTrackLevelInfoExtensionInterface : public PVInterface
         * @return PVMFSuccess if data position is returned for the specified timestamp, PVMFErrInvalidState if the information
         * is not available, else PVMFFailure for any other errors
         */
-        virtual PVMFStatus GetDataPositionForTimestamp(PVMFTrackInfo& aTrackInfo, PVMFTimestamp aTimestamp, uint32& aDataPosition) = 0;
+        virtual PVMFStatus GetDataPositionForTimestamp(PVMFTrackInfo& aTrackInfo, PVMFTimestamp aTimestamp, TOsclFileOffset& aDataPosition) = 0;
 };
 
 #endif // PVMF_TRACK_LEVEL_INFO_EXTENSION_H_INCLUDED

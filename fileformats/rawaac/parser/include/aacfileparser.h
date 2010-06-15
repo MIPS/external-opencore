@@ -197,6 +197,8 @@ typedef struct
     TAACFormat  iFormat;
     int32       iFileSize;
     int32       iHeaderLength;
+    int32       iChannels;
+    int32       iProfile;
 } TPVAacFileInfo;
 
 
@@ -325,7 +327,7 @@ class AACBitstreamObject
         * @param adifHeaderLen Length of header
         * @returns Result of operation: EVERYTHING_OK, READ_ERROR etc.
         */
-        int32 getFileInfo(int32& fileSize, TAACFormat& format, uint8& sampleFreqIndex, uint32& bitRate, uint32& adifHeaderLen, OSCL_wString&);
+        int32 getFileInfo(int32& fileSize, TAACFormat& format, uint8& sampleFreqIndex, uint32& bitRate, uint32& adifHeaderLen, uint8& channels, uint8& profile, OSCL_wString&);
 
         /**
         * @brief Expanded adts search for file information
@@ -419,6 +421,8 @@ class AACBitstreamObject
             iActual_size = iMax_size = AACBitstreamObject::MAIN_BUFF_SIZE;
             iPos = AACBitstreamObject::MAIN_BUFF_SIZE;
             iAACFormat = EAACUnrecognized;
+            iChannels = 0;
+            iProfile = 0;
 
             if (ipAACFile)
             {
@@ -475,6 +479,8 @@ class AACBitstreamObject
         uint32 iBitrate;        // max bitrate for variable rate bitstream
         PVID3ParCom* iID3Parser;
         PVLogger  *iLogger;
+        uint8 iChannels;        //channel index
+        uint8 iProfile;         //profile index
 
     public:
         uint32 GetByteOffsetToStartOfAudioFrames()
@@ -687,6 +693,8 @@ class CAACFileParser
         uint32     iMetadataSize;
         uint32     iDownloadFileSize;
         uint8      iSampleFreqTableIndex;
+        uint8      iAACChannels;
+        uint8      iAACProfile;
 
         PVFile     iAACFile;
 

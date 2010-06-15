@@ -28,6 +28,46 @@
 #include "oscl_mem.h"
 #endif
 
+#define PVMF_CPM_DRM_ID_SIZE 16
+#define PVMF_CPM_CONTENT_ID_SIZE PVMF_CPM_DRM_ID_SIZE
+#define PVMF_CPM_METER_ID_SIZE PVMF_CPM_DRM_ID_SIZE
+
+class PVMFCPMDrmId
+{
+    public:
+        PVMFCPMDrmId()
+        {
+            Clear();
+        }
+        PVMFCPMDrmId(const PVMFCPMDrmId &aId)
+        {
+            Set((uint8*)aId.iData);
+        }
+
+        PVMFCPMDrmId operator=(const PVMFCPMDrmId &aId)
+        {
+            Set((uint8*)aId.iData);
+            return *this;
+        }
+
+        void Clear()
+        {
+            oscl_memset(iData, 0, PVMF_CPM_DRM_ID_SIZE);
+        }
+
+        void Set(uint8 *aData)
+        {
+            if (aData)
+            {
+                oscl_memcpy(iData, aData, PVMF_CPM_DRM_ID_SIZE);
+            }
+        }
+        uint8 iData[PVMF_CPM_DRM_ID_SIZE];
+};
+
+typedef PVMFCPMDrmId PVMFCPMContentId;
+typedef PVMFCPMDrmId PVMFCPMMeterId;
+
 //A class to hold detailed status information on communication with license servers.
 // This information is primarily for debugging.
 class PVMFCPMLicenseStatus

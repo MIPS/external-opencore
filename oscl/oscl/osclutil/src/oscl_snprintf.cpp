@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -230,7 +230,14 @@
  *
  * This is off by default as (long long int) is a language extension.
  */
-/* #define SNPRINTF_LONGLONG_SUPPORT */
+
+#ifndef OSCLCONFIG_UTIL_H_INCLUDED
+#include "osclconfig_util.h"
+#endif
+
+#if(OSCL_HAS_SNPRINTF_LONGLONG_SUPPORT)
+#define SNPRINTF_LONGLONG_SUPPORT
+#endif
 
 /* Define NEED_SNPRINTF_ONLY if you only need snprintf, and not vsnprintf.
  * If NEED_SNPRINTF_ONLY is defined, the snprintf will be defined directly,

@@ -87,6 +87,7 @@ class SampleSizeAtom : public FullAtom
         uint32 _curr_buff_number;
         uint32 _next_buff_number;
         uint32 _parsing_mode;
+        PVLogger *iLogger, *iStateVarLogger, *iParsedDataLogger;
 };
 
 #endif // SAMPLESIZEATOM_H_INCLUDED

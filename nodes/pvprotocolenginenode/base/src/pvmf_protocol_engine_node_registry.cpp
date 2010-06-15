@@ -46,6 +46,8 @@
 
 
 
+
+
 #if USE_LOADABLE_MODULES
 #include "oscl_shared_library.h"
 #include "oscl_library_list.h"
@@ -116,6 +118,7 @@ PVMFProtocolEngineNodeRegistry::PVMFProtocolEngineNodeRegistry() : iTypeVecIndex
     aContainerInfo.iProtocolEngineContainerReleaseFunc = PVMFProtocolEngineNodeRTMPStreamingContainerFactory::Delete;
     iTypeVec.push_back(aContainerInfo);
 #endif
+
 
 
     iLogger = PVLogger::GetLoggerObject("PVMFProtocolEngineNode");;

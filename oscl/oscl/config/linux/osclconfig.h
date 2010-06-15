@@ -34,6 +34,8 @@
 // system includes for dynamic registry
 #include <dirent.h>
 #include <dlfcn.h>
+#include <fcntl.h>
+#include <sys/types.h>
 
 // include common include for determining sizes from limits.h
 #include "osclconfig_limits_typedefs.h"

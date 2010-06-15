@@ -199,7 +199,7 @@ class AtomUtils
         OSCL_IMPORT_REF static int32 getNextAtomSize(uint8 *buf);
 
         // returns content length
-        OSCL_IMPORT_REF static uint32 getContentLength(MP4_FF_FILE *fp);
+        OSCL_IMPORT_REF static TOsclFileOffset getContentLength(MP4_FF_FILE *fp);
         // returns the data stream cache size
         OSCL_IMPORT_REF static uint32 getFileBufferingCapacity(MP4_FF_FILE *fp);
         // peek to a new offset (MBDS only), read pointer does not change

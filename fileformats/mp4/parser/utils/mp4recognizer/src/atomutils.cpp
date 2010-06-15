@@ -1002,7 +1002,8 @@ OSCL_EXPORT_REF int32 AtomUtils::getNextAtomSize(uint8 *buf)
     return size;
 }
 
-OSCL_EXPORT_REF uint32 AtomUtils::getContentLength(MP4_FF_FILE *fp)
+
+OSCL_EXPORT_REF TOsclFileOffset AtomUtils::getContentLength(MP4_FF_FILE *fp)
 {
     // this returns the content length if known
     return fp->_pvfile.GetContentLength();

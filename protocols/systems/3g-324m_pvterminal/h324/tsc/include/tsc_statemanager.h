@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ class TSC_statemanager
     public:
         TSC_statemanager()
         {
-            for (uint ii = 0; ii <= MAX_TSC_STATES; ++ii)
+            for (uint ii = 0; ii < MAX_TSC_STATES; ++ii)
             {
                 iTerminalState[ii] = 0;
             }

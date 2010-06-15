@@ -1507,13 +1507,13 @@ uint32 PVID3ParCom::ValidateFrameLengthV2_4(uint32 aFrameSize)
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool  PVID3ParCom::ReadFrameData(uint8 unicodeCheck, PVID3FrameType frameType, uint32 pos, uint32 currFrameLength)
+bool  PVID3ParCom::ReadFrameData(uint8 unicodeCheck, PVID3FrameType frameType, TOsclFileOffset pos, uint32 currFrameLength)
 {
     if (unicodeCheck == PV_ID3_CHARSET_ISO88591)
     {
         // This frame contains normal ASCII text strings. (ISO-8859-1)
         iID3TagInfo.iTextType = PV_ID3_CHARSET_ISO88591;
-        HandleID3V2FrameDataASCII(frameType, pos, currFrameLength - 1);
+        HandleID3V2FrameDataASCII(frameType, (uint32)pos, currFrameLength - 1);
     }
     else if (unicodeCheck == PV_ID3_CHARSET_UTF16)
     {
@@ -1542,7 +1542,7 @@ bool  PVID3ParCom::ReadFrameData(uint8 unicodeCheck, PVID3FrameType frameType, u
         }
 
         // value of 2 is for BOM Character
-        HandleID3V2FrameDataUnicode16(frameType, pos + 2, currFrameLength - 3, endianType);
+        HandleID3V2FrameDataUnicode16(frameType, (uint32)(pos + 2), currFrameLength - 3, endianType);
     }
     else if (unicodeCheck == PV_ID3_CHARSET_UTF16BE)
     {
@@ -1552,13 +1552,13 @@ bool  PVID3ParCom::ReadFrameData(uint8 unicodeCheck, PVID3FrameType frameType, u
         // Default ID3V2 endian type to Big Endian
         uint32 endianType = UNICODE_BIG_ENDIAN;
         // Big Endian is assumed since the frame did not specify the endian type.
-        HandleID3V2FrameDataUnicode16(frameType, pos, currFrameLength - 1, endianType);
+        HandleID3V2FrameDataUnicode16(frameType, (uint32)pos, currFrameLength - 1, endianType);
     }
     else if (unicodeCheck == PV_ID3_CHARSET_UTF8)
     {
         // This frame's text strings are Unicode (UTF-8)
         iID3TagInfo.iTextType = PV_ID3_CHARSET_UTF8;
-        HandleID3V2FrameDataUTF8(frameType, pos, currFrameLength - 1);
+        HandleID3V2FrameDataUTF8(frameType, (uint32)pos, currFrameLength - 1);
     }
     return true;
 }
@@ -1684,7 +1684,7 @@ void PVID3ParCom::HandleID3V2FrameDataASCII(PVID3FrameType aFrameType,
 }
 
 void PVID3ParCom::HandleID3V2FrameUnsupported(PVID3FrameType aFrameType,
-        uint32         aPos,
+        TOsclFileOffset         aPos,
         uint32         aSize)
 {
     OSCL_StackString<128> keyStr;

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,6 +132,7 @@ class pv_metadata_engine_test
                 , iObserver(a_testParam.iObserver)
                 , iTestCase(a_testParam.iTestCase)
                 , iTestMsgOutputFile(a_testParam.iTestMsgOutputFile)
+
         {
             OSCL_ASSERT(0 != iObserver);
             OSCL_ASSERT(0 != iTestCase);
@@ -220,7 +221,7 @@ class pv_metadata_engine_test
         Oscl_Vector<PvmiKvp, OsclMemAllocator>  iMetadataValueList;
         OSCL_HeapString<OsclMemAllocator>       iTestCaseName;
 
-    private:
+    protected:
 
         void ReadMetadataFile();
         void ReadClipsFile();
@@ -261,7 +262,6 @@ class pv_metadata_engine_test
         char* iFileName;
         oscl_wchar iTempWCharBuf[512];
         PVMFFormatType iFileType;
-
         ThreadSafeQueue iThreadSafeCommandQueue;
         ThreadSafeQueue iThreadSafeErrorQueue;
         ThreadSafeQueue iThreadSafeInfoQueue;

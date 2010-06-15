@@ -240,7 +240,7 @@ OSCL_EXPORT_REF void ProtocolContainer::startDataFlowByCommand(const bool needDo
     iObserver->ClearRest();
 
     // cancel all the existing timers
-    iNodeTimer->clear();
+    iNodeTimer->clearExcept(PLAYLIST_REFRESH_TIMER_ID);
 
     // disable info update at this point, will be enabled when new response comes in
     enableInfoUpdate(false);
@@ -456,7 +456,7 @@ OSCL_EXPORT_REF bool ProtocolContainer::handleProtocolStateComplete(PVProtocolEn
         PVMFProtocolEngineNodeOutput* nodeOutput = getOutputOject(protocolObjectId);
         OSCL_ASSERT(nodeOutput);
         nodeOutput->flushData();
-        iNodeTimer->clear();
+        iNodeTimer->clearExcept(PLAYLIST_REFRESH_TIMER_ID);
         if (aEOSArrived && iInterfacingObjectContainer->getOutputPortConnect())
         {
             doEOS(true, protocolObjectId); // true EOS

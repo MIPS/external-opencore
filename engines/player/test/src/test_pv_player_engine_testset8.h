@@ -228,7 +228,7 @@ class pvplayer_async_test_printmetadata : public pvplayer_async_test_base
         Oscl_Vector<PvmiKvp, OsclMemAllocator> iMetadataValueList;
         int32 iNumValues;
 
-        int32 iDownloadMaxfilesize;
+        TOsclFileOffset iDownloadMaxfilesize;
         OSCL_wHeapString<OsclMemAllocator> iDownloadFilename;
         OSCL_HeapString<OsclMemAllocator> iDownloadProxy;
         OSCL_wHeapString<OsclMemAllocator> iDownloadConfigFilename;
@@ -347,7 +347,7 @@ class pvplayer_async_test_printmemstats : public pvplayer_async_test_base
         uint32 iInitialNumBytes;
         uint32 iInitialNumAllocs;
 
-        int32 iDownloadMaxfilesize;
+        TOsclFileOffset iDownloadMaxfilesize;
         OSCL_wHeapString<OsclMemAllocator> iDownloadFilename;
         OSCL_HeapString<OsclMemAllocator> iDownloadProxy;
         OSCL_wHeapString<OsclMemAllocator> iDownloadConfigFilename;
@@ -438,7 +438,7 @@ class pvplayer_async_test_playuntileos : public pvplayer_async_test_base,
             iDownloadComplete = false;
         }
 
-        void DownloadUpdate(uint32 aLatestFileSizeInBytes, bool aDownloadComplete) {};
+        void DownloadUpdate(TOsclFileOffset aLatestFileSizeInBytes, bool aDownloadComplete) {};
 
         enum PVTestState
         {
@@ -479,7 +479,7 @@ class pvplayer_async_test_playuntileos : public pvplayer_async_test_base,
         OSCL_wHeapString<OsclMemAllocator> iFileNameWStr;
         oscl_wchar iTmpWCharBuffer[512];
 
-        int32 iDownloadMaxfilesize;
+        TOsclFileOffset iDownloadMaxfilesize;
         OSCL_wHeapString<OsclMemAllocator> iDownloadFilename;
         OSCL_HeapString<OsclMemAllocator> iDownloadProxy;
         OSCL_wHeapString<OsclMemAllocator> iDownloadConfigFilename;

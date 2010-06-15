@@ -19,6 +19,10 @@
 #include "pvmf_shoutcast_stream_parser.h"
 #include "oscl_string_utils.h"
 
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
 // logging
 #define LOGDEBUG(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_VERBOSE, m);
 #define LOGERROR(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, m);
@@ -26,31 +30,29 @@
 
 #define LOG_FOR_DEBUGGING       0     // set to 1 to enable and 0 to disable debug logging at PVLOGMSG_ERR
 
-// to handle 32 bit 4GB wrap around
-#define WRAP_THRESHOLD 0x80000000
-
-// returns true in inRange, if
-// thisOffset is in the range of bytes,
-// first byte being firstRangeOffset and last byte being lastRangeOffset
-#define IS_OFFSET_IN_RANGE(firstRangeOffset, lastRangeOffset, thisOffset, inRange)      \
-    {                                                                                   \
-        inRange = true;                                                                 \
-        if ((firstRangeOffset >= WRAP_THRESHOLD) && (lastRangeOffset < WRAP_THRESHOLD)) \
-        {                                                                               \
-            if ((thisOffset >= WRAP_THRESHOLD) && (thisOffset < firstRangeOffset))      \
-            {                                                                           \
-                inRange = false;                                                        \
-            }                                                                           \
-            else if ((thisOffset < WRAP_THRESHOLD) && (thisOffset > lastRangeOffset))   \
-            {                                                                           \
-                inRange = false;                                                        \
-            }                                                                           \
-        }                                                                               \
-        else if ((thisOffset < firstRangeOffset) || (thisOffset > lastRangeOffset))     \
-        {                                                                               \
-            inRange = false;                                                            \
-        }                                                                               \
+#define IS_OFFSET_IN_RANGE(firstRangeOffset, lastRangeOffset, thisOffset, inRange)  \
+    {                                                                               \
+        inRange = true;                                                             \
+        if (lastRangeOffset >= firstRangeOffset)                                    \
+        {                                                                           \
+            /* not wrapped  */                                                      \
+            if ((thisOffset < firstRangeOffset) || (thisOffset > lastRangeOffset))  \
+            {                                                                       \
+                /* out of range */                                                  \
+                inRange = false;                                                    \
+            }                                                                       \
+        }                                                                           \
+        else                                                                        \
+        {                                                                           \
+            /* wrapped */                                                           \
+            if ((thisOffset < firstRangeOffset) && (thisOffset > lastRangeOffset))  \
+            {                                                                       \
+                 /* out of range */                                                 \
+                inRange = false;                                                    \
+            }                                                                       \
+        }                                                                           \
     }
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -64,7 +66,7 @@ PVMFMediaChunkMap::PVMFMediaChunkMap()
 }
 
 // Set up the map pointers, chunk size and max number of chunks
-void PVMFMediaChunkMap::SetMapInfo(uint32 aMaxChunks, uint32 aChunkSize, uint32* aMapPtr)
+void PVMFMediaChunkMap::SetMapInfo(uint32 aMaxChunks, uint32 aChunkSize, int64* aMapPtr)
 {
     LOGTRACE((0, "PVMFMediaChunkMap::SetMapInfo - max chunks %d, chunk size %d mem ptr %d", aMaxChunks, aChunkSize, aMapPtr));
 
@@ -72,7 +74,7 @@ void PVMFMediaChunkMap::SetMapInfo(uint32 aMaxChunks, uint32 aChunkSize, uint32*
     iChunkSize = aChunkSize;
 
     iNextEntry = iFirstEntry = iCurrentEntry = aMapPtr;
-    iLastEntry = iFirstEntry + (iMaxChunks - 1);
+    iLastEntry = iFirstEntry + ((int64)iMaxChunks - 1);
 
     *iFirstEntry = 0;
     *iLastEntry = 0;
@@ -112,17 +114,17 @@ void PVMFMediaChunkMap::ResetMapInfo()
 // Returns the total number of bytes in the map
 // starting from and including the specified offset
 // If the offset is not in the map, 0 is returned
-uint32 PVMFMediaChunkMap::GetBytesMapped(uint32 aStreamOffset)
+uint32 PVMFMediaChunkMap::GetBytesMapped(int64 aStreamOffset)
 {
     uint32 bytesMapped = 0;
 
     // the map is a circular list
     // next to find the start of the map
     // the end of map is pointed to by iCurrentEntry
-    uint32* startEntry = iWrapped ? iNextEntry : iFirstEntry;
+    int64* startEntry = iWrapped ? iNextEntry : iFirstEntry;
 
-    uint32 firstStreamOffsetInMap = *startEntry;
-    uint32 lastStreamOffsetInMap = (*iCurrentEntry) + iChunkSize - 1;
+    int64 firstStreamOffsetInMap = *startEntry;
+    int64 lastStreamOffsetInMap = (*iCurrentEntry) + iChunkSize - 1;
 
     LOGDEBUG((0, "PVMFMediaChunkMap::GetBytesMapped - stream offset %d, first map offset %d, last map offset %d",
               aStreamOffset, firstStreamOffsetInMap, lastStreamOffsetInMap));
@@ -133,13 +135,13 @@ uint32 PVMFMediaChunkMap::GetBytesMapped(uint32 aStreamOffset)
     {
         // stream offset may be in the map
         // find the chunk that the offset is in
-        uint32* tmpEntry = startEntry;
+        int64* tmpEntry = startEntry;
 
         bool found = false;
         while (!found)
         {
-            uint32 firstStreamOffsetInChunk = *tmpEntry;
-            uint32 lastStreamOffsetInChunk = firstStreamOffsetInChunk + iChunkSize - 1;
+            int64 firstStreamOffsetInChunk = *tmpEntry;
+            int64 lastStreamOffsetInChunk = firstStreamOffsetInChunk + iChunkSize - 1;
             bool inChunk = false;
             IS_OFFSET_IN_RANGE(firstStreamOffsetInChunk, lastStreamOffsetInChunk, aStreamOffset, inChunk);
             if (inChunk)
@@ -174,7 +176,7 @@ uint32 PVMFMediaChunkMap::GetBytesMapped(uint32 aStreamOffset)
                     entries = iCurrentEntry - tmpEntry;
                 }
 
-                bytesMapped = (entries * iChunkSize) + GetBytesLeftInRange(firstStreamOffsetInChunk, lastStreamOffsetInChunk, aStreamOffset);
+                bytesMapped = (entries * iChunkSize) + (uint32)GetBytesLeftInRange(firstStreamOffsetInChunk, lastStreamOffsetInChunk, aStreamOffset);
                 // done
                 break;
             }
@@ -206,7 +208,7 @@ uint32 PVMFMediaChunkMap::GetBytesMapped(uint32 aStreamOffset)
 
 // Set the starting stram offset for the next media chunk in map
 
-void PVMFMediaChunkMap::SetNextChunkOffset(uint32 aStreamOffset)
+void PVMFMediaChunkMap::SetNextChunkOffset(int64 aStreamOffset)
 {
     LOGTRACE((0, "PVMFMediaChunkMap::SetNextChunkOffset - stream offset %d", aStreamOffset));
 
@@ -236,12 +238,12 @@ void PVMFMediaChunkMap::SetNextChunkOffset(uint32 aStreamOffset)
 // Return the start offset of the chunk that the specified stream offset is on
 // also return the pointer to the map entry
 
-bool PVMFMediaChunkMap::GetChunkOffset(uint32 aStreamOffset, uint32& aThisChunkStreamOffset, uint32*& aThisEntry)
+bool PVMFMediaChunkMap::GetChunkOffset(int64 aStreamOffset, int64& aThisChunkStreamOffset, int64*& aThisEntry)
 {
-    uint32* startEntry = iWrapped ? iNextEntry : iFirstEntry;
+    int64* startEntry = iWrapped ? iNextEntry : iFirstEntry;
 
-    uint32 firstStreamOffsetInMap = *startEntry;
-    uint32 lastStreamOffsetInMap = (*iCurrentEntry) + iChunkSize - 1;
+    int64 firstStreamOffsetInMap = *startEntry;
+    int64 lastStreamOffsetInMap = (*iCurrentEntry) + iChunkSize - 1;
 
     bool inMap = false;
     IS_OFFSET_IN_RANGE(firstStreamOffsetInMap, lastStreamOffsetInMap, aStreamOffset, inMap);
@@ -249,12 +251,12 @@ bool PVMFMediaChunkMap::GetChunkOffset(uint32 aStreamOffset, uint32& aThisChunkS
     {
         // stream offset may be in the map
         // find the chunk that the offset is in
-        uint32* tmpEntry = startEntry;
+        int64* tmpEntry = startEntry;
 
         while (1)
         {
-            uint32 firstStreamOffsetInChunk = *tmpEntry;
-            uint32 lastStreamOffsetInChunk = firstStreamOffsetInChunk + iChunkSize - 1;
+            int64 firstStreamOffsetInChunk = *tmpEntry;
+            int64 lastStreamOffsetInChunk = firstStreamOffsetInChunk + iChunkSize - 1;
             bool inChunk = false;
 
             IS_OFFSET_IN_RANGE(firstStreamOffsetInChunk, lastStreamOffsetInChunk, aStreamOffset, inChunk);
@@ -295,10 +297,10 @@ bool PVMFMediaChunkMap::GetChunkOffset(uint32 aStreamOffset, uint32& aThisChunkS
 
 // Locate the media chunk containing the specified offset and return the start offset of the next chunk
 
-bool PVMFMediaChunkMap::GetNextChunkOffset(uint32 aStreamOffset, uint32& aNextChunkStreamOffset)
+bool PVMFMediaChunkMap::GetNextChunkOffset(int64 aStreamOffset, int64& aNextChunkStreamOffset)
 {
-    uint32* thisEntry = NULL;
-    uint32 thisChunkOffset = 0;
+    int64* thisEntry = NULL;
+    int64 thisChunkOffset = 0;
 
     // find the offset of the chunk that the specified offset is in
     if (GetChunkOffset(aStreamOffset, thisChunkOffset, thisEntry))
@@ -321,10 +323,10 @@ bool PVMFMediaChunkMap::GetNextChunkOffset(uint32 aStreamOffset, uint32& aNextCh
 
 // Locate the media chunk containing the specified offset and return the start offset of the previous chunk
 
-bool PVMFMediaChunkMap::GetPrevChunkOffset(uint32 aStreamOffset, uint32& aPrevChunkStreamOffset)
+bool PVMFMediaChunkMap::GetPrevChunkOffset(int64 aStreamOffset, int64& aPrevChunkStreamOffset)
 {
-    uint32* thisEntry = NULL;
-    uint32 thisChunkOffset = 0;
+    int64* thisEntry = NULL;
+    int64 thisChunkOffset = 0;
 
     // find the offset of the chunk that the specified offset is in
     if (GetChunkOffset(aStreamOffset, thisChunkOffset, thisEntry))
@@ -370,7 +372,7 @@ bool PVMFMediaChunkMap::GetPrevChunkOffset(uint32 aStreamOffset, uint32& aPrevCh
 
 
 // should make this into a macro
-uint32 PVMFMediaChunkMap::GetBytesLeftInRange(uint32 aFirstOffset, uint32 aLastOffset, uint32 aOffset)
+int64 PVMFMediaChunkMap::GetBytesLeftInRange(int64 aFirstOffset, int64 aLastOffset, int64 aOffset)
 {
     OSCL_UNUSED_ARG(aFirstOffset);
 
@@ -416,7 +418,8 @@ OSCL_EXPORT_REF PVMFShoutcastStreamParserFactory::PVMFShoutcastStreamParserFacto
         // allocate memory a media chunk map
         uint32 maxChunks = (bufCap / iMetadataInterval) + 1;
 
-        iMediaMapMemPtr = (uint32*)oscl_malloc(maxChunks * sizeof(uint32));
+        iMediaMapMemPtr = (int64*)oscl_malloc(maxChunks * sizeof(int64));
+
         if (NULL == iMediaMapMemPtr)
         {
             LOGERROR((0, "PVMFShoutcastStreamParserFactory::PVMFShoutcastStreamParserFactory - failed to allocate %d bytes", maxChunks * sizeof(uint32)));
@@ -424,7 +427,7 @@ OSCL_EXPORT_REF PVMFShoutcastStreamParserFactory::PVMFShoutcastStreamParserFacto
         }
         else
         {
-            iMediaChunkMap.SetMapInfo(maxChunks, iMetadataInterval, iMediaMapMemPtr);
+            iMediaChunkMap.SetMapInfo(maxChunks, iMetadataInterval, (int64*)iMediaMapMemPtr);
         }
     }
 
@@ -754,7 +757,7 @@ OSCL_EXPORT_REF PvmiDataStreamRandomAccessType PVMFShoutcastStreamParser::QueryR
 }
 
 OSCL_EXPORT_REF PvmiDataStreamStatus PVMFShoutcastStreamParser::QueryReadCapacity(PvmiDataStreamSession aSessionID,
-        uint32& aCapacity)
+        TOsclFileOffset& aCapacity)
 {
     LOGTRACE((0, "PVMFShoutcastStreamParser::QueryReadCapacity"));
 
@@ -766,7 +769,7 @@ OSCL_EXPORT_REF PvmiDataStreamStatus PVMFShoutcastStreamParser::QueryReadCapacit
         return PVDS_INVALID_REQUEST;
     }
 
-    uint32 streamCapacity = 0;
+    TOsclFileOffset streamCapacity = 0;
     PvmiDataStreamStatus status = iReadStream->QueryReadCapacity(iReadFilePosVec->iReadFilePos[aSessionID].iStreamSessionID, streamCapacity);
 
     if (PVDS_SUCCESS != status)
@@ -789,7 +792,7 @@ OSCL_EXPORT_REF PvmiDataStreamStatus PVMFShoutcastStreamParser::QueryReadCapacit
     // add the length byte
     uint32 tagSize = iLargestMetadataTag + 1;
 
-    if (streamCapacity > + (iLargestRead + tagSize))
+    if (streamCapacity > + ((TOsclFileOffset)iLargestRead + (TOsclFileOffset)tagSize))
     {
         // enough data in cache
         aCapacity = streamCapacity;
@@ -803,7 +806,7 @@ OSCL_EXPORT_REF PvmiDataStreamStatus PVMFShoutcastStreamParser::QueryReadCapacit
     {
         // there is a tag in cache, assume the largest tag (not the max 4081)
         // don't include tag in capacity
-        aCapacity = (streamCapacity > tagSize) ? (streamCapacity - tagSize) : 0;
+        aCapacity = ((streamCapacity > (TOsclFileOffset)tagSize) ? (streamCapacity - tagSize) : (TOsclFileOffset)0);
 
         LOGDEBUG((0, "PVMFShoutcastStreamParser::QueryReadCapacity - session id %d, capacity %d, streamCapacity %d, iLargestMetadataTag %d, iLargestRead %d, iBytesToNextMetadataTag %d",
                   aSessionID, aCapacity, streamCapacity, iLargestMetadataTag, iLargestRead, iBytesToNextMetadataTag));
@@ -816,7 +819,7 @@ OSCL_EXPORT_REF PvmiDataStreamStatus PVMFShoutcastStreamParser::QueryReadCapacit
 
 OSCL_EXPORT_REF PvmiDataStreamCommandId PVMFShoutcastStreamParser::RequestReadCapacityNotification(PvmiDataStreamSession aSessionID,
         PvmiDataStreamObserver& aObserver,
-        uint32 aCapacity,
+        TOsclFileOffset aCapacity,
         OsclAny* aContextData)
 {
     LOGTRACE((0, "PVMFShoutcastStreamParser::RequestReadCapacityNotification - session id %d, capacity %d, context data %x",
@@ -832,8 +835,8 @@ OSCL_EXPORT_REF PvmiDataStreamCommandId PVMFShoutcastStreamParser::RequestReadCa
     // need to find out metadata is expected shortly
     // if so, need to add max metadata tag size to the requested capacity
 
-    uint32 chunkStart = 0;
-    uint32* unused = NULL;
+    int64 chunkStart = 0;
+    int64* unused = NULL;
     bool found = iMediaChunkMap->GetChunkOffset(iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition, chunkStart, unused);
     if (!found)
     {
@@ -844,14 +847,14 @@ OSCL_EXPORT_REF PvmiDataStreamCommandId PVMFShoutcastStreamParser::RequestReadCa
         OSCL_LEAVE(OsclErrArgument);
     }
 
-    uint32 bytesInChunk = iMediaChunkMap->GetBytesLeftInRange(chunkStart, chunkStart + iMetadataInterval - 1, iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition);
+    uint32 bytesInChunk = (uint32)iMediaChunkMap->GetBytesLeftInRange(chunkStart, chunkStart + iMetadataInterval - 1, iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition);
 
-    uint32 streamCapacity = aCapacity;
-    if (aCapacity > bytesInChunk)
+    TOsclFileOffset streamCapacity = aCapacity;
+    if (aCapacity > (TOsclFileOffset)bytesInChunk)
     {
-        uint32 overflow = aCapacity - bytesInChunk;
-        uint32 numMetadataTags = overflow / iMetadataInterval;
-        uint32 mod = overflow % iMetadataInterval;
+        TOsclFileOffset overflow = aCapacity - bytesInChunk;
+        TOsclFileOffset numMetadataTags = overflow / iMetadataInterval;
+        TOsclFileOffset mod = overflow % iMetadataInterval;
         if (0 != mod)
         {
             numMetadataTags++;
@@ -866,7 +869,7 @@ OSCL_EXPORT_REF PvmiDataStreamCommandId PVMFShoutcastStreamParser::RequestReadCa
 }
 
 OSCL_EXPORT_REF PvmiDataStreamStatus PVMFShoutcastStreamParser::QueryWriteCapacity(PvmiDataStreamSession aSessionID,
-        uint32& capacity)
+        TOsclFileOffset& capacity)
 {
     LOGTRACE((0, "PVMFShoutcastStreamParser::QueryWriteCapacity"));
 
@@ -950,9 +953,11 @@ OSCL_EXPORT_REF PvmiDataStreamStatus PVMFShoutcastStreamParser::Read(PvmiDataStr
     PvmiDataStreamStatus status = PVDS_SUCCESS;
 
     // find out the current byte range in the stream
-    uint32 firstStreamOffset = 0;
-    uint32 lastStreamOffset = 0;
-    iReadStream->GetCurrentByteRange(firstStreamOffset, lastStreamOffset);
+    TOsclFileOffset firstStreamOffset_tmp = 0;
+    TOsclFileOffset lastStreamOffset_tmp = 0;
+    iReadStream->GetCurrentByteRange(firstStreamOffset_tmp, lastStreamOffset_tmp);
+    int64 firstStreamOffset = (int64)firstStreamOffset_tmp;
+    int64 lastStreamOffset = (int64)lastStreamOffset_tmp;
 
     uint32 bytesRequested = aSize * aNumElements;
 
@@ -1031,7 +1036,7 @@ OSCL_EXPORT_REF PvmiDataStreamStatus PVMFShoutcastStreamParser::Read(PvmiDataStr
                 // otherwise, skip over metadata tag, upate stream position, but not file position
                 if (0 != length)
                 {
-                    int seekToOffset = length * 16;
+                    int64 seekToOffset = length * 16;
 
                     status = SkipRelativeBytes(aSessionID, firstStreamOffset, lastStreamOffset, seekToOffset, false);
                     if (PVDS_SUCCESS != status)
@@ -1201,7 +1206,7 @@ OSCL_EXPORT_REF PvmiDataStreamStatus PVMFShoutcastStreamParser::Write(PvmiDataSt
 }
 
 OSCL_EXPORT_REF PvmiDataStreamStatus PVMFShoutcastStreamParser::Seek(PvmiDataStreamSession aSessionID,
-        int32 aOffset, PvmiDataStreamSeekType aOrigin)
+        TOsclFileOffset aOffset, PvmiDataStreamSeekType aOrigin)
 {
     LOGTRACE((0, "PVMFShoutcastStreamParser::Seek - session id %d, offset %d, origin %d iStreamPosition %d iParserFilePosition %d",
               aSessionID, aOffset, aOrigin, iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition,
@@ -1226,34 +1231,42 @@ OSCL_EXPORT_REF PvmiDataStreamStatus PVMFShoutcastStreamParser::Seek(PvmiDataStr
     PvmiDataStreamStatus status = PVDS_SUCCESS;
 
     // find out the current byte range in the stream
-    uint32 firstStreamOffset = 0;
-    uint32 lastStreamOffset = 0;
-    iReadStream->GetCurrentByteRange(firstStreamOffset, lastStreamOffset);
+    TOsclFileOffset firstStreamOffset_tmp1 = 0;
+    TOsclFileOffset lastStreamOffset_tmp1 = 0;
+    iReadStream->GetCurrentByteRange(firstStreamOffset_tmp1, lastStreamOffset_tmp1);
+    int64 firstStreamOffset = (int64)firstStreamOffset_tmp1;
+    int64 lastStreamOffset = (int64)lastStreamOffset_tmp1;
 
-    int32 seekToOffset = 0;
-    uint32 streamPosition = iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition;
-    uint32 filePosition = iReadFilePosVec->iReadFilePos[aSessionID].iParserFilePosition;
+    /*int64 firstStreamOffset = 0;
+    int64 lastStreamOffset = 0;
+    iReadStream->GetCurrentByteRange((TOsclFileOffset)firstStreamOffset, (TOsclFileOffset)lastStreamOffset);*/
+
+    int64 seekToOffset = 0;
+    int64 streamPosition = iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition;
+    int64 filePosition = iReadFilePosVec->iReadFilePos[aSessionID].iParserFilePosition;
 
     // in case multiple seek failed, need to put the pointer back
-    uint32 savedOffset = iReadStream->GetCurrentPointerPosition(iReadFilePosVec->iReadFilePos[aSessionID].iStreamSessionID);
+    int64 savedOffset = (int64)iReadStream->GetCurrentPointerPosition(iReadFilePosVec->iReadFilePos[aSessionID].iStreamSessionID);
 
 
-    uint32 bytesMapped = iMediaChunkMap->GetBytesMapped(iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition);
+    int64 bytesMapped = iMediaChunkMap->GetBytesMapped(iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition);
 
     // do nothing if offset is 0
-    if (aOffset < 0)
+    if (aOffset < (int64)0)
     {
         // seek backward, bytes should have been mapped
         // find the start of this media chunk
-        uint32* unused = NULL;
-        uint32 chunkStart = 0;
+        int64* unused = NULL;
+        int64 chunkStart = 0;
 
-        uint32 bytesToRewind = oscl_abs(aOffset);
+        //uint32 bytesToRewind = oscl_abs((int)aOffset);
+
+        int64 bytesToRewind = (int64)0 - aOffset;
 
         bool chunkFound = iMediaChunkMap->GetChunkOffset(iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition, chunkStart, unused);
         if (!chunkFound)
         {
-            status = SkipRelativeBytes(aSessionID, firstStreamOffset, lastStreamOffset, -1, true);
+            status = SkipRelativeBytes(aSessionID, firstStreamOffset, lastStreamOffset, (int64) - 1, true);
             if (PVDS_SUCCESS != status)
             {
                 LOGERROR((0, "PVMFShoutcastStreamParser::Seek - failed, SkipRelativeBytes status %d", status));
@@ -1269,16 +1282,17 @@ OSCL_EXPORT_REF PvmiDataStreamStatus PVMFShoutcastStreamParser::Seek(PvmiDataStr
             }
         }
 
-        uint32 bytesLeftInChunk = iMediaChunkMap->GetBytesLeftInRange(chunkStart, chunkStart + iMetadataInterval - 1, iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition);
+        uint32 bytesLeftInChunk = (uint32)iMediaChunkMap->GetBytesLeftInRange(chunkStart, chunkStart + iMetadataInterval - 1, iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition);
         uint32 bytesInChunk = iMetadataInterval - bytesLeftInChunk;
 
         while (0 != bytesToRewind)
         {
-            bytesInChunk = (bytesInChunk < bytesToRewind) ? bytesInChunk : bytesToRewind;
+            bytesInChunk = (bytesInChunk < (uint32)bytesToRewind) ? bytesInChunk : (uint32)bytesToRewind;
 
             // rewind to the start of this chunk
             // update stream position and file position
-            seekToOffset = 0 - bytesInChunk;
+
+            seekToOffset = (int64)0 - (int64)bytesInChunk;
 
             status = SkipRelativeBytes(aSessionID, firstStreamOffset, lastStreamOffset, seekToOffset, true);
             if (PVDS_SUCCESS != status)
@@ -1319,16 +1333,16 @@ OSCL_EXPORT_REF PvmiDataStreamStatus PVMFShoutcastStreamParser::Seek(PvmiDataStr
             }
         } // end while
     }
-    else if (aOffset > 0)
+    else if (aOffset > (int64)0)
     {
         // seek forward, bytes may not be mapped
         bytesMapped = iMediaChunkMap->GetBytesMapped(iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition);
 
-        uint32 bytesToSkip = aOffset;
+        int64 bytesToSkip = aOffset;
 
-        while (0 != bytesToSkip)
+        while ((int64)0 != bytesToSkip)
         {
-            if (0 != bytesMapped)
+            if ((int64)0 != bytesMapped)
             {
                 // these bytes are mapped
                 uint32 bytesInChunk = 0;
@@ -1345,7 +1359,7 @@ OSCL_EXPORT_REF PvmiDataStreamStatus PVMFShoutcastStreamParser::Seek(PvmiDataStr
 
                 // skip over the media bytes
                 // update stream and file positions
-                seekToOffset = (bytesInChunk < bytesToSkip) ? bytesInChunk : bytesToSkip;
+                seekToOffset = ((int64)bytesInChunk < bytesToSkip) ? (int64)bytesInChunk : bytesToSkip;
 
                 status = SkipRelativeBytes(aSessionID, firstStreamOffset, lastStreamOffset, seekToOffset, true);
                 if (PVDS_SUCCESS != status)
@@ -1354,7 +1368,7 @@ OSCL_EXPORT_REF PvmiDataStreamStatus PVMFShoutcastStreamParser::Seek(PvmiDataStr
                     break;
                 }
 
-                bool pointToTag = (bytesToSkip >= bytesInChunk);
+                bool pointToTag = (bytesToSkip >= (int64)bytesInChunk);
 
                 bytesToSkip -= seekToOffset;
                 bytesMapped -= seekToOffset;
@@ -1433,7 +1447,7 @@ OSCL_EXPORT_REF PvmiDataStreamStatus PVMFShoutcastStreamParser::Seek(PvmiDataStr
                 // the next bytes should be the beginning of a media chunk
                 // skip pass entire media chunk to the next metadata tag length byte
                 // update stream and file position
-                seekToOffset = (iMetadataInterval < bytesToSkip) ? iMetadataInterval : bytesToSkip;
+                seekToOffset = ((int64)iMetadataInterval < bytesToSkip) ? (int64)iMetadataInterval : bytesToSkip;
 
                 status = SkipRelativeBytes(aSessionID, firstStreamOffset, lastStreamOffset, seekToOffset, true);
                 if (PVDS_SUCCESS != status)
@@ -1452,7 +1466,7 @@ OSCL_EXPORT_REF PvmiDataStreamStatus PVMFShoutcastStreamParser::Seek(PvmiDataStr
         // put everything back to where they were
         iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition = streamPosition;
         iReadFilePosVec->iReadFilePos[aSessionID].iParserFilePosition = filePosition;
-        iReadStream->Seek(iReadFilePosVec->iReadFilePos[aSessionID].iStreamSessionID, savedOffset, PVDS_SEEK_SET);
+        iReadStream->Seek(iReadFilePosVec->iReadFilePos[aSessionID].iStreamSessionID, (TOsclFileOffset)savedOffset, PVDS_SEEK_SET);
     }
 
     LOGTRACE((0, "PVMFShoutcastStreamParser::Seek - session id %d, offset %d, status %d", aSessionID, aOffset, status));
@@ -1461,7 +1475,7 @@ OSCL_EXPORT_REF PvmiDataStreamStatus PVMFShoutcastStreamParser::Seek(PvmiDataStr
 }
 
 
-OSCL_EXPORT_REF uint32 PVMFShoutcastStreamParser::GetCurrentPointerPosition(PvmiDataStreamSession aSessionID)
+OSCL_EXPORT_REF TOsclFileOffset PVMFShoutcastStreamParser::GetCurrentPointerPosition(PvmiDataStreamSession aSessionID)
 {
     LOGTRACE((0, "PVMFShoutcastStreamParser::GetCurrentPointerPosition - session id %d", aSessionID));
 
@@ -1476,7 +1490,7 @@ OSCL_EXPORT_REF uint32 PVMFShoutcastStreamParser::GetCurrentPointerPosition(Pvmi
     LOGTRACE((0, "PVMFShoutcastStreamParser::GetCurrentPointerPosition - session id %d current pos %d",
               aSessionID, iReadFilePosVec->iReadFilePos[aSessionID].iParserFilePosition));
 
-    return iReadFilePosVec->iReadFilePos[aSessionID].iParserFilePosition;
+    return (TOsclFileOffset)iReadFilePosVec->iReadFilePos[aSessionID].iParserFilePosition;
 }
 
 OSCL_EXPORT_REF PvmiDataStreamStatus PVMFShoutcastStreamParser::Flush(PvmiDataStreamSession aSessionID)
@@ -1499,13 +1513,13 @@ OSCL_EXPORT_REF uint32 PVMFShoutcastStreamParser::QueryBufferingCapacity()
     return iReadStream->QueryBufferingCapacity();
 }
 
-OSCL_EXPORT_REF PvmiDataStreamStatus PVMFShoutcastStreamParser::MakePersistent(int32 aOffset, uint32 aSize)
+OSCL_EXPORT_REF PvmiDataStreamStatus PVMFShoutcastStreamParser::MakePersistent(TOsclFileOffset aOffset, uint32 aSize)
 {
     LOGTRACE((0, "PVMFShoutcastStreamParser::MakePersistent - offset %d, size %d", aOffset, aSize));
 
     // convert the parser offset and size into shoutcast stream offset and size
     // should be 0, 0 for shoutcast
-    if ((0 != aOffset) || (0 != aSize))
+    if (((TOsclFileOffset)0 != aOffset) || (0 != aSize))
     {
         LOGERROR((0, "PVMFShoutcastStreamParser::MakePersistent - failed, aOffset %d, aSize %d, should both be 0", aOffset, aSize));
         return PVDS_INVALID_REQUEST;
@@ -1514,7 +1528,7 @@ OSCL_EXPORT_REF PvmiDataStreamStatus PVMFShoutcastStreamParser::MakePersistent(i
     return iReadStream->MakePersistent(aOffset, aSize);
 }
 
-OSCL_EXPORT_REF void PVMFShoutcastStreamParser::GetCurrentByteRange(uint32& aCurrentFirstByteOffset, uint32& aCurrentLastByteOffset)
+OSCL_EXPORT_REF void PVMFShoutcastStreamParser::GetCurrentByteRange(TOsclFileOffset& aCurrentFirstByteOffset, TOsclFileOffset& aCurrentLastByteOffset)
 {
     OSCL_UNUSED_ARG(aCurrentFirstByteOffset);
     OSCL_UNUSED_ARG(aCurrentLastByteOffset);
@@ -1592,12 +1606,12 @@ void PVMFShoutcastStreamParser::ManageMetadataUpdateNotifications()
 }
 
 
-PvmiDataStreamStatus PVMFShoutcastStreamParser::GetBytesInChunk(PvmiDataStreamSession aSessionID, uint32 aLastStreamOffset, uint32& aBytesInChunk)
+PvmiDataStreamStatus PVMFShoutcastStreamParser::GetBytesInChunk(PvmiDataStreamSession aSessionID, int64 aLastStreamOffset, uint32& aBytesInChunk)
 {
     LOGTRACE((0, "PVMFShoutcastStreamParser::GetBytesInChunk - session id %d, last offset %d", aSessionID, aLastStreamOffset));
 
-    uint32 chunkStart = 0;
-    uint32* unused = NULL;
+    int64 chunkStart = 0;
+    int64* unused = NULL;
     bool found = iMediaChunkMap->GetChunkOffset(iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition, chunkStart, unused);
     if (!found)
     {
@@ -1607,13 +1621,13 @@ PvmiDataStreamStatus PVMFShoutcastStreamParser::GetBytesInChunk(PvmiDataStreamSe
         return PVDS_FAILURE;
     }
 
-    uint32 bytesInChunk = iMediaChunkMap->GetBytesLeftInRange(chunkStart, chunkStart + iMetadataInterval - 1, iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition);
+    uint32 bytesInChunk = (uint32)iMediaChunkMap->GetBytesLeftInRange(chunkStart, chunkStart + iMetadataInterval - 1, iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition);
 
     if (0 == bytesInChunk)
     {
         // move to the next chunk
         // get the next chunk offset
-        uint32 nextChunkOffset = 0;
+        int64 nextChunkOffset = 0;
         found = iMediaChunkMap->GetNextChunkOffset(iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition, nextChunkOffset);
         if ((!found) || (nextChunkOffset > aLastStreamOffset))
         {
@@ -1624,9 +1638,9 @@ PvmiDataStreamStatus PVMFShoutcastStreamParser::GetBytesInChunk(PvmiDataStreamSe
         }
 
         // skip over the metadata tag
-        uint32 seekOffset = nextChunkOffset - iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition;
+        int64 seekOffset = nextChunkOffset - iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition;
 
-        PvmiDataStreamStatus status = iReadStream->Seek(iReadFilePosVec->iReadFilePos[aSessionID].iStreamSessionID, seekOffset, PVDS_SEEK_CUR);
+        PvmiDataStreamStatus status = iReadStream->Seek(iReadFilePosVec->iReadFilePos[aSessionID].iStreamSessionID, (TOsclFileOffset)seekOffset, PVDS_SEEK_CUR);
         if (PVDS_SUCCESS != status)
         {
             LOGERROR((0, "PVMFShoutcastStreamParser::GetBytesInChunk - failed, skipping metadata status %d", status));
@@ -1655,7 +1669,7 @@ PvmiDataStreamStatus PVMFShoutcastStreamParser::GetBytesInChunk(PvmiDataStreamSe
     return PVDS_SUCCESS;
 }
 
-PvmiDataStreamStatus PVMFShoutcastStreamParser::ReadBytes(PvmiDataStreamSession aSessionID, uint32 aFirstStreamOffset, uint32 aLastStreamOffset,
+PvmiDataStreamStatus PVMFShoutcastStreamParser::ReadBytes(PvmiDataStreamSession aSessionID, int64 aFirstStreamOffset, int64 aLastStreamOffset,
         uint8* aBufPtr, uint32& aBytesToRead, bool bUpdateParsingPosition)
 {
     LOGTRACE((0, "PVMFShoutcastStreamParser::ReadBytes - session id %d, first offset %d, last offset %d, bufptr %x, bytes %d, update %d",
@@ -1665,7 +1679,7 @@ PvmiDataStreamStatus PVMFShoutcastStreamParser::ReadBytes(PvmiDataStreamSession 
     bool inStream = false;
     IS_OFFSET_IN_RANGE(aFirstStreamOffset, aLastStreamOffset, iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition, inStream);
     bool inStream2 = false;
-    IS_OFFSET_IN_RANGE(aFirstStreamOffset, aLastStreamOffset, iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition + aBytesToRead - 1, inStream2);
+    IS_OFFSET_IN_RANGE(aFirstStreamOffset, aLastStreamOffset, (iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition + (int64)aBytesToRead - (int64)1), inStream2);
 
     if (!inStream || !inStream2)
     {
@@ -1703,23 +1717,23 @@ PvmiDataStreamStatus PVMFShoutcastStreamParser::ReadBytes(PvmiDataStreamSession 
 }
 
 
-PvmiDataStreamStatus PVMFShoutcastStreamParser::SkipRelativeBytes(PvmiDataStreamSession aSessionID, uint32 aFirstStreamOffset, uint32 aLastStreamOffset,
-        int32 aSeekToOffset, bool bUpdateParsingPosition)
+PvmiDataStreamStatus PVMFShoutcastStreamParser::SkipRelativeBytes(PvmiDataStreamSession aSessionID, int64 aFirstStreamOffset, int64 aLastStreamOffset,
+        int64 aSeekToOffset, bool bUpdateParsingPosition)
 {
     LOGTRACE((0, "PVMFShoutcastStreamParser::SkipRelativeBytes - session id %d, first offset %d, last offset %d, offset %d, update %d",
               aSessionID, aFirstStreamOffset, aLastStreamOffset, aSeekToOffset, bUpdateParsingPosition));
 
     // make sure all the bytes are in the stream
     // seeking forward, it is ok for data to be not in stream yet
-    if (0 == aSeekToOffset)
+    if ((int64)0 == aSeekToOffset)
     {
         return PVDS_SUCCESS;
     }
-    else if (aSeekToOffset < 0)
+    else if (aSeekToOffset < (int64)0)
     {
         // seeking backward
         bool inStream = false;
-        IS_OFFSET_IN_RANGE(aFirstStreamOffset, aLastStreamOffset, iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition + aSeekToOffset, inStream);
+        IS_OFFSET_IN_RANGE(aFirstStreamOffset, aLastStreamOffset, (iReadFilePosVec->iReadFilePos[aSessionID].iStreamPosition + aSeekToOffset), inStream);
 
         if (!inStream)
         {
@@ -1731,7 +1745,7 @@ PvmiDataStreamStatus PVMFShoutcastStreamParser::SkipRelativeBytes(PvmiDataStream
         }
     }
 
-    PvmiDataStreamStatus status = iReadStream->Seek(iReadFilePosVec->iReadFilePos[aSessionID].iStreamSessionID, aSeekToOffset, PVDS_SEEK_CUR);
+    PvmiDataStreamStatus status = iReadStream->Seek(iReadFilePosVec->iReadFilePos[aSessionID].iStreamSessionID, (TOsclFileOffset)aSeekToOffset, PVDS_SEEK_CUR);
     if (PVDS_SUCCESS == status)
     {
         // update both pointers
@@ -1742,12 +1756,14 @@ PvmiDataStreamStatus PVMFShoutcastStreamParser::SkipRelativeBytes(PvmiDataStream
             iReadFilePosVec->iReadFilePos[aSessionID].iParserFilePosition += aSeekToOffset;
 
             // update counter
-            if (aSeekToOffset < 0)
+            if (aSeekToOffset < (int64)0)
             {
                 // seeking backward, may seek across multiple chunks
-                uint32 absOffset = oscl_abs(aSeekToOffset);
+                //uint32 absOffset = oscl_abs((int)aSeekToOffset);
 
-                if (absOffset > (iMetadataInterval - iBytesToNextMetadataTag))
+                int64 absOffset = (int64)0 - aSeekToOffset;
+
+                if (absOffset > (int64)(iMetadataInterval - iBytesToNextMetadataTag))
                 {
                     // not in current chunk
                     // but we rewinding to the last byte of the chunk
@@ -1763,10 +1779,10 @@ PvmiDataStreamStatus PVMFShoutcastStreamParser::SkipRelativeBytes(PvmiDataStream
             else
             {
                 // seeking forward, may seek across multiple chunks
-                if ((uint32)aSeekToOffset > iBytesToNextMetadataTag)
+                if (aSeekToOffset > iBytesToNextMetadataTag)
                 {
                     // cross over to another chunk
-                    iBytesToNextMetadataTag = iMetadataInterval - ((aSeekToOffset - iBytesToNextMetadataTag) % iMetadataInterval);
+                    iBytesToNextMetadataTag = (int64)iMetadataInterval - ((aSeekToOffset - iBytesToNextMetadataTag) % (int64)iMetadataInterval);
                 }
                 else
                 {
@@ -1787,7 +1803,7 @@ PvmiDataStreamStatus PVMFShoutcastStreamParser::SkipRelativeBytes(PvmiDataStream
 }
 
 
-PvmiDataStreamStatus PVMFShoutcastStreamParser::HandleMetadata(PvmiDataStreamSession aSessionID, uint32 aFirstStreamOffset, uint32 aLastStreamOffset,
+PvmiDataStreamStatus PVMFShoutcastStreamParser::HandleMetadata(PvmiDataStreamSession aSessionID, int64 aFirstStreamOffset, int64 aLastStreamOffset,
         uint32 aMetadataLengthBase16)
 {
 
@@ -1832,4 +1848,3 @@ PvmiDataStreamStatus PVMFShoutcastStreamParser::HandleMetadata(PvmiDataStreamSes
     LOGTRACE((0, "PVMFShoutcastStreamParser::HandleMetadata session id %d, status %d", aSessionID, status));
     return status;
 }
-

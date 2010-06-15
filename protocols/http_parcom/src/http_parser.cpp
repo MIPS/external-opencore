@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -216,7 +216,9 @@ bool HTTPContentInfoInternal::parseContentInfo(StringKeyValueStore &aKeyValueSto
     if (aKeyValueStore.getValueByKey(contenLengthKey, contentLengthValue))
     {
         // has content length
-        PV_atoi(contentLengthValue.c_str(), 'd', iContentLength);
+        uint64 tempVar = 0;
+        PV_atoi(contentLengthValue.c_str(), 'd', oscl_strlen(contentLengthValue.c_str()), tempVar);
+        iContentLength = (TOsclFileOffset)tempVar;
     }
 
     // Content-Type
@@ -285,7 +287,9 @@ void HTTPContentInfoInternal::parseContentRange(const StrPtrLen &aContentRange)
             ptr++;
             len--;
         }
-        PV_atoi(start_ptr, 'd', start_len - len, iContentRangeLeft);
+        uint64 tempVar = 0;
+        PV_atoi(start_ptr, 'd', start_len - len, tempVar);
+        iContentRangeLeft = (TOsclFileOffset)tempVar;
 
         // get the right side of the range
         while (!isDigit(*ptr) && len > 0)
@@ -300,7 +304,9 @@ void HTTPContentInfoInternal::parseContentRange(const StrPtrLen &aContentRange)
             ptr++;
             len--;
         }
-        PV_atoi(start_ptr, 'd', start_len - len, iContentRangeRight);
+        uint64 temp = 0;
+        PV_atoi(start_ptr, 'd', start_len - len, temp);
+        iContentRangeRight = (TOsclFileOffset)temp;
 
         // get the content length
         while (!isDigit(*ptr) && len > 0)
@@ -315,7 +321,9 @@ void HTTPContentInfoInternal::parseContentRange(const StrPtrLen &aContentRange)
             ptr++;
             len--;
         }
-        PV_atoi(start_ptr, 'd', start_len - len, iContentLength);
+        uint64 tmp = 0;
+        PV_atoi(start_ptr, 'd', start_len - len, tmp);
+        iContentLength = (TOsclFileOffset)tmp;
     }
 }
 
@@ -1310,8 +1318,9 @@ bool HTTPParserHeaderObject::checkGood2xxCode()
         if (iKeyValueStore->getValueByKey(contenLengthKey, contentLengthValue))
         {
             // has Content-Length field
-            uint32 aContentLength = 0;
-            PV_atoi(contentLengthValue.c_str(), 'd', aContentLength);
+            uint64 aContentLength = 0;
+            //PV_atoi(contentLengthValue.c_str(), 'd', aContentLength);
+            PV_atoi(contentLengthValue.c_str(), 'd', oscl_strlen(contentLengthValue.c_str()), aContentLength);
 
             // check the empty Content-Length case
             char *ptr = (char *)contentLengthValue.c_str();
@@ -1356,8 +1365,8 @@ bool HTTPParserHeaderObject::checkResponseParsedComplete()
     if (!getField(contentLengthKey, contentLengthValue)) return false; // no "Content-Length"
 
     // get "Content-Length" value
-    uint32 contentLength = 0;
-    PV_atoi(contentLengthValue.c_str(), 'd', contentLength);
+    uint64 contentLength = 0;
+    PV_atoi(contentLengthValue.c_str(), 'd', oscl_strlen(contentLengthValue.c_str()), contentLength);
     return (contentLength == 0);
 }
 
@@ -1436,20 +1445,23 @@ int32 HTTPParserEntityBodyObject::parseEnityBodyChunkData(HTTPParserInput &aPars
 int32 HTTPParserNormalContentObject::parse(HTTPParserInput &aParserInput, RefCountHTTPEntityUnit &aEntityUnit)
 {
     HTTPMemoryFragment aFrag;
-    int32 actualSize = 0;
+    TOsclFileOffset actualSize = 0;
+
+
 
 
     if (iCurrTotalLengthObtained == 0 && iContentInfo->iContentRangeLeft > 0) iCurrTotalLengthObtained = iContentInfo->iContentRangeLeft;
 
     // Shoutast sessions do not have Content-Length
-    int32 requestSize = (iContentInfo->iContentLength == 0 ? 0 : (int32)iContentInfo->iContentLength - (int32)iCurrTotalLengthObtained);
+    TOsclFileOffset requestSize = (TOsclFileOffset)(iContentInfo->iContentLength == 0 ? 0 : /*(int32)*/iContentInfo->iContentLength - /*(int32)*/iCurrTotalLengthObtained);
+
     if (requestSize <= 0 && iContentInfo->iContentLength > 0)
     {
         if (requestSize == 0) return HTTPParser::PARSE_SUCCESS_END_OF_MESSAGE;
         return HTTPParser::PARSE_SUCCESS_END_OF_MESSAGE_WITH_EXTRA_DATA;
     }
 
-    while ((actualSize = aParserInput.getData(aFrag, requestSize)) > 0)
+    while ((actualSize = aParserInput.getData(aFrag, (uint32)requestSize)) > 0)
     {
         iCurrTotalLengthObtained += actualSize;
         if (requestSize > 0)

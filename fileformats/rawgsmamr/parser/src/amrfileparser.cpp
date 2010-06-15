@@ -289,6 +289,7 @@ int32 bitstreamObject::getNextFrame(uint8* frameBuffer, uint8& frame_type, bool 
         {
             oscl_memcpy(frameBuffer, &pBuffer[1], frame_size - 1); // NO frame header
         }
+
     }
     iPos += frame_size;
     iBytesProcessed += frame_size;
@@ -319,6 +320,7 @@ int32 bitstreamObject::parseIETFHeader()
             {
                 // single channel AMR file
                 iAmrFormat  = EAMRIETF_SingleNB;
+                iAmrChannel = 1;
                 iInitFilePos = 6;
             }
 
@@ -333,6 +335,7 @@ int32 bitstreamObject::parseIETFHeader()
             {
                 // multi-channel AMR file
                 iAmrFormat = EAMRIETF_MultiNB;
+                iAmrChannel = pBuffer[15] & 0x0f;
                 iInitFilePos = 12;
             }
             else if (iActual_size >= 8  &&
@@ -345,6 +348,7 @@ int32 bitstreamObject::parseIETFHeader()
                 {
                     // single channel AMR-WB file
                     iAmrFormat  = EAMRIETF_SingleWB;
+                    iAmrChannel = 1;
                     iInitFilePos = 9;
                 }
                 else if (iActual_size >= 14     &&
@@ -358,6 +362,7 @@ int32 bitstreamObject::parseIETFHeader()
                 {
                     // multi-channel AMR-WB file
                     iAmrFormat = EAMRIETF_MultiWB;
+                    iAmrChannel = pBuffer[18] & 0x0f;
                     iInitFilePos = 15;
                 }
             }
@@ -380,7 +385,7 @@ int32 bitstreamObject::parseIETFHeader()
 }
 
 //! get clip information: file size, format(IETF or IF2) and frame_type(bitrate)
-int32 bitstreamObject::getFileInfo(int32& fileSize, int32& format, int32& frame_type)
+int32 bitstreamObject::getFileInfo(int32& fileSize, int32& format, int32& frame_type, int8& channel)
 {
     fileSize = format = 0;
     int32 ret_value = bitstreamObject::EVERYTHING_OK;
@@ -396,6 +401,7 @@ int32 bitstreamObject::getFileInfo(int32& fileSize, int32& format, int32& frame_
     fileSize = iFileSize;
     format = iAmrFormat;
     frame_type = iFrame_type;
+    channel = iAmrChannel;
     return ret_value;
 }
 
@@ -458,6 +464,7 @@ OSCL_EXPORT_REF CAMRFileParser::CAMRFileParser(void)
     iEndOfFileReached   = false;
     iRandomAccessTimeInterval = 0;
     iCountToClaculateRDATimeInterval = 0;
+    iAMRChannel = 0;
     iLogger = PVLogger::GetLoggerObject("pvamr_parser");
     iDiagnosticLogger = PVLogger::GetLoggerObject("playerdiagnostics.pvamr_parser");
 
@@ -560,7 +567,7 @@ OSCL_EXPORT_REF bool CAMRFileParser::InitAMRFile(OSCL_wString& aClip, bool aInit
 
     // get file info
     int32 frameTypeIndex = 0;
-    if (ipBSO->getFileInfo(iAMRFileSize, iAMRFormat, frameTypeIndex))
+    if (ipBSO->getFileInfo(iAMRFileSize, iAMRFormat, frameTypeIndex, iAMRChannel))
     {
         PVMF_AMRPARSER_LOGERROR((0, "CAMRFileParser::InitAMRFile- getFileInfo failed "));
         return false;
@@ -730,6 +737,7 @@ OSCL_EXPORT_REF bool CAMRFileParser::RetrieveFileInfo(TPVAmrFileInfo& aInfo)
     aInfo.iDuration = iAMRDuration;
     aInfo.iFileSize = iAMRFileSize;
     aInfo.iAmrFormat = iAMRFormat;
+    aInfo.iChannel = iAMRChannel;
     PVMF_AMRPARSER_LOGDIAGNOSTICS((0, "CAMRFileParser::RetrieveFileInfo- duration = %d, bitrate = %d, filesize = %d", iAMRDuration, iAMRBitRate, iAMRFileSize));
 
     return true;
@@ -923,7 +931,7 @@ OSCL_EXPORT_REF int32 CAMRFileParser::ResetPlayback(int32 aStartTime)
     if (iAMRFileSize <= 0)
     {
         int32 frameTypeIndex;
-        if (ipBSO->getFileInfo(iAMRFileSize, iAMRFormat, frameTypeIndex))
+        if (ipBSO->getFileInfo(iAMRFileSize, iAMRFormat, frameTypeIndex, iAMRChannel))
         {
             PVMF_AMRPARSER_LOGERROR((0, "CAMRFileParser::Reset Playback Failed"));
             return bitstreamObject::MISC_ERROR;
@@ -1017,7 +1025,7 @@ OSCL_EXPORT_REF uint32 CAMRFileParser::SeekPointFromTimestamp(uint32 aStartTime)
     if (iAMRFileSize <= 0)
     {
         int32 frameTypeIndex;
-        if (ipBSO->getFileInfo(iAMRFileSize, iAMRFormat, frameTypeIndex))
+        if (ipBSO->getFileInfo(iAMRFileSize, iAMRFormat, frameTypeIndex, iAMRChannel))
         {
             return 0;
         }

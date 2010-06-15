@@ -486,8 +486,9 @@ OSCL_EXPORT_REF void PVMediaOutputNode::RequestCompleted(const PVMFCmdResp& aRes
 
 OSCL_EXPORT_REF void PVMediaOutputNode::ReportErrorEvent(PVMFEventType aEventType, PVInterface* aExtMsg)
 {
-    OSCL_UNUSED_ARG(aEventType);
-    OSCL_UNUSED_ARG(aExtMsg);
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMediaOutputNode::ReportErrorEvent Type %d", aEventType));
+    PVMFNodeInterface::ReportErrorEvent(aEventType, NULL, aExtMsg);
 }
 OSCL_EXPORT_REF void PVMediaOutputNode::ReportInfoEvent(PVMFEventType aEventType, PVInterface* aExtMsg)
 {

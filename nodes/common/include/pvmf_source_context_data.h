@@ -34,6 +34,10 @@
 #include "pv_interface.h"
 #endif
 
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
 #define PVMF_SOURCE_CONTEXT_DATA_UUID PVUuid(0xf218cdfc,0x797d,0x453e,0x9c,0x94,0x8f,0x0e,0x83,0x8a,0xa1,0x99)
 
 #define PVMF_SOURCE_CONTEXT_DATA_COMMON_UUID PVUuid(0xa6b5f829,0x8ead,0x4c21,0xad,0x40,0x8c,0xc5,0x10,0x05,0xb5,0xfa)
@@ -43,6 +47,7 @@
 #define PVMF_SOURCE_CONTEXT_DATA_PVR_UUID PVUuid(0x442059a2,0x76b6,0x11dc,0x83,0x14,0x08,0x00,0x20,0x0c,0x9a,0x66)
 #define PVMF_SOURCE_CONTEXT_DATA_PACKETSOURCE_UUID PVUuid(0x7f064f8c,0xa90d,0x11dc,0x83,0x14,0x08,0x00,0x20,0x0c,0x9a,0x66)
 //3f9c615e-31e2-474c-9add-29c61dd07ead
+
 
 class OsclFileHandle;
 class PVMFCPMPluginAccessInterfaceFactory;
@@ -87,6 +92,7 @@ class PVMFSourceContextDataCommon : public PVInterface
             }
             return *this;
         };
+
 
         /* From PVInterface */
         void addRef()
@@ -282,7 +288,7 @@ class PVMFSourceContextDataDownloadHTTP : public PVInterface
         //false if keep downloading a partial downloading file
         OSCL_wHeapString<OsclMemAllocator> iConfigFileName;     //download config file
         OSCL_wHeapString<OsclMemAllocator> iDownloadFileName;   //local file name of the downloaded clip
-        uint32  iMaxFileSize;               //the max size of the file.
+        TOsclFileOffset  iMaxFileSize;               //the max size of the file.
         OSCL_HeapString<OsclMemAllocator> iProxyName;           //HTTP proxy name, either ip or dns
         int32   iProxyPort;                 //HTTP proxy port
         int32 iMaxHttpHeaderFieldSize;     //HTTP header field size, in DLNA PPB size is 998
@@ -378,7 +384,7 @@ class PVMFSourceContextDataDownloadPVX : public PVInterface
         //false if keep downloading a partial downloading file
         OSCL_wHeapString<OsclMemAllocator> iConfigFileName;     //download config file
         OSCL_wHeapString<OsclMemAllocator> iDownloadFileName;   //local file name of the downloaded clip
-        uint32  iMaxFileSize;               //the max size of the file.
+        TOsclFileOffset  iMaxFileSize;               //the max size of the file.
         OSCL_HeapString<OsclMemAllocator> iProxyName;           //HTTP proxy name, either ip or dns
         int32   iProxyPort;                 //HTTP proxy port
 
@@ -438,7 +444,6 @@ class PVMFSourceContextDataPVR : public PVInterface
         {
             return iPVMFPVRControl;
         }
-
 
 //  void SetLiveBufferSizeInSeconds(uint32 aLiveBufferSizeInSeconds)
 //  {

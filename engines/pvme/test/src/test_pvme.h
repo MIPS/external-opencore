@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,7 +117,15 @@ class pvmetadataengine_test : public test_case,
 
             GetSourceMetadataThreadedModeTest = GetSourceMetadataNonThreadedModeTest + 1,
 
-            LastTest = GetSourceMetadataThreadedModeTest + 1,//placeholder
+            ProtectedMetadataNonThreadedModeTest = GetSourceMetadataThreadedModeTest + 1, //Hardcoded test content -- Janus_playcount_3.wma
+
+            ProtectedMetadataWithPlayReadyContentNonThreadedModeTest = ProtectedMetadataNonThreadedModeTest + 1, //Hardcoded PlayReady test content -- ExpireImmediately.pya
+
+            ProtectedMetadataThreadedModeTest = ProtectedMetadataWithPlayReadyContentNonThreadedModeTest + 1, //Hardcoded test content -- Janus_playcount_3.wma
+
+            ProtectedMetadataWithPlayReadyContentThreadedModeTest = ProtectedMetadataThreadedModeTest + 1, //Hardcoded PlayReady test content -- ExpireImmediately.pya
+
+            LastTest = ProtectedMetadataWithPlayReadyContentThreadedModeTest + 1,//placeholder
 
             BeyondLastTest = 999 //placeholder
 

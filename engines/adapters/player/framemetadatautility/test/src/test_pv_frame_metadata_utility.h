@@ -237,7 +237,8 @@ class pvframemetadata_utility_test : public test_case,
             InvalidSourceFileTest,
             NoGetFrameTest, //20
             NoVideoTrackTest,
-            ProtectedMetadataTest, //Hardcoded test content -- jazz1.wma
+            ProtectedMetadataTest, //Hardcoded test content -- Janus_playcount_3.wma
+            ProtectedMetadataWithPlayReadyContentTest, //Hardcoded PlayReady test content -- ExpireImmediately.pya
             ProtectedThumbnailTest_WithThumbnailIntent, //Hardcoded test content -- stc10v.wmv
             ProtectedThumbnailTest_WithPlayIntent, //Hardcoded test content -- stc10v.wmv
             ProtectedThumbnailTest_WithMetadataIntent, //Hardcoded test content -- stc10v.wmv

@@ -21,12 +21,13 @@ LOCAL_SRC_FILES := \
  	src/pvmf_sync_util.cpp \
  	src/pvmf_timestamp.cpp \
  	src/pvmi_config_and_capability_utils.cpp \
- 	src/pvmi_kvp_util.cpp
+ 	src/pvmi_kvp_util.cpp \
+ 	src/pvmi_fd_data_stream.cpp
 
 
 LOCAL_MODULE := libpvmf
 
-LOCAL_CFLAGS := -DPV_CPU_ARCH_VERSION=0  $(PV_CFLAGS)
+LOCAL_CFLAGS :=   $(PV_CFLAGS)
 
 
 LOCAL_STATIC_LIBRARIES := 
@@ -95,6 +96,8 @@ LOCAL_COPY_HEADERS := \
  	include/pvmi_media_io_observer.h \
  	include/pvmi_mio_control.h \
  	include/pvmi_port_config_kvp.h \
- 	include/pvmf_fileinput_settings.h
+ 	include/pvmf_fileinput_settings.h \
+ 	include/pvmi_ds_basic_interface.h \
+ 	include/pvmi_data_stream.h
 
 include $(BUILD_STATIC_LIBRARY)

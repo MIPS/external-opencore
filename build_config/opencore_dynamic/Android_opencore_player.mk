@@ -19,6 +19,10 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
  	libpvaacffrecognizer \
  	libpvwavffparsernode \
  	libpvwavffrecognizer \
+ 	libpvcommonparsernode \
+ 	libaudioparser \
+ 	libamrparser \
+ 	libwavparser \
  	libpvmfrecognizer \
  	libpvframemetadatautility \
  	libpvplayer_engine
@@ -57,6 +61,10 @@ include   $(PV_TOP)/nodes/pvaacffparsernode/Android.mk
 include   $(PV_TOP)/pvmi/recognizer/plugins/pvaacffrecognizer/Android.mk
 include   $(PV_TOP)/nodes/pvwavffparsernode/Android.mk
 include   $(PV_TOP)/pvmi/recognizer/plugins/pvwavffrecognizer/Android.mk
+include   $(PV_TOP)/nodes/pvcommonparsernode/Android.mk
+include   $(PV_TOP)/fileformats/audioparser/common/Android.mk
+include   $(PV_TOP)/fileformats/audioparser/amr/Android.mk
+include   $(PV_TOP)/fileformats/audioparser/wav/Android.mk
 include   $(PV_TOP)/pvmi/recognizer/Android.mk
 include   $(PV_TOP)/engines/adapters/player/framemetadatautility/Android.mk
 include   $(PV_TOP)/engines/player/Android.mk

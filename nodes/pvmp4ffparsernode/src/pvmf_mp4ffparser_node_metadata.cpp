@@ -931,7 +931,6 @@ PVMFStatus PVMFMP4FFParserNode::InitMetaData(uint32 aParserIndex)
 
         parserObj->getTrackMIMEType(trackID, (OSCL_String&)trackMIMEType);
 
-        // leave the PVMFMp4ClipInfo.iFormatTypeInteger as PVMF_MP4_PARSER_NODE_FORMAT_UNKNOWN for video and text tracks
         if ((oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_M4V, oscl_strlen(PVMF_MIME_M4V)) == 0) ||
                 (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_H2632000, oscl_strlen(PVMF_MIME_H2632000)) == 0) ||
                 (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_H264_VIDEO_MP4, oscl_strlen(PVMF_MIME_H264_VIDEO_MP4)) == 0))
@@ -947,6 +946,7 @@ PVMFStatus PVMFMP4FFParserNode::InitMetaData(uint32 aParserIndex)
                 PushToAvailableMetadataKeysList(aParserIndex, PVMP4METADATA_TRACKINFO_VIDEO_HEIGHT_KEY, indexparam);
             }
         }
+
         else if (oscl_strncmp(trackMIMEType.get_str(), PVMF_MIME_AMR_IETF, oscl_strlen(PVMF_MIME_AMR_IETF)) == 0)
         {
             iClipInfoList[aParserIndex].iFormatTypeInteger = PVMF_MP4_PARSER_NODE_AMR_IETF;
@@ -1097,7 +1097,7 @@ void PVMFMP4FFParserNode::GetGaplessMetadata(int32 aClipIndex)
             uint64 totalSamples = iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetZeroPadding() +
                                   iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetEncoderDelay() +
                                   iClipInfoList[aClipIndex].iClipInfo.iGaplessMetadata.GetOriginalStreamLength();
-            uint32 sfp = totalSamples / totalFrames;
+            uint32 sfp = (uint32)(totalSamples / totalFrames);
 
             // total frames include the encoder delay and zero padding
             // we can probably find out the samples per frame from the decoder,

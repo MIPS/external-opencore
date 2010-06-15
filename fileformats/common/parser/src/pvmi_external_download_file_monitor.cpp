@@ -120,7 +120,7 @@ OSCL_EXPORT_REF void   PVMIExternalDownloadFileMonitor::RemoveObserver
 }
 
 
-OSCL_EXPORT_REF uint32 PVMIExternalDownloadFileMonitor::GetDownloadedFileSize()
+OSCL_EXPORT_REF TOsclFileOffset PVMIExternalDownloadFileMonitor::GetDownloadedFileSize()
 {
     return iBytesDownloaded;
 }
@@ -213,7 +213,7 @@ void PVMIExternalDownloadFileMonitor::Poll(void)
     //Flush the read handle so Symbian sees the size change.
     iFile.Flush();
     iFile.Seek(0, Oscl_File::SEEKEND);
-    uint32 newSize = (uint32)iFile.Tell();
+    TOsclFileOffset newSize = iFile.Tell();
     if (newSize != iBytesDownloaded)
     {
         iBytesDownloaded = newSize;

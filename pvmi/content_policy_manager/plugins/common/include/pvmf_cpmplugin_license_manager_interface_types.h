@@ -25,49 +25,7 @@
 #include "oscl_types.h"
 #endif
 
-
-//A class to hold a content ID.
-class PVMFCPMContentId
-{
-    public:
-        PVMFCPMContentId(): iData(NULL), iDataLen(0)
-        {}
-
-        PVMFCPMContentId(const PVMFCPMContentId& aVal)
-        {
-            iData = NULL;
-            iDataLen = 0;
-            Set(aVal);
-        }
-
-        ~PVMFCPMContentId()
-        {
-            if (iData)
-                OSCL_FREE(iData);
-            iData = NULL;
-        }
-
-        void Set(uint8* aData, uint32 aDataLen)
-        {
-            if (iData)
-                OSCL_FREE(iData);
-            iData = NULL;
-            if (aDataLen)
-            {
-                iData = (uint8*)OSCL_MALLOC(aDataLen);
-                if (iData)
-                    oscl_memcpy(iData, aData, aDataLen);
-                iDataLen = aDataLen;
-            }
-        }
-        void Set(const PVMFCPMContentId& aId)
-        {
-            Set(aId.iData, aId.iDataLen);
-        }
-
-        uint8* iData;
-        uint32 iDataLen;
-};
+#include "pvmf_cpmplugin_license_interface_types.h"
 
 //A class to hold information about a license request
 class PVMFCPMLicenseUpdateInfo
@@ -91,13 +49,13 @@ class PVMFCPMLicenseUpdateInfo
         void Clear()
         {
             iValid = false;
-            iLicenseSyncId.Set(NULL, 0);
+            iLicenseSyncId.Clear();
         }
         void Set(const PVMFCPMLicenseUpdateInfo& aInfo)
         {
             iValid = aInfo.iValid;
             iLicenseSyncIndex = aInfo.iLicenseSyncIndex;
-            iLicenseSyncId.Set(aInfo.iLicenseSyncId);
+            iLicenseSyncId = aInfo.iLicenseSyncId;
             iURL = aInfo.iURL;
         }
 };

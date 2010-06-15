@@ -411,6 +411,10 @@ class PVMFNodeInterface: public PVMFPortActivityHandler
                                               , const PVUuid& aUuid
                                               , PVInterface*& aInterfacePtr)
         {
+            OSCL_UNUSED_ARG(aSession);
+            OSCL_UNUSED_ARG(aUuid);
+            OSCL_UNUSED_ARG(aInterfacePtr);
+
             return PVMFErrNotImplemented;
         }
 

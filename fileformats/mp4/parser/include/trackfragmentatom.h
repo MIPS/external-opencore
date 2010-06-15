@@ -114,6 +114,7 @@ class TrackFragmentAtom : public Atom
     public:
 
         TrackFragmentAtom(MP4_FF_FILE *fp,
+                          MP4_FF_FILE *Moof_fp,
                           uint32 &size,
                           uint32 type,
                           TOsclFileOffset movieFragmentCurrentOffset,
@@ -169,6 +170,7 @@ class TrackFragmentAtom : public Atom
         uint64 resetPlayback(uint64 time);
         uint64 resetPlayback(uint64 time, uint32 trun_number, uint32 sample_num);
         uint32 _trackFragmentEndOffset;
+        uint32 trackId;
 
     private:
         SampleEncryptionBox* ipSampleEncryptionBox;
@@ -191,7 +193,7 @@ class TrackFragmentAtom : public Atom
         uint32 _default_duration;
         bool _use_default_duratoin;
         TrackDurationContainer *_pTrackDurationContainer;
-        uint32 trackId;
+
         uint32 tf_flags;
         TOsclFileOffset trun_offset;
         bool trunParsingCompleted;

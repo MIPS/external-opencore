@@ -619,6 +619,7 @@ class pvplayer_async_test_ppb_base : public pvplayer_async_test_base
                 , iShoutcastSession(false)
                 , iSCListenTime(0)
                 , iShoutcastPlayStopPlay(false)
+                , iMetadataReceived(false)
                 , iUseLongClip(false)
                 , iSessionDuration(0)
         {
@@ -823,6 +824,7 @@ class pvplayer_async_test_ppb_base : public pvplayer_async_test_base
         bool iShoutcastSession;
         int32 iSCListenTime;
         bool iShoutcastPlayStopPlay;
+        bool iMetadataReceived;
 
         void enableShoutcastPauseResume()
         {

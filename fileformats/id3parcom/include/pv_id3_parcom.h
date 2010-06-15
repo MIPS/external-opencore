@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -574,7 +574,7 @@ class PVID3ParCom
          */
 
         void HandleID3V2FrameUnsupported(PVID3FrameType aframeType,
-                                         uint32 aPos,
+                                         TOsclFileOffset aPos,
                                          uint32 aSize);
 
         /**
@@ -679,7 +679,7 @@ class PVID3ParCom
          * @param pos position in file
          * @param currFrameLength length of the frame
          */
-        bool  ReadFrameData(uint8 unicode, PVID3FrameType frameType, uint32 pos, uint32 currFrameLength);
+        bool  ReadFrameData(uint8 unicode, PVID3FrameType frameType, TOsclFileOffset pos, uint32 currFrameLength);
         /**
          * @brief reads extended header if present in id3 tag header
          * @param none

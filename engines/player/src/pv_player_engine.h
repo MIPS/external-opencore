@@ -82,6 +82,10 @@
 #include "pvmf_meta_data_extension.h"
 #endif
 
+#ifndef PVMF_DATASTREAM_INIT_EXTENSION_H_INCLUDED
+#include "pvmf_datastream_init_extension.h"
+#endif
+
 #ifndef PVMF_DATA_SOURCE_INIT_EXTENSION_H_INCLUDED
 #include "pvmf_data_source_init_extension.h"
 #endif
@@ -857,6 +861,7 @@ class PVPlayerWatchdogTimerObserver
         virtual void PVPlayerWatchdogTimerEvent() = 0;
 };
 
+class PvmiDataStream;
 
 class PVPlayerEngine
         : public OsclTimerObject
@@ -1081,6 +1086,7 @@ class PVPlayerEngine
         PVMFStatus DoQuerySourceFormatType(PVCommandId aCmdId, OsclAny* aCmdContext);
         PVMFStatus DoSetupSourceNode(PVCommandId aCmdId, OsclAny* aCmdContext);
         PVMFStatus SetupDataSourceForUnknownURLAccess();
+        PVMFStatus DoSourceNodeQueryInitIF(PVCommandId aCmdId, OsclAny* aCmdContext);
         PVMFStatus DoSourceNodeQueryTrackSelIF(PVCommandId aCmdId, OsclAny* aCmdContext);
         PVMFStatus DoSourceNodeQueryInterfaceOptional(PVCommandId aCmdId, OsclAny* aCmdContext);
         void DoSourceNodeQueryCPMLicenseInterface(PVCommandId aCmdId, OsclAny* aCmdContext);
@@ -1180,6 +1186,7 @@ class PVPlayerEngine
         PVMFFormatType iSourceFormatType;
         PVMFNodeInterface* iSourceNode;
         PVMFSessionId iSourceNodeSessionId;
+        PVMFDataStreamInitExtension* iSourceNodeDataStreamIF;
         PVMFDataSourceInitializationExtensionInterface* iSourceNodeInitIF;
         PVMFTrackSelectionExtensionInterface* iSourceNodeTrackSelIF;
         PvmfDataSourcePlaybackControlInterface* iSourceNodePBCtrlIF;
@@ -1189,6 +1196,7 @@ class PVPlayerEngine
         PvmiCapabilityAndConfig* iSourceNodeCapConfigIF;
         PVMFDataSourceNodeRegistryInitInterface* iSourceNodeRegInitIF;
         PVMFCPMPluginLicenseInterface* iCPMLicenseIF;
+        PVInterface* iSourceNodePVInterfaceDataStream;
         PVInterface* iSourceNodePVInterfaceInit;
         PVInterface* iSourceNodePVInterfaceTrackSel;
         PVInterface* iSourceNodePVInterfacePBCtrl;
@@ -1323,7 +1331,8 @@ class PVPlayerEngine
             // Recognizer command
             PVP_CMD_QUERYSOURCEFORMATTYPE,
             // source roll over
-            PVP_CMD_SourceNodeRollOver
+            PVP_CMD_SourceNodeRollOver,
+            PVP_CMD_SourceNodeQueryDataStreamIF
         };
 
         PVMFStatus DoSinkNodeChangeClockRate();
@@ -1333,6 +1342,7 @@ class PVPlayerEngine
         void UpdateDirection(PVMFTimestamp, PVMFTimestamp, PVPPlaybackPosition&);
 
         // Node command handling functions
+        void HandleSourceNodeQueryDataStreamIF(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleSourceNodeQueryInitIF(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleSourceNodeQueryTrackSelIF(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
         void HandleSourceNodeQueryInterfaceOptional(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp);
@@ -1434,6 +1444,8 @@ class PVPlayerEngine
         void UpdateSourceDurationVector(uint8* localBuffer, uint32 duration);
         void UpdateCurrentClipSourceDuration();
         PVMFStatus DoPauseDatapath(PVMFCommandId aCmdId, OsclAny* aCmdContext);
+
+        PVMFStatus SetDataStreamOrDataSource(bool aValidDataStream);
 
         // Handle to the logger node
         PVLogger* iLogger;
@@ -1588,6 +1600,8 @@ class PVPlayerEngine
         //CPM related - As of today we use this instance of CPM in QueryInterface calls only
         //outside of this engine has no interactions with CPM.
         PVMFCPM* iCPM;
+
+        PvmiDataStream* ipDataStream;
 };
 
 /**

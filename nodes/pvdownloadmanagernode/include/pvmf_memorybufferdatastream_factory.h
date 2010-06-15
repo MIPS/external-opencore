@@ -61,6 +61,10 @@
 #include "oscl_semaphore.h"
 #endif
 
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
 
 #define PV_MBDS_MAX_NUMBER_OF_READ_CONNECTIONS  16
 
@@ -92,6 +96,8 @@
 // being less than this threshold, then don't disconnect to send a new GET request.
 #define PV_MBDS_FWD_SEEKING_NO_GET_REQUEST_THRESHOLD 64000
 
+
+
 typedef enum
 {
     MBDS_CACHE_TRIM_NONE,       // invalid node
@@ -114,7 +120,9 @@ typedef enum
     MBDS_STREAM_FORMAT_SHOUTCAST,
     MBDS_STREAM_FORMAT_RTMPSTREAMING,
     MBDS_STREAM_FORMAT_DTCP,
-    MBDS_STREAM_FORMAT_SMOOTH_STREAMING
+    MBDS_STREAM_FORMAT_SMOOTH_STREAMING,
+    MBDS_STREAM_FORMAT_APPLE_HTTP_STREAMING,
+
 } MBDSStreamFormat;
 
 typedef enum
@@ -123,29 +131,30 @@ typedef enum
     PVMF_MBDS_TEMPCACHE_FINITE
 } PVMFMBDSTempCacheStatus;
 
-// For Shoutcast, the content length is infinite
-// the offsets will wrap around to 0 after 0xFFFFFFFF
-#define WRAP_THRESHOLD  0x8000000
 
-#define IS_OFFSET_IN_RANGE(firstRangeOffset, lastRangeOffset, thisOffset, inRange)      \
-    {                                                                                   \
-        inRange = true;                                                                 \
-        if ((firstRangeOffset >= WRAP_THRESHOLD) && (lastRangeOffset < WRAP_THRESHOLD)) \
-        {                                                                               \
-            if ((thisOffset >= WRAP_THRESHOLD) && (thisOffset < firstRangeOffset))      \
-            {                                                                           \
-                inRange = false;                                                        \
-            }                                                                           \
-            else if ((thisOffset < WRAP_THRESHOLD) && (thisOffset > lastRangeOffset))   \
-            {                                                                           \
-                inRange = false;                                                        \
-            }                                                                           \
-        }                                                                               \
-        else if ((thisOffset < firstRangeOffset) || (thisOffset > lastRangeOffset))     \
-        {                                                                               \
-            inRange = false;                                                            \
-        }                                                                               \
+#define IS_OFFSET_IN_RANGE(firstRangeOffset, lastRangeOffset, thisOffset, inRange)  \
+    {                                                                               \
+        inRange = true;                                                             \
+        if (lastRangeOffset >= firstRangeOffset)                                    \
+        {                                                                           \
+            /* not wrapped  */                                                      \
+            if ((thisOffset < firstRangeOffset) || (thisOffset > lastRangeOffset))  \
+            {                                                                       \
+                /* out of range */                                                  \
+                inRange = false;                                                    \
+            }                                                                       \
+        }                                                                           \
+        else                                                                        \
+        {                                                                           \
+            /* wrapped */                                                           \
+            if ((thisOffset < firstRangeOffset) && (thisOffset > lastRangeOffset))  \
+            {                                                                       \
+                 /* out of range */                                                 \
+                inRange = false;                                                    \
+            }                                                                       \
+        }                                                                           \
     }
+
 
 class PVMFMemoryBufferWriteDataStreamImpl;
 
@@ -164,17 +173,17 @@ class PVMFMemoryBufferDataStreamTempCache
             return 0xFFFFFFFF;
         };
         virtual void SetDecryptionInterface(PVMFCPMPluginAccessUnitDecryptionInterface*& aDecryptionInterface) {};
-        virtual PvmiDataStreamStatus AddEntry(OsclRefCounterMemFrag* aFrag, uint8* aFragPtr, uint32 aFragSize, uint32& dataWritten, uint32 aFileOffset);
+        virtual PvmiDataStreamStatus AddEntry(OsclRefCounterMemFrag* aFrag, uint8* aFragPtr, TOsclFileOffset aFragSize, TOsclFileOffset& dataWritten, TOsclFileOffset aFileOffset);
 
-        uint32 GetTotalBytes();
+        TOsclFileOffset GetTotalBytes();
 
-        void GetFileOffsets(uint32& aFirstByte, uint32& aLastByte);
+        void GetFileOffsets(TOsclFileOffset& aFirstByte, TOsclFileOffset& aLastByte);
 
-        uint32 ReadBytes(uint8* aBuffer, uint32 aFirstByte, uint32 aLastByte, uint32& firstEntry);
+        TOsclFileOffset ReadBytes(uint8* aBuffer, TOsclFileOffset aFirstByte, TOsclFileOffset aLastByte, uint32& firstEntry);
 
-        void GetFirstEntryInfo(uint32& entryOffset, uint32& entrySize);
+        void GetFirstEntryInfo(TOsclFileOffset& entryOffset, uint32& entrySize);
 
-        void GetLastEntryInfo(uint32& entryOffset, uint32& entrySize);
+        void GetLastEntryInfo(TOsclFileOffset& entryOffset, uint32& entrySize);
 
         uint32 GetNumEntries();
 
@@ -187,17 +196,17 @@ class PVMFMemoryBufferDataStreamTempCache
             // mem ptr
             uint8* fragPtr;
             // size of mem frag
-            uint32 fragSize;
+            TOsclFileOffset fragSize;
             // file offset corresponding to the first byte of the mem frag
-            uint32 fileOffset;
+            TOsclFileOffset fileOffset;
         };
 
         // total number of bytes of data in this cache
         uint32 iTotalBytes;
         // file offset of first byte in cache, use iLock
-        uint32 iFirstByteFileOffset;
+        TOsclFileOffset iFirstByteFileOffset;
         // file offset of last byte in cache, use iLock
-        uint32 iLastByteFileOffset;
+        TOsclFileOffset iLastByteFileOffset;
         // list of temp cache entries
         Oscl_Vector<MBDSTempCacheEntry*, OsclMemAllocator> iEntries;
 
@@ -211,25 +220,25 @@ class PVMFMemoryBufferDataStreamPermCache
         virtual ~PVMFMemoryBufferDataStreamPermCache();
 
         virtual void SetDecryptionInterface(PVMFCPMPluginAccessUnitDecryptionInterface*& aDecryptionInterface) {};
-        virtual uint32 GetTotalBytes();
-        virtual PvmiDataStreamStatus WriteBytes(uint8* aFragPtr, uint32 aFragSize, uint32& dataWritten, uint32 aFileOffset);
+        virtual TOsclFileOffset GetTotalBytes();
+        virtual PvmiDataStreamStatus WriteBytes(uint8* aFragPtr, TOsclFileOffset aFragSize, TOsclFileOffset& dataWritten, TOsclFileOffset aFileOffset);
 
         // these are the offsets of bytes already in the cache
-        void GetFileOffsets(uint32& aFirstByte, uint32& aLastByte);
+        void GetFileOffsets(TOsclFileOffset& aFirstByte, TOsclFileOffset& aLastByte);
 
         // this byte range have made persistent, but not all the bytes are there yet
         // use GetFileOffsets to check what bytes are available for reading
-        void GetPermOffsets(uint32& aFirstByte, uint32& aLastByte);
+        void GetPermOffsets(TOsclFileOffset& aFirstByte, TOsclFileOffset& aLastByte);
 
-        PvmiDataStreamStatus AddEntry(uint8* aBufPtr, uint32 aBufSize, uint8* aFillPtr, uint32 aFirstOffset, uint32 aLastOffset, uint32 aFillOffset, uint32 aFillSize);
+        PvmiDataStreamStatus AddEntry(uint8* aBufPtr, TOsclFileOffset aBufSize, uint8* aFillPtr, TOsclFileOffset aFirstOffset, TOsclFileOffset aLastOffset, TOsclFileOffset aFillOffset, TOsclFileOffset aFillSize);
 
-        uint32 ReadBytes(uint8* aBuffer, uint32 aFirstByte, uint32 aLastByte);
+        TOsclFileOffset ReadBytes(uint8* aBuffer, TOsclFileOffset aFirstByte, TOsclFileOffset aLastByte);
 
         bool RemoveFirstEntry(uint8*& aFragPtr);
 
         uint32 GetNumEntries();
 
-        uint32 GetCacheSize();
+        TOsclFileOffset GetCacheSize();
 
     private:
 
@@ -238,34 +247,34 @@ class PVMFMemoryBufferDataStreamPermCache
             // mem ptr from malloc, saved for freeing later
             uint8* bufPtr;
             // size of mem from malloc
-            uint32 bufSize;
+            TOsclFileOffset bufSize;
             // mem ptr to the next byte to be written to
             uint8* fillBufPtr;
             // file offset of first byte in buffer
-            uint32 firstFileOffset;
+            TOsclFileOffset firstFileOffset;
             // file offset of last byte in buffer
-            uint32 lastFileOffset;
+            TOsclFileOffset lastFileOffset;
             // file offset of the next byte to be written to
-            uint32 fillFileOffset;
+            TOsclFileOffset fillFileOffset;
             // number of bytes already written to buffer
-            uint32 fillSize;
+            TOsclFileOffset fillSize;
         };
 
         // total number of bytes allocated in this cache
-        uint32 iTotalBufferAlloc;
+        TOsclFileOffset iTotalBufferAlloc;
 
         // file offset of first byte to be made persistent
-        uint32 iFirstPermByteOffset;
+        TOsclFileOffset iFirstPermByteOffset;
         // file offset of last byte to be made persistent
-        uint32 iLastPermByteOffset;
+        TOsclFileOffset iLastPermByteOffset;
 
     protected:
         // total number of bytes of data in this cache
-        uint32 iTotalBytes;
+        TOsclFileOffset iTotalBytes;
         // file offset of first readable byte in cache
-        uint32 iFirstByteFileOffset;
+        TOsclFileOffset iFirstByteFileOffset;
         // file offset of last readable byte in cache
-        uint32 iLastByteFileOffset;
+        TOsclFileOffset iLastByteFileOffset;
         // list of perm cache entries
         Oscl_Vector<MBDSPermCacheEntry*, OsclMemAllocator> iEntries;
 
@@ -389,15 +398,15 @@ class PVMFMemoryBufferReadDataStreamImpl : public PVMIDataStreamSyncInterface
         OSCL_IMPORT_REF PvmiDataStreamRandomAccessType QueryRandomAccessCapability();
 
         OSCL_IMPORT_REF PvmiDataStreamStatus QueryReadCapacity(PvmiDataStreamSession aSessionID,
-                uint32& capacity);
+                TOsclFileOffset& capacity);
 
         OSCL_IMPORT_REF PvmiDataStreamCommandId RequestReadCapacityNotification(PvmiDataStreamSession aSessionID,
                 PvmiDataStreamObserver& observer,
-                uint32 capacity,
+                TOsclFileOffset capacity,
                 OsclAny* aContextData = NULL);
 
         OSCL_IMPORT_REF PvmiDataStreamStatus QueryWriteCapacity(PvmiDataStreamSession aSessionID,
-                uint32& capacity);
+                TOsclFileOffset& capacity);
 
         OSCL_IMPORT_REF PvmiDataStreamCommandId RequestWriteCapacityNotification(PvmiDataStreamSession aSessionID,
                 PvmiDataStreamObserver& observer,
@@ -421,20 +430,20 @@ class PVMFMemoryBufferReadDataStreamImpl : public PVMIDataStreamSyncInterface
                 uint32& aNumElements);
 
         OSCL_IMPORT_REF PvmiDataStreamStatus Seek(PvmiDataStreamSession aSessionID,
-                int32 offset, PvmiDataStreamSeekType origin);
+                TOsclFileOffset offset, PvmiDataStreamSeekType origin);
 
-        OSCL_IMPORT_REF uint32 GetCurrentPointerPosition(PvmiDataStreamSession aSessionID);
+        OSCL_IMPORT_REF TOsclFileOffset GetCurrentPointerPosition(PvmiDataStreamSession aSessionID);
 
         OSCL_IMPORT_REF PvmiDataStreamStatus Flush(PvmiDataStreamSession aSessionID);
 
         OSCL_IMPORT_REF void NotifyDownloadComplete();
 
-        void SetContentLength(uint32 aContentLength)
+        void SetContentLength(TOsclFileOffset aContentLength)
         {
             OSCL_UNUSED_ARG(aContentLength);
         }
 
-        OSCL_IMPORT_REF uint32 GetContentLength();
+        OSCL_IMPORT_REF TOsclFileOffset GetContentLength();
 
         OSCL_IMPORT_REF PvmiDataStreamStatus SetSourceRequestObserver(PvmiDataStreamRequestObserver& aObserver);
 
@@ -449,10 +458,10 @@ class PVMFMemoryBufferReadDataStreamImpl : public PVMIDataStreamSyncInterface
             OSCL_UNUSED_ARG(aResponse);
         }
 
-        OSCL_IMPORT_REF PvmiDataStreamStatus MakePersistent(int32 aOffset, uint32 aSize);
+        OSCL_IMPORT_REF PvmiDataStreamStatus MakePersistent(TOsclFileOffset aOffset, uint32 aSize);
 
         // This returns the offsets in the temp cache
-        OSCL_IMPORT_REF void GetCurrentByteRange(uint32& aCurrentFirstByteOffset, uint32& aCurrentLastByteOffset);
+        OSCL_IMPORT_REF void GetCurrentByteRange(TOsclFileOffset& aCurrentFirstByteOffset, TOsclFileOffset& aCurrentLastByteOffset);
 
     public:
         bool iDownloadComplete;
@@ -470,7 +479,7 @@ class PVMFMemoryBufferReadDataStreamImpl : public PVMIDataStreamSyncInterface
 
         PVLogger* iLogger;
 
-        uint32 iFilePtrPos;
+        TOsclFileOffset iFilePtrPos;
 
         bool iReadSessionOpened;
 
@@ -508,9 +517,9 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
         virtual OSCL_IMPORT_REF bool IsWriteNotificationPending(PvmiDataStreamSession aSessionID);
 
         virtual OSCL_IMPORT_REF PvmiDataStreamStatus QueryWriteCapacity(PvmiDataStreamSession aSessionID,
-                uint32& aCapacity);
+                TOsclFileOffset& aCapacity);
 
-        virtual PVMFMBDSTempCacheStatus GetTempCacheWriteCapacity(uint32& aCapacity);
+        virtual PVMFMBDSTempCacheStatus GetTempCacheWriteCapacity(TOsclFileOffset& aCapacity);
 
         OSCL_IMPORT_REF PvmiDataStreamStatus OpenSession(PvmiDataStreamSession& aSessionID,
                 PvmiDataStreamMode aMode,
@@ -526,11 +535,11 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
         OSCL_IMPORT_REF PvmiDataStreamRandomAccessType QueryRandomAccessCapability();
 
         OSCL_IMPORT_REF PvmiDataStreamStatus QueryReadCapacity(PvmiDataStreamSession aSessionID,
-                uint32& aCapacity);
+                TOsclFileOffset& aCapacity);
 
         OSCL_IMPORT_REF PvmiDataStreamCommandId RequestReadCapacityNotification(PvmiDataStreamSession aSessionID,
                 PvmiDataStreamObserver& aobserver,
-                uint32 aCapacity,
+                TOsclFileOffset aCapacity,
                 OsclAny* aContextData = NULL);
 
         OSCL_IMPORT_REF PvmiDataStreamCommandId RequestWriteCapacityNotification(PvmiDataStreamSession aSessionID,
@@ -554,27 +563,27 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
                 uint32& aNumElements);
 
 
-        OSCL_IMPORT_REF PvmiDataStreamStatus Seek(PvmiDataStreamSession aSessionID, int32 offset,
+        OSCL_IMPORT_REF PvmiDataStreamStatus Seek(PvmiDataStreamSession aSessionID, TOsclFileOffset offset,
                 PvmiDataStreamSeekType origin);
 
         OSCL_IMPORT_REF PvmiDataStreamStatus Reposition(PvmiDataStreamSession aSessionID,
-                uint32 aOffset, MBDSRepositionMode aMode);
+                TOsclFileOffset aOffset, MBDSRepositionMode aMode);
 
-        OSCL_IMPORT_REF uint32 GetCurrentPointerPosition(PvmiDataStreamSession aSessionID) ;
+        OSCL_IMPORT_REF TOsclFileOffset GetCurrentPointerPosition(PvmiDataStreamSession aSessionID) ;
 
         OSCL_IMPORT_REF PvmiDataStreamStatus Flush(PvmiDataStreamSession aSessionID);
 
         OSCL_IMPORT_REF void NotifyDownloadComplete();
 
-        OSCL_IMPORT_REF void SetContentLength(uint32 aContentLength);
+        OSCL_IMPORT_REF void SetContentLength(TOsclFileOffset aContentLength);
 
-        OSCL_IMPORT_REF uint32 GetContentLength();
+        OSCL_IMPORT_REF TOsclFileOffset GetContentLength();
 
         OSCL_IMPORT_REF PvmiDataStreamStatus SetSourceRequestObserver(PvmiDataStreamRequestObserver& aObserver);
 
         OSCL_IMPORT_REF void SourceRequestCompleted(const PVMFCmdResp& aResponse);
 
-        OSCL_IMPORT_REF PvmiDataStreamStatus MakePersistent(int32 aOffset, uint32 aSize);
+        OSCL_IMPORT_REF PvmiDataStreamStatus MakePersistent(TOsclFileOffset aOffset, uint32 aSize);
 
         OSCL_IMPORT_REF PvmiDataStreamStatus SetBufferingCapacity(uint32 aMinCapacity, uint32 aTrimMargin);
 
@@ -582,7 +591,7 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
 
         OSCL_IMPORT_REF uint32 QueryBufferingTrimMargin();
 
-        OSCL_IMPORT_REF PvmiDataStreamStatus SetReadPointerPosition(PvmiDataStreamSession aSessionID, uint32 aFilePosition);
+        OSCL_IMPORT_REF PvmiDataStreamStatus SetReadPointerPosition(PvmiDataStreamSession aSessionID, TOsclFileOffset aFilePosition);
 
 
         OSCL_IMPORT_REF PvmiDataStreamStatus SetReadPointerCacheLocation(PvmiDataStreamSession aSessionID, bool aInTempCache);
@@ -593,7 +602,7 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
 
         OSCL_IMPORT_REF void UpdateReadPointersAfterMakePersistent();
 
-        OSCL_IMPORT_REF bool GetPermCachePersistence(uint32& aFirstOffset, uint32& aLastOffset);
+        OSCL_IMPORT_REF bool GetPermCachePersistence(TOsclFileOffset& aFirstOffset, TOsclFileOffset& aLastOffset);
 
         OSCL_IMPORT_REF void SetStreamFormat(MBDSStreamFormat aStreamFormat);
 
@@ -621,9 +630,9 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
 
             PvmiDataStreamObserver *iReadObserver;
 
-            uint32 iFilePosition;
+            TOsclFileOffset iFilePosition;
 
-            uint32 iReadCapacity;
+            TOsclFileOffset iReadCapacity;
 
             OsclAny* iContextData;
 
@@ -641,7 +650,7 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
 
             PvmiDataStreamObserver *iWriteObserver;
 
-            uint32 iFilePosition;
+            TOsclFileOffset iFilePosition;
 
             uint32 iWriteCapacity;
 
@@ -663,7 +672,7 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
 
             PvmiDataStreamSession iRepositionSessionID;
 
-            uint32 iNewFilePosition;
+            TOsclFileOffset iNewFilePosition;
 
             bool iFlushCache;
 
@@ -681,7 +690,7 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
         {
             bool iReadPositionStructValid;
 
-            uint32 iReadFilePtr;
+            TOsclFileOffset iReadFilePtr;
 
             bool iInTempCache;
 
@@ -706,7 +715,7 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
 
         PVLogger* iLogger;
 
-        uint32 iContentLength;
+        TOsclFileOffset iContentLength;
 
         PvmiDataStreamRequestObserver* iRequestObserver;
 
@@ -715,13 +724,13 @@ class PVMFMemoryBufferWriteDataStreamImpl : public PVMIDataStreamSyncInterface
         WriteCapacityNotificationStruct iWriteNotification;
 
         // Tracks current write file pointer position
-        uint32 iFilePtrPos;
+        TOsclFileOffset iFilePtrPos;
 
         bool iThrowAwayData;
 
         // Tracks the audio/video/text session read pointers
         PvmiDataStreamSession iAVTSessionID[3];
-        uint32 iAVTOffsetDelta;
+        TOsclFileOffset iAVTOffsetDelta;
 
         bool iMadePersistent;
 

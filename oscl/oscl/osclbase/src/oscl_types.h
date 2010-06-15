@@ -64,6 +64,8 @@ typedef uint8 octet;
 //! The Float type defined as OsclFloat
 typedef float OsclFloat;
 
+typedef size_t OsclSizeT;
+
 #ifndef OSCL_INT64_TYPES_DEFINED
 //use native type
 typedef OSCL_NATIVE_INT64_TYPE int64;

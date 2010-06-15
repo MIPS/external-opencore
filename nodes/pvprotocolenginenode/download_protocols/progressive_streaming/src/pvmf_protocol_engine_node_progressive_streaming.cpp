@@ -77,24 +77,24 @@ OSCL_EXPORT_REF PVMFStatus ProgressiveStreamingContainer::doStop()
 
 OSCL_EXPORT_REF PVMFStatus ProgressiveStreamingContainer::doSeek(PVMFNodeCommand& aCmd)
 {
-    uint32 newOffset = getSeekOffset(aCmd);
+    TOsclFileOffset newOffset = getSeekOffset(aCmd);
 
-    LOGINFODATAPATH((0, "PVMFProtocolEngineNode::DoReposition()->ProgressiveStreamingContainer::DoSeek : reposition offset=%d, iInterfaceState=%d",
-                     newOffset, (uint32)iObserver->GetObserverState()));
+    LOGINFODATAPATH((0, "PVMFProtocolEngineNode::DoReposition()->ProgressiveStreamingContainer::DoSeek : reposition offset=%u, iInterfaceState=%d",
+                     (uint32)newOffset, (uint32)iObserver->GetObserverState()));
 
     return doSeekBody(newOffset);
 }
 
-OSCL_EXPORT_REF uint32 ProgressiveStreamingContainer::getSeekOffset(PVMFNodeCommand& aCmd)
+OSCL_EXPORT_REF TOsclFileOffset ProgressiveStreamingContainer::getSeekOffset(PVMFNodeCommand& aCmd)
 {
     //extract the parameters.
     OsclAny* aRequestData;
     aCmd.PVMFNodeCommand::Parse(aRequestData);
-    uint32 newOffset = (uint32)aRequestData;
+    TOsclFileOffset newOffset = (TOsclFileOffset)aRequestData;
     return newOffset;
 }
 
-OSCL_EXPORT_REF PVMFStatus ProgressiveStreamingContainer::doSeekBody(uint32 aNewOffset)
+OSCL_EXPORT_REF PVMFStatus ProgressiveStreamingContainer::doSeekBody(TOsclFileOffset aNewOffset)
 {
     // reset streaming done and session done flag to restart streaming
     ProtocolStateCompleteInfo aInfo;
@@ -122,7 +122,7 @@ OSCL_EXPORT_REF bool ProgressiveStreamingContainer::completeRepositionRequest()
     pCmd->PVMFNodeCommand::Parse(aRequestData, aDataStreamCmdId);
 
     // set current file offset to the byte range request offset
-    uint32 newOffset = (uint32)(aRequestData);
+    TOsclFileOffset newOffset = (TOsclFileOffset)aRequestData;
     iNodeOutput->seekDataStream(newOffset);
     iNodeOutput->setCurrentOutputSize(newOffset);
     iDownloadControl->setPrevDownloadSize(newOffset);
@@ -380,7 +380,7 @@ OSCL_EXPORT_REF bool pvProgressiveStreamingOutput::releaseMemFrag(OsclRefCounter
     return bFound;
 }
 
-OSCL_EXPORT_REF void pvProgressiveStreamingOutput::setContentLength(uint32 aLength)
+OSCL_EXPORT_REF void pvProgressiveStreamingOutput::setContentLength(TOsclFileOffset aLength)
 {
     if (iDataStream) iDataStream->SetContentLength(aLength);
 }
@@ -392,7 +392,7 @@ OSCL_EXPORT_REF void pvProgressiveStreamingOutput::flushDataStream()
     if (iDataStream) iDataStream->Flush(iSessionID);
 }
 
-OSCL_EXPORT_REF bool pvProgressiveStreamingOutput::seekDataStream(const uint32 aSeekOffset)
+OSCL_EXPORT_REF bool pvProgressiveStreamingOutput::seekDataStream(const TOsclFileOffset aSeekOffset)
 {
     if (!iDataStream) return false;
     return (iDataStream->Seek(iSessionID, aSeekOffset, PVDS_SEEK_SET) == PVDS_SUCCESS);
@@ -459,11 +459,11 @@ void progressiveStreamingControl::setProtocolInfo()
 ////////////////////////////////////////////////////////////////////////////////////
 //////  ProgressiveStreamingProgress implementation
 ////////////////////////////////////////////////////////////////////////////////////
-OSCL_EXPORT_REF bool ProgressiveStreamingProgress::calculateDownloadPercent(uint32 &aDownloadProgressPercent)
+OSCL_EXPORT_REF bool ProgressiveStreamingProgress::calculateDownloadPercent(TOsclFileOffset &aDownloadProgressPercent)
 {
     // in progessive streaming, the getContentLength will change after new GET request
     // from known to 0 and then to known again
-    uint32 fileSize = iProtocol->getContentLength();
+    TOsclFileOffset fileSize = iProtocol->getContentLength();
     if (!fileSize && iContentLength)
     {
         fileSize = iContentLength;
@@ -497,19 +497,19 @@ uint32 progressiveStreamingEventReporter::getBufferFullness()
 
     uint32 aCacheSize = iNodeOutput->getMaxAvailableOutputSize();
     if (aCacheSize == 0) return 0xffffffff;
-    uint32 aCacheFilledSize = iNodeOutput->getAvailableOutputSize();
-    if (aCacheFilledSize >= aCacheSize) return 100;
+    TOsclFileOffset aCacheFilledSize = iNodeOutput->getAvailableOutputSize();
+    if (aCacheFilledSize >= (TOsclFileOffset)aCacheSize) return 100;
 
     // avoid fix-point multiplication overflow
     uint32 aBufferEmptiness = 0xffffffff;
     if (IS_OVERFLOW_FOR_100x(aCacheFilledSize) > 0)
     {
-        aBufferEmptiness = (aCacheFilledSize >> PVPROTOCOLENGINE_DOWNLOAD_BYTE_PERCENTAGE_DLSIZE_RIGHTSHIFT_FACTOR) * 100 /
+        aBufferEmptiness = ((uint32)aCacheFilledSize >> PVPROTOCOLENGINE_DOWNLOAD_BYTE_PERCENTAGE_DLSIZE_RIGHTSHIFT_FACTOR) * 100 /
                            (aCacheSize >> PVPROTOCOLENGINE_DOWNLOAD_BYTE_PERCENTAGE_DLSIZE_RIGHTSHIFT_FACTOR);
     }
     else
     {
-        aBufferEmptiness = aCacheFilledSize * 100 / aCacheSize;
+        aBufferEmptiness = (uint32)aCacheFilledSize * 100 / aCacheSize;
     }
 
     return 100 - aBufferEmptiness;

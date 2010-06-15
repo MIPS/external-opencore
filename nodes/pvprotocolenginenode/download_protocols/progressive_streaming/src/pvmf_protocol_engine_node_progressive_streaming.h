@@ -23,6 +23,12 @@
 #include "pvmf_protocol_engine_node_progressive_download.h"
 #endif
 
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
+//#define TOsclFileOffset int64
+
 
 ////////////////////////////////////////////////////////////////////////////////////
 //////  ProgressiveStreamingContainer
@@ -48,8 +54,8 @@ class ProgressiveStreamingContainer : public ProgressiveDownloadContainer
 
     protected:
         // called by DoSeek()
-        OSCL_IMPORT_REF uint32 getSeekOffset(PVMFNodeCommand& aCmd);
-        OSCL_IMPORT_REF PVMFStatus doSeekBody(uint32 aNewOffset);
+        OSCL_IMPORT_REF TOsclFileOffset getSeekOffset(PVMFNodeCommand& aCmd);
+        OSCL_IMPORT_REF PVMFStatus doSeekBody(TOsclFileOffset aNewOffset);
         OSCL_IMPORT_REF void updateDownloadControl(const bool isDownloadComplete = false);
         OSCL_IMPORT_REF bool needToCheckResumeNotificationMaually();
 
@@ -77,7 +83,7 @@ class pvProgressiveStreamingOutput : public pvHttpDownloadOutput,
         }
         OSCL_IMPORT_REF bool releaseMemFrag(OsclRefCounterMemFrag* aFrag);
         // for new data stream APIs
-        OSCL_IMPORT_REF virtual void setContentLength(uint32 aLength);
+        OSCL_IMPORT_REF virtual void setContentLength(TOsclFileOffset aLength);
 
         /* pure virtual functions of PvmiDataStreamObserver */
         /* This function is the call back function from Write data stream. After the successful registration for
@@ -101,7 +107,7 @@ class pvProgressiveStreamingOutput : public pvHttpDownloadOutput,
             iSourceRequestObserver = aObserver;
         }
         OSCL_IMPORT_REF virtual void flushDataStream();
-        OSCL_IMPORT_REF bool seekDataStream(const uint32 aSeekOffset);
+        OSCL_IMPORT_REF bool seekDataStream(const TOsclFileOffset aSeekOffset);
 
         // constructor and destructor
         OSCL_IMPORT_REF pvProgressiveStreamingOutput(PVMFProtocolEngineNodeOutputObserver *aObserver = NULL);
@@ -155,10 +161,10 @@ class ProgressiveStreamingProgress : public ProgressiveDownloadProgress
         }
 
     private:
-        OSCL_IMPORT_REF bool calculateDownloadPercent(uint32 &aDownloadProgressPercent);
+        OSCL_IMPORT_REF bool calculateDownloadPercent(TOsclFileOffset &aDownloadProgressPercent);
 
     private:
-        uint32 iContentLength;
+        TOsclFileOffset iContentLength;
 };
 
 
@@ -177,7 +183,7 @@ class progressiveStreamingEventReporter : public downloadEventReporter
         bool checkContentLengthOrTooLarge()
         {
             // PVMFInfoContentLength
-            uint32 fileSize = iInterfacingObjectContainer->getFileSize();
+            TOsclFileOffset fileSize = iInterfacingObjectContainer->getFileSize();
 
             if (!iSendContentLengthEvent && fileSize > 0)
             {

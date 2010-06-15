@@ -2136,7 +2136,7 @@ MovieAtom::getTextSampleEntryAt(uint32 id, uint32 index)
     }
 }
 
-int32 MovieAtom::getTrackTSStartOffset(uint32& aTSOffset, uint32 aTrackID)
+int32 MovieAtom::getTrackTSStartOffset(TOsclFileOffset& aTSOffset, uint32 aTrackID)
 {
     aTSOffset = 0;
     TrackAtom *track = getTrackForID(aTrackID);

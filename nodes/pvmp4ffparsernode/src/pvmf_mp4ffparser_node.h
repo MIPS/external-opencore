@@ -315,8 +315,8 @@ class PVMFMP4FFParserNode
         PVMFStatus GetNumberOfSyncSamples(PVMFTrackInfo& aTrackInfo, int32& aNumSyncSamples);
         PVMFStatus GetSyncSampleInfo(PVMFTrackInfo& aTrackInfo, PVMFSampleNumTSList& aList, uint32 aStartIndex = 0, int32 aMaxEntries = -1);
         PVMFStatus GetSyncSampleInfo(PVMFSampleNumTSList& aList, PVMFTrackInfo& aTrackInfo, int32 aTargetTimeInMS, uint32 aHowManySamples = 1);
-        PVMFStatus GetTimestampForDataPosition(PVMFTrackInfo& aTrackInfo, uint32 aDataPosition, PVMFTimestamp& aTimestamp);
-        PVMFStatus GetDataPositionForTimestamp(PVMFTrackInfo& aTrackInfo, PVMFTimestamp aTimestamp, uint32& aDataPosition);
+        PVMFStatus GetTimestampForDataPosition(PVMFTrackInfo& aTrackInfo, TOsclFileOffset aDataPosition, PVMFTimestamp& aTimestamp);
+        PVMFStatus GetDataPositionForTimestamp(PVMFTrackInfo& aTrackInfo, PVMFTimestamp aTimestamp, TOsclFileOffset& aDataPosition);
 
 
         // From PVMFPortActivityHandler
@@ -333,8 +333,8 @@ class PVMFMP4FFParserNode
 
 
         /* From PVMFFormatProgDownloadSupportInterface */
-        int32 convertSizeToTime(uint32 fileSize, uint32& aNPTInMS);
-        void setFileSize(const uint32 aFileSize);
+        int32 convertSizeToTime(TOsclFileOffset fileSize, uint32& aNPTInMS);
+        void setFileSize(const TOsclFileOffset aFileSize);
         void setDownloadProgressInterface(PVMFDownloadProgressInterface*);
         void playResumeNotification(bool aDownloadComplete);
         void notifyDownloadComplete();
@@ -524,7 +524,7 @@ class PVMFMP4FFParserNode
         // variables to support download autopause
         OsclSharedPtr<PVMFMediaClock> download_progress_clock;
         PVMFDownloadProgressInterface* download_progress_interface;
-        uint32 iDownloadFileSize;
+        TOsclFileOffset iDownloadFileSize;
         bool autopaused;
 
         void DataStreamCommandCompleted(const PVMFCmdResp& aResponse);
@@ -667,8 +667,8 @@ class PVMFMP4FFParserNode
         bool oIsAACFramesFragmented;
 
         int32 iPlayBackDirection;
-        int32 iStartForNextTSSearch;
-        int32 iPrevSampleTS;
+        int64 iStartForNextTSSearch;
+        uint64 iPrevSampleTS;
         bool iParseAudioDuringFF;
         bool iParseAudioDuringREW;
         bool iParseVideoOnly;

@@ -2261,6 +2261,14 @@ OSCL_EXPORT_REF bool PVRTSPEngineNode::parseURL(const char *aUrl)
 
     /* Locate the server name. */
     mbchar *server_port_ptr = OSCL_CONST_CAST(mbchar*, oscl_strstr(server_ip_ptr, ":"));
+    // This check is to ensure that the server port is retrieved from the URL only if there
+    // is an abs_path or media name present after the first occurrence of ":". This is
+    // found by checking for a "/" after a potential port pointer is found.
+    mbchar *clip_name_following_port = NULL;
+    if (server_port_ptr != NULL)
+    {
+        clip_name_following_port = OSCL_CONST_CAST(mbchar*, oscl_strstr(server_port_ptr, "/"));
+    }
     mbchar *clip_name = OSCL_CONST_CAST(mbchar*, oscl_strstr(server_ip_ptr, "/"));
     if (clip_name != NULL)
     {
@@ -2269,7 +2277,7 @@ OSCL_EXPORT_REF bool PVRTSPEngineNode::parseURL(const char *aUrl)
 
     /* Locate the port number if provided. */
     iSessionInfo.iSrvAdd.port = (iSessionInfo.iStreamingType == PVRTSP_RM_HTTP) ? DEFAULT_HTTP_PORT : DEFAULT_RTSP_PORT;
-    if ((server_port_ptr != NULL)  && (*(server_port_ptr + 1) != '/'))
+    if ((server_port_ptr != NULL)  && (*(server_port_ptr + 1) != '/') && (clip_name_following_port != NULL))
     {
         *(server_port_ptr++) = '\0';
         uint32 atoi_tmp;

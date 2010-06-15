@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,10 @@
 #include "pv_interface.h"
 #endif
 
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
 #define PVMF_DOWNLOAD_DATASOURCE_HTTP_UUID PVUuid(0xdea36265,0x6a59,0x4d8b,0xb3,0xea,0xdf,0x68,0x4d,0x7e,0x0e,0x08)
 
 //Source data for HTTP Progressive download (format type PVMF_DATA_SOURCE_HTTP_URL)
@@ -41,7 +45,7 @@ class PVMFDownloadDataSourceHTTP : public PVInterface
         //false if keep downloading a partial downloading file
         OSCL_wString &iConfigFileName;      //download config file
         OSCL_wString &iDownloadFileName;    //local file name of the downloaded clip
-        uint32  iMaxFileSize;               //the max size of the file.
+        TOsclFileOffset  iMaxFileSize;               //the max size of the file.
         OSCL_String &iProxyName;            //HTTP proxy name, either ip or dns
         int32   iProxyPort;                 //HTTP proxy port
         int32 iMaxHttpHeaderFieldSize;     //HTTP header field size, in DLNA PPB size is 998
@@ -58,7 +62,7 @@ class PVMFDownloadDataSourceHTTP : public PVInterface
         PVMFDownloadDataSourceHTTP(bool aIsNewSession
                                    , OSCL_wString &aConfigFile
                                    , OSCL_wString &aDownloadFileName
-                                   , uint32 aMaxSize
+                                   , TOsclFileOffset aMaxSize
                                    , OSCL_String &aProxyName
                                    , int32 aProxyPort
                                    , TPVPlaybackControl aPlaybackControl)
@@ -110,13 +114,13 @@ class PVMFDownloadDataSourcePVX : public PVInterface
         //false if keep downloading a partial downloading file
         OSCL_wString &iConfigFileName;      //download config file
         OSCL_wString &iDownloadFileName;    //local file name of the downloaded clip
-        uint32  iMaxFileSize;               //the max size of the file.
+        TOsclFileOffset  iMaxFileSize;               //the max size of the file.
         OSCL_String &iProxyName;            //HTTP proxy name, either ip or dns
         int32   iProxyPort;                 //HTTP proxy port
 
         CPVXInfo &iPvxInfo;                 //class which contains all the info in the .pvx file except the URL
 
-        PVMFDownloadDataSourcePVX(bool aIsNewSession, OSCL_wString &aConfigFile, OSCL_wString &aDownloadFileName, uint32 aMaxSize, OSCL_String &aProxyName, int32 aProxyPort, CPVXInfo &p)
+        PVMFDownloadDataSourcePVX(bool aIsNewSession, OSCL_wString &aConfigFile, OSCL_wString &aDownloadFileName, TOsclFileOffset aMaxSize, OSCL_String &aProxyName, int32 aProxyPort, CPVXInfo &p)
                 : bIsNewSession(aIsNewSession)
                 , iConfigFileName(aConfigFile)
                 , iDownloadFileName(aDownloadFileName)

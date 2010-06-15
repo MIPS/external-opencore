@@ -22,14 +22,6 @@
 #include "test_case.h"
 #endif
 
-#ifndef TEXT_TEST_INTERPRETER_H_INCLUDED
-#include "text_test_interpreter.h"
-#endif
-
-#ifndef XML_TEST_INTERPRETER_H_INCLUDED
-#include "xml_test_interpreter.h"
-#endif
-
 #ifndef OSCL_SCHEDULER_AO_H_INCLUDED
 #include "oscl_scheduler_ao.h"
 #endif
@@ -117,6 +109,7 @@ class pvplayer_engine_test_suite : public test_case
     public:
         pvplayer_engine_test_suite
         (
+            FILE* aFileHandleStdOut,
             char *aFilename,
             PVMFFormatType aFiletype,
             int32 aFirstTest,
@@ -394,7 +387,8 @@ class pvplayer_engine_test
         , public OsclTimerObserver
 {
     public:
-        pvplayer_engine_test(char *aFileName,
+        pvplayer_engine_test(FILE* aFileHandleSTDOUT,
+                             char *aFileName,
                              PVMFFormatType aFileType,
                              int32 aFirstTest,
                              int32 aLastTest,
@@ -923,6 +917,14 @@ class pvplayer_engine_test
             * Output YUV and PCM data files from Playback.
             */
             ProgPlaybackMP4StartPauseResumeSeekStopTest, //162
+            /**
+            * @test (163) Progressive Playback until EOS Test
+            * Input http url to a M3U8 file.
+            * Default url is an http url to an MPEG-2 file.
+            * Output YUV and PCM data files from Playback.
+            */
+            ProgPlaybackMPEG2UntilEOSTest, //163
+
 
             LastProgressivePlaybackTest, //placeholder
 
@@ -2301,43 +2303,51 @@ class pvplayer_engine_test
             DLA_OpenPlayStop_PlayReadyCPMTest_unprotected_eAACPlus,//1415
             DLA_OpenPlayStop_PlayReadyCPMTest_unprotected_H264,//1416
             DLA_OpenPlayStop_PlayReadyCPMTest_unprotected_H264_AAC,//1417
+            DLA_OpenPlayStop_PlayReadyCPMTest_verifyOPLLevels,//1418
 
             //Special license protocol sequence tests
-            DLA_OpenPlayStop_PlayReadyCPMTest_redirect,//1418
-            DLA_OpenPlayStop_PlayReadyCPMTest_zero_http_redirect,//1419
-            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_RingtoneRights,//1420
-            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain,//1421
-            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain_member,//1422
-            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain_renew,//1423
-            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain_offline,//1424
-            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_MissingServiceIdInContentHeader,//1425
+            DLA_OpenPlayStop_PlayReadyCPMTest_redirect,//1419
+            DLA_OpenPlayStop_PlayReadyCPMTest_zero_http_redirect,//1420
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_RingtoneRights,//1421
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain,//1422
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain_member,//1423
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain_renew,//1424
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_domain_offline,//1425
+            DLA_OpenPlayStop_PlayReadyCPMTest_v4_WMA_MissingServiceIdInContentHeader,//1426
 
             //PlayReady Cancel tests
-            DLA_CancelAcquireLicense_PlayReadyCPMTest_v2_Content,//1426
-            DLA_CancelJoinDomain_PlayReadyCPMTest, //1427
+            DLA_CancelAcquireLicense_PlayReadyCPMTest_v2_Content,//1427
+            DLA_CancelJoinDomain_PlayReadyCPMTest, //1428
 
             //PlayReady streaming tests.
-            DLA_StreamingOpenPlayUntilEOST_PlayReadyCPMTest,//1428
-            DLA_StreamingOpenPlayPausePlayUntilEOS_PlayReadyCPMTest,//1429
-            DLA_StreamingOpenPlaySeekPlayUntilEOS_PlayReadyCPMTest,//1430
-            DLA_StreamingMultiplePlayUntilEOS_PlayReadyCPMTest,//1431
-            DLA_StreamingCancelAcquireLicense_PlayReadyCPMTest,//1432
-            DLA_StreamingProtocolRollOverTest_PlayReadyCPMTest,//1433
-            DLA_StreamingProtocolRollOverTestWithUnknownURLType_PlayReadyCPMTest,//1434
-            DLA_PDL_OpenPlayUntilEOS_PlayreadyCPMTest_v4_WMA,//1435
-            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_WMV,//1436
-            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_AAC,//1437
-            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_H264,//1438
-            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_H264_AAC,//1439
+            DLA_StreamingOpenPlayUntilEOST_WMA_PlayReadyCPMTest,//1429
+            DLA_StreamingOpenPlayUntilEOST_WMV_PlayReadyCPMTest,//1430
+            DLA_StreamingOpenPlayPausePlayUntilEOS_WMA_PlayReadyCPMTest,//1431
+            DLA_StreamingOpenPlayPausePlayUntilEOS_WMV_PlayReadyCPMTest,//1432
+            DLA_StreamingOpenPlaySeekPlayUntilEOS_WMA_PlayReadyCPMTest,//1433
+            DLA_StreamingOpenPlaySeekPlayUntilEOS_WMV_PlayReadyCPMTest,//1434
+            DLA_StreamingMultiplePlayUntilEOS_WMA_PlayReadyCPMTest,//1435
+            DLA_StreamingMultiplePlayUntilEOS_WMV_PlayReadyCPMTest,//1436
+            DLA_StreamingCancelAcquireLicense_WMA_PlayReadyCPMTest,//1437
+            DLA_StreamingCancelAcquireLicense_WMV_PlayReadyCPMTest,//1438
+            DLA_StreamingProtocolRollOverTest_WMA_PlayReadyCPMTest,//1439
+            DLA_StreamingProtocolRollOverTest_WMV_PlayReadyCPMTest,//1440
+            DLA_StreamingProtocolRollOverTestWithUnknownURLType_WMA_PlayReadyCPMTest,//1441
+            DLA_StreamingProtocolRollOverTestWithUnknownURLType_WMV_PlayReadyCPMTest,//1442
+            DLA_PDL_OpenPlayUntilEOS_PlayreadyCPMTest_v4_WMA,//1443
+            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_WMV,//1444
+            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_AAC,//1445
+            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_H264,//1446
+            DLA_PDL_OpenPlayStop_PlayreadyCPMTest_v4_H264_AAC,//1447
 
-            DLA_PPB_OpenPlayUntilEOS_PlayreadyCPMTest_v4_WMA,//1440
-            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_WMV,//1441
-            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_AAC,//1442
-            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_H264,//1443
-            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_H264_AAC,//1444
+            DLA_PPB_OpenPlayUntilEOS_PlayreadyCPMTest_v4_WMA,//1448
+            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_WMV,//1449
+            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_AAC,//1450
+            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_H264,//1451
+            DLA_PPB_OpenPlayStop_PlayreadyCPMTest_v4_H264_AAC,//1452
 
             //Miscellaneous tests
-            LicenseCountVerification_PlayReadyCPMTest, //1445
+            LicenseCountVerification_PlayReadyCPMTest, //1453
 
             //PlayReady utility tests 1500-1599
 
@@ -2782,6 +2792,7 @@ class pvplayer_engine_test
         virtual void TimeoutOccurred(int32 timerID, int32 timeoutInfo);
 
     private:
+        FILE* iFileHandleSTDOUT;
         const char *iFileName;
         PVMFFormatType iFileType;
 
@@ -2822,7 +2833,7 @@ class pvplayer_engine_test
         bool iRunPRUtilityNoSchedulerTC;
         OsclTimer<OsclMemAllocator> *iTimer;
 
-        uint32 m_starttick; // used to compute elapsed time for test cases
+        uint32 iStarttick; // used to compute elapsed time for test cases
 };
 
 /**

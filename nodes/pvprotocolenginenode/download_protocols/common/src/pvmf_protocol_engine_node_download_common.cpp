@@ -20,6 +20,11 @@
 #include "pvmf_protocol_engine_command_format_ids.h"
 #include "pvmf_download_progress_interface.h"
 
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////
 //////  DownloadContainer implementation
@@ -55,8 +60,8 @@ OSCL_EXPORT_REF int32 DownloadContainer::doPreStart()
 
     // check the case: resume download after download is complete
     OsclSharedPtr<PVDlCfgFile> aCfgFile = iCfgFileContainer->getCfgFile();
-    LOGINFODATAPATH((0, "DownloadContainer::doPreStart(), currFileSizeFromCfgFile=%d, totalFileSizeFromCfgFile=%d, aResumeDownload=%d, rangeStartTime=%d",
-                     aCfgFile->GetCurrentFileSize(), aCfgFile->GetOverallFileSize(), (uint32)(!aCfgFile->IsNewSession()), aCfgFile->GetRangeStartTime()));
+    LOGINFODATAPATH((0, "DownloadContainer::doPreStart(), currFileSizeFromCfgFile=%u, totalFileSizeFromCfgFile=%u, aResumeDownload=%u, rangeStartTime=%u",
+                     (uint32)aCfgFile->GetCurrentFileSize(), (uint32)aCfgFile->GetOverallFileSize(), (uint32)(!aCfgFile->IsNewSession()), aCfgFile->GetRangeStartTime()));
 
     if (!aCfgFile->IsNewSession() && aCfgFile->GetCurrentFileSize() >= aCfgFile->GetOverallFileSize())
     {
@@ -460,9 +465,9 @@ OSCL_EXPORT_REF void pvHttpDownloadOutput::discardData(const bool aNeedReopen)
     PVMFProtocolEngineNodeOutput::discardData();
 }
 
-OSCL_EXPORT_REF uint32 pvHttpDownloadOutput::getAvailableOutputSize()
+OSCL_EXPORT_REF TOsclFileOffset pvHttpDownloadOutput::getAvailableOutputSize()
 {
-    uint32 writeCapacity = 0xFFFFFFFF;
+    TOsclFileOffset writeCapacity = (TOsclFileOffset)MAX_TOSCLFILEOFFSET_VALUE;
     if (iDataStream)
     {
         iDataStream->QueryWriteCapacity(iSessionID, writeCapacity);
@@ -538,18 +543,19 @@ OSCL_EXPORT_REF void pvDownloadControl::requestResumeNotification(const uint32 c
     // save the download size at the underflow point
     iPrevDownloadSize = iNodeOutput->getCurrentOutputSize();
 
+
     // estimate playback rate and save the download size at the underflow point
     if (currentNPTReadPosition > 0 && currentNPTReadPosition < 0xFFFFFFFF)
     {
         // estimate playback rate
-        iPlaybackByteRate = divisionInMilliSec(iProtocol->getDownloadSize(), currentNPTReadPosition);
+        iPlaybackByteRate = (uint32)divisionInMilliSec(iProtocol->getDownloadSize(), currentNPTReadPosition);
 
-        uint32 iPrevDownloadSizeOrig = 0;
+        TOsclFileOffset iPrevDownloadSizeOrig = 0;
         iPrevDownloadSizeOrig = iPrevDownloadSize;
-        if (iClipByterate == 0 && iClipDurationMsec > 0) iClipByterate = divisionInMilliSec(iFileSize, iClipDurationMsec);
-        iPrevDownloadSize = OSCL_MAX(iPrevDownloadSize, currentNPTReadPosition / 1000 * iClipByterate);
+        if (iClipByterate == 0 && iClipDurationMsec > 0) iClipByterate = (uint32)divisionInMilliSec(iFileSize, iClipDurationMsec);
+        iPrevDownloadSize = OSCL_MAX((uint64)iPrevDownloadSize, currentNPTReadPosition / 1000 * iClipByterate);
 
-        LOGINFODATAPATH((0, "pvDownloadControl::requestResumeNotification(), currentNPTReadPosition=%d, playbackRate=%dbps, prevDownloadSize=%d, iPrevDownloadSizeOrig=%d, iClipByterate=%dbps",
+        LOGINFODATAPATH((0, "pvDownloadControl::requestResumeNotification(), currentNPTReadPosition=%d, playbackRate=%dbps, prevDownloadSize=%d, iPrevDownloadSizeOrig=%d, iClipByterate=%ubps",
                          currentNPTReadPosition, (iPlaybackByteRate << 3), iPrevDownloadSize, iPrevDownloadSizeOrig, (iClipByterate << 3)));
     }
 }
@@ -682,7 +688,7 @@ OSCL_EXPORT_REF void pvDownloadControl::updateFileSize()
     }
 }
 
-OSCL_EXPORT_REF void pvDownloadControl::setFileSize(const uint32 aFileSize)
+OSCL_EXPORT_REF void pvDownloadControl::setFileSize(const TOsclFileOffset aFileSize)
 {
     if (iSetFileSize) return;
     if (aFileSize == 0 || !iProgDownloadSI) return;
@@ -738,11 +744,11 @@ OSCL_EXPORT_REF void pvDownloadControl::createDownloadClock()
 
 // auto-resume playback decision
 OSCL_EXPORT_REF bool pvDownloadControl::isResumePlayback(const uint32 aDownloadRate,
-        const uint32 aCurrDownloadSize,
-        const uint32 aFileSize)
+        const TOsclFileOffset aCurrDownloadSize,
+        const TOsclFileOffset aFileSize)
 {
     // check download complete, for download complete, no need to run the following algorithm
-    uint32 writeCapacity = iNodeOutput->getAvailableOutputSize();
+    uint32 writeCapacity = (uint32)iNodeOutput->getAvailableOutputSize();
     LOGINFODATAPATH((0, "pvDownloadControl::isResumePlayback() IN, MBDS write capacity=%d", writeCapacity));
     OSCL_UNUSED_ARG(writeCapacity);
 
@@ -769,8 +775,8 @@ OSCL_EXPORT_REF bool pvDownloadControl::isResumePlayback(const uint32 aDownloadR
 
 OSCL_EXPORT_REF bool pvDownloadControl::isDlAlgoPreConditionMet(const uint32 aDownloadRate,
         const uint32 aDurationMsec,
-        const uint32 aCurrDownloadSize,
-        const uint32 aFileSize)
+        const TOsclFileOffset aCurrDownloadSize,
+        const TOsclFileOffset aFileSize)
 {
     if (iDlAlgoPreConditionMet) return iDlAlgoPreConditionMet;
 
@@ -781,22 +787,22 @@ OSCL_EXPORT_REF bool pvDownloadControl::isDlAlgoPreConditionMet(const uint32 aDo
 
     // check initial download time for download rate estimation
     uint32 downloadTimeMsec = iProtocol->getDownloadTimeForEstimation();
-    LOGINFODATAPATH((0, "pvDownloadControl::isResumePlayback()->isDlAlgoPreConditionMet(), check dl_time(%dms) > 1sec, OR download size(%d) >= 10 percent of file size(%d)=%d",
-                     downloadTimeMsec, aCurrDownloadSize, aFileSize, aFileSize / PVPROTOCOLENGINE_INIT_DOWNLOAD_SIZE_PERCENTAGE_THRESHOLD));
+    LOGINFODATAPATH((0, "pvDownloadControl::isResumePlayback()->isDlAlgoPreConditionMet(), check dl_time(%dms) > 1sec, OR download size(%u) >= 10 percent of file size(%u)=%u",
+                     downloadTimeMsec, (uint32)aCurrDownloadSize, (uint32)aFileSize, aFileSize / PVPROTOCOLENGINE_INIT_DOWNLOAD_SIZE_PERCENTAGE_THRESHOLD));
     iDlAlgoPreConditionMet = (downloadTimeMsec >= PVPROTOCOLENGINE_INIT_DOWNLOAD_TIME_THRESHOLD);
     if (iDlAlgoPreConditionMet) return true;
 
     // check initial download size for download rate estimation
-    uint32 initDownloadThreshold = (aFileSize > 0 ? aFileSize / PVPROTOCOLENGINE_INIT_DOWNLOAD_SIZE_PERCENTAGE_THRESHOLD : PVPROTOCOLENGINE_INIT_DOWNLOAD_SIZE_THRESHOLD);
+    TOsclFileOffset initDownloadThreshold = (aFileSize > 0 ? aFileSize / PVPROTOCOLENGINE_INIT_DOWNLOAD_SIZE_PERCENTAGE_THRESHOLD : PVPROTOCOLENGINE_INIT_DOWNLOAD_SIZE_THRESHOLD);
     iDlAlgoPreConditionMet = (aCurrDownloadSize >= initDownloadThreshold);
     return iDlAlgoPreConditionMet;
 }
 
 // with contraint: file size and clip duration are both available
 OSCL_EXPORT_REF bool pvDownloadControl::checkAutoResumeAlgoWithConstraint(const uint32 aDownloadRate,
-        const uint32 aRemainingDownloadSize,
+        const TOsclFileOffset aRemainingDownloadSize,
         const uint32 aDurationMsec,
-        const uint32 aFileSize)
+        const TOsclFileOffset aFileSize)
 {
     if (!canRunAutoResumeAlgoWithConstraint(aDurationMsec, aFileSize)) return false;
 
@@ -804,7 +810,7 @@ OSCL_EXPORT_REF bool pvDownloadControl::checkAutoResumeAlgoWithConstraint(const 
     uint32 playbackTimeMec32 = 0;
     if (!getPlaybackTimeFromEngineClock(playbackTimeMec32)) return false;
 
-    LOGINFODATAPATH((0, "pvDownloadControl::isResumePlayback()->checkAutoResumeAlgowithConstraint(), algorithm: RemainingDownloadSize < 0.0009 * dl_rate * remaining_playback_time: remaining_dl_size= %d, dl_rate=%dByte/s,  playback_remaining_time=%dms",
+    LOGINFODATAPATH((0, "pvDownloadControl::isResumePlayback()->checkAutoResumeAlgowithConstraint(), algorithm: RemainingDownloadSize < 0.0009 * dl_rate * remaining_playback_time: remaining_dl_size= %u, dl_rate=%dByte/s,  playback_remaining_time=%dms",
                      aRemainingDownloadSize, aDownloadRate, aDurationMsec - playbackTimeMec32));
     // the basic algorithm is, remaining download time (remaining download size/download rate) <
     //                         remaining playback time (duration - current playback time) * 0.9
@@ -820,7 +826,7 @@ OSCL_EXPORT_REF bool pvDownloadControl::checkAutoResumeAlgoWithConstraint(const 
 
     if (approveAutoResumeDecision(aRemainingDownloadSize, aDownloadRate, playbackRemainingTimeMsec))
     {
-        LOGINFODATAPATH((0, "pvDownloadControl::isResumePlayback()->checkAutoResumeAlgowithConstraint(), BytesLeft = %d, dl_rate = %dbps, duration = %d(orig_duration=%d), playback_time=%d",
+        LOGINFODATAPATH((0, "pvDownloadControl::isResumePlayback()->checkAutoResumeAlgowithConstraint(), BytesLeft = %u, dl_rate = %dbps, duration = %d(orig_duration=%d), playback_time=%d",
                          aRemainingDownloadSize, (aDownloadRate << 3), newDurationMsec, aDurationMsec, playbackTimeMec32));
         return true;
     }
@@ -842,65 +848,75 @@ OSCL_EXPORT_REF bool pvDownloadControl::getPlaybackTimeFromEngineClock(uint32 &a
 
     LOGINFODATAPATH((0, "pvDownloadControl::getPlaybackTimeFromEngineClock(), aPlaybackTime=%d, iCurrentNPTReadPosition=%d",
                      aPlaybackTime, iCurrentNPTReadPosition));
-    aPlaybackTime = OSCL_MAX(aPlaybackTime, iCurrentNPTReadPosition);
+    aPlaybackTime = OSCL_MAX(aPlaybackTime, (uint32)iCurrentNPTReadPosition);
     return true;
 }
 
 // use fixed-point calculation to replace the float-point calculation: aRemainingDLSize<0.0009*aDownloadRate*aRemainingPlaybackTime
-OSCL_EXPORT_REF bool pvDownloadControl::approveAutoResumeDecision(const uint32 aRemainingDLSize,
+OSCL_EXPORT_REF bool pvDownloadControl::approveAutoResumeDecision(const TOsclFileOffset aRemainingDLSize,
         const uint32 aDownloadRate,
         const uint32 aRemainingPlaybackTime)
 {
-
     // fixed-point calculation
     // 0.0009 = 1/1111 ~= 1/1024 = 1/2^10 = right shift 10 bits
     // aRemainingDLSize<(aDownloadRate*aRemainingPlaybackTime>>10)
 
-    uint32 max = OSCL_MAX(aDownloadRate, aRemainingPlaybackTime);
+    uint64 max = OSCL_MAX(aDownloadRate, aRemainingPlaybackTime);
     if ((max >> PVPROTOCOLENGINE_AUTO_RESUME_FIXED_CALCULATION_MAX_LIMIT_RIGHT_SHIFT_FACTOR) == 0)   // right shift 16 bits, 2^16= 65536
     {
-        return (aRemainingDLSize < (aDownloadRate*aRemainingPlaybackTime >>
-                                    PVPROTOCOLENGINE_AUTO_RESUME_FIXED_CALCULATION_RIGHT_SHIFT)); // right shift 10 bits
+        return ((uint64)aRemainingDLSize < (aDownloadRate*aRemainingPlaybackTime >>
+                                            PVPROTOCOLENGINE_AUTO_RESUME_FIXED_CALCULATION_RIGHT_SHIFT)); // right shift 10 bits
     }
     else
     {
         uint32 min = OSCL_MIN(aDownloadRate, aRemainingPlaybackTime);
-        uint32 maxRightShift10 = max >> PVPROTOCOLENGINE_AUTO_RESUME_FIXED_CALCULATION_RIGHT_SHIFT; // right shift 10 bits
+        uint32 maxRightShift10 = (uint32)(max >> PVPROTOCOLENGINE_AUTO_RESUME_FIXED_CALCULATION_RIGHT_SHIFT); // right shift 10 bits
         return (aRemainingDLSize / maxRightShift10 < min);
     }
 }
 
 // result = x*1000/y
-OSCL_EXPORT_REF uint32 pvDownloadControl::divisionInMilliSec(const uint32 x, const uint32 y)
+OSCL_EXPORT_REF TOsclFileOffset pvDownloadControl::divisionInMilliSec(const TOsclFileOffset x, const TOsclFileOffset y)
 {
     // result = x*1000/y
     // handle overflow issue
-    if (x >> PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_LIMIT_RIGHT_SHIFT_FACTOR == 0) return x*1000 / y; // no overflow
+    if (x >> (TOsclFileOffset)PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_LIMIT_RIGHT_SHIFT_FACTOR == 0)
+    {
+        return x*1000 / y; // no overflow
+    }
 
     // x*1000 overflows
-    uint32 result = (x >> PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_RIGHTSHIFT_FACTOR) * 1000;
-    if (result < y) result /= (y >> PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_RIGHTSHIFT_FACTOR);
+    TOsclFileOffset result = (x >> (TOsclFileOffset)PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_RIGHTSHIFT_FACTOR) * (TOsclFileOffset)1000;
+    if (result < y)
+    {
+        result /= (y >> (TOsclFileOffset)PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_RIGHTSHIFT_FACTOR);
+    }
     else
     {
-        uint32 resultTmp = result / y;
-        if (resultTmp >> PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_LIMIT_RIGHT_SHIFT_FACTOR) /* overflow */  result = 0xffffffff;
+        TOsclFileOffset resultTmp = result / y;
+        if (resultTmp >> (TOsclFileOffset)PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_LIMIT_RIGHT_SHIFT_FACTOR) /* overflow */
+        {
+            result = (TOsclFileOffset)MAX_TOSCLFILEOFFSET_VALUE;
+        }
         else
         {
             // check the accuracy of result/y
-            uint32 halfRightShift = PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_RIGHTSHIFT_FACTOR >> 1;
+            TOsclFileOffset halfRightShift = (TOsclFileOffset)PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_RIGHTSHIFT_FACTOR >> (TOsclFileOffset)1;
             if (resultTmp >> halfRightShift)
-                result = resultTmp << PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_RIGHTSHIFT_FACTOR;
+            {
+                result = resultTmp << (TOsclFileOffset)PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_RIGHTSHIFT_FACTOR;
+            }
             else
             {
                 result /= (y >> halfRightShift);
-                result <<= (PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_RIGHTSHIFT_FACTOR - halfRightShift);
+                result <<= ((TOsclFileOffset)PVPROTOCOLENGINE_DOWNLOAD_DURATION_CALCULATION_RIGHTSHIFT_FACTOR - halfRightShift);
             }
         }
     }
     return result;
 }
 
-OSCL_EXPORT_REF bool pvDownloadControl::isResumePlaybackWithOldAlg(const uint32 aDownloadRate, const uint32 aRemainingDownloadSize)
+OSCL_EXPORT_REF bool pvDownloadControl::isResumePlaybackWithOldAlg(const uint32 aDownloadRate, const TOsclFileOffset aRemainingDownloadSize)
 {
     // get the download progress clock time
     uint32 download_time;
@@ -910,11 +926,11 @@ OSCL_EXPORT_REF bool pvDownloadControl::isResumePlaybackWithOldAlg(const uint32 
 
     LOGINFODATAPATH((0, "pvDownloadControl::isResumePlaybackWithOldAlg(), download_time=%dms, download_complete=%d\n", download_time, iDownloadComplete));
 
-    if (iCurrentNPTReadPosition < currentNPTDownloadPosition)
+    if (iCurrentNPTReadPosition < (TOsclFileOffset)currentNPTDownloadPosition)
     {
         // bytes_remaining < (0.9 * (received data rate * file duration ))
 
-        uint32 BytesTobeDownloadedForAutoResume = (uint32)((currentNPTDownloadPosition - iCurrentNPTReadPosition) *
+        TOsclFileOffset BytesTobeDownloadedForAutoResume = (TOsclFileOffset)((currentNPTDownloadPosition - (uint32)iCurrentNPTReadPosition) *
                 aDownloadRate * 0.0009);
 
         LOGINFODATAPATH((0, "pvDownloadControl::isResumePlaybackWithOldAlg(), currentDLPosition=%dms, iCurrentReadPosition=%dms, downloadRate=%d, remainingSize %d\n", \
@@ -983,16 +999,16 @@ OSCL_EXPORT_REF bool DownloadProgress::update(const bool aDownloadComplete)
     updateDownloadClock(aDownloadComplete);
 
     // update download progress
-    uint32 newProgressPercent = 0;
+    TOsclFileOffset newProgressPercent = 0;
     if (!calculateDownloadPercent(newProgressPercent)) return false;
 
     //Report 0... 100 percent complete.
     // In progressive streaming, repositioning is allowed during download
     // so the download percentage does not always increase
-    if (newProgressPercent != iCurrProgressPercent)
+    if (newProgressPercent != (TOsclFileOffset)iCurrProgressPercent)
     {
         //avoid sending the same percentage update
-        iCurrProgressPercent = newProgressPercent;
+        iCurrProgressPercent = (uint32)newProgressPercent;
         return true;
     }
     return false;
@@ -1013,7 +1029,7 @@ OSCL_EXPORT_REF bool DownloadProgress::getNewProgressPercent(uint32 &aProgressPe
     return false;
 }
 
-OSCL_EXPORT_REF bool DownloadProgress::calculateDownloadPercent(uint32 &aDownloadProgressPercent)
+OSCL_EXPORT_REF bool DownloadProgress::calculateDownloadPercent(TOsclFileOffset &aDownloadProgressPercent)
 {
     // clip duration
     uint32 clipDuration = getClipDuration();
@@ -1198,7 +1214,7 @@ OSCL_EXPORT_REF PVMFStatus PVDlCfgFileContainer::createCfgFile(OSCL_String &aUrl
 OSCL_EXPORT_REF PVMFStatus PVDlCfgFileContainer::loadOldConfig()
 {
     int32 status = iCfgFileObj->LoadConfig();
-    LOGINFODATAPATH((0, "PVDlCfgFileContainer::loadOldConfig() status=%d(-1 critical, -2 non-critical), currFileSize=%d, totalFileSize=%d, rangeStartTime=%d",
+    LOGINFODATAPATH((0, "PVDlCfgFileContainer::loadOldConfig() status=%d(-1 critical, -2 non-critical), currFileSize=%lu, totalFileSize=%lu, rangeStartTime=%u",
                      status, iCfgFileObj->GetCurrentFileSize(), iCfgFileObj->GetOverallFileSize(), iCfgFileObj->GetRangeStartTime()));
 
     if (status == PVDlCfgFile::LoadConfigStatus_CriticalError) return PVMFFailure;
@@ -1494,8 +1510,8 @@ OSCL_EXPORT_REF bool downloadEventReporter::checkContentInfoEvent(const uint32 d
 OSCL_EXPORT_REF bool downloadEventReporter::checkContentLengthOrTooLarge()
 {
     // PVMFInfoContentLength
-    uint32 fileSize = iInterfacingObjectContainer->getFileSize();
-    uint32 maxAllowedFileSize = iCfgFileContainer->getCfgFile()->GetMaxAllowedFileSize();
+    TOsclFileOffset fileSize = iInterfacingObjectContainer->getFileSize();
+    TOsclFileOffset maxAllowedFileSize = iCfgFileContainer->getCfgFile()->GetMaxAllowedFileSize();
 
     if (!iSendContentLengthEvent && fileSize > 0)
     {
@@ -1542,8 +1558,8 @@ OSCL_EXPORT_REF int32 downloadEventReporter::isDownloadFileTruncated(const uint3
     // 1. connection shutdown case with content length
     // if no content length and connection is done, this case should be download complete,
     // and the download size should be file size (this is NOT truncated case)
-    uint32 currDownloadSize = iProtocol->getDownloadSize();
-    uint32 contentLength = iInterfacingObjectContainer->getFileSize();
+    TOsclFileOffset currDownloadSize = iProtocol->getDownloadSize();
+    TOsclFileOffset contentLength = iInterfacingObjectContainer->getFileSize();
     if (isDownloadComplete(downloadStatus))
     {
         // short-cut: for resume download, if previous download is complete download, then return 0 (no truncation)
@@ -1558,7 +1574,7 @@ OSCL_EXPORT_REF int32 downloadEventReporter::isDownloadFileTruncated(const uint3
     if (contentLength == 0)
     {
         if (downloadStatus == PROCESS_SUCCESS_END_OF_MESSAGE_TRUNCATED) return 1;
-        uint32 maxFileSize = iCfgFileContainer->getCfgFile()->GetMaxAllowedFileSize();
+        TOsclFileOffset maxFileSize = iCfgFileContainer->getCfgFile()->GetMaxAllowedFileSize();
         if (currDownloadSize <= maxFileSize) return 0;
         if (currDownloadSize > maxFileSize)  return 1;
     }

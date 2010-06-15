@@ -2224,7 +2224,7 @@ void pvplayer_async_test_genericopenplaystop::HandleInformationalEvent(const PVA
         curpos.iPosUnit = PVPPBPOSUNIT_DATAPOSITION;
         if (iPlayer->GetCurrentPositionSync(curpos) == PVMFSuccess)
         {
-            fprintf(iTestMsgOutputFile, "Playback status(data position) %d bytes\n", curpos.iPosValue.datapos_value);
+            fprintf(iTestMsgOutputFile, "Playback status(data position) %d bytes\n", (int32)curpos.iPosValue.datapos_value);
         }
 
         fprintf(iTestMsgOutputFile, "------------------------------\n");

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,17 +85,17 @@ class PVMIExternalDownloadDataStreamImpl : public PVMIDataStreamSyncInterface,
 
         OSCL_IMPORT_REF
         PvmiDataStreamStatus QueryReadCapacity(PvmiDataStreamSession aSessionID,
-                                               uint32& capacity);
+                                               TOsclFileOffset& capacity);
 
         OSCL_IMPORT_REF
         PvmiDataStreamCommandId RequestReadCapacityNotification(PvmiDataStreamSession aSessionID,
                 PvmiDataStreamObserver& observer,
-                uint32 capacity,
+                TOsclFileOffset capacity,
                 OsclAny* aContextData = NULL);
 
         OSCL_IMPORT_REF
         PvmiDataStreamStatus QueryWriteCapacity(PvmiDataStreamSession aSessionID,
-                                                uint32& capacity);
+                                                TOsclFileOffset& capacity);
 
         OSCL_IMPORT_REF
         PvmiDataStreamCommandId RequestWriteCapacityNotification(PvmiDataStreamSession aSessionID,
@@ -135,23 +135,23 @@ class PVMIExternalDownloadDataStreamImpl : public PVMIDataStreamSyncInterface,
 
         OSCL_IMPORT_REF
         PvmiDataStreamStatus Seek(PvmiDataStreamSession aSessionID,
-                                  int32 offset,
+                                  TOsclFileOffset offset,
                                   PvmiDataStreamSeekType origin);
 
         OSCL_IMPORT_REF
-        uint32 GetCurrentPointerPosition(PvmiDataStreamSession aSessionID) ;
+        TOsclFileOffset GetCurrentPointerPosition(PvmiDataStreamSession aSessionID) ;
 
         OSCL_IMPORT_REF
         PvmiDataStreamStatus Flush(PvmiDataStreamSession aSessionID);
 
-        void SetContentLength(uint32 aContentLength)
+        void SetContentLength(TOsclFileOffset aContentLength)
         {
             OSCL_UNUSED_ARG(aContentLength);
         }
 
-        uint32 GetContentLength()
+        TOsclFileOffset GetContentLength()
         {
-            return (uint32)iFileNumBytes;
+            return iFileNumBytes;
         }
 
         uint32 QueryBufferingCapacity()
@@ -170,7 +170,7 @@ class PVMIExternalDownloadDataStreamImpl : public PVMIDataStreamSyncInterface,
             OSCL_UNUSED_ARG(aResponse);
         }
 
-        PvmiDataStreamStatus MakePersistent(int32 aOffset, uint32 aSize)
+        PvmiDataStreamStatus MakePersistent(TOsclFileOffset aOffset, uint32 aSize)
         {
             OSCL_UNUSED_ARG(aOffset);
             OSCL_UNUSED_ARG(aSize);
@@ -185,7 +185,7 @@ class PVMIExternalDownloadDataStreamImpl : public PVMIDataStreamSyncInterface,
                                            Oscl_Vector<PVInterface*, OsclMemAllocator>& aIntfVec);
         virtual ~PVMIExternalDownloadDataStreamImpl();
 
-        void DownloadUpdate(uint32 aLatestFileSizeInBytes, bool aDownloadComplete);
+        void DownloadUpdate(TOsclFileOffset aLatestFileSizeInBytes, bool aDownloadComplete);
 
         PvmiDataStreamSession iSessionID;
         OsclFileHandle* iFileHandle;
@@ -193,7 +193,7 @@ class PVMIExternalDownloadDataStreamImpl : public PVMIDataStreamSyncInterface,
         bool iSimulateDownload;
 
         Oscl_File *iFileObject;
-        int32 iFileNumBytes;
+        TOsclFileOffset iFileNumBytes;
         Oscl_FileServer iFs;
         PVLogger* iLogger;
         PVLogger* iDataPathLogger;
@@ -204,7 +204,7 @@ class PVMIExternalDownloadDataStreamImpl : public PVMIDataStreamSyncInterface,
         struct PVMIExternalDownloadDataStreamReadCallBackParams
         {
             PvmiDataStreamCommandId iId;
-            uint32 iRequestedFileSize;
+            TOsclFileOffset iRequestedFileSize;
             PvmiDataStreamObserver *iObserver;
             OsclAny* iContext;
         };

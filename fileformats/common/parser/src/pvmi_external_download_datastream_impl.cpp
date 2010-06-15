@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -256,12 +256,12 @@ PVMIExternalDownloadDataStreamImpl::QueryRandomAccessCapability()
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
 PVMIExternalDownloadDataStreamImpl::QueryReadCapacity(PvmiDataStreamSession sessionID,
-        uint32& capacity)
+        TOsclFileOffset& capacity)
 {
     OSCL_UNUSED_ARG(sessionID);
 
     // Get the current file position
-    uint32 currFilePosition = GetCurrentPointerPosition(iSessionID);
+    TOsclFileOffset currFilePosition = GetCurrentPointerPosition(iSessionID);
 
     // for projects on Symbian using RFileBuf cache enabled
     // we need to reload the filecache in symbian, since oscl fileio
@@ -271,9 +271,9 @@ PVMIExternalDownloadDataStreamImpl::QueryReadCapacity(PvmiDataStreamSession sess
 
     // since the behaviour of fflush is undefined for read-only files
     // file pos may not be preserved. So seek back
-    iFileObject->Seek((int32)(currFilePosition), Oscl_File::SEEKSET);
+    iFileObject->Seek((currFilePosition), Oscl_File::SEEKSET);
 
-    capacity = ((uint32)iFileNumBytes - currFilePosition);
+    capacity = (iFileNumBytes - currFilePosition);
 
     if (iDownloadComplete == true)
     {
@@ -285,7 +285,7 @@ PVMIExternalDownloadDataStreamImpl::QueryReadCapacity(PvmiDataStreamSession sess
 OSCL_EXPORT_REF PvmiDataStreamCommandId
 PVMIExternalDownloadDataStreamImpl::RequestReadCapacityNotification(PvmiDataStreamSession sessionID,
         PvmiDataStreamObserver& observer,
-        uint32 capacity,
+        TOsclFileOffset capacity,
         OsclAny* aContextData)
 {
     OSCL_UNUSED_ARG(sessionID);
@@ -298,9 +298,9 @@ PVMIExternalDownloadDataStreamImpl::RequestReadCapacityNotification(PvmiDataStre
     //the capacity passed here means that the entity using the read datastream
     //wants "capacity" number of bytes FROM its CURRENT location
     //Read datastream's current read location cannot exceed downloaded file size
-    uint32 currreadpos = GetCurrentPointerPosition(0);
-    uint32 finalreadpositionforthisrequest = currreadpos + capacity;
-    if ((uint32)iFileNumBytes >= finalreadpositionforthisrequest)
+    TOsclFileOffset currreadpos = GetCurrentPointerPosition(0);
+    TOsclFileOffset finalreadpositionforthisrequest = currreadpos + capacity;
+    if (iFileNumBytes >= finalreadpositionforthisrequest)
     {
         //this request should never have been sent
         //there is enough data in the datastream to be read
@@ -319,7 +319,7 @@ PVMIExternalDownloadDataStreamImpl::RequestReadCapacityNotification(PvmiDataStre
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
 PVMIExternalDownloadDataStreamImpl::QueryWriteCapacity(PvmiDataStreamSession sessionID,
-        uint32& capacity)
+        TOsclFileOffset& capacity)
 {
     OSCL_UNUSED_ARG(sessionID);
     OSCL_UNUSED_ARG(capacity);
@@ -397,7 +397,7 @@ PVMIExternalDownloadDataStreamImpl::Write(PvmiDataStreamSession sessionID,
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
 PVMIExternalDownloadDataStreamImpl::Seek(PvmiDataStreamSession sessionID,
-        int32 offset,
+        TOsclFileOffset offset,
         PvmiDataStreamSeekType origin)
 {
     OSCL_UNUSED_ARG(sessionID);
@@ -426,16 +426,16 @@ PVMIExternalDownloadDataStreamImpl::Seek(PvmiDataStreamSession sessionID,
     return PVDS_SUCCESS;
 }
 
-OSCL_EXPORT_REF uint32
+OSCL_EXPORT_REF TOsclFileOffset
 PVMIExternalDownloadDataStreamImpl::GetCurrentPointerPosition(PvmiDataStreamSession sessionID)
 {
     OSCL_UNUSED_ARG(sessionID);
 
     if (!iFileObject)
         return 0;
-    int32 result = (TOsclFileOffsetInt32)iFileObject->Tell();
+    TOsclFileOffset result = iFileObject->Tell();
     LOGDEBUG((0, "PVMIExternalDownloadDataStreamImpl::GetCurrentContentPosition returning %d", result));
-    return (uint32)(result);
+    return (result);
 }
 
 OSCL_EXPORT_REF PvmiDataStreamStatus
@@ -458,7 +458,7 @@ PVMIExternalDownloadDataStreamImpl::Flush(PvmiDataStreamSession sessionID)
 
 }
 
-void PVMIExternalDownloadDataStreamImpl::DownloadUpdate(uint32 aLatestFileSizeInBytes, bool aDownloadComplete)
+void PVMIExternalDownloadDataStreamImpl::DownloadUpdate(TOsclFileOffset aLatestFileSizeInBytes, bool aDownloadComplete)
 {
     LOGDATAPATH((0, "PVMIExternalDownloadDataStreamImpl::DownloadUpdate - LatestFileSize=%d, DnldComplete=%d",
                  aLatestFileSizeInBytes, aDownloadComplete));

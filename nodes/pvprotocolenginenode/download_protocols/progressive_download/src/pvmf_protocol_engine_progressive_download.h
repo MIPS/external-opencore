@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,10 +93,10 @@ class ProgressiveDownloadState_GET : public DownloadState
         OSCL_IMPORT_REF void getStartFragmentInNewDownloadData(OUTPUT_DATA_QUEUE &aOutputQueue,
                 bool &aUseAllNewDownloadData,
                 uint32 &aStartFragsNo,
-                uint32 &aStartFragOffset);
+                TOsclFileOffset &aStartFragOffset);
         OSCL_IMPORT_REF void getEndFragmentInNewDownloadData(OUTPUT_DATA_QUEUE &aOutputQueue,
                 uint32 &aEndFragNo,
-                uint32 &aEndFragValidLen);
+                TOsclFileOffset &aEndFragValidLen);
         OSCL_IMPORT_REF int32 checkContentInfoMatchingForResumeDownload();
         OSCL_IMPORT_REF virtual int32 checkParsingStatus(int32 parsingStatus);
         OSCL_IMPORT_REF int32 updateDownloadStatistics();
@@ -111,7 +111,7 @@ class ProgressiveDownloadState_GET : public DownloadState
 class ProgressiveStreamingState_GET : public ProgressiveDownloadState_GET
 {
     public:
-        virtual void seek(const uint32 aSeekPosition)
+        virtual void seek(const TOsclFileOffset aSeekPosition)
         {
             iCfgFile->SetCurrentFileSize(aSeekPosition);
             iNeedGetResponsePreCheck = true; // reset the parser
@@ -153,8 +153,10 @@ class ProgressiveDownload : public HttpBasedProtocol
                 iState[i] = NULL;
             }
 
-            OSCL_DELETE(iComposer);
-            OSCL_DELETE(iParser);
+            if (iComposer) OSCL_DELETE(iComposer);
+            iComposer = NULL;
+            if (iParser) OSCL_DELETE(iParser);
+            iParser = NULL;
         }
 
         void setConfigInfo(OsclAny* aConfigInfo)
@@ -219,7 +221,7 @@ class ProgressiveStreaming : public ProgressiveDownload
             if (iParser) iParser->setNumRetry(MAX_NUM_EOS_MESSAGES_FOR_SAME_REQUEST + 1); // +1 for testing purpose (i.e., insert an EOS)
         }
 
-        virtual void seek(const uint32 aSeekPosition)
+        virtual void seek(const TOsclFileOffset aSeekPosition)
         {
             HttpBasedProtocol::seek(aSeekPosition);
 

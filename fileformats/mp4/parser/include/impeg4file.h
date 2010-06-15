@@ -598,7 +598,7 @@ class IMpeg4File : public ISucceedFail
          */
         virtual MP4_ERROR_CODE GetCurrentFileSize(TOsclFileOffset& aFileSize) = 0;
 
-        virtual int32 getTrackTSStartOffset(uint32& aTSOffset, uint32 aTrackID) = 0;
+        virtual int32 getTrackTSStartOffset(TOsclFileOffset& aTSOffset, uint32 aTrackID) = 0;
 
         // ITunes Specific functions
         virtual uint16 getITunesThisTrackNo() const = 0;

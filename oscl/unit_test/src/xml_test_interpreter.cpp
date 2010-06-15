@@ -21,7 +21,7 @@
 #endif
 
 _STRING
-xml_test_interpreter::problem_string(const test_problem& problem) const
+problem_string(const test_problem& problem)
 {
     _STRING Result;
     _APPEND(Result, problem.filename());
@@ -34,7 +34,7 @@ xml_test_interpreter::problem_string(const test_problem& problem) const
 }
 
 void
-xml_test_interpreter::add_problems(UnitTest_XMLWriter & doc, _STRING type, const _VECTOR(test_problem, unit_test_allocator)& vect) const
+add_problems(UnitTest_XMLWriter & doc, _STRING type, const _VECTOR(test_problem, unit_test_allocator)& vect)
 {
     for (_VECTOR(test_problem, unit_test_allocator)::const_iterator iter = vect.begin(); iter != vect.end(); ++iter)
     {
@@ -44,7 +44,7 @@ xml_test_interpreter::add_problems(UnitTest_XMLWriter & doc, _STRING type, const
 }
 
 _STRING
-xml_test_interpreter::unexpected_termination_interpretation(_STRING executable_name) const
+xml_test_interpreter::unexpected_termination_interpretation(_STRING executable_name)
 {
     UnitTest_XMLWriter doc;
 
@@ -72,9 +72,8 @@ xml_test_interpreter::unexpected_termination_interpretation(_STRING executable_n
     return doc.to_str();
 }
 
-
 _STRING
-xml_test_interpreter::interpretation(const test_result& result, _STRING executable_name) const
+xml_test_interpreter::interpretation(const test_result& result, _STRING executable_name, _STRING* pValue)
 {
     UnitTest_XMLWriter doc;
 
@@ -109,6 +108,9 @@ xml_test_interpreter::interpretation(const test_result& result, _STRING executab
         add_problems(doc, "error", sub_result.errors());
         doc.close();
     }
+
+    if (0 != pValue)
+        doc.element("system-out", *pValue);
 
     doc.close(root_id);
 

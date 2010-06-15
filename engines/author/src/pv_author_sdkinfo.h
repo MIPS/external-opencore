@@ -21,7 +21,7 @@
 // This header file is automatically generated at build-time
 // *** OFFICIAL RELEASE INFO -- Will not auto update
 
-#define PVAUTHOR_ENGINE_SDKINFO_LABEL "CORE_9.000.1.1_RC4"
-#define PVAUTHOR_ENGINE_SDKINFO_DATE 0x20100521
+#define PVAUTHOR_ENGINE_SDKINFO_LABEL "CORE_9.002.1.1"
+#define PVAUTHOR_ENGINE_SDKINFO_DATE 0x20100613
 
 #endif //PV_AUTHOR_SDKINFO_H_INCLUDED

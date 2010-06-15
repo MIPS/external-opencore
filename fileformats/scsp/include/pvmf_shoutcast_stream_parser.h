@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@
 #define PV_SCSP_MAX_METADATA_TAG_SIZE                   4080
 #define PV_SCSP_MAX_METADATA_TAG_SIZE_WITH_LENGTH_BYTE  PV_SCSP_MAX_METADATA_TAG_SIZE + 1
 
+
 class PVMFMediaChunkMap
 {
     public:
@@ -66,38 +67,38 @@ class PVMFMediaChunkMap
 
         ~PVMFMediaChunkMap() {};
 
-        void SetMapInfo(uint32 aMaxChunks, uint32 aChunkSize, uint32* aMapPtr);
+        void SetMapInfo(uint32 aMaxChunks, uint32 aChunkSize, int64* aMapPtr);
 
         void ClearMapInfo();
 
         void ResetMapInfo();
 
-        uint32 GetBytesMapped(uint32 aStreamOffset);
+        uint32 GetBytesMapped(int64 aStreamOffset);
 
-        void SetNextChunkOffset(uint32 aStreamOffset);
+        void SetNextChunkOffset(int64 aStreamOffset);
 
-        bool GetChunkOffset(uint32 aStreamOffset, uint32& aThisChunkStreamOffset, uint32*& aThisEntry);
+        bool GetChunkOffset(int64 aStreamOffset, int64& aThisChunkStreamOffset, int64*& aThisEntry);
 
-        bool GetNextChunkOffset(uint32 aStreamOffset, uint32& aNextChunkStreamOffset);
+        bool GetNextChunkOffset(int64 aStreamOffset, int64& aNextChunkStreamOffset);
 
-        bool GetPrevChunkOffset(uint32 aStreamOffset, uint32& aPrevChunkStreamOffset);
+        bool GetPrevChunkOffset(int64 aStreamOffset, int64& aPrevChunkStreamOffset);
 
-        uint32 GetBytesLeftInRange(uint32 aFirstOffset, uint32 aLastOffset, uint32 aOffset);
+        int64 GetBytesLeftInRange(int64 aFirstOffset, int64 aLastOffset, int64 aOffset);
 
     private:
 
         // pointer to the beginning (first uin32) of allocated memory
         // this does not change once it is set in SetMapInfo
-        uint32* iFirstEntry;
+        int64* iFirstEntry;
         // pointer to the end (last uint32) of the allocated memory
         // this does not change once it is set in SetMapInfo
-        uint32* iLastEntry;
+        int64* iLastEntry;
         // pointer to where the next media chunk stream offset should be stored
         // this is the start of the map
-        uint32* iNextEntry;
+        int64* iNextEntry;
         // pointer to where the current media chunk stream offset is stored
         // this is the end of the map
-        uint32* iCurrentEntry;
+        int64* iCurrentEntry;
         // max number of media chunks in the map
         // this does not change once it is set in SetMapInfo
         uint32 iMaxChunks;
@@ -132,9 +133,9 @@ typedef struct _ReadFilePositionStruct
 {
     bool iReadPositionStructValid;
 
-    uint32 iParserFilePosition;
+    int64 iParserFilePosition;
 
-    uint32 iStreamPosition;
+    int64 iStreamPosition;
 
     uint32 iStreamSessionID;
 
@@ -203,7 +204,7 @@ class PVMFShoutcastStreamParserFactory : public PVMFCPMPluginAccessInterfaceFact
 
         Oscl_Vector<ReadStreamStruct*, OsclMemAllocator> iReadStreamVec;
 
-        uint32* iMediaMapMemPtr;
+        int64* iMediaMapMemPtr;
 
         PVMFMediaChunkMap iMediaChunkMap;
 
@@ -243,15 +244,15 @@ class PVMFShoutcastStreamParser : public PVMIDataStreamSyncInterface
         OSCL_IMPORT_REF PvmiDataStreamRandomAccessType QueryRandomAccessCapability();
 
         OSCL_IMPORT_REF PvmiDataStreamStatus QueryReadCapacity(PvmiDataStreamSession aSessionID,
-                uint32& capacity);
+                TOsclFileOffset& capacity);
 
         OSCL_IMPORT_REF PvmiDataStreamCommandId RequestReadCapacityNotification(PvmiDataStreamSession aSessionID,
                 PvmiDataStreamObserver& observer,
-                uint32 capacity,
+                TOsclFileOffset capacity,
                 OsclAny* aContextData = NULL);
 
         OSCL_IMPORT_REF PvmiDataStreamStatus QueryWriteCapacity(PvmiDataStreamSession aSessionID,
-                uint32& capacity);
+                TOsclFileOffset& capacity);
 
         OSCL_IMPORT_REF PvmiDataStreamCommandId RequestWriteCapacityNotification(PvmiDataStreamSession aSessionID,
                 PvmiDataStreamObserver& observer,
@@ -275,17 +276,17 @@ class PVMFShoutcastStreamParser : public PVMIDataStreamSyncInterface
                 uint32& aNumElements);
 
         OSCL_IMPORT_REF PvmiDataStreamStatus Seek(PvmiDataStreamSession aSessionID,
-                int32 offset, PvmiDataStreamSeekType origin);
+                TOsclFileOffset offset, PvmiDataStreamSeekType origin);
 
-        OSCL_IMPORT_REF uint32 GetCurrentPointerPosition(PvmiDataStreamSession aSessionID);
+        OSCL_IMPORT_REF TOsclFileOffset GetCurrentPointerPosition(PvmiDataStreamSession aSessionID);
 
         OSCL_IMPORT_REF PvmiDataStreamStatus Flush(PvmiDataStreamSession aSessionID);
 
         OSCL_IMPORT_REF uint32 QueryBufferingCapacity();
 
-        OSCL_IMPORT_REF PvmiDataStreamStatus MakePersistent(int32 aOffset, uint32 aSize);
+        OSCL_IMPORT_REF PvmiDataStreamStatus MakePersistent(TOsclFileOffset aOffset, uint32 aSize);
 
-        OSCL_IMPORT_REF void GetCurrentByteRange(uint32& aCurrentFirstByteOffset, uint32& aCurrentLastByteOffset);
+        OSCL_IMPORT_REF void GetCurrentByteRange(TOsclFileOffset& aCurrentFirstByteOffset, TOsclFileOffset& aCurrentLastByteOffset);
 
         OSCL_IMPORT_REF PvmiDataStreamStatus RequestMetadataUpdates(PvmiDataStreamSession aSessionID,
                 PVMFMetadataUpdatesObserver& aObserver,
@@ -298,16 +299,16 @@ class PVMFShoutcastStreamParser : public PVMIDataStreamSyncInterface
 
         void ManageMetadataUpdateNotifications();
 
-        PvmiDataStreamStatus HandleMetadata(PvmiDataStreamSession aSessionID, uint32 aFirstStreamOffset, uint32 aLastStreamOffset,
+        PvmiDataStreamStatus HandleMetadata(PvmiDataStreamSession aSessionID, int64 aFirstStreamOffset, int64 aLastStreamOffset,
                                             uint32 aMetadataLengthBase16);
 
-        PvmiDataStreamStatus GetBytesInChunk(PvmiDataStreamSession aSessionID, uint32 aLastStreamOffset, uint32& aBytesInChunk);
+        PvmiDataStreamStatus GetBytesInChunk(PvmiDataStreamSession aSessionID, int64 aLastStreamOffset, uint32& aBytesInChunk);
 
-        PvmiDataStreamStatus ReadBytes(PvmiDataStreamSession aSessionID, uint32 aFirstStreamOffset, uint32 aLastStreamOffset,
+        PvmiDataStreamStatus ReadBytes(PvmiDataStreamSession aSessionID, int64 aFirstStreamOffset, int64 aLastStreamOffset,
                                        uint8* aBufPtr, uint32& aBytesToRead, bool bUpdateParsingPosition);
 
-        PvmiDataStreamStatus SkipRelativeBytes(PvmiDataStreamSession aSessionID, uint32 aFirstStreamOffset, uint32 aLastStreamOffset,
-                                               int32 aSeekToOffset, bool bUpdateParsingPosition);
+        PvmiDataStreamStatus SkipRelativeBytes(PvmiDataStreamSession aSessionID, int64 aFirstStreamOffset, int64 aLastStreamOffset,
+                                               int64 aSeekToOffset, bool bUpdateParsingPosition);
 
     private:
 
@@ -328,10 +329,9 @@ class PVMFShoutcastStreamParser : public PVMIDataStreamSyncInterface
         // For QueryReadCapacity
         uint32 iLargestRead;
         // For QueryReadCapacity
-        uint32 iBytesToNextMetadataTag;
+        int64 iBytesToNextMetadataTag;
 
 };
 
 #endif // PVMF_SHOUTCAST_STREAM_PARSER_H_INCLUDED
-
 

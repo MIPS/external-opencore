@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -379,7 +379,7 @@ OSCL_EXPORT_REF int32 PVDlCfgFile::LoadConfig(void)
         iProxyPort = *tmpPtr++;
 
         //client only downloads the clip which is smaller than this size
-        uint32 aMaxAllowedFileSize = *tmpPtr++;
+        TOsclFileOffset aMaxAllowedFileSize = *tmpPtr++;
         if (/*iMaxAllowedFileSize==0 && */aMaxAllowedFileSize > 0) iMaxAllowedFileSize = aMaxAllowedFileSize;
 
         //the file size after it is completly downloaded.
@@ -604,11 +604,11 @@ void PVDlCfgFile::composeFixedHeader(uint8 *aBuf)
     *tmpPtr++ =     iProxyPort;
 
     //client only downloads the clip which is smaller than this size
-    *tmpPtr++ =     iMaxAllowedFileSize;
+    *tmpPtr++ = (uint32)iMaxAllowedFileSize;
     //the file size after it is completly downloaded.
-    *tmpPtr++ =     iOverallFileSize;
+    *tmpPtr++ = (uint32)iOverallFileSize;
     //for FastTrack, this would be the accumulated bytes downloaded
-    *tmpPtr++ =     iCurrentFileSize;
+    *tmpPtr++ = (uint32)iCurrentFileSize;
     // flag of whether to have content length for the previous download
     *tmpPtr++ =     iHasContentLength;
     *tmpPtr++ =     iDownloadComplete;

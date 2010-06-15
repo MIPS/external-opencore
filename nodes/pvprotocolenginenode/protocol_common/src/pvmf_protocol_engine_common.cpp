@@ -19,6 +19,11 @@
 #include "pvmf_media_msg_format_ids.h" // for PVMF_MEDIA_CMD_EOS_FORMAT_ID
 #include "oscl_utf8conv.h" // for oscl_UnicodeToUTF8
 
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
+
 ////////////////////////////////////////////////////////////////////////////////////
 //////  pvHttpDownloadInput implementation
 ////////////////////////////////////////////////////////////////////////////////////
@@ -183,6 +188,10 @@ OSCL_EXPORT_REF int32 HttpParsingBasicObject::parseResponse(INPUT_DATA_QUEUE &aD
             {
                 iHttpHeaderParsed = true;
                 iParser->getContentInfo(iContentInfo);
+
+                if (iContentInfo.iContentLength < 0)
+                    return PROCESS_GENERAL_ERROR;
+
                 extractServerVersionNum();
 
                 // update BandWidthEstimationInfo
@@ -209,8 +218,8 @@ OSCL_EXPORT_REF int32 HttpParsingBasicObject::parseResponse(INPUT_DATA_QUEUE &aD
 
                 // update BandWidthEstimationInfo
                 iBWEstInfo.update(mediaData, iHttpHeaderParsed);
-                PVMF_PROTOCOL_ENGINE_LOGERRINFODATAPATH((0, "HttpParsingBasicObject::parseResponse() 1:streaming currentSize = %d, 2:download Size = %d", iTotalHttpStreamingSize, iTotalDLHttpBodySize));
-                PVMF_PROTOCOL_ENGINE_LOGERRINFODATAPATH((0, "HttpParsingBasicObject::parseResponse() file size = %d, download size = %d, curr_size = %d, new download size = %d",
+                PVMF_PROTOCOL_ENGINE_LOGERRINFODATAPATH((0, "HttpParsingBasicObject::parseResponse() 1:streaming currentSize = %u, 2:download Size = %u", iTotalHttpStreamingSize, iTotalDLHttpBodySize));
+                PVMF_PROTOCOL_ENGINE_LOGERRINFODATAPATH((0, "HttpParsingBasicObject::parseResponse() file size = %u, download size = %u, curr_size = %u, new download size = %u",
                                                         iContentInfo.iContentLength, iTotalDLHttpBodySize, size, iBWEstInfo.iTotalSizePerRequest));
             }
         }
@@ -390,7 +399,7 @@ bool HttpParsingBasicObject::construct()
     return true;
 }
 
-void HttpParsingBasicObject::setDownloadSize(const uint32 aInitialSize)
+void HttpParsingBasicObject::setDownloadSize(const TOsclFileOffset aInitialSize)
 {
     if (aInitialSize > 0)
         iTotalDLHttpBodySize = aInitialSize;
@@ -538,7 +547,7 @@ OSCL_EXPORT_REF bool HttpParsingBasicObject::isServerSendAuthenticationHeader()
     return false;
 }
 
-int32 HttpParsingBasicObject::isNewContentRangeInfoMatchingCurrentOne(const uint32 aPrevContentLength)
+int32 HttpParsingBasicObject::isNewContentRangeInfoMatchingCurrentOne(const TOsclFileOffset aPrevContentLength)
 {
     // First, consider content-length match
     if (aPrevContentLength > 0 && iContentInfo.iContentLength > 0 && aPrevContentLength != iContentInfo.iContentLength)
@@ -781,7 +790,7 @@ int32 ProtocolState::handleParsingSyntaxError()
         LOGINFODATAPATH((0, "ProtocolState::handleParsingSyntaxError(), parsing error(-2) + no Http header parsed, IGNORE THE PACKET AND CONTINUE SEARCH!!"));
 
         // reset the parser
-        uint32 currDownloadSize = iParser->getDownloadSize();
+        TOsclFileOffset currDownloadSize = iParser->getDownloadSize();
         iParser->reset();
         iParser->setDownloadSize(currDownloadSize);
         return PROCESS_SUCCESS;
@@ -815,13 +824,13 @@ OSCL_EXPORT_REF uint32 ProtocolState::getDownloadRate()
     OsclFloat downloadRate1 = ((OsclFloat)(pBWEstInfo->iTotalSizePerRequest) /
                                (OsclFloat)deltaMilliSec1) * (OsclFloat)1000.0; // try to avoid overflow problem for 32-bit interger multiplication
 
-    LOGINFODATAPATH((0, "ProtocolState::getDownloadRate(), deltaMilliSec0=%d, downloadSize=%d, downloadRate0=%dbps",
+    LOGINFODATAPATH((0, "ProtocolState::getDownloadRate(), deltaMilliSec0=%d, downloadSize=%d, downloadRate0=%ubps",
                      deltaMilliSec0, getDownloadSize(), (uint32)(downloadRate0*8)));
 
-    LOGINFODATAPATH((0, "ProtocolState::getDownloadRate(), deltaMilliSec=%d, downloadSize=%d, downloadRate=%dbps, ",
+    LOGINFODATAPATH((0, "ProtocolState::getDownloadRate(), deltaMilliSec=%d, downloadSize=%d, downloadRate=%ubps, ",
                      deltaMilliSec, getDownloadSize(), (uint32)(downloadRate*8)));
 
-    LOGINFODATAPATH((0, "ProtocolState::getDownloadRate(), deltaMilliSec1=%d, downloadSize1=%d, downloadRate1=%dbps",
+    LOGINFODATAPATH((0, "ProtocolState::getDownloadRate(), deltaMilliSec1=%d, downloadSize1=%d, downloadRate1=%ubps",
                      deltaMilliSec1, pBWEstInfo->iTotalSizePerRequest, (uint32)(downloadRate1*8)));
 
     OSCL_UNUSED_ARG(downloadRate0);

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -230,7 +230,7 @@ int SDP_Parser::validate_media_line(const char *start, const char *end, Oscl_Vec
 }
 
 OSCL_EXPORT_REF
-SDP_ERROR_CODE SDP_Parser::parseSDP(const char *sdpText, int text_length, SDPInfo *sdp)
+SDP_ERROR_CODE SDP_Parser::parseSDP(const char *sdpText, int64 text_length, SDPInfo *sdp)
 {
     int index = 0, sdpIndex = 0;
 

@@ -21,6 +21,10 @@
 #include "pvlogger.h"
 #include "oscl_utf8conv.h"
 
+#ifndef OSCLCONFIG_IO_H_INCLUDED
+#include "osclconfig_io.h"
+#endif
+
 #define Response300StatusCode     300
 #define Response301StatusCode     301
 #define Response302StatusCode     302
@@ -619,6 +623,7 @@ PVMFStatus PVMFProtocolEngineNode::DoPrepare()
     PassInObjects();
 
     PVMFStatus status = iProtocolContainer->doPrepare();
+    if (status == PVMFPending) return status;
 
     HandleCommandComplete(iCurrentCommand, status);
     return PVMFCmdCompleted;
@@ -797,7 +802,7 @@ void PVMFProtocolEngineNode::ReportInfoEvent(PVMFEventType aEventType, OsclAny* 
         const int32 aEventCode, OsclAny* aEventLocalBuffer,
         const uint32 aEventLocalBufferSize)
 {
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFProtocolEngineNode:NodeInfoEvent Type %d Data %d",
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFProtocolEngineNode:NodeInfoEvent Type %d Data %u",
                     aEventType, aEventData));
 
     if (aEventCode == 0)
@@ -2141,6 +2146,11 @@ void PVMFProtocolEngineNode::ReportEvent(PVMFEventType aEventType, OsclAny* aEve
     ReportInfoEvent(aEventType, aEventData, aEventCode, aEventLocalBuffer, aEventLocalBufferSize);
 }
 
+void PVMFProtocolEngineNode::ReportEvent(PVMFAsyncEvent& aEvent)
+{
+    PVMFNodeInterfaceImpl::ReportInfoEvent(aEvent);
+}
+
 void PVMFProtocolEngineNode::NotifyContentTooLarge()
 {
     // before error out, settle down the interaction with parser node
@@ -2666,10 +2676,16 @@ bool HttpHeaderAvailableHandler::handle(PVProtocolEngineNodeInternalEvent &aEven
     bool status = true;
     if (headerLength > 0)
     {
-        uint32 length = iProtocol->getContentLength();
+        TOsclFileOffset length = iProtocol->getContentLength();
         iNode->iInterfacingObjectContainer->setFileSize(length);
         iNodeOutput->setContentLength(length);
         status = iNode->iProtocolContainer->downloadUpdateForHttpHeaderAvailable();
+
+        uint8* header = NULL;
+        uint32 headerLen = 0;
+        iNode->iInterfacingObjectContainer->getHTTPHeader(header, headerLen);
+        LOGINFODATAPATH((0, "HttpHeaderAvailableHandler::handle() HTTP HEADER : \n-----------\n%s\n------------\n",
+                         (char*)header));
     }
 
     if (Handle1xxResponse())
@@ -2953,7 +2969,7 @@ bool EndOfDataProcessingHandler::handle(PVProtocolEngineNodeInternalEvent &aEven
     if (aInfo->iSendResumeNotification)
     {
         iNode->iDownloadControl->checkResumeNotification();
-        iNode->iNodeTimer->clear();
+        iNode->iNodeTimer->clearExcept(PLAYLIST_REFRESH_TIMER_ID);
         LOGINFODATAPATH((0, "EndOfDataProcessingHandler::handle(), send resume notification to parser node, for DOWNLOAD COMPLETE"));
     }
     if (aInfo->iExtraDataComeIn)

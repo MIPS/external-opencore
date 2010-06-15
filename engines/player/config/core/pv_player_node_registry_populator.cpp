@@ -65,6 +65,9 @@
 #if BUILD_FLV_FF_PARSER_NODE
 #include "pvmf_flvffparser_factory.h"
 #endif
+#if BUILD_COMMON_PARSER_NODE
+#include "pvmf_parsernode_factory.h"
+#endif
 // For recognizer registry
 #if BUILD_MP4_FF_REC
 #include "pvmp4ffrec_factory.h"
@@ -293,6 +296,7 @@ void PVPlayerRegistryPopulator::RegisterAllNodes(PVPlayerNodeRegistryInterface* 
     nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_SHOUTCAST_URL);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_RTMP_STREAMING_URL);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_SMOOTH_STREAMING_URL);
+    nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_ALS_URL);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_DATA_SOURCE_PVX_FILE);
     nodeinfo.iInputTypes.push_back(PVMF_MIME_PLSFF);
 #if PVPLAYERENGINE_SUPPORT_DTCP
@@ -324,6 +328,19 @@ void PVPlayerRegistryPopulator::RegisterAllNodes(PVPlayerNodeRegistryInterface* 
     nodeinfo.iOutputType.push_back(PVMF_MIME_FORMAT_UNKNOWN);
     nodeinfo.iNodeCreateFunc = PVMFFLVParserNodeFactory::CreatePVMFFLVParserNode;
     nodeinfo.iNodeReleaseFunc = PVMFFLVParserNodeFactory::DeletePVMFFLVParserNode;
+    aRegistry->RegisterNode(nodeinfo);
+#endif
+#if BUILD_COMMON_PARSER_NODE
+    //For PVMFAMRFFParserNode
+    //For PVMFWAVFFParserNode
+    nodeinfo.iInputTypes.clear();
+    nodeinfo.iInputTypes.push_back(PVMF_MIME_AMRFF);
+    nodeinfo.iInputTypes.push_back(PVMF_MIME_WAVFF);
+    nodeinfo.iNodeUUID = KPVMFParserNodeUuid;
+    nodeinfo.iOutputType.clear();
+    nodeinfo.iOutputType.push_back(PVMF_MIME_FORMAT_UNKNOWN);
+    nodeinfo.iNodeCreateFunc = PVMFParserNodeFactory::CreatePVMFParserNode;
+    nodeinfo.iNodeReleaseFunc = PVMFParserNodeFactory::DeletePVMFParserNode;
     aRegistry->RegisterNode(nodeinfo);
 #endif
 }

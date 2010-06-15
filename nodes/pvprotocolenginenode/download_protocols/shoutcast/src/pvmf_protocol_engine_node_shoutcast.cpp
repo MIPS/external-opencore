@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,7 +119,7 @@ void ShoutcastControl::setProtocolInfo()
 
 void ShoutcastControl::requestResumeNotification(const uint32 currentNPTReadPosition, bool& aDownloadComplete, bool& aNeedSendUnderflowEvent)
 {
-    uint32 aPlaybackByteRateOrig = iPlaybackByteRate;
+    uint32 aPlaybackByteRateOrig = (uint32)iPlaybackByteRate;
     progressiveStreamingControl::requestResumeNotification(currentNPTReadPosition, aDownloadComplete, aNeedSendUnderflowEvent);
 
     // keep iPlaybackByteRate unchanged in case of shoutcast, i.e. using playback rate from shoutcast response header

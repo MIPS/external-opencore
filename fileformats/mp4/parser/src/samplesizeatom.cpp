@@ -43,6 +43,14 @@ SampleSizeAtom::SampleSizeAtom(MP4_FF_FILE *fp,
         : FullAtom(fp, size, type),
         _mediaType(mediaType)
 {
+    iLogger = PVLogger::GetLoggerObject("mp4ffparser");
+    iStateVarLogger = PVLogger::GetLoggerObject("mp4ffparser_mediasamplestats");
+    iParsedDataLogger = PVLogger::GetLoggerObject("mp4ffparser_parseddata");
+
+    PVMF_MP4FFPARSER_LOGPARSEDINFO((0, "SampleSizeAtom::SampleSizeAtom IN"));
+
+
+
     _psampleSizeVec = NULL;
 
     _maxSampleSize = 0;
@@ -70,6 +78,7 @@ SampleSizeAtom::SampleSizeAtom(MP4_FF_FILE *fp,
         {
             _success = false;
             _mp4ErrorCode = READ_SAMPLE_SIZE_ATOM_FAILED;
+            PVMF_MP4FFPARSER_LOGPARSEDINFO((0, "SampleSizeAtom::SampleSizeAtom OUT1"));
             return;
         }
 
@@ -139,6 +148,8 @@ SampleSizeAtom::SampleSizeAtom(MP4_FF_FILE *fp,
                         AtomUtils::seekFromCurrPos(fp, dataSize);
                         AtomUtils::seekFromStart(_fileptr, _head_offset);
 
+                        PVMF_MP4FFPARSER_LOGPARSEDINFO((0, "SampleSizeAtom::SampleSizeAtom OUT2"));
+
                         return;
                     }
                     else
@@ -192,11 +203,12 @@ SampleSizeAtom::SampleSizeAtom(MP4_FF_FILE *fp,
         if (_mp4ErrorCode != ATOM_VERSION_NOT_SUPPORTED)
             _mp4ErrorCode = READ_SAMPLE_SIZE_ATOM_FAILED;
     }
+    PVMF_MP4FFPARSER_LOGPARSEDINFO((0, "SampleSizeAtom::SampleSizeAtom OUT3"));
 }
 
 bool SampleSizeAtom::ParseEntryUnit(uint32 sample_cnt)
 {
-
+    PVMF_MP4FFPARSER_LOGPARSEDINFO((0, "SampleSizeAtom::ParseEntryUnit IN"));
     uint32 threshold = 0;
     if (0 != AtomUtils::getFileBufferingCapacity(_fileptr))
     {
@@ -243,12 +255,14 @@ bool SampleSizeAtom::ParseEntryUnit(uint32 sample_cnt)
         }
         _parsed_entry_cnt++;
     }
+    PVMF_MP4FFPARSER_LOGPARSEDINFO((0, "SampleSizeAtom::ParseEntryUnit OUT"));
     return true;
 }
 
 // Destructor
 SampleSizeAtom::~SampleSizeAtom()
 {
+    PVMF_MP4FFPARSER_LOGPARSEDINFO((0, "SampleSizeAtom::~SampleSizeAtom IN"));
     if (_psampleSizeVec != NULL)
     {
         // CLEAN UP VECTOR
@@ -266,14 +280,18 @@ SampleSizeAtom::~SampleSizeAtom()
     if (_stbl_fptr_vec != NULL)
         PV_MP4_ARRAY_DELETE(NULL, _stbl_fptr_vec);
 
+    PVMF_MP4FFPARSER_LOGPARSEDINFO((0, "SampleSizeAtom::~SampleSizeAtom OUT"));
+
 }
 
 MP4_ERROR_CODE
 SampleSizeAtom::getSampleSizeAt(uint32 index, uint32& aSampleSize)
 {
+    PVMF_MP4FFPARSER_LOGPARSEDINFO((0, "SampleSizeAtom::~SampleSizeAtom IN"));
     if (_psampleSizeVec == NULL)
     {
         aSampleSize = _sampleSize;
+        PVMF_MP4FFPARSER_LOGPARSEDINFO((0, "SampleSizeAtom::~SampleSizeAtom OUT1"));
         return EVERYTHING_FINE;
     }
 
@@ -299,6 +317,7 @@ SampleSizeAtom::getSampleSizeAt(uint32 index, uint32& aSampleSize)
                         if (entryFallsInPreviousBuffer == 1)
                         {
                             aSampleSize = _psampleSizeVec[index%_stbl_buff_size];
+                            PVMF_MP4FFPARSER_LOGPARSEDINFO((0, "SampleSizeAtom::~SampleSizeAtom OUT2"));
                             return EVERYTHING_FINE;
                         }
                     }
@@ -312,14 +331,17 @@ SampleSizeAtom::getSampleSizeAt(uint32 index, uint32& aSampleSize)
                 }
             }
             aSampleSize = _psampleSizeVec[index%_stbl_buff_size];
+            PVMF_MP4FFPARSER_LOGPARSEDINFO((0, "SampleSizeAtom::~SampleSizeAtom OUT3"));
             return EVERYTHING_FINE;
         }
         else
         {
+            PVMF_MP4FFPARSER_LOGPARSEDINFO((0, "SampleSizeAtom::~SampleSizeAtom OUT4"));
             return DEFAULT_ERROR;
         }
     }
     aSampleSize = _psampleSizeVec[index];
+    PVMF_MP4FFPARSER_LOGPARSEDINFO((0, "SampleSizeAtom::~SampleSizeAtom OUT5"));
     return EVERYTHING_FINE;
 }
 

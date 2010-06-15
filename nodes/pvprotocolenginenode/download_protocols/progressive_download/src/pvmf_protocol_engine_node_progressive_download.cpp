@@ -104,8 +104,8 @@ OSCL_EXPORT_REF bool ProgressiveDownloadContainer::initProtocol_SetConfigInfo(Ht
 ////////////////////////////////////////////////////////////////////////////////////
 OSCL_EXPORT_REF bool progressiveDownloadControl::isDlAlgoPreConditionMet(const uint32 aDownloadRate,
         const uint32 aDurationMsec,
-        const uint32 aCurrDownloadSize,
-        const uint32 aFileSize)
+        const TOsclFileOffset aCurrDownloadSize,
+        const TOsclFileOffset aFileSize)
 {
     // first make sure initial download pre-conditions should be met
     if (!pvDownloadControl::isDlAlgoPreConditionMet(aDownloadRate, aDurationMsec, aCurrDownloadSize, aFileSize)) return false;
@@ -122,8 +122,8 @@ OSCL_EXPORT_REF bool progressiveDownloadControl::isDlAlgoPreConditionMet(const u
 //          1,  playback rate is not close to clip bitrate, but the information is all available
 //          -1, related information, e.g. duration=0, size2time conversion is not available, is not available
 OSCL_EXPORT_REF int32 progressiveDownloadControl::isPlaybackRateCloseToClipBitrate(const uint32 aDurationMsec,
-        const uint32 aCurrDownloadSize,
-        const uint32 aFileSize)
+        const TOsclFileOffset aCurrDownloadSize,
+        const TOsclFileOffset aFileSize)
 {
     if (aFileSize == 0 || aDurationMsec == 0 || iProgDownloadSI == NULL) return -1;
 
@@ -133,10 +133,10 @@ OSCL_EXPORT_REF int32 progressiveDownloadControl::isPlaybackRateCloseToClipBitra
     {
 
         if (aNPTInMS == 0) return 1;
-        if (iClipByterate == 0) iClipByterate = divisionInMilliSec(aFileSize, aDurationMsec);   // aFileSize*1000/aDurationMsec
-        uint32 aInstantByterate = divisionInMilliSec(aCurrDownloadSize, aNPTInMS);          // aCurrDownloadSize*1000/aNPTInMS
-        LOGINFODATAPATH((0, "progressiveDownloadControl::isPlaybackRateCloseToClipBitrate, check Instant rate=%d(currDLSize=%d, NPTTimeMs=%d), clip bitrate=%d",
-                         (aInstantByterate << 3), aCurrDownloadSize, aNPTInMS, (iClipByterate << 3)));
+        if (iClipByterate == 0) iClipByterate = (uint32)divisionInMilliSec(aFileSize, aDurationMsec);   // aFileSize*1000/aDurationMsec
+        uint32 aInstantByterate = (uint32)divisionInMilliSec(aCurrDownloadSize, aNPTInMS);          // aCurrDownloadSize*1000/aNPTInMS
+        LOGINFODATAPATH((0, "progressiveDownloadControl::isPlaybackRateCloseToClipBitrate, check Instant rate=%u(currDLSize=%u, NPTTimeMs=%u), clip bitrate=%u",
+                         (aInstantByterate << 3), (uint32)aCurrDownloadSize, (uint32)aNPTInMS, (iClipByterate << 3)));
         uint32 diffByterate = (aInstantByterate >= iClipByterate ? aInstantByterate - iClipByterate : iClipByterate - aInstantByterate);
         if (diffByterate < GET_10_PERCENT(iClipByterate) || // OSCL_ABS(aInstantByterate-iClipByterate)/iClipByterate < 1/8-1/64=0.109
                 isBufferingEnoughTime(aCurrDownloadSize, PVPROTOCOLENGINE_JITTER_BUFFER_SIZE_TIME, aNPTInMS))
@@ -151,21 +151,21 @@ OSCL_EXPORT_REF int32 progressiveDownloadControl::isPlaybackRateCloseToClipBitra
     else
     {
         // in case of convertSizeToTime() not supported in parser node, but duration can be estimated and provided
-        if (iClipByterate == 0) iClipByterate = divisionInMilliSec(aFileSize, aDurationMsec);
+        if (iClipByterate == 0) iClipByterate = (uint32)divisionInMilliSec(aFileSize, aDurationMsec);
         if (isBufferingEnoughTime(aCurrDownloadSize, PVPROTOCOLENGINE_INIT_DOWNLOAD_TIME_THRESHOLD_WITH_CLIPBITRATE)) return 0;
     }
 
     return 1;
 }
 
-OSCL_EXPORT_REF bool progressiveDownloadControl::isBufferingEnoughTime(const uint32 aCurrDownloadSize,
+OSCL_EXPORT_REF bool progressiveDownloadControl::isBufferingEnoughTime(const TOsclFileOffset aCurrDownloadSize,
         const uint32 aBufferTimeLimitInSec,
         const uint32 aNPTInMS)
 {
     if (aNPTInMS == 0xFFFFFFFF)
     {
         // use clip bitrate to calculate buffering time, instead of using convertSizeToTime()
-        uint32 deltaSizeLimit = iClipByterate * aBufferTimeLimitInSec;
+        TOsclFileOffset deltaSizeLimit = iClipByterate * aBufferTimeLimitInSec;
         return (aCurrDownloadSize >= iPrevDownloadSize + deltaSizeLimit);
     }
     else if (aNPTInMS > 0)
@@ -192,21 +192,21 @@ OSCL_EXPORT_REF uint32 progressiveDownloadControl::checkNewDuration(const uint32
     uint32 newDurationMsec = aCurrDurationMsec;
     if (aCurrDurationMsec > 0 && iClipByterate == 0)
     {
-        if (iFileSize > 0) iClipByterate = divisionInMilliSec(iFileSize, aCurrDurationMsec);
+        if (iFileSize > (TOsclFileOffset)0) iClipByterate = (uint32)divisionInMilliSec(iFileSize, aCurrDurationMsec);
     }
 
-    if (iPlaybackByteRate > 0)
+    if (iPlaybackByteRate > (TOsclFileOffset)0)
     {
         if (iPlaybackByteRate > iClipByterate)
         {
             uint32 averPlaybackRate = (iClipByterate + iPlaybackByteRate) / 2;
-            newDurationMsec = divisionInMilliSec(iFileSize, averPlaybackRate); // aFileSize/averPlaybackRate*1000
+            newDurationMsec = (uint32)divisionInMilliSec(iFileSize, averPlaybackRate); // aFileSize/averPlaybackRate*1000
         }
     }
     return newDurationMsec;
 }
 
-OSCL_EXPORT_REF bool progressiveDownloadControl::approveAutoResumeDecisionShortCut(const uint32 aCurrDownloadSize,
+OSCL_EXPORT_REF bool progressiveDownloadControl::approveAutoResumeDecisionShortCut(const TOsclFileOffset aCurrDownloadSize,
         const uint32 aDurationMsec,
         const uint32 aPlaybackTimeMsec,
         uint32 &aPlaybackRemainingTimeMsec)
@@ -225,35 +225,35 @@ OSCL_EXPORT_REF bool progressiveDownloadControl::approveAutoResumeDecisionShortC
 
 // No constraint: for file size/clip duration/clip bitrate(i.e. playback rate), one of them must be unavailable, except
 // file size and clip duration are available, but clip bitrate is unavailable
-OSCL_EXPORT_REF bool progressiveDownloadControl::checkAutoResumeAlgoNoConstraint(const uint32 aCurrDownloadSize,
-        const uint32 aFileSize,
+OSCL_EXPORT_REF bool progressiveDownloadControl::checkAutoResumeAlgoNoConstraint(const TOsclFileOffset aCurrDownloadSize,
+        const TOsclFileOffset aFileSize,
         uint32 &aDurationMsec)
 {
     // first check one exception: file size>0, duration=0, playbackRate>0, then we need to estimate the clip duration
     if (checkEstDurationAvailable(aFileSize, aDurationMsec)) return false;
 
-    uint32 currDownloadSizeOfInterest = aCurrDownloadSize - iPrevDownloadSize; // use download size as the jitter buffer size
-    if (iPlaybackByteRate > 0) currDownloadSizeOfInterest /= iPlaybackByteRate; // use playback time as the jitter buffer size
-    else if (aFileSize > 0) currDownloadSizeOfInterest /= (aFileSize / PVPROTOCOLENGINE_DOWNLOAD_BYTE_PERCENTAGE_CONVERTION_100); // use download percentage as the jitter buffer size
+    TOsclFileOffset currDownloadSizeOfInterest = aCurrDownloadSize - iPrevDownloadSize; // use download size as the jitter buffer size
+    if (iPlaybackByteRate > (TOsclFileOffset)0) currDownloadSizeOfInterest /= iPlaybackByteRate; // use playback time as the jitter buffer size
+    else if (aFileSize > (TOsclFileOffset)0) currDownloadSizeOfInterest /= (aFileSize / PVPROTOCOLENGINE_DOWNLOAD_BYTE_PERCENTAGE_CONVERTION_100); // use download percentage as the jitter buffer size
 
-    uint32 aJitterBufferSize = (iPlaybackByteRate > 0 ? PVPROTOCOLENGINE_JITTER_BUFFER_SIZE_TIME :
-                                (aFileSize > 0 ? PVPROTOCOLENGINE_JITTER_BUFFER_SIZE_DLPERCENTAGE :
+    uint32 aJitterBufferSize = (iPlaybackByteRate > (TOsclFileOffset)0 ? PVPROTOCOLENGINE_JITTER_BUFFER_SIZE_TIME :
+                                (aFileSize > (TOsclFileOffset)0 ? PVPROTOCOLENGINE_JITTER_BUFFER_SIZE_DLPERCENTAGE :
                                  PVPROTOCOLENGINE_JITTER_BUFFER_SIZE_BYTES));
-    bool resumeOK = (currDownloadSizeOfInterest >= aJitterBufferSize);
-    LOGINFODATAPATH((0, "progressiveDownloadControl::isResumePlayback()->checkAutoResumeAlgoNoConstraint(), resumeOK=%d, currDownloadSize=%d, prevDownloadSize=%d, currDownloadSizeOfInterest=%d, aJitterBufferSize=%d, file size=%d",
+    bool resumeOK = (currDownloadSizeOfInterest >= (TOsclFileOffset)aJitterBufferSize);
+    LOGINFODATAPATH((0, "progressiveDownloadControl::isResumePlayback()->checkAutoResumeAlgoNoConstraint(), resumeOK=%d, currDownloadSize=%u, prevDownloadSize=%u, currDownloadSizeOfInterest=%u, aJitterBufferSize=%u, file size=%u",
                      (uint32)resumeOK, aCurrDownloadSize, iPrevDownloadSize, currDownloadSizeOfInterest, aJitterBufferSize, aFileSize));
 
     return resumeOK;
 }
 
-OSCL_EXPORT_REF bool progressiveDownloadControl::checkEstDurationAvailable(const uint32 aFileSize, uint32 &aDurationMsec)
+OSCL_EXPORT_REF bool progressiveDownloadControl::checkEstDurationAvailable(const TOsclFileOffset aFileSize, uint32 &aDurationMsec)
 {
     // check file size>0, duration=0, playbackRate>0, then we need to estimate the clip duration
     // and use the original algorithm
-    if (iPlaybackByteRate > 0 && aFileSize > 0 && aDurationMsec == 0)
+    if (iPlaybackByteRate > (TOsclFileOffset)0 && aFileSize > (TOsclFileOffset)0 && aDurationMsec == 0)
     {
         // calculate estimated duration
-        aDurationMsec = divisionInMilliSec(aFileSize, iPlaybackByteRate);
+        aDurationMsec = (uint32)divisionInMilliSec(aFileSize, iPlaybackByteRate);
         LOGINFODATAPATH((0, "progressiveDownloadControl::isResumePlayback()->checkEstDurationAvailable(), aFileSize=%d, aPlaybackByteRate=%d, estDurationMsec=%d",
                          aFileSize, iPlaybackByteRate, aDurationMsec));
         return true;
@@ -343,12 +343,12 @@ OSCL_EXPORT_REF bool ProgressiveDownloadProgress::checkDownloadPercentModeAndUpd
     return true;
 }
 
-OSCL_EXPORT_REF bool ProgressiveDownloadProgress::calculateDownloadPercent(uint32 &aDownloadProgressPercent)
+OSCL_EXPORT_REF bool ProgressiveDownloadProgress::calculateDownloadPercent(TOsclFileOffset &aDownloadProgressPercent)
 {
     return calculateDownloadPercentBody(aDownloadProgressPercent, iProtocol->getContentLength());
 }
 
-OSCL_EXPORT_REF bool ProgressiveDownloadProgress::calculateDownloadPercentBody(uint32 &aDownloadProgressPercent, const uint32 aFileSize)
+OSCL_EXPORT_REF bool ProgressiveDownloadProgress::calculateDownloadPercentBody(TOsclFileOffset &aDownloadProgressPercent, const TOsclFileOffset aFileSize)
 {
     if (iTimeBasedDownloadPercent)
     {
@@ -358,7 +358,7 @@ OSCL_EXPORT_REF bool ProgressiveDownloadProgress::calculateDownloadPercentBody(u
     {
         // byte-based download percentage
         aDownloadProgressPercent = iDownloadSize;
-        if (aFileSize > 0)
+        if (aFileSize > (TOsclFileOffset)0)
         {
             aDownloadProgressPercent = getDownloadBytePercent(iDownloadSize, aFileSize);
             if (aDownloadProgressPercent > 100) aDownloadProgressPercent = 100;
@@ -366,7 +366,7 @@ OSCL_EXPORT_REF bool ProgressiveDownloadProgress::calculateDownloadPercentBody(u
         }
         else
         {
-            uint32 aMaxFileSize = iCfgFileContainer->getCfgFile()->GetMaxAllowedFileSize();
+            TOsclFileOffset aMaxFileSize = iCfgFileContainer->getCfgFile()->GetMaxAllowedFileSize();
             if (aDownloadProgressPercent > aMaxFileSize) aDownloadProgressPercent = aMaxFileSize;
         }
     }
@@ -374,9 +374,9 @@ OSCL_EXPORT_REF bool ProgressiveDownloadProgress::calculateDownloadPercentBody(u
 }
 
 // handle overflow issue for integer multiplication: downloadSize*100/fileSize
-OSCL_EXPORT_REF uint32 ProgressiveDownloadProgress::getDownloadBytePercent(const uint32 aDownloadSize, const uint32 aFileSize)
+OSCL_EXPORT_REF TOsclFileOffset ProgressiveDownloadProgress::getDownloadBytePercent(const TOsclFileOffset aDownloadSize, const TOsclFileOffset aFileSize)
 {
-    uint32 aDownloadProgressPercent = aDownloadSize * PVPROTOCOLENGINE_DOWNLOAD_BYTE_PERCENTAGE_CONVERTION_100 / aFileSize; // 100
+    TOsclFileOffset aDownloadProgressPercent = aDownloadSize * PVPROTOCOLENGINE_DOWNLOAD_BYTE_PERCENTAGE_CONVERTION_100 / aFileSize; // 100
     if ((aDownloadSize >> PVPROTOCOLENGINE_DOWNLOAD_BYTE_PERCENTAGE_DLSIZE_LIMIT_RIGHT_SHIFT_FACTOR) > 0)   // right shift 25 bits => larger than 2^25, then *100 may cause overflow
     {
         aDownloadProgressPercent = (aDownloadSize >> PVPROTOCOLENGINE_DOWNLOAD_BYTE_PERCENTAGE_DLSIZE_RIGHTSHIFT_FACTOR)* // right shift 7 bits, 2^7>100 to avoid overflow

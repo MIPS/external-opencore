@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -286,10 +286,11 @@ typedef struct hostent TOsclHostent;
 
 // file IO support
 #if (OSCL_HAS_LARGE_FILE_SUPPORT)
-#define _FILE_OFFSET_BITS 64
-typedef off_t TOsclFileOffset;
+typedef off64_t TOsclFileOffset;
+#define MAX_TOSCLFILEOFFSET_VALUE 0x7FFFFFFFFFFFFFFFLL;
 #else
 typedef int32 TOsclFileOffset;
+#define MAX_TOSCLFILEOFFSET_VALUE 0x7FFFFFFF;
 #endif
 
 

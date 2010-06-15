@@ -75,7 +75,9 @@
 
 #include "pvmf_recognizer_plugin.h"
 
-//
+#include "pvmi_data_stream.h"
+
+#include "oscl_utf8conv.h"
 
 
 #define PVPLAYERENGINE_NUM_COMMANDS 10
@@ -1061,6 +1063,7 @@ PVPlayerEngine::PVPlayerEngine() :
         iSourceFormatType(PVMF_MIME_FORMAT_UNKNOWN),
         iSourceNode(NULL),
         iSourceNodeSessionId(0),
+        iSourceNodeDataStreamIF(NULL),
         iSourceNodeInitIF(NULL),
         iSourceNodeTrackSelIF(NULL),
         iSourceNodePBCtrlIF(NULL),
@@ -1070,6 +1073,7 @@ PVPlayerEngine::PVPlayerEngine() :
         iSourceNodeCapConfigIF(NULL),
         iSourceNodeRegInitIF(NULL),
         iCPMLicenseIF(NULL),
+        iSourceNodePVInterfaceDataStream(NULL),
         iSourceNodePVInterfaceInit(NULL),
         iSourceNodePVInterfaceTrackSel(NULL),
         iSourceNodePVInterfacePBCtrl(NULL),
@@ -1146,7 +1150,8 @@ PVPlayerEngine::PVPlayerEngine() :
         iClipsCorrupted(0),
         iCurrentPlaybackClipId(0xFFFFFFFF),
         iNumClipsQueued(0),
-        iStartIssuedOnEngine(false)
+        iStartIssuedOnEngine(false),
+        ipDataStream(NULL)
 {
     iCurrentBeginPosition.iIndeterminate = true;
     iCurrentEndPosition.iIndeterminate = true;
@@ -2145,6 +2150,10 @@ void PVPlayerEngine::NodeCommandCompleted(const PVMFCmdResp& aResponse)
                 case PVP_ENGINE_STATE_IDLE:
                     switch (nodecontext->iCmdType)
                     {
+                        case PVP_CMD_SourceNodeQueryDataStreamIF:
+                            HandleSourceNodeQueryDataStreamIF(*nodecontext, aResponse);
+                            break;
+
                         case PVP_CMD_SourceNodeQueryInitIF:
                             HandleSourceNodeQueryInitIF(*nodecontext, aResponse);
                             break;
@@ -3450,7 +3459,7 @@ PVMFStatus PVPlayerEngine::ConvertFromMillisec(uint32 aTimeMS, PVPPlaybackPositi
             // Query each active track for its data position
             // Return the max data position
             PVMFTimestamp ts = aTimeMS;
-            uint32 maxdatapos = 0;
+            TOsclFileOffset maxdatapos = 0;
             bool maxdataposvalid = false;
 
             // Go through each active track
@@ -3458,7 +3467,7 @@ PVMFStatus PVPlayerEngine::ConvertFromMillisec(uint32 aTimeMS, PVPPlaybackPositi
             {
                 if (iDatapathList[i].iDatapath)
                 {
-                    uint32 curdatapos = 0;
+                    TOsclFileOffset curdatapos = 0;
                     // Convert the time to data position
                     if (iSourceNodeTrackLevelInfoIF->GetDataPositionForTimestamp(*(iDatapathList[i].iTrackInfo), ts, curdatapos) != PVMFSuccess)
                     {
@@ -4630,23 +4639,71 @@ PVMFStatus PVPlayerEngine::DoSetupSourceNode(PVCommandId aCmdId, OsclAny* aCmdCo
                          OSCL_ASSERT(false);
                          return PVMFFailure);
 
+    PVPlayerEngineContext* context = AllocateEngineContext(NULL, iSourceNode, NULL, aCmdId, aCmdContext, PVP_CMD_SourceNodeQueryDataStreamIF);
+
+    PVUuid sourceinituuid = PVMF_DATASTREAM_INIT_INTERFACE_UUID;
+    leavecode = 0;
+    PVMFCommandId cmdid = -1;
+    iSourceNodePVInterfaceDataStream = NULL;
+    OSCL_TRY(leavecode, cmdid = iSourceNode->QueryInterface(iSourceNodeSessionId, sourceinituuid, iSourceNodePVInterfaceDataStream, (OsclAny*)context));
+    OSCL_FIRST_CATCH_ANY(leavecode,
+                         iSourceNodePVInterfaceDataStream = NULL;
+                         FreeEngineContext(context);
+                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSetupSourceNode() QueryInterface for PVMF_DATASTREAM_INIT_INTERFACE_UUID did a leave!"))
+                        );
+
+    if (0 != leavecode || -1 == cmdid)
+    {
+        // This would mean the PVMF_DATASTREAM_INIT_INTERFACE_UUID is not supported by the source node, in such a case
+        // query for PVMF_DATA_SOURCE_INIT_INTERFACE_UUID
+        PVPlayerEngineContext* context = AllocateEngineContext(NULL, iSourceNode, NULL, aCmdId, aCmdContext, PVP_CMD_SourceNodeQueryInitIF);
+
+        PVUuid sourceinituuid = PVMF_DATA_SOURCE_INIT_INTERFACE_UUID;
+        int32 leavecode = 0;
+        PVMFCommandId cmdid = -1;
+        iSourceNodePVInterfaceInit = NULL;
+        OSCL_TRY(leavecode, cmdid = iSourceNode->QueryInterface(iSourceNodeSessionId, sourceinituuid, iSourceNodePVInterfaceInit, (OsclAny*)context));
+        OSCL_FIRST_CATCH_ANY(leavecode,
+                             iSourceNodePVInterfaceInit = NULL;
+                             FreeEngineContext(context);
+                             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSetupSourceNode QueryInterface on iSourceNode did a leave!"));
+                             return PVMFFailure);
+    }
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoSetupSourceNode() Out"));
+    return PVMFSuccess;
+}
+
+PVMFStatus PVPlayerEngine::DoSourceNodeQueryInitIF(PVCommandId aCmdId, OsclAny* aCmdContext)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iPerfLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVPlayerEngine::DoSourceNodeQueryInitIF Tick=%d", OsclTickCount::TickCount()));
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoSourceNodeQueryInitIF In"));
+
+    if (iSourceNodeDataStreamIF)
+    {
+        // Valid Data Stream set the data stream here via Data stream IF
+        if (PVMFSuccess != SetDataStreamOrDataSource(true))
+            return PVMFFailure;
+    }
+
     PVPlayerEngineContext* context = AllocateEngineContext(NULL, iSourceNode, NULL, aCmdId, aCmdContext, PVP_CMD_SourceNodeQueryInitIF);
 
     PVUuid sourceinituuid = PVMF_DATA_SOURCE_INIT_INTERFACE_UUID;
-    leavecode = 0;
+    int32 leavecode = 0;
     PVMFCommandId cmdid = -1;
     iSourceNodePVInterfaceInit = NULL;
     OSCL_TRY(leavecode, cmdid = iSourceNode->QueryInterface(iSourceNodeSessionId, sourceinituuid, iSourceNodePVInterfaceInit, (OsclAny*)context));
     OSCL_FIRST_CATCH_ANY(leavecode,
                          iSourceNodePVInterfaceInit = NULL;
                          FreeEngineContext(context);
-                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSetupSourceNode() QueryInterface on iSourceNode did a leave!"));
+                         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceNodeQueryInitIF QueryInterface on iSourceNode did a leave!"));
                          return PVMFFailure);
 
-    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoSetupSourceNode() Out"));
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::DoSourceNodeQueryInitIF Out"));
     return PVMFSuccess;
 }
-
 
 PVMFStatus PVPlayerEngine::DoSourceNodeQueryTrackSelIF(PVCommandId aCmdId, OsclAny* aCmdContext)
 {
@@ -4657,81 +4714,18 @@ PVMFStatus PVPlayerEngine::DoSourceNodeQueryTrackSelIF(PVCommandId aCmdId, OsclA
 
     int32 leavecode = 0;
 
-    if (iDataSource->GetDataSourceType() == PVP_DATASRCTYPE_URL)
+    if (NULL == iSourceNodeDataStreamIF)
     {
-        // Setup the source node via the initialization IF
-        OSCL_ASSERT(iSourceFormatType != PVMF_MIME_FORMAT_UNKNOWN);
-
-        for (uint32 clipIndex = 0; clipIndex < iDataSource->GetNumClips(); clipIndex++)
-        {
-
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVPlayerEngine::DoSourceNodeQueryTrackSelIF() - Set index of current clip to %d", clipIndex));
-            iDataSource->SetCurrentClip(clipIndex);
-
-            OSCL_wHeapString<OsclMemAllocator> sourceURL;
-            // In case the URL starts with file:// skip it
-            OSCL_wStackString<8> fileScheme(_STRLIT_WCHAR("file"));
-            OSCL_wStackString<8> schemeDelimiter(_STRLIT_WCHAR("://"));
-            const oscl_wchar* actualURL = NULL;
-
-            if (oscl_strncmp(fileScheme.get_cstr(), iDataSource->GetDataSourceURL().get_cstr(), 4) == 0)
-            {
-                actualURL = oscl_strstr(iDataSource->GetDataSourceURL().get_cstr(), schemeDelimiter.get_cstr());
-                if (actualURL == NULL)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceNodeQueryTrackSelIF() Unable to skip over file://"));
-                    return PVMFErrArgument;
-                }
-                //skip over ://
-                actualURL += schemeDelimiter.get_size();
-                sourceURL += actualURL;
-            }
-            else
-            {
-                sourceURL += iDataSource->GetDataSourceURL().get_cstr();
-            }
-
-            PVMFStatus retval = PVMFFailure;
-            if (clipIndex > 0)
-            {
-                PVMFFormatType srcFormatType = iDataSource->GetDataSourceFormatType();
-                retval = iSourceNodeInitIF->SetSourceInitializationData(sourceURL, srcFormatType, iDataSource->GetDataSourceContextData(), clipIndex);
-            }
-            else
-            {
-                retval = iSourceNodeInitIF->SetSourceInitializationData(sourceURL, iSourceFormatType, iDataSource->GetDataSourceContextData(), clipIndex);
-            }
-
-            if (retval == PVMFSuccess || retval == PVMFErrAlreadyExists)
-            {
-                iNumClipsQueued++;
-            }
-            else
-            {
-                if (retval == PVMFErrNotSupported)
-                {
-                    // dont ignore update failure for clips index == 0
-                    if (clipIndex == 0)
-                    {
-                        return PVMFFailure;
-                    }
-                }
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceNodeQueryTrackSelIF() SetSourceInitializationData failed errcode %d", retval));
-
-            }
-        }
-        // Set Playback Clock
-        PVMFStatus status = iSourceNodeInitIF->SetClientPlayBackClock(&iPlaybackClock);
-        if (status != PVMFSuccess)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceNodeQueryTrackSelIF() SetClientPlayBackClock failed!"));
+        // We need the data source via data source IF
+        if (PVMFSuccess != SetDataStreamOrDataSource(false))
             return PVMFFailure;
-        }
     }
-    else
+
+    // Set Playback Clock
+    PVMFStatus status = iSourceNodeInitIF->SetClientPlayBackClock(&iPlaybackClock);
+    if (status != PVMFSuccess)
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceNodeQueryTrackSelIF() Data source type not supported yet so asserting"));
-        OSCL_ASSERT(false);
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceNodeQueryTrackSelIF() SetClientPlayBackClock failed!"));
         return PVMFFailure;
     }
 
@@ -7461,11 +7455,11 @@ PVMFStatus PVPlayerEngine::DoVerifyTrackInfo(PVPlayerEngineTrackSelection &aTrac
                         {
 
                             // record width and height of the video track
-                            if (pv_mime_strcmp(kvpPtr[ii].key, MOUT_VIDEO_WIDTH_KEY) >= 0)
+                            if (pv_mime_strcmp(kvpPtr[ii].key, "x-pvmf/video/render/width;valtype=uint32") >= 0)
                             {
                                 aTrack->setTrackWidth(kvpPtr[0].value.uint32_value);
                             }
-                            if (pv_mime_strcmp(kvpPtr[ii].key, MOUT_VIDEO_HEIGHT_KEY) >= 0)
+                            if (pv_mime_strcmp(kvpPtr[ii].key, "x-pvmf/video/render/height;valtype=uint32") >= 0)
                             {
                                 aTrack->setTrackHeight(kvpPtr[1].value.uint32_value);
                             }
@@ -9791,6 +9785,14 @@ void PVPlayerEngine::DoSourceNodeCleanup(void)
 
     if (iSourceNode)
     {
+        // Remove reference to the parser node data stream interface if available
+        if (iSourceNodeDataStreamIF)
+        {
+            iSourceNodeDataStreamIF->removeRef();
+            iSourceNodeDataStreamIF = NULL;
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO, (0, "PVPlayerEngine::DoSourceNodeCleanup() - iSourceNodeDataStreamIF Released"));
+        }
+
         // Remove reference to the parser node init interface if available
         if (iSourceNodeInitIF)
         {
@@ -9910,6 +9912,13 @@ void PVPlayerEngine::DoSourceNodeCleanup(void)
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_INFO, (0, "PVPlayerEngine::DoSourceNodeCleanup() - iSourceNode not found"));
             return;
         }
+    }
+
+    // delete the datastream
+    if (ipDataStream)
+    {
+        OSCL_DELETE(ipDataStream);
+        ipDataStream = NULL;
     }
 
     // Cleanup the control varibles related to rate & direction changes.
@@ -11131,6 +11140,69 @@ void PVPlayerEngine::FreeEngineContext(PVPlayerEngineContext* aContext)
     }
 }
 
+void PVPlayerEngine::HandleSourceNodeQueryDataStreamIF(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp)
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_PROF, iPerfLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVPlayerEngine::HandleSourceNodeQueryDataStreamIF Tick=%d", OsclTickCount::TickCount()));
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSourceNodeQueryDataStreamIF In"));
+
+    PVMFStatus cmdstatus;
+    bool rescheduleAO = false;
+
+    switch (aNodeResp.GetCmdStatus())
+    {
+        case PVMFSuccess:
+            if (iSourceNodePVInterfaceDataStream)
+            {
+                iSourceNodeDataStreamIF = (PVMFDataStreamInitExtension*)iSourceNodePVInterfaceDataStream;
+                iSourceNodePVInterfaceDataStream = NULL;
+            }
+            break;
+        default:
+            break;
+    }
+    // Query for data source init interface
+    cmdstatus = DoSourceNodeQueryInitIF(aNodeContext.iCmdId, aNodeContext.iCmdContext);
+    if (cmdstatus != PVMFSuccess)
+    {
+        if ((CheckForSourceRollOver() == true) && (iRollOverState == RollOverStateInProgress))
+        {
+            iRollOverState = RollOverStateStart;
+            rescheduleAO = true;
+        }
+        else
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVPlayerEngine::HandleSourceNodeQueryDataStreamIF DoSourceNodeQueryInitIF failed, Add EH command"));
+            iCommandCompleteStatusInErrorHandling = cmdstatus;
+            iCommandCompleteErrMsgInErrorHandling = NULL;
+            if (iRollOverState == RollOverStateInProgress)
+            {
+                // Init is the current ongoing cmd so queue Init EH cmd
+                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_INIT, NULL, NULL, NULL, false);
+            }
+            else
+            {
+                // AddDataSource cmd is Current Command, queue ADS EH cmd
+                AddCommandToQueue(PVP_ENGINE_COMMAND_ERROR_HANDLING_ADD_DATA_SOURCE, NULL, NULL, NULL, false);
+            }
+            iRollOverState = RollOverStateIdle;
+        }
+    }
+
+    if (rescheduleAO)
+    {
+        if (IsBusy())
+        {
+            Cancel();
+        }
+
+        RunIfNotReady();
+    }
+
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE, (0, "PVPlayerEngine::HandleSourceNodeQueryDataStreamIF Out"));
+}
 
 void PVPlayerEngine::HandleSourceNodeQueryInitIF(PVPlayerEngineContext& aNodeContext, const PVMFCmdResp& aNodeResp)
 {
@@ -12627,9 +12699,12 @@ void PVPlayerEngine::HandleSourceNodeSetDataSourcePosition(PVPlayerEngineContext
                     }
                     else
                     {
-                        // Adjust the media data time to skip-to to correspond to the requested time
-                        // Add the difference of target NPT with actual playback position in NPT to the actual media data time to get time to skip to.
-                        iSkipMediaDataTS = iActualMediaDataTS + (iTargetNPT - iActualNPT);
+                        if (iPlaybackDirection_New > 0)
+                        {
+                            // Adjust the media data time to skip-to to correspond to the requested time
+                            // Add the difference of target NPT with actual playback position in NPT to the actual media data time to get time to skip to.
+                            iSkipMediaDataTS = iActualMediaDataTS + (iTargetNPT - iActualNPT);
+                        }
                         iActualNPT = iTargetNPT;
                     }
                 }
@@ -13371,9 +13446,12 @@ void PVPlayerEngine::HandleSourceNodeSetDataSourcePositionDuringPlayback(PVPlaye
                 }
                 else
                 {
-                    // Adjust the media data time to skip-to to correspond to the requested time
-                    // Add the difference of target NPT with actual playback position in NPT to the actual media data time to get time to skip to.
-                    iSkipMediaDataTS = iActualMediaDataTS + (iTargetNPT - iActualNPT);
+                    if (iPlaybackDirection_New > 0)
+                    {
+                        // Adjust the media data time to skip-to to correspond to the requested time
+                        // Add the difference of target NPT with actual playback position in NPT to the actual media data time to get time to skip to.
+                        iSkipMediaDataTS = iActualMediaDataTS + (iTargetNPT - iActualNPT);
+                    }
                     // Set the actual playback position to the requested time since actual media data TS was adjusted
                     // This is important since the difference between the two is used to calculate the NPT to media data offset in HandleSinkNodeskipMediaDataDuringPlayback()
                     iActualNPT = iTargetNPT;
@@ -14447,26 +14525,20 @@ void PVPlayerEngine::HandleDatapathResume(PVPlayerEngineContext& aDatapathContex
             PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::HandleDatapathResume() Report command as completed"));
             EngineCommandCompleted(aDatapathContext.iCmdId, aDatapathContext.iCmdContext, PVMFSuccess);
         }
-        if (!iPendingCmds.empty())
+        if (!iPendingCmds.empty() && (iPendingCmds.top().GetCmdType() == PVP_ENGINE_COMMAND_PAUSE_DUE_TO_SET_PLAYBACK_RANGE))
         {
-            if (iPendingCmds.top().GetCmdType() == PVP_ENGINE_COMMAND_PAUSE_DUE_TO_SET_PLAYBACK_RANGE)
-            {
-                // If we are here, it means that the HandleDatapathResume
-                // was part of the SetPlaybackRange command, and the StartOfData
-                // events have already reached the engine. So, pause the engine.
-                RunIfNotReady();
-            }
+            // If we are here, it means that the HandleDatapathResume
+            // was part of the SetPlaybackRange command, and the StartOfData
+            // events have already reached the engine. So, pause the engine.
+            RunIfNotReady();
         }
-        else if (!iCurrentCmd.empty())
+        else if (!iCurrentCmd.empty() && (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_PAUSE_DUE_TO_SET_PLAYBACK_RANGE))
         {
-            if (iCurrentCmd[0].GetCmdType() == PVP_ENGINE_COMMAND_PAUSE_DUE_TO_SET_PLAYBACK_RANGE)
-            {
-                // If we are here, it means that the HandleDatapathResume
-                // was part of the SetPlaybackRange command, and the StartOfData
-                // events have already reached the engine. And, the command has already been
-                // attempted to process before.
-                RunIfNotReady();
-            }
+            // If we are here, it means that the HandleDatapathResume
+            // was part of the SetPlaybackRange command, and the StartOfData
+            // events have already reached the engine. And, the command has already been
+            // attempted to process before.
+            RunIfNotReady();
         }
     }
     else
@@ -16510,6 +16582,106 @@ PVMFStatus PVPlayerEngine::AddErrorHandlingCmd(int32 aCmdType, PVMFStatus aErrSt
     iCommandCompleteErrMsgInErrorHandling = aErrMsg;
     AddCommandToQueue(aCmdType, NULL, NULL, NULL, false);
     return PVMFPending;
+}
+
+PVMFStatus PVPlayerEngine::SetDataStreamOrDataSource(bool aValidDataStream)
+{
+    if (iDataSource->GetDataSourceType() == PVP_DATASRCTYPE_URL)
+    {
+        OSCL_ASSERT(iSourceFormatType != PVMF_MIME_FORMAT_UNKNOWN);
+
+        for (uint32 clipIndex = 0; clipIndex < iDataSource->GetNumClips(); clipIndex++)
+        {
+
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVPlayerEngine::DoSourceNodeQueryTrackSelIF() - Set index of current clip to %d", clipIndex));
+            iDataSource->SetCurrentClip(clipIndex);
+
+            OSCL_wHeapString<OsclMemAllocator> sourceURL;
+            // In case the URL starts with file:// skip it
+            OSCL_wStackString<8> fileScheme(_STRLIT_WCHAR("file"));
+            OSCL_wStackString<8> schemeDelimiter(_STRLIT_WCHAR("://"));
+            const oscl_wchar* actualURL = NULL;
+
+            if (oscl_strncmp(fileScheme.get_cstr(), iDataSource->GetDataSourceURL().get_cstr(), 4) == 0)
+            {
+                actualURL = oscl_strstr(iDataSource->GetDataSourceURL().get_cstr(), schemeDelimiter.get_cstr());
+                if (actualURL == NULL)
+                {
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceNodeQueryTrackSelIF() Unable to skip over file://"));
+                    return PVMFErrArgument;
+                }
+                //skip over ://
+                actualURL += schemeDelimiter.get_size();
+                sourceURL += actualURL;
+            }
+            else
+            {
+                sourceURL += iDataSource->GetDataSourceURL().get_cstr();
+            }
+
+            if (aValidDataStream)
+            {
+                // Create the DataStream using filename
+                uint32 destSize = 128;
+                char filename[128];
+                oscl_UnicodeToUTF8(sourceURL.get_cstr(), sourceURL.get_size(), filename, destSize);
+                ipDataStream = OSCL_NEW(PvmiDataStream, (filename));
+                if (NULL == ipDataStream)
+                    return PVMFErrNoMemory;
+            }
+
+            PVMFStatus retval = PVMFFailure;
+            if (clipIndex > 0)
+            {
+                PVMFFormatType srcFormatType = iDataSource->GetDataSourceFormatType();
+                if (aValidDataStream)
+                {
+                    // Use DataStream IF
+                    retval = iSourceNodeDataStreamIF->InitializeDataStreamData(ipDataStream, srcFormatType);
+                }
+                else
+                {
+                    // Use DataSource IF
+                    retval = iSourceNodeInitIF->SetSourceInitializationData(sourceURL, srcFormatType, iDataSource->GetDataSourceContextData(), clipIndex);
+                }
+            }
+            else
+            {
+                if (aValidDataStream)
+                {
+                    // Use DataStream IF
+                    retval = iSourceNodeDataStreamIF->InitializeDataStreamData(ipDataStream, iSourceFormatType);
+                }
+                else
+                {
+                    // Use DataSource IF
+                    retval = iSourceNodeInitIF->SetSourceInitializationData(sourceURL, iSourceFormatType, iDataSource->GetDataSourceContextData(), clipIndex);
+                }
+            }
+
+            if (retval == PVMFSuccess || retval == PVMFErrAlreadyExists)
+            {
+                iNumClipsQueued++;
+            }
+            else
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceNodeQueryTrackSelIF() SetSourceInitializationData failed errcode %d", retval));
+
+                // dont ignore update failure for clips index == 0
+                if (clipIndex == 0)
+                {
+                    return PVMFFailure;
+                }
+            }
+        }
+    }
+    else
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceNodeQueryTrackSelIF() Data source type not supported yet so asserting"));
+        OSCL_ASSERT(false);
+        return PVMFFailure;
+    }
+    return PVMFSuccess;
 }
 
 // END FILE

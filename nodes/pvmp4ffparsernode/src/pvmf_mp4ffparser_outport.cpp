@@ -124,24 +124,9 @@ PVMFStatus PVMFMP4FFParserOutPort::Connect(PVMFPortInterface* aPort)
             PVMF_MP4FFPARSERNODE_LOGERROR((0, "PVMFMP4ParserOutPort::Connect: Error - Unable To Send Format Specific Info Plus First Sample To Peer"));
             return PVMFFailure;
         }
-        if (!(pvmiSetPortFormatSpecificInfoSync(config, MOUT_VIDEO_WIDTH_KEY)))
+        if (!(pvmiSetPortFormatSpecificInfoSync(config, PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV)))
         {
-            PVMF_MP4FFPARSERNODE_LOGERROR((0, "PVMFMP4ParserOutPort::Connect: Error - Unable To Decode Width To Peer"));
-            return PVMFFailure;
-        }
-        if (!(pvmiSetPortFormatSpecificInfoSync(config, MOUT_VIDEO_DISPLAY_WIDTH_KEY)))
-        {
-            PVMF_MP4FFPARSERNODE_LOGERROR((0, "PVMFMP4ParserOutPort::Connect: Error - Unable To Send Display Width To Peer"));
-            return PVMFFailure;
-        }
-        if (!(pvmiSetPortFormatSpecificInfoSync(config, MOUT_VIDEO_HEIGHT_KEY)))
-        {
-            PVMF_MP4FFPARSERNODE_LOGERROR((0, "PVMFMP4ParserOutPort::Connect: Error - Unable To Send Decode Height To Peer"));
-            return PVMFFailure;
-        }
-        if (!(pvmiSetPortFormatSpecificInfoSync(config, MOUT_VIDEO_DISPLAY_HEIGHT_KEY)))
-        {
-            PVMF_MP4FFPARSERNODE_LOGERROR((0, "PVMFMP4ParserOutPort::Connect: Error - Unable To Send Display Height To Peer"));
+            PVMF_MP4FFPARSERNODE_LOGERROR((0, "PVMFMP4ParserOutPort::Connect: Error - Unable To Send Format Specfic Info YUV To Peer"));
             return PVMFFailure;
         }
     }
@@ -189,34 +174,6 @@ PVMFStatus PVMFMP4FFParserOutPort::getParametersSync(PvmiMIOSession aSession,
             return PVMFFailure;
         }
     }
-    else if (pv_mime_strcmp(aIdentifier, MOUT_VIDEO_WIDTH_KEY) == 0)
-    {
-        if (!pvmiGetPortFormatSpecificInfoSync(MOUT_VIDEO_WIDTH_KEY, aParameters))
-        {
-            return PVMFFailure;
-        }
-    }
-    else if (pv_mime_strcmp(aIdentifier, MOUT_VIDEO_DISPLAY_WIDTH_KEY) == 0)
-    {
-        if (!pvmiGetPortFormatSpecificInfoSync(MOUT_VIDEO_DISPLAY_WIDTH_KEY, aParameters))
-        {
-            return PVMFFailure;
-        }
-    }
-    else if (pv_mime_strcmp(aIdentifier, MOUT_VIDEO_HEIGHT_KEY) == 0)
-    {
-        if (!pvmiGetPortFormatSpecificInfoSync(MOUT_VIDEO_HEIGHT_KEY, aParameters))
-        {
-            return PVMFFailure;
-        }
-    }
-    else if (pv_mime_strcmp(aIdentifier, MOUT_VIDEO_DISPLAY_HEIGHT_KEY) == 0)
-    {
-        if (!pvmiGetPortFormatSpecificInfoSync(MOUT_VIDEO_DISPLAY_HEIGHT_KEY, aParameters))
-        {
-            return PVMFFailure;
-        }
-    }
     num_parameter_elements = 1;
     return PVMFSuccess;
 }
@@ -239,26 +196,6 @@ PVMFStatus PVMFMP4FFParserOutPort::releaseParameters(PvmiMIOSession aSession,
 
     }
     if (pv_mime_strcmp(aParameters->key, PVMF_FORMAT_SPECIFIC_INFO_PLUS_FIRST_SAMPLE_KEY) == 0)
-    {
-        OsclMemAllocator alloc;
-        alloc.deallocate((OsclAny*)(aParameters->key));
-    }
-    if (pv_mime_strcmp(aParameters->key, MOUT_VIDEO_WIDTH_KEY) == 0)
-    {
-        OsclMemAllocator alloc;
-        alloc.deallocate((OsclAny*)(aParameters->key));
-    }
-    if (pv_mime_strcmp(aParameters->key, MOUT_VIDEO_DISPLAY_WIDTH_KEY) == 0)
-    {
-        OsclMemAllocator alloc;
-        alloc.deallocate((OsclAny*)(aParameters->key));
-    }
-    if (pv_mime_strcmp(aParameters->key, MOUT_VIDEO_HEIGHT_KEY) == 0)
-    {
-        OsclMemAllocator alloc;
-        alloc.deallocate((OsclAny*)(aParameters->key));
-    }
-    if (pv_mime_strcmp(aParameters->key, MOUT_VIDEO_DISPLAY_HEIGHT_KEY) == 0)
     {
         OsclMemAllocator alloc;
         alloc.deallocate((OsclAny*)(aParameters->key));
@@ -336,103 +273,42 @@ PVMFMP4FFParserOutPort::pvmiSetPortFormatSpecificInfoSync(PvmiCapabilityAndConfi
         }
         return true;
     }
-    else if ((pv_mime_strcmp(aFormatValType, MOUT_VIDEO_WIDTH_KEY) == 0))
+    else if ((pv_mime_strcmp(aFormatValType, PVMF_FORMAT_SPECIFIC_INFO_KEY_YUV) == 0))
     {
+        int32 displaywidth = iMP4FFParserNode->FindVideoDisplayWidth(trackInfoPtr->iTrackId);
+        int32 displayheight = iMP4FFParserNode->FindVideoDisplayHeight(trackInfoPtr->iTrackId);
         int32 width = iMP4FFParserNode->FindVideoWidth(trackInfoPtr->iTrackId);
-        if (width > 0)
-        {
-            OsclMemAllocator alloc;
-            PvmiKvp kvp;
-            kvp.key = NULL;
-            kvp.length = oscl_strlen(aFormatValType) + 1; // +1 for \0
-            kvp.key = (PvmiKeyType)alloc.ALLOCATE(kvp.length);
-            if (kvp.key == NULL)
-            {
-                return false;
-            }
-            oscl_strncpy(kvp.key, aFormatValType, kvp.length);
-
-            kvp.value.uint32_value = (uint32)width;
-            PvmiKvp* retKvp = NULL; // for return value
-            int32 err;
-            OSCL_TRY(err, aPort->setParametersSync(NULL, &kvp, 1, retKvp););
-            /* ignore the error for now */
-            alloc.deallocate((OsclAny*)(kvp.key));
-        }
-        return true;
-    }
-    else if ((pv_mime_strcmp(aFormatValType, MOUT_VIDEO_HEIGHT_KEY) == 0))
-    {
         int32 height = iMP4FFParserNode->FindVideoHeight(trackInfoPtr->iTrackId);
-        if (height > 0)
+        if (displaywidth > 0 || displayheight > 0)
         {
-            OsclMemAllocator alloc;
-            PvmiKvp kvp;
-            kvp.key = NULL;
-            kvp.length = oscl_strlen(aFormatValType) + 1; // +1 for \0
-            kvp.key = (PvmiKeyType)alloc.ALLOCATE(kvp.length);
-            if (kvp.key == NULL)
+            PVMFYuvFormatSpecificInfo0 *yuvInfo = OSCL_NEW(PVMFYuvFormatSpecificInfo0, ());
+            if (yuvInfo != NULL)
             {
-                return false;
-            }
-            oscl_strncpy(kvp.key, aFormatValType, kvp.length);
+                yuvInfo->viewable_width = displaywidth;
+                yuvInfo->viewable_height = displayheight;
+                yuvInfo->buffer_width = width;
+                yuvInfo->buffer_height = height;
 
-            kvp.value.uint32_value = (uint32)height;
-            PvmiKvp* retKvp = NULL; // for return value
-            int32 err;
-            OSCL_TRY(err, aPort->setParametersSync(NULL, &kvp, 1, retKvp););
-            /* ignore the error for now */
-            alloc.deallocate((OsclAny*)(kvp.key));
-        }
-        return true;
-    }
-    else if ((pv_mime_strcmp(aFormatValType, MOUT_VIDEO_DISPLAY_WIDTH_KEY) == 0))
-    {
-        int32 width = iMP4FFParserNode->FindVideoDisplayWidth(trackInfoPtr->iTrackId);
-        if (width > 0)
-        {
-            OsclMemAllocator alloc;
-            PvmiKvp kvp;
-            kvp.key = NULL;
-            kvp.length = oscl_strlen(aFormatValType) + 1; // +1 for \0
-            kvp.key = (PvmiKeyType)alloc.ALLOCATE(kvp.length);
-            if (kvp.key == NULL)
-            {
-                return false;
-            }
-            oscl_strncpy(kvp.key, aFormatValType, kvp.length);
+                OsclMemAllocator alloc;
+                PvmiKvp kvp;
+                kvp.key = NULL;
+                kvp.length = oscl_strlen(aFormatValType) + 1; // +1 for \0
+                kvp.key = (PvmiKeyType)alloc.ALLOCATE(kvp.length);
+                if (kvp.key == NULL)
+                {
+                    OSCL_DELETE(yuvInfo);
+                    return false;
+                }
+                oscl_strncpy(kvp.key, aFormatValType, kvp.length);
 
-            kvp.value.uint32_value = (uint32)width;
-            PvmiKvp* retKvp = NULL; // for return value
-            int32 err;
-            OSCL_TRY(err, aPort->setParametersSync(NULL, &kvp, 1, retKvp););
-            /* ignore the error for now */
-            alloc.deallocate((OsclAny*)(kvp.key));
-        }
-        return true;
-    }
-    else if ((pv_mime_strcmp(aFormatValType, MOUT_VIDEO_DISPLAY_HEIGHT_KEY) == 0))
-    {
-        int32 height = iMP4FFParserNode->FindVideoDisplayHeight(trackInfoPtr->iTrackId);
-        if (height > 0)
-        {
-            OsclMemAllocator alloc;
-            PvmiKvp kvp;
-            kvp.key = NULL;
-            kvp.length = oscl_strlen(aFormatValType) + 1; // +1 for \0
-            kvp.key = (PvmiKeyType)alloc.ALLOCATE(kvp.length);
-            if (kvp.key == NULL)
-            {
-                return false;
+                kvp.value.key_specific_value = (OsclAny*)yuvInfo;
+                PvmiKvp* retKvp = NULL; // for return value
+                int32 err;
+                OSCL_TRY(err, aPort->setParametersSync(NULL, &kvp, 1, retKvp););
+                /* ignore the error for now */
+                alloc.deallocate((OsclAny*)(kvp.key));
+                OSCL_DELETE(yuvInfo);
             }
-            oscl_strncpy(kvp.key, aFormatValType, kvp.length);
-
-            kvp.value.uint32_value = (uint32)height;
-            PvmiKvp* retKvp = NULL; // for return value
-            int32 err;
-            OSCL_TRY(err, aPort->setParametersSync(NULL, &kvp, 1, retKvp););
-            /* ignore the error for now */
-            alloc.deallocate((OsclAny*)(kvp.key));
         }
         return true;
     }
@@ -491,82 +367,6 @@ PVMFMP4FFParserOutPort::pvmiGetPortFormatSpecificInfoSync(const char* aFormatVal
 
             aKvp->value.pUint8_value = (uint8*)(trackInfoPtr->iFormatSpecificConfigAndFirstSample.getMemFragPtr());
             aKvp->capacity = trackInfoPtr->iFormatSpecificConfigAndFirstSample.getMemFragSize();
-        }
-        return true;
-    }
-    else if ((pv_mime_strcmp(aFormatValType, MOUT_VIDEO_WIDTH_KEY) == 0))
-    {
-        int32 width = iMP4FFParserNode->FindVideoWidth(trackInfoPtr->iTrackId);
-        if (width > 0)
-        {
-            OsclMemAllocator alloc;
-            aKvp->key = NULL;
-            aKvp->length = oscl_strlen(aFormatValType) + 1; // +1 for \0
-            aKvp->key = (PvmiKeyType)alloc.ALLOCATE(aKvp->length);
-            if (aKvp->key == NULL)
-            {
-                return false;
-            }
-            oscl_strncpy(aKvp->key, aFormatValType, aKvp->length);
-
-            aKvp->value.uint32_value = (uint32)width;
-        }
-        return true;
-    }
-    else if ((pv_mime_strcmp(aFormatValType, MOUT_VIDEO_HEIGHT_KEY) == 0))
-    {
-        int32 height = iMP4FFParserNode->FindVideoHeight(trackInfoPtr->iTrackId);
-        if (height > 0)
-        {
-            OsclMemAllocator alloc;
-            aKvp->key = NULL;
-            aKvp->length = oscl_strlen(aFormatValType) + 1; // +1 for \0
-            aKvp->key = (PvmiKeyType)alloc.ALLOCATE(aKvp->length);
-            if (aKvp->key == NULL)
-            {
-                return false;
-            }
-            oscl_strncpy(aKvp->key, aFormatValType, aKvp->length);
-
-            aKvp->value.uint32_value = (uint32)height;
-        }
-        return true;
-    }
-    else if ((pv_mime_strcmp(aFormatValType, MOUT_VIDEO_DISPLAY_WIDTH_KEY) == 0))
-    {
-        int32 width = iMP4FFParserNode->FindVideoDisplayWidth(trackInfoPtr->iTrackId);
-        if (width > 0)
-        {
-            OsclMemAllocator alloc;
-            aKvp->key = NULL;
-            aKvp->length = oscl_strlen(aFormatValType) + 1; // +1 for \0
-            aKvp->key = (PvmiKeyType)alloc.ALLOCATE(aKvp->length);
-            if (aKvp->key == NULL)
-            {
-                return false;
-            }
-            oscl_strncpy(aKvp->key, aFormatValType, aKvp->length);
-
-            aKvp->value.uint32_value = (uint32)width;
-        }
-        return true;
-    }
-    else if ((pv_mime_strcmp(aFormatValType, MOUT_VIDEO_DISPLAY_HEIGHT_KEY) == 0))
-    {
-        int32 height = iMP4FFParserNode->FindVideoDisplayHeight(trackInfoPtr->iTrackId);
-        if (height > 0)
-        {
-            OsclMemAllocator alloc;
-            aKvp->key = NULL;
-            aKvp->length = oscl_strlen(aFormatValType) + 1; // +1 for \0
-            aKvp->key = (PvmiKeyType)alloc.ALLOCATE(aKvp->length);
-            if (aKvp->key == NULL)
-            {
-                return false;
-            }
-            oscl_strncpy(aKvp->key, aFormatValType, aKvp->length);
-
-            aKvp->value.uint32_value = (uint32)height;
         }
         return true;
     }
