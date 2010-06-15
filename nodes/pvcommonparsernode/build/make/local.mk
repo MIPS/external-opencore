@@ -11,9 +11,9 @@ INCSRCDIR := ../../include
 
 # compose final src list for actual build
 SRCS :=	 \
-	pvmf_parsernode_factory.cpp \
 	pvmf_parsernode_impl.cpp \
-	pvmf_parsernode_port.cpp
+	pvmf_parsernode_port.cpp \
+	pvmf_parsernode_factory.cpp	
 
 HDRS :=	\
 	pvmf_parsernode_factory.h \

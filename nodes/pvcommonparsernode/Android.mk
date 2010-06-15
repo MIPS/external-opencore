@@ -2,9 +2,9 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
-	src/pvmf_parsernode_factory.cpp \
- 	src/pvmf_parsernode_impl.cpp \
- 	src/pvmf_parsernode_port.cpp
+	src/pvmf_parsernode_impl.cpp \
+ 	src/pvmf_parsernode_port.cpp \
+ 	src/pvmf_parsernode_factory.cpp
 
 
 LOCAL_MODULE := libpvcommonparsernode
