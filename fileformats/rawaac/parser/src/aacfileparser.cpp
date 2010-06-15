@@ -1538,9 +1538,9 @@ class AutoPtrArrayContainer
 //
 //------------------------------------------------------------------------------
 OSCL_EXPORT_REF CAACFileParser::CAACFileParser(void) :
-        iAACDuration(0),
-        iAACProfile(0),
         iAACChannels(0),
+        iAACProfile(0),
+        iAACDuration(0),
         iAACSampleFrequency(0),
         iAACBitRate(0),
         iAACHeaderLen(0),
