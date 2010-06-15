@@ -24,6 +24,7 @@
 
 #include "test_pvme_testset1.h"
 
+
 FILE* file;
 
 #define MAX_LEN 100
@@ -668,6 +669,22 @@ void pvmetadataengine_test::test()
 
             case GetSourceMetadataThreadedModeTest:
                 iCurrentTest = new pv_metadata_engine_test(testparam, PV_METADATA_ENGINE_THREADED_MODE, at, vectorLogNodeCfg);
+                break;
+
+            case ProtectedMetadataNonThreadedModeTest:
+                fprintf(file, "Janus CPM test cases disabled\n");
+                break;
+
+            case ProtectedMetadataWithPlayReadyContentNonThreadedModeTest:
+                fprintf(file, "Playready CPM test cases disabled\n");
+                break;
+
+            case ProtectedMetadataThreadedModeTest:
+                fprintf(file, "Janus CPM test cases disabled\n");
+                break;
+
+            case ProtectedMetadataWithPlayReadyContentThreadedModeTest:
+                fprintf(file, "Playready CPM test cases disabled\n");
                 break;
 
             case BeyondLastTest:

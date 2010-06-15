@@ -1601,7 +1601,7 @@
 #define pvbroadcastwithpvrfsp_m_mk ""
 #define pvrmff_recognizer_link_type "loaded"
 #define REGISTER_OMX_M4VENC_COMPONENT 1
-#define AGGREGATE_LIBDIRS_pvplayready " "
+#define AGGREGATE_LIBDIRS_pvplayready "  "
 #define pvpvrff_y_mk ""
 #define pvpvrnode_y_mk ""
 #define omx_baseclass_y_mk ""

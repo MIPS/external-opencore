@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -981,6 +981,14 @@ void pvframemetadata_utility_test::test()
             case ProtectedMetadataTest:
                 fprintf(file, "Janus CPM test cases disabled\n");
                 break;
+            case ProtectedMetadataWithPlayReadyContentTest:
+#if RUN_PLAYREADY_TESTCASES_FMU
+                iCurrentTest = new pvframemetadata_async_test_protectedmetadata(testparam, true);
+#else
+                fprintf(file, "Playready CPM test cases disabled\n");
+#endif
+                break;
+
             case ProtectedThumbnailTest_WithThumbnailIntent:
                 fprintf(file, "Janus CPM test cases disabled\n");
                 break;

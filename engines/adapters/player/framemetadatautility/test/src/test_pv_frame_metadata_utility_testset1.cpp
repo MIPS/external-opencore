@@ -3222,7 +3222,8 @@ void pvframemetadata_async_test_settimeout_getframe::Run()
         case STATE_QUERYINTERFACE:
         {
             PVUuid capconfigifuuid = PVMI_CAPABILITY_AND_CONFIG_PVUUID;
-            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->QueryInterface(capconfigifuuid, (PVInterface*&)iFMUCapConfigIF, (OsclAny*) & iContextObject));
+            PVInterface* temp = NULL;
+            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->QueryInterface(capconfigifuuid, temp, (OsclAny*) & iContextObject); iFMUCapConfigIF = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, temp));
             OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;
@@ -3532,7 +3533,8 @@ void pvframemetadata_async_test_set_player_key::Run()
         case STATE_QUERYINTERFACE:
         {
             PVUuid capconfigifuuid = PVMI_CAPABILITY_AND_CONFIG_PVUUID;
-            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->QueryInterface(capconfigifuuid, (PVInterface*&)iFMUCapConfigIF, (OsclAny*) & iContextObject));
+            PVInterface* temp = NULL;
+            OSCL_TRY(error, iCurrentCmdId = iFrameMetadataUtil->QueryInterface(capconfigifuuid, temp, (OsclAny*) & iContextObject); iFMUCapConfigIF = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, temp));
             OSCL_FIRST_CATCH_ANY(error, PVFMUATB_TEST_IS_TRUE(false); iState = STATE_CLEANUPANDCOMPLETE; RunIfNotReady());
         }
         break;

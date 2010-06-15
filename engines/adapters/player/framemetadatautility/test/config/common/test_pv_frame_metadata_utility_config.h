@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,11 @@
 #define RUN_RGB24_TESTCASES 0
 
 // Set to 1 to enable test cases that uses Janus CPM, 0 to disable
-#define RUN_JANUSCPM_TESTCASES 1
+#define RUN_JANUS_TESTCASES_FMU 1
+
+// Set to 1 to enable test cases that uses PlayReady CPM, 0 to disable
+#define RUN_PLAYREADY_TESTCASES_FMU 0
+
 
 // The source test file without video track
 //#define NOVIDEOSOURCEFILENAME "test_amr.mp4"

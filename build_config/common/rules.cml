@@ -427,7 +427,7 @@ derive MODS_pvdivxdrm from "-lopencore_common"
 derive pvplayready_so_name from playready_support==y ? "pvplayready" : ""
 derive pvplayready_aggregate_libtype from playready_support==y ? "shared":"static"
 derive pvplayready_link_type from "loaded"
-derive AGGREGATE_LIBDIRS_pvplayready from pvplayreadyplugin_m_mk.pvplayreadyplugininterface_m_mk
+derive AGGREGATE_LIBDIRS_pvplayready from pvplayreadyplugin_m_mk.pvplayreadyplugininterface_m_mk.pvplayreadyutility_m_mk
 derive MODS_pvplayready from "-lopencore_common -lpvwmdrmmd" 
 
 derive pvsqlite_so_name from mtp_db_support==y ? "pvsqlite" : ""
