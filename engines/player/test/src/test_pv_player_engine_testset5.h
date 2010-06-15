@@ -617,9 +617,9 @@ class pvplayer_async_test_ppb_base : public pvplayer_async_test_base
                 , iSeekInCache(false)
                 , iEOSStopPlay(false)
                 , iShoutcastSession(false)
-                , iMetadataReceived(false)
                 , iSCListenTime(0)
                 , iShoutcastPlayStopPlay(false)
+                , iMetadataReceived(false)
                 , iUseLongClip(false)
                 , iSessionDuration(0)
         {
