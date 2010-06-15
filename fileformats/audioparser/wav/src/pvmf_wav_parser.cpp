@@ -30,7 +30,7 @@
 #define BYTES_TO_RECOGNIZE 12
 #define BYTES_TO_READ_FMT_CHNK 24
 
-const uint16 MuLawDecompressTable[256] =
+const short MuLawDecompressTable[256] =
 {
     -32124, -31100, -30076, -29052, -28028, -27004, -25980, -24956,
     -23932, -22908, -21884, -20860, -19836, -18812, -17788, -16764,
@@ -66,7 +66,7 @@ const uint16 MuLawDecompressTable[256] =
     56,    48,    40,    32,    24,    16,     8,     0
 };
 
-const uint16 ALawDecompressTable[256] =
+const short ALawDecompressTable[256] =
 {
     -5504, -5248, -6016, -5760, -4480, -4224, -4992, -4736,
     -7552, -7296, -8064, -7808, -6528, -6272, -7040, -6784,
@@ -223,12 +223,12 @@ bool PVMFWavParser::Init(PvmiDataStreamInterface *aDataStream, int64 &aDuration,
     }
     else if (WAV_FORMAT_MULAW == audioFmt)
     {
-        pLawTable = (uint16*)MuLawDecompressTable;
+        pLawTable = (short*)MuLawDecompressTable;
         iClipFmt = PVMF_WAV_MULAW;
     }
     else if (WAV_FORMAT_ALAW == audioFmt)
     {
-        pLawTable = (uint16*)ALawDecompressTable;
+        pLawTable = (short*)ALawDecompressTable;
         iClipFmt = PVMF_WAV_ALAW;
     }
     else
@@ -320,7 +320,7 @@ PVMFParserReturnCode PVMFWavParser::GetNextAccessUnits(GAU* aGau)
         if (pLawTable)
         {
             uint8* srcBuf = &(aGau->MediaBuffer[sizeInBytes-1]);
-            uint8* destBuf = &(aGau->MediaBuffer[sizeInBytes-1]);
+            short* destBuf = &(((short*)aGau->MediaBuffer)[sizeInBytes-1]);
             for (uint32 ii = sizeInBytes; ii > 0; ii--)
                 *destBuf-- = pLawTable[*srcBuf--];
         }
@@ -413,7 +413,7 @@ void PVMFWavParser::NotifyDataAvailable(OsclSizeT bytesRead, PvmiDataStreamStatu
         if (pLawTable)
         {
             uint8* srcBuf = &(iGau->MediaBuffer[bytesRead-1]);
-            uint8* destBuf = &(iGau->MediaBuffer[bytesRead-1]);
+            short* destBuf = &(((short*)iGau->MediaBuffer)[bytesRead-1]);
             for (uint32 ii = bytesRead; ii > 0; ii--)
                 *destBuf-- = pLawTable[*srcBuf--];
         }

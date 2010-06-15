@@ -69,7 +69,7 @@ class PVMFWavParser: public PVMFFileParserInterface
         uint16 iBytesPerSample;
         OsclOffsetT iStartOffset;
         int64 iDuration;
-        uint16* pLawTable;
+        short* pLawTable;
         OsclOffsetT iEndDataChnkOffset;
         uint32 iFramesRead;
         GAU* iGau;

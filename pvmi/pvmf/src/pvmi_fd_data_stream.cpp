@@ -142,7 +142,7 @@ PvmiDataStreamStatus PvmiDataStream::InternalRead(PvmiDataStreamSession aSession
 {
     if (CHECK_FD_DS_INVALID_STATE(iDataStreamState))
     {
-        aSize = -1;
+        aSize = 0;
         return PVDS_INVALID_STATE;
     }
 
