@@ -1199,23 +1199,24 @@ OSCL_EXPORT_REF int16 iGetAVCConfigInfo(uint8 *buffer, int32 length, int32 *widt
 
 OSCL_EXPORT_REF int16 ParseAVCFSI(uint8* buffer, uint32 length, AVCConfigInfo* iAVCConfigInfo)
 {
-    int16 status;
     mp4StreamType psBits;
-    uint16 sps_length, pps_length;
-    int32 size;
-    uint32 i = 0;
-    uint8* sps = NULL;
-    uint8* temp = (uint8 *)OSCL_MALLOC(sizeof(uint8) * length);
-    uint8* pps = NULL;
+    int32 nal_length = 0, bytesLeft = 0, tmp_nal_length = 0;
+    int32 i;
+    uint8* temp = NULL;
+    uint8* nal = NULL;
+    int32 nal_type = 0;
+    int32 count = 0;
+
+    temp = (uint8 *)OSCL_MALLOC(sizeof(uint8) * length);
 
     // Zero initialization
     oscl_memset(iAVCConfigInfo, 0, sizeof(AVCConfigInfo));
 
     if (temp)
     {
-        sps = temp; // Make a copy of the original pointer to be freed later
+        nal = temp; // Make a copy of the original pointer to be freed later
         // Successfull allocation... copy input buffer
-        oscl_memcpy(sps, buffer, length);
+        oscl_memcpy(nal, buffer, length);
     }
     else
     {
@@ -1229,93 +1230,129 @@ OSCL_EXPORT_REF int16 ParseAVCFSI(uint8* buffer, uint32 length, AVCConfigInfo* i
         return MP4_INVALID_VOL_PARAM;
     }
 
-    if (sps[0] == 0 && sps[1] == 0)
+    bytesLeft = length;
+
+    do
     {
-        /* find SC at the beginning of the NAL */
-        while (sps[i++] == 0 && i < length)
+        if (nal[0] == 0 && nal[1] == 0)
         {
-        }
-
-        if (sps[i-1] == 1)
-        {
-            sps += i;
-
-            sps_length = 0;
-            // search for the next start code
-            while (sps_length < length - i - 2 && !(sps[sps_length] == 0 && sps[sps_length+1] == 0 && sps[sps_length+2] == 1))
+            i = 0;
+            /* find SC at the beginning of the NAL */
+            while ((nal[i++] == 0) && (i < bytesLeft))
             {
-                sps_length++;
             }
 
-            if (sps_length >= length - i - 2)
+            if (nal[i-1] == 1)
+            {
+                nal += i;
+
+                nal_length = 0;
+                count = 0;
+                bytesLeft -= i;
+                // search for the next start code
+                while (nal_length < (int32)bytesLeft)
+                {
+                    if (count == 2 && nal[nal_length] == 0x01)
+                    {
+                        //000001
+                        nal_length -= 2;
+                        break;
+                    }
+                    else if (count == 3 && nal[nal_length] == 0x01)
+                    {
+                        //00000001
+                        nal_length -= 3;
+                        break;
+                    }
+
+                    if (nal[nal_length])
+                        count = 0;
+                    else
+                        count++;
+                    nal_length++;
+                }
+
+                //here we have all nals together as next nal
+                bytesLeft -= nal_length;
+            }
+            else
             {
                 OSCL_FREE(temp);
                 return MP4_INVALID_VOL_PARAM;
             }
-
-            pps_length = length - i - sps_length - 3;
-            pps = sps + sps_length + 3;
-
-            // for zero_byte
-            if (sps_length > 0 && sps[sps_length-1] == 0)
-            {
-                sps_length--;
-            }
         }
         else
+        {
+            nal_length = (uint16)(nal[1] << 8) | nal[0];
+            nal += 2;
+            // robustness check
+            if (nal_length > (bytesLeft - 2)) //-2 for the length bytes
+            {
+                OSCL_FREE(temp);
+                return MP4_INVALID_VOL_PARAM;
+            }
+            bytesLeft -= (nal_length + 2);
+        }
+
+        tmp_nal_length = nal_length;
+        Parser_EBSPtoRBSP(nal, (int32*) &tmp_nal_length);
+
+        psBits.data = nal;
+        psBits.numBytes = tmp_nal_length;
+        psBits.bitBuf = 0;
+        psBits.bitPos = 32;
+        psBits.bytePos = 0;
+        psBits.dataBitPos = 0;
+
+        if (!getNALType(nal, tmp_nal_length, &nal_type))
         {
             OSCL_FREE(temp);
             return MP4_INVALID_VOL_PARAM;
         }
+
+        /*
+        ** Since we re-use iAVCConfigInfo, it will contain the values from the last SPS/PPS in the config info.
+        ** Typically width and height of the same sequence should be the same even if they come from different SPSs.
+        ** However, it is also possible for MP4 file format to have multiple track config with different width/height.
+        ** In that case, we actually expect the parser node to provide all track configs at once. So, in a single mediamsg,
+        ** there will be several media fragments one for each config. Each config can contain several SPSs/PPSs.
+        ** So, if we assume that width/height do not change per config info, using one AVCConfigInfo memory space should be sufficient.
+        */
+
+        switch (nal_type)
+        {
+                /*
+                ** Parsing fails if either SPS or PPS decoding fails.
+                */
+            case 7 : //SPS
+                if (DecodeSPS(&psBits, iAVCConfigInfo))
+                {
+                    OSCL_FREE(temp);
+                    return MP4_INVALID_VOL_PARAM;
+                }
+                break;
+
+            case 8: //PPS
+                if (DecodePPS(&psBits, iAVCConfigInfo))
+                {
+                    // SPS is missing or error in SPS decoding.
+                    OSCL_FREE(temp);
+                    return MP4_INVALID_VOL_PARAM;
+                }
+                break;
+            default: /* Skip AUD/SEI or others */
+                break;
+        }
+
+        nal += nal_length;
+
     }
-    else
-    {
-        sps_length = (uint16)(sps[1] << 8) | sps[0];
-        sps += 2;
-        pps = sps + sps_length;
-        pps_length = (uint16)(pps[1] << 8) | pps[0];
-        pps += 2;
-    }
+    while (bytesLeft > 1);
 
-    if (sps_length + pps_length > length)
-    {
-        OSCL_FREE(temp);
-        return MP4_INVALID_VOL_PARAM;
-    }
-
-    size = sps_length;
-
-    Parser_EBSPtoRBSP(sps, &size);
-
-    psBits.data = sps;
-    psBits.numBytes = size;
-    psBits.bitBuf = 0;
-    psBits.bitPos = 32;
-    psBits.bytePos = 0;
-    psBits.dataBitPos = 0;
-
-    if (DecodeSPS(&psBits, iAVCConfigInfo))
-    {
-        OSCL_FREE(temp);
-        return MP4_INVALID_VOL_PARAM;
-    }
-
-    // now do PPS
-    size = pps_length;
-
-    Parser_EBSPtoRBSP(pps, &size);
-    psBits.data = pps;
-    psBits.numBytes = size;
-    psBits.bitBuf = 0;
-    psBits.bitPos = 32;
-    psBits.bytePos = 0;
-    psBits.dataBitPos = 0;
-
-    status = DecodePPS(&psBits, iAVCConfigInfo);
 
     OSCL_FREE(temp);
 
-    return status;
+    return 0; // return 0 for success
 }
 
 
@@ -1825,4 +1862,20 @@ void Parser_EBSPtoRBSP(uint8 *nal_unit, int32 *size)
     *size = j;
 }
 
+
+bool getNALType(uint8 *bitstream, int size, int32 *nal_type)
+{
+    int forbidden_zero_bit;
+    if (size > 0)
+    {
+        forbidden_zero_bit = bitstream[0] >> 7;
+        if (forbidden_zero_bit != 0)
+            return false;
+
+        *nal_type = (int32)(bitstream[0] & 0x1F);
+        return true;
+    }
+
+    return false;
+}
 
