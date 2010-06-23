@@ -12014,6 +12014,7 @@ void PVPlayerEngine::HandleSinkNodeQueryInterfaceMandatory(PVPlayerEngineContext
                 else
                 {
                     // Video track available or an unknown datapath
+                    aNodeContext.iEngineDatapath->iSinkNodeSyncCtrlIF->SetMargins((-1*iSyncMarginVideo.min), iSyncMarginVideo.max);
                 }
             }
         }
