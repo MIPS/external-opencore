@@ -48,6 +48,9 @@
 #ifndef PVMF_META_DATA_EXTENSION_H_INCLUDED
 #include "pvmf_meta_data_extension.h"
 #endif
+#ifndef PVMF_PARSER_DEFS_H_INCLUDED
+#include "pvmf_parser_defs.h"
+#endif
 
 class PvmiDataStreamInterface;
 class PVMFFileParserInterface;

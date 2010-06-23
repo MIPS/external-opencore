@@ -42,6 +42,11 @@ PvmiDataStream::PvmiDataStream(int input_fd)
 OSCL_EXPORT_REF PvmiDataStream::PvmiDataStream(const char *filename)
 {
     RESET_FD_DS_STATE(iDataStreamState);
+
+    ipDSObserver = NULL;
+    iTmpBuffer = NULL;
+    iTmpSize = 0;
+
     // Create the Oscl_File
     ipFile = OSCL_NEW(Oscl_File, ());
     if (NULL == ipFile)
@@ -56,14 +61,17 @@ OSCL_EXPORT_REF PvmiDataStream::PvmiDataStream(const char *filename)
     ipFile->SetPVCacheSize(0);
 
     ipFile->SetSummaryStatsLoggingEnable(false);
-    Oscl_FileServer* fileserv = NULL;
-    int32 result = ipFile->Open(filename, (Oscl_File::MODE_READ | Oscl_File::MODE_BINARY), *fileserv);
+    // Connect to File Server
+    iFileServer.Connect();
+    int32 result = ipFile->Open(filename, (Oscl_File::MODE_READ | Oscl_File::MODE_BINARY), iFileServer);
 
     //If open failed, cleanup the file object
     if (result != 0)
     {
         OSCL_DELETE(ipFile);
         ipFile = NULL;
+        SET_INVALID_FD_DS_STATE(iDataStreamState);
+        return;
     }
 
     // get information on the file
@@ -76,10 +84,6 @@ OSCL_EXPORT_REF PvmiDataStream::PvmiDataStream(const char *filename)
     }
 
     SET_CLOSE_FD_DS_FLAG(iDataStreamState);
-
-    ipDSObserver = NULL;
-    iTmpBuffer = NULL;
-    iTmpSize = 0;
 }
 
 void PvmiDataStream::SetCallbackHandler(PvmiBasicDataStreamObs* aDSObserver)
@@ -98,9 +102,13 @@ int PvmiDataStream::GetFileInfo()
 
 PvmiDataStream::~PvmiDataStream()
 {
-    ipFile->Close();
-    OSCL_DELETE(ipFile);
-    ipFile = NULL;
+    if (ipFile)
+    {
+        ipFile->Close();
+        OSCL_DELETE(ipFile);
+        ipFile = NULL;
+    }
+    iFileServer.Close();
 }
 
 PvmiDataStreamStatus PvmiDataStream::GetFileSize(OsclOffsetT& size)

@@ -24,9 +24,6 @@
 #ifndef PVMF_WAV_PARSER_H_INCLUDED
 #include "pvmf_wav_parser.h"
 #endif
-#ifndef PVMF_PARSER_DEFS_H_INCLUDED
-#include "pvmf_parser_defs.h"
-#endif
 #ifndef PVMI_DS_BASIC_INTERFACE_H_INCLUDED
 #include "pvmi_ds_basic_interface.h"
 #endif

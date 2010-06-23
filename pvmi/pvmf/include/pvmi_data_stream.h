@@ -21,8 +21,12 @@
 #ifndef PVMI_DS_BASIC_INTERFACE_H_INCLUDED
 #include "pvmi_ds_basic_interface.h"
 #endif
+#ifndef OSCL_FILE_SERVER_H_INCLUDED
+#include "oscl_file_server.h"
+#endif
 
 class Oscl_File;
+
 class PvmiDataStream : public PvmiDataStreamInterface
 {
 
@@ -75,6 +79,7 @@ class PvmiDataStream : public PvmiDataStreamInterface
     private:
         int iFd;
         Oscl_File* ipFile;
+        Oscl_FileServer iFileServer;
         int iDataStreamState;
         bool iRegFile;
         OsclOffsetT iFileSize;

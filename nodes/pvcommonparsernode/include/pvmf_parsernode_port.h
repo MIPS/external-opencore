@@ -24,12 +24,16 @@
 #ifndef OSCL_MEM_MEMPOOL_H_INCLUDED
 #include "oscl_mem_mempool.h"
 #endif
+#ifndef PVMI_CONFIG_AND_CAPABILITY_UTILS_H_INCLUDED
+#include "pvmi_config_and_capability_utils.h"
+#endif
 
 class PVMFParserNodeImpl;
 class MediaClockConverter;
 class PVMFResizableSimpleMediaMsgAlloc;
 
 class PVMFParserNodePort: public PvmfPortBaseImpl
+        , PvmiCapabilityAndConfigPortFormatImpl
 {
     public:
         PVMFParserNodePort(int32 aPortTag
@@ -39,6 +43,10 @@ class PVMFParserNodePort: public PvmfPortBaseImpl
 
         void QueryInterface(const PVUuid& aUuid, OsclAny*& aPtr);
         PVMFStatus Connect(PVMFPortInterface* aPort);
+
+        // From PvmiCapabilityAndConfigPortFormatImpl
+        bool IsFormatSupported(PVMFFormatType aFormat);
+        void FormatUpdated();
 
     private:
         PVMFParserNodeImpl* iParserNode;

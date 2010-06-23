@@ -25,6 +25,8 @@ PVMFParserNodePort::PVMFParserNodePort(int32 aPortTag
         : PvmfPortBaseImpl(aPortTag, aNode, aName)
 {
     iParserNode = OSCL_STATIC_CAST(PVMFParserNodeImpl*, aNode);
+    PvmiCapabilityAndConfigPortFormatImpl::Construct(PVMF_COMMONPARSER_PORT_OUTPUT_FORMATS,
+            PVMF_COMMONPARSER_PORT_OUTPUT_FORMATS_VALTYPE);
 }
 
 PVMFParserNodePort::~PVMFParserNodePort()
@@ -35,7 +37,7 @@ void PVMFParserNodePort::QueryInterface(const PVUuid& aUuid, OsclAny*& aPtr)
 {
     if (PVMI_CAPABILITY_AND_CONFIG_PVUUID == aUuid)
     {
-        aPtr = OSCL_STATIC_CAST(OsclAny*, this);
+        aPtr = OSCL_STATIC_CAST(PvmiCapabilityAndConfig*, this);
     }
 }
 
@@ -100,5 +102,27 @@ PVMFStatus PVMFParserNodePort::Connect(PVMFPortInterface* aPort)
     PortActivity(PVMF_PORT_ACTIVITY_CONNECT);
     return PVMFSuccess;
 }
+
+bool PVMFParserNodePort::IsFormatSupported(PVMFFormatType aFormat)
+{
+    if (aFormat == PVMF_MIME_PCM ||
+            aFormat == PVMF_MIME_PCM8 ||
+            aFormat == PVMF_MIME_PCM16 ||
+            aFormat == PVMF_MIME_PCM16_BE ||
+            aFormat == PVMF_MIME_ULAW ||
+            aFormat == PVMF_MIME_ALAW ||
+            aFormat == PVMF_MIME_AMR_IETF ||
+            aFormat == PVMF_MIME_AMR_IF2 ||
+            aFormat == PVMF_MIME_AMRWB_IETF)
+        return true;
+    return false;
+}
+
+void PVMFParserNodePort::FormatUpdated()
+{
+    PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iParserNode->ipLogger, PVLOGMSG_STACK_TRACE,
+                    (0, "PVMFParserNodePort::FormatUpdated: %s", iFormat.getMIMEStrPtr()));
+}
+
 
 
