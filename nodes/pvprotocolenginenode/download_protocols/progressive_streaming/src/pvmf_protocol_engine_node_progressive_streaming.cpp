@@ -90,7 +90,10 @@ OSCL_EXPORT_REF TOsclFileOffset ProgressiveStreamingContainer::getSeekOffset(PVM
     //extract the parameters.
     OsclAny* aRequestData;
     aCmd.PVMFNodeCommand::Parse(aRequestData);
-    TOsclFileOffset newOffset = (TOsclFileOffset)aRequestData;
+
+    TOsclFileOffset *newOffset_tmp = (TOsclFileOffset*)(aRequestData);
+    TOsclFileOffset newOffset = *newOffset_tmp;
+
     return newOffset;
 }
 
@@ -122,7 +125,9 @@ OSCL_EXPORT_REF bool ProgressiveStreamingContainer::completeRepositionRequest()
     pCmd->PVMFNodeCommand::Parse(aRequestData, aDataStreamCmdId);
 
     // set current file offset to the byte range request offset
-    TOsclFileOffset newOffset = (TOsclFileOffset)aRequestData;
+    TOsclFileOffset *newOffset_tmp = (TOsclFileOffset*)(aRequestData);
+    TOsclFileOffset newOffset = *newOffset_tmp;
+
     iNodeOutput->seekDataStream(newOffset);
     iNodeOutput->setCurrentOutputSize(newOffset);
     iDownloadControl->setPrevDownloadSize(newOffset);

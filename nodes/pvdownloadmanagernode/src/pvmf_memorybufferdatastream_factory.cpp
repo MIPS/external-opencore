@@ -2136,7 +2136,7 @@ PVMFMemoryBufferWriteDataStreamImpl::Reposition(PvmiDataStreamSession aSessionID
 
             PvmiDataStreamCommandId cmdId = 0;
             int32 error = 0;
-            OSCL_TRY(error, cmdId = iRequestObserver->DataStreamRequest(0, PVDS_REQUEST_REPOSITION, (OsclAny*)iRepositionRequest.iNewFilePosition, (OsclAny*) & iRepositionRequest));
+            OSCL_TRY(error, cmdId = iRequestObserver->DataStreamRequest(0, PVDS_REQUEST_REPOSITION, (OsclAny*) & iRepositionRequest.iNewFilePosition, (OsclAny*) & iRepositionRequest));
             if (error)
             {
                 status = PVDS_FAILURE;

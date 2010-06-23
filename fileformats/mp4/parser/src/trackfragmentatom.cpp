@@ -810,10 +810,9 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
             }
             if (INSUFFICIENT_DATA == _mp4ErrorCode || INSUFFICIENT_BUFFER_SIZE == _mp4ErrorCode)
             {
-
                 // if MBDS, may need to kick of a http request
-                uint32 contentLength = AtomUtils::getContentLength(_pinput);
-                if ((0 != contentLength) && ((sigmaSampleSize + sampleFileOffset) > contentLength))
+                TOsclFileOffset contentLength = AtomUtils::getContentLength(_pinput);
+                if (((TOsclFileOffset)0 != contentLength) && ((sigmaSampleSize + sampleFileOffset) > contentLength))
                 {
                     // do not skip beyond end of clip
                     // if content length is known
@@ -821,13 +820,10 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
                 }
                 else
                 {
-
-                    AtomUtils::skipFromStart(_pinput, (TOsclFileOffset)sampleFileOffset);
-
+                    AtomUtils::skipFromStart(_pinput, sampleFileOffset);
                 }
 
                 *n = 0;
-
                 _currentTrackFragmentRunSampleNumber = startSampleNum;
                 for (uint32 i = 0; i < pgau->numMediaSamples; i++)
                 {
