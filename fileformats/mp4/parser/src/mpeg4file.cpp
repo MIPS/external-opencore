@@ -2421,22 +2421,7 @@ int32 Mpeg4File::getNextBundledAccessUnits(const uint32 trackID,
                 if (return1 == END_OF_TRACK)
                 {
                     *n = totalSampleRead;
-                    if (!MoreMoofAtomsExpected(_movieFragmentSeqIdx[moofIdx]))
-                    {
-                        _movieFragmentIdx[moofIdx] = 0;
-                    }
-                    else
-                    {
-                        //We have run out of moofs and theres no data to be parsed
-                        if (totalSampleRead == 0)
-                        {
-                            return1 = INSUFFICIENT_DATA;
-                        }
-                        else
-                        {
-                            return1 = EVERYTHING_FINE;
-                        }
-                    }
+                    _movieFragmentIdx[moofIdx] = 0;
                     return return1;
                 }
             }
