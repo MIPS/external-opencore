@@ -413,6 +413,14 @@ bool PVMFOMXAudioDecNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
 
     // if we end up here, the msg is a data message
 
+    if (iFirstDataMsgAfterBOS)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDataPathLogger, PVLOGMSG_INFO,
+                        (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: iTSOfFirstDataMsgAfterBOS = %d", msg->getTimestamp()));
+        iTSOfFirstDataMsgAfterBOS = msg->getTimestamp();
+        iInputTimestampClock_LH = iTSOfFirstDataMsgAfterBOS;
+        iInputTimestampClock_UH = 0;
+    }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -564,14 +572,7 @@ bool PVMFOMXAudioDecNode::ProcessIncomingMsg(PVMFPortInterface* aPort)
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDataPathLogger, PVLOGMSG_INFO,
                         (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: TS=%d, SEQNUM= %d", msg->getTimestamp(), msg->getSeqNum()));
 
-        if (iFirstDataMsgAfterBOS)
-        {
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iDataPathLogger, PVLOGMSG_INFO,
-                            (0, "PVMFOMXAudioDecNode::ProcessIncomingMsg: iTSOfFirstDataMsgAfterBOS = %d", msg->getTimestamp()));
-            iTSOfFirstDataMsgAfterBOS = msg->getTimestamp();
-            iInputTimestampClock_LH = iTSOfFirstDataMsgAfterBOS;
-            iInputTimestampClock_UH = 0;
-        }
+
         convertToPVMFMediaData(iDataIn, msg);
         ((PVMFOMXDecPort*)aPort)->iNumFramesConsumed++;
     }
