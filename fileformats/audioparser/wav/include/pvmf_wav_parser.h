@@ -25,8 +25,6 @@
 #include "pvmi_ds_basic_interface.h"
 #endif
 
-#define WAV_DATA_READ_IN_MSEC 100
-
 enum PVWavSupportedFormatType
 {
     WAV_FORMAT_UNKNOWN = 0,
@@ -75,6 +73,8 @@ class PVMFWavParser: public PVMFFileParserInterface
         GAU* iGau;
         bool iEOSReached;
         PVLogger* ipLogger;
+        uint32 iBytesPerSec;
+        OsclSizeT iWavDataReadPerFrame;
 };
 
 #endif

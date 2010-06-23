@@ -33,10 +33,10 @@ static const char PVMF_COMMON_PARSER_NODE_RANDOM_ACCESS_DENIED_KEY[] = "random-a
 
 // Tuneables for different fileformats
 #define PVMF_NUM_FRAMES_AMR 10
-#define PVMF_NUM_FRAMES_WAV 1102
+#define PVMF_MAX_FRAME_SIZE_AMR_NB 32
+#define PVMF_MAX_FRAME_SIZE_AMR_WB 61
 
-#define PVMF_FRAMES_BUFFER_LEN 2204 // This has to accomodate the biggest frame
-// retrieved by the node.
+#define PVMF_NUM_FRAMES_WAV 1102
 
 #endif
 

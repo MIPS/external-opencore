@@ -369,10 +369,6 @@ PVMFParserReturnCode PVMFAmrParser::Seek(int64 aSeekAt, int64& aSeekedTo)
 {
     LOG_DEBUG_MSG((0, "PVMFAmrParser::Seek() IN"));
 
-    if (0 == aSeekAt && iClipDuration == aSeekedTo)
-        // This means that node is stopping reset the FramesRead
-        iFramesRead = 0;
-
     // Use the bitrate and frame len to do the seek
     OsclOffsetT offset = ((aSeekAt * ((iAmrBitrate + 7) / 8)) / 1000);
     uint32 numFrames = offset / iAvgFrameLen;
@@ -382,8 +378,10 @@ PVMFParserReturnCode PVMFAmrParser::Seek(int64 aSeekAt, int64& aSeekedTo)
         return PVMFParserDefaultErr;
 
     aSeekedTo = aSeekAt;
-    LOG_DEBUG_MSG((0, "Seeked at timestamp %ld msec", aSeekedTo));
+    // Set the FramesRead accordingly
+    iFramesRead = aSeekAt / TIME_STAMP_PER_FRAME;
 
+    LOG_DEBUG_MSG((0, "Seeked at timestamp %ld msec", aSeekedTo));
     LOG_DEBUG_MSG((0, "PVMFAmrParser::Seek() OUT"));
     return PVMFParserEverythingFine;
 }

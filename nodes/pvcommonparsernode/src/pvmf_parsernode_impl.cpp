@@ -152,10 +152,17 @@ PVMFStatus PVMFParserNodeImpl::GetMediaPresentationInfo(PVMFMediaPresentationInf
 
     if (iFileInfo.AudioPresent)
     {
+        // Check the Track type and set mime type and BufferLen to retrieve data
         if (PVMF_AMR_NB == iFileInfo.AudioTrkInfo.AudioFmt)
+        {
             mimeType = _STRLIT_CHAR(PVMF_MIME_AMR_IETF);
+            iTrackPortInfo.iBufferlen = PVMF_NUM_FRAMES_AMR * PVMF_MAX_FRAME_SIZE_AMR_NB;
+        }
         else if (PVMF_AMR_WB == iFileInfo.AudioTrkInfo.AudioFmt)
+        {
             mimeType = _STRLIT_CHAR(PVMF_MIME_AMRWB_IETF);
+            iTrackPortInfo.iBufferlen = PVMF_NUM_FRAMES_AMR * PVMF_MAX_FRAME_SIZE_AMR_WB;
+        }
         else if (PVMF_WAV_PCM == iFileInfo.AudioTrkInfo.AudioFmt)
         {
             if (8 == (iFileInfo.AudioTrkInfo.BitRate / iFileInfo.AudioTrkInfo.SamplingRate))
@@ -171,6 +178,13 @@ PVMFStatus PVMFParserNodeImpl::GetMediaPresentationInfo(PVMFMediaPresentationInf
             mimeType = _STRLIT_CHAR(PVMF_MIME_ULAW);
         else
             status = PVMFErrNotSupported;
+
+        if (0 == iTrackPortInfo.iBufferlen)
+        {
+            // Just set it for WAV parser
+            uint32 bytesPerSample = ((iFileInfo.AudioTrkInfo.BitRate / iFileInfo.AudioTrkInfo.SamplingRate) + 7) / 8;
+            iTrackPortInfo.iBufferlen = PVMF_NUM_FRAMES_WAV * iFileInfo.AudioTrkInfo.NoOfChannels * bytesPerSample;
+        }
     }
 
     aInfo.setDurationValue(iClipDuration);
@@ -447,7 +461,7 @@ PVMFStatus PVMFParserNodeImpl::DoStop()
         (&iTrkPortInfoVec[0])->reset();
 
     // Reset the tracks
-    int64 seekTo = iClipDuration; // This is to let the parser know that this seek is requested while stopping the node
+    int64 seekTo = 0;
     ipParser->Seek(0, seekTo);
 
     PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, ipLogger, PVLOGMSG_STACK_TRACE, (0, "PVMFParserNodeImpl::DoStop: Out"));
@@ -575,7 +589,12 @@ void PVMFParserNodeImpl::ProcessPortActivity(PVMFParserNodeTrackPortInfo* aTrack
         if (SendBeginOfMediaStreamCommand(aTrackPortInfo->ipPort, iStreamID, aTrackPortInfo->iTimestamp))
             aTrackPortInfo->iSendBos = false;
         else
+        {
+            // Queue is not ready to accept any more data, set the boolean iOutgoingQueueBusy as true
+            // and wait for Queues to signal when they are ready
+            aTrackPortInfo->iOutgoingQueueBusy = true;
             return;
+        }
     }
 
     if (!aTrackPortInfo->iSendEos)
@@ -602,12 +621,12 @@ PVMFStatus PVMFParserNodeImpl::QueueMediaSample(PVMFParserNodeTrackPortInfo* aTr
 {
     // Create a Media data pool
     OsclSharedPtr<PVMFMediaDataImpl> mediaDataImpl;
-    mediaDataImpl = aTrackPortInfo->ipResizeableSimpleMediaMsg->allocate(PVMF_FRAMES_BUFFER_LEN);
+    mediaDataImpl = aTrackPortInfo->ipResizeableSimpleMediaMsg->allocate(aTrackPortInfo->iBufferlen);
     if (NULL == mediaDataImpl.GetRep())
     {
         OsclMemPoolResizableAllocatorObserver* resizableMemPoolAllocObs =
             OSCL_STATIC_CAST(OsclMemPoolResizableAllocatorObserver*, aTrackPortInfo);
-        aTrackPortInfo->ipResizeableMemPoolAllocator->notifyfreeblockavailable(*resizableMemPoolAllocObs, PVMF_FRAMES_BUFFER_LEN);
+        aTrackPortInfo->ipResizeableMemPoolAllocator->notifyfreeblockavailable(*resizableMemPoolAllocObs, aTrackPortInfo->iBufferlen);
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, ipDatapathLog, PVLOGMSG_STACK_TRACE, (0, "PVMFParserNodeImpl::QueueMediaSample: No Memory available"));
         return PVMFErrNoMemory;
     }
@@ -619,7 +638,7 @@ PVMFStatus PVMFParserNodeImpl::QueueMediaSample(PVMFParserNodeTrackPortInfo* aTr
     {
         OsclMemPoolResizableAllocatorObserver* resizableMemPoolAllocObs =
             OSCL_STATIC_CAST(OsclMemPoolResizableAllocatorObserver*, aTrackPortInfo);
-        aTrackPortInfo->ipResizeableMemPoolAllocator->notifyfreeblockavailable(*resizableMemPoolAllocObs, PVMF_FRAMES_BUFFER_LEN);
+        aTrackPortInfo->ipResizeableMemPoolAllocator->notifyfreeblockavailable(*resizableMemPoolAllocObs, aTrackPortInfo->iBufferlen);
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, ipDatapathLog, PVLOGMSG_STACK_TRACE, (0, "PVMFParserNodeImpl::QueueMediaSample: No Memory available"));
         return PVMFErrNoMemory;
     }
@@ -632,12 +651,12 @@ PVMFStatus PVMFParserNodeImpl::QueueMediaSample(PVMFParserNodeTrackPortInfo* aTr
     {
         ipGau->MediaBuffer = NULL;
         ipGau->NumberOfFrames = PVMF_NUM_FRAMES_AMR;
-        ipGau->BufferLen = PVMF_FRAMES_BUFFER_LEN;
+        ipGau->BufferLen = aTrackPortInfo->iBufferlen;
     }
     else if (iClipFmtType == PVMF_MIME_WAVFF)
     {
         ipGau->MediaBuffer = (uint8*)refCntrMemFrag.getMemFragPtr();
-        ipGau->BufferLen = PVMF_FRAMES_BUFFER_LEN;
+        ipGau->BufferLen = aTrackPortInfo->iBufferlen;
         ipGau->NumberOfFrames = PVMF_NUM_FRAMES_WAV;
     }
 
@@ -656,9 +675,21 @@ PVMFStatus PVMFParserNodeImpl::QueueMediaSample(PVMFParserNodeTrackPortInfo* aTr
         // Resize Memory Fragment
         aTrackPortInfo->ipResizeableSimpleMediaMsg->ResizeMemoryFragment(mediaDataImpl);
 
+        // Special handling for first frame after seek
+        if (aTrackPortInfo->iFirstFrameAfterSeek)
+        {
+            aTrackPortInfo->iSampleNPT = ipGau->info[0].ts;
+            aTrackPortInfo->iFirstFrameAfterSeek = false;
+        }
+
+        // Sample Duration of first sample after seek will be zero. The duration can only be known once node
+        // has retrieved atleast 2 samples.
+        aTrackPortInfo->iSampleDur = ipGau->info[0].ts - aTrackPortInfo->iSampleNPT;
+        aTrackPortInfo->iTimestamp += aTrackPortInfo->iSampleDur;
+        aTrackPortInfo->iSampleNPT = ipGau->info[0].ts;
+
         // Set the parameters
         mediaDataPtr->setStreamID(iStreamID);
-        aTrackPortInfo->iTimestamp = ipGau->info[0].ts;
         mediaDataPtr->setTimestamp(aTrackPortInfo->iTimestamp);
         mediaDataPtr->setSeqNum(aTrackPortInfo->iSeqNum);
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, ipDatapathLog, PVLOGMSG_STACK_TRACE,
@@ -726,11 +757,12 @@ PVMFStatus PVMFParserNodeImpl::DoSetDataSourcePosition()
 
     for (uint32 ii = 0; ii < iTrkPortInfoVec.size(); ii++)
     {
-        // New stream reset BOS-EOS booleans and start the data flow
+        // New stream reset booleans for BOS-EOS and start the data flow
         iTrkPortInfoVec[ii].iSendBos = true;
         iTrkPortInfoVec[ii].iSendEos = false;
         iTrkPortInfoVec[ii].iEosSent = false;
         iTrkPortInfoVec[ii].iOutgoingQueueBusy = false;
+        iTrkPortInfoVec[ii].iFirstFrameAfterSeek = true;
         if (sendBosEos)
             // Since the target position was beyond clip duration source just needs
             // to send EOS after BOS, so set the boolean for EOS

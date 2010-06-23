@@ -61,13 +61,16 @@ class PVMFParserNodeTrackPortInfo: public OsclMemPoolFixedChunkAllocatorObserver
             iTrackId = 0;
             iSeqNum = 0;
             iTimestamp = 0;
+            iSampleNPT = 0;
             iSampleDur = 0;
             iNumSamples = 1;
+            iBufferlen = 0;
             iSendBos = true;
             iSendEos = false;
             iEosSent = false;
             iOutgoingQueueBusy = false;
             iProcessOutgoingMsg = false;
+            iFirstFrameAfterSeek = false;
             ipMimeString = NULL;
             ipNode = NULL;
             ipPort = NULL;
@@ -83,13 +86,16 @@ class PVMFParserNodeTrackPortInfo: public OsclMemPoolFixedChunkAllocatorObserver
             iTrackId = aSrc.iTrackId;
             iSeqNum = aSrc.iSeqNum;
             iTimestamp = aSrc.iTimestamp;
+            iSampleNPT = aSrc.iSampleNPT;
             iSampleDur = aSrc.iSampleDur;
             iNumSamples = aSrc.iNumSamples;
+            iBufferlen = aSrc.iBufferlen;
             iSendBos = aSrc.iSendBos;
             iSendEos = aSrc.iSendEos;
             iEosSent = aSrc.iEosSent;
             iOutgoingQueueBusy = aSrc.iOutgoingQueueBusy;
             iProcessOutgoingMsg = aSrc.iProcessOutgoingMsg;
+            iFirstFrameAfterSeek = aSrc.iFirstFrameAfterSeek;
             ipMimeString = aSrc.ipMimeString;
             ipNode = aSrc.ipNode;
             ipPort = aSrc.ipPort;
@@ -123,25 +129,31 @@ class PVMFParserNodeTrackPortInfo: public OsclMemPoolFixedChunkAllocatorObserver
         {
             iSeqNum = 0;
             iTimestamp = 0;
+            iSampleNPT = 0;
             iSampleDur = 0;
             iNumSamples = 1;
+            iBufferlen = 0;
             iSendBos = true;
             iSendEos = false;
             iEosSent = false;
             iOutgoingQueueBusy = false;
             iProcessOutgoingMsg = false;
+            iFirstFrameAfterSeek = false;
         }
 
         uint32 iTrackId;
         uint32 iSeqNum;
         PVMFTimestamp iTimestamp;
+        PVMFTimestamp iSampleNPT;
         uint64 iSampleDur;
         uint32 iNumSamples;
+        uint32 iBufferlen;
         bool iSendBos;
         bool iSendEos;
         bool iEosSent;
         bool iOutgoingQueueBusy;
         bool iProcessOutgoingMsg;
+        bool iFirstFrameAfterSeek;
         char* ipMimeString;
         PVMFNodeInterfaceImpl* ipNode;
         PVMFPortInterface* ipPort;

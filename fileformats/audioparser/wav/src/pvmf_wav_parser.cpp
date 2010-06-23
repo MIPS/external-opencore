@@ -120,6 +120,8 @@ PVMFWavParser::PVMFWavParser()
     iFramesRead = 0;
     iEOSReached = false;
     ipLogger = PVLogger::GetLoggerObject("wavparser");
+    iBytesPerSec = 0;
+    iWavDataReadPerFrame = 0;
 }
 
 PVMFWavParser::~PVMFWavParser()
@@ -282,8 +284,8 @@ bool PVMFWavParser::Init(PvmiDataStreamInterface *aDataStream, int64 &aDuration,
 
     iEndDataChnkOffset = fileOffset + subChunkSize;
 
-    uint32 bytesPerSec = iBytesPerSample * iSamplesPerSec * iChannels;
-    aDuration = iDuration = ((iEndDataChnkOffset - iStartOffset) / bytesPerSec) * 1000;
+    iBytesPerSec = iBytesPerSample * iSamplesPerSec * iChannels;
+    aDuration = iDuration = ((iEndDataChnkOffset - iStartOffset) / iBytesPerSec) * 1000;
     aTimescale = 1000;
 
     return true;
@@ -314,8 +316,10 @@ PVMFParserReturnCode PVMFWavParser::GetNextAccessUnits(GAU* aGau)
 
     if (PVDS_SUCCESS == status)
     {
+        iWavDataReadPerFrame = sizeInBytes;
         aGau->info[0].len = sizeInBytes;
-        aGau->info[0].ts = (iFramesRead * WAV_DATA_READ_IN_MSEC);
+        uint32 wavDataReadinMsec = (sizeInBytes * 1000) / iBytesPerSec;
+        aGau->info[0].ts = (iFramesRead * wavDataReadinMsec);
         iFramesRead++;
         if (pLawTable)
         {
@@ -359,12 +363,8 @@ PVMFParserReturnCode PVMFWavParser::Seek(int64 aSeekAt, int64& aSeekedTo)
 {
     LOG_DEBUG_MSG((0, "PVMFWavParser: Seek In, seekAt %d", aSeekAt));
 
-    if (0 == aSeekAt && iDuration == aSeekedTo)
-        // This means that node is stopping reset the FramesRead
-        iFramesRead = 0;
-
     // Get the file offset toSeekTo
-    OsclOffsetT offsetSeekAt = ((aSeekAt * (iSamplesPerSec / iChannels)) / 1000) * iBytesPerSample;
+    OsclOffsetT offsetSeekAt = ((aSeekAt * iSamplesPerSec) / 1000) * iBytesPerSample * iChannels;
     // Now add the start offset
     offsetSeekAt += iStartOffset;
 
@@ -380,8 +380,12 @@ PVMFParserReturnCode PVMFWavParser::Seek(int64 aSeekAt, int64& aSeekedTo)
     }
     // Seek on Datastream succedded, means we did seeked to offsetSeekAt, which means SeekAt msecs
     aSeekedTo = aSeekAt;
+    // Set the FramesRead accordingly
+    if (iWavDataReadPerFrame > 0)
+        iFramesRead = aSeekedTo / iWavDataReadPerFrame;
     // Reset EOS Boolean
     iEOSReached = false;
+
     LOG_DEBUG_MSG((0, "PVMFWavParser: Seek Out, seekedTo %d", aSeekedTo));
     return PVMFParserEverythingFine;
 }
@@ -407,8 +411,10 @@ void PVMFWavParser::NotifyDataAvailable(OsclSizeT bytesRead, PvmiDataStreamStatu
     PVMFParserReturnCode retStatus = PVMFParserDefaultErr;
     if (PVDS_SUCCESS == aStatus)
     {
+        iWavDataReadPerFrame = bytesRead;
         iGau->info[0].len = bytesRead;
-        iGau->info[0].ts = (iFramesRead * WAV_DATA_READ_IN_MSEC);
+        uint32 wavDataReadinMsec = (bytesRead * 1000) / iBytesPerSec;
+        iGau->info[0].ts = (iFramesRead * wavDataReadinMsec);
         iFramesRead++;
         if (pLawTable)
         {
