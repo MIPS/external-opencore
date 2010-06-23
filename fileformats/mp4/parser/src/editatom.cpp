@@ -61,9 +61,10 @@ EditAtom::EditAtom(MP4_FF_FILE *fp, uint32 size, uint32 type)
             }
             else
             {
-                _success = false;
-                _mp4ErrorCode = READ_UNKNOWN_ATOM;
-                break;
+                dataLength -= atomSize;
+                atomSize -= DEFAULT_ATOM_SIZE;
+                AtomUtils::seekFromCurrPos(fp, atomSize);
+
             }
 
         }

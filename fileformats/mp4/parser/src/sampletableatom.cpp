@@ -3578,7 +3578,7 @@ void SampleTableAtom::handleEditList(uint64 &ts)
     if ((_pEditListTimeVec == NULL) || (_pEditListDurationVec == NULL))
         return;
 
-    if ((ts < _prevEditDuration) || (_editIndex > _pEditListTimeVec->size()))
+    if ((ts < _prevEditDuration) || (_editIndex >= _pEditListTimeVec->size()))
         return;
 
     if ((*_pEditListTimeVec)[_editIndex] == -1)
