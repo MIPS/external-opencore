@@ -343,6 +343,27 @@ class PvmfLyricsCommStruct
         oscl_wchar *iData;
 };
 
+class PvmfPopmStruct
+{
+    public:
+        PvmfPopmStruct()
+        {
+            iUserEmail = NULL;
+            iRating = 0;
+            iCounter = 0;
+        };
+        virtual ~PvmfPopmStruct()
+        {
+            iUserEmail = NULL;
+            iRating = 0;
+            iCounter = 0;
+        }
+
+        oscl_wchar *iUserEmail;
+        int32 iRating;
+        int32 iCounter;
+};
+
 
 class PvmfAssetInfo3GPPLocationStruct
 {

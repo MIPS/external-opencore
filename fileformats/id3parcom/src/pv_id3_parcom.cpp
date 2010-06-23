@@ -1290,9 +1290,12 @@ int PVID3ParCom::ReadTagID3V2(PVID3Version aVersion)
         {
             uint8 unicodeCheck;
 
-            if (read8(iInputFile, unicodeCheck) == false)
+            if (frameType != PV_ID3_FRAME_POPULARIMETER)
             {
-                return count;
+                if (read8(iInputFile, unicodeCheck) == false)
+                {
+                    return count;
+                }
             }
 
             if ((frameType == PV_ID3_FRAME_LYRICS) || (frameType == PV_ID3_FRAME_COMMENT))
@@ -1306,6 +1309,14 @@ int PVID3ParCom::ReadTagID3V2(PVID3Version aVersion)
                 {
                     LOG_ERR((0, "PVID3ParCom::ReadTagID3V2: Error - ReadAPICFrame failed"));
 
+                    return count;
+                }
+            }
+            else if (frameType == PV_ID3_FRAME_POPULARIMETER)
+            {
+                if (ReadPopularimeterFrame(currFrameLength)  != PVMFSuccess)
+                {
+                    LOG_ERR((0, "PVID3ParCom::ReadTagID3V2: Error - ReadPopularimeterFrame failed"));
                     return count;
                 }
             }
@@ -1979,6 +1990,10 @@ PVID3ParCom::PVID3FrameType PVID3ParCom::FrameSupportedID3V2(PVID3Version aVersi
         {
             ID3V2FrameTypeReturnValue = PV_ID3_FRAME_VERSION;
         }
+        else if (oscl_memcmp(pFrameID, ID3_FRAME_ID_POPULARIMETER, ID3V2_FRAME_NUM_BYTES_ID) == 0)
+        {
+            ID3V2FrameTypeReturnValue = PV_ID3_FRAME_POPULARIMETER;
+        }
         else if (oscl_memcmp(pFrameID, endTestBuf, ID3V2_FRAME_NUM_BYTES_ID) == 0)
         {
             ID3V2FrameTypeReturnValue = PV_ID3_FRAME_EEND;
@@ -2101,7 +2116,6 @@ PVID3ParCom::PVID3FrameType PVID3ParCom::FrameSupportedID3V2_2(void)
     {
         ID3V2_2FrameTypeReturnValue = PV_ID3_FRAME_VERSION;
     }
-
     else if (oscl_memcmp(iID3TagInfo.iID3V2FrameID, endTestBuf, ID3V2_2_FRAME_NUM_BYTES_ID) == 0)
     {
         ID3V2_2FrameTypeReturnValue = PV_ID3_FRAME_EEND;
@@ -2507,7 +2521,7 @@ PVMFStatus PVID3ParCom::ConstructKvpKey(OSCL_String& aKey, PVID3FrameType aType,
             if ((iVersion != PV_ID3_V1_1) && (iVersion != PV_ID3_V1))
             {
                 aKey += SEMI_COLON;
-                aKey += KVP_VALTYPE_LYRICS;
+                aKey += KVP_VALTYPE_KSV;
             }
             break;
         case PV_ID3_FRAME_TRACK_LENGTH:
@@ -2523,8 +2537,13 @@ PVMFStatus PVID3ParCom::ConstructKvpKey(OSCL_String& aKey, PVID3FrameType aType,
         case PV_ID3_FRAME_LYRICS:
             aKey += _STRLIT_CHAR(KVP_KEY_LYRICS);
             aKey += SEMI_COLON;
-            aKey += KVP_VALTYPE_LYRICS;
+            aKey += KVP_VALTYPE_KSV;
             break;
+        case PV_ID3_FRAME_POPULARIMETER:
+            aKey += _STRLIT_CHAR(KVP_KEY_POPULARIMETER);
+            aKey += SEMI_COLON;
+            aKey += KVP_VALTYPE_KSV;
+            return PVMFSuccess;
         case PV_ID3_FRAME_UNRECOGNIZED:
         case PV_ID3_FRAME_CANDIDATE:
             aKey += _STRLIT_CHAR(KVP_ID3V2_VALUE);
@@ -2849,6 +2868,70 @@ PVID3ParCom::readNullTerminatedAsciiString(PVFile* aInputFile, OSCL_HeapString<O
     return true;
 }
 
+PVMFStatus PVID3ParCom::ReadPopularimeterFrame(uint32 aFrameSize)
+{
+    PvmfPopmStruct* popmStruct = NULL;
+    uint8   rating;
+    uint32  dataLen = 0;
+    uint32  playbackCounter = 0;
+    int32 err = OsclErrNone;
+    PvmiKvpSharedPtr kvpPtr;
+    OSCL_StackString<128> keyStr;
+    OSCL_HeapString<OsclMemAllocator> emailId;
+    bool truncate = false;
+
+    if (ConstructKvpKey(keyStr, PV_ID3_FRAME_POPULARIMETER, PV_ID3_CHARSET_ISO88591) != PVMFSuccess)
+    {
+        LOG_ERR((0, "PVID3ParCom::ReadPopularimeterFrame: Error - ConstructKvpKey failed"));
+        return PVMFErrNotSupported;
+    }
+
+    if (PVMFSuccess == GetPopmFrameData(aFrameSize, emailId, &rating, playbackCounter, dataLen))
+    {
+        uint32 rfs = emailId.get_size() * sizeof(oscl_wchar) + 2;
+        uint32 total_size = sizeof(PvmfPopmStruct) + rfs;
+
+        OSCL_TRY(err, kvpPtr = AllocateKvp(keyStr, PVMI_KVPVALTYPE_KSV, total_size, truncate););
+        if (OsclErrNone != err || !kvpPtr)
+        {
+            LOG_ERR((0, "PVID3ParCom::ReadPopularimeterFrame: Error - AllocateKvp failed. err=%d", err));
+            return PVMFFailure;
+        }
+
+        uint8 *ptr = NULL;
+        uint32 used_size = 0;
+
+        popmStruct = OSCL_STATIC_CAST(PvmfPopmStruct *, kvpPtr->value.key_specific_value);
+        ptr = (uint8 *)kvpPtr->value.key_specific_value;
+        if (!ptr)
+        {
+            return PVMFFailure;
+        }
+
+        ptr += sizeof(PvmfPopmStruct);
+        used_size += sizeof(PvmfPopmStruct);
+        popmStruct->iUserEmail = OSCL_STATIC_CAST(oscl_wchar *, ptr);
+        uint32 sz = oscl_strlen(emailId.get_cstr()) * sizeof(oscl_wchar) + 2;
+
+        oscl_UTF8ToUnicode((const char *)emailId.get_cstr(), emailId.get_size(), popmStruct->iUserEmail,  sz);
+        popmStruct->iCounter = playbackCounter;
+        popmStruct->iRating = rating;
+
+        kvpPtr->capacity = total_size;
+        kvpPtr->length = total_size;
+
+        //convert raw data to struct
+        kvpPtr->value.key_specific_value = (OsclAny*) popmStruct;
+
+        OSCL_TRY(err, iFrames.push_back(kvpPtr););
+        OSCL_FIRST_CATCH_ANY(err,
+                             LOG_ERR((0, "PVID3ParCom::ReadPopularimeterFrame: Error - iFrame.push_back failed"));
+                             return PVMFErrNoMemory;
+                            );
+    }
+    return PVMFSuccess;
+}
+
 PVMFStatus PVID3ParCom::ReadAlbumArtFrame(PVID3FrameType aFrameType, uint8 unicode, uint32 aFrameSize)
 {
     PvmfApicStruct* aApicStruct = NULL;
@@ -2885,7 +2968,7 @@ PVMFStatus PVID3ParCom::ReadAlbumArtFrame(PVID3FrameType aFrameType, uint8 unico
 
             keyStr += KVP_FORMAT_ALBUMART;
             keyStr += SEMI_COLON;
-            keyStr += KVP_VALTYPE_ALBUMART;
+            keyStr += KVP_VALTYPE_KSV;
 
             //description and image format are stored as wchar.
             uint32 rfs = aFrameSize - (ImageFormat.get_size() + description.get_size());
@@ -2941,7 +3024,7 @@ PVMFStatus PVID3ParCom::ReadAlbumArtFrame(PVID3FrameType aFrameType, uint8 unico
 
             keyStr += KVP_FORMAT_ALBUMART;
             keyStr += SEMI_COLON;
-            keyStr += KVP_VALTYPE_ALBUMART;
+            keyStr += KVP_VALTYPE_KSV;
 
             //image format is stored as wchar.
             uint32 rfs = aFrameSize - (ImageFormat.get_size() + (2 * oscl_strlen(description.get_str())));
@@ -3038,7 +3121,6 @@ PVMFStatus PVID3ParCom::ReadAlbumArtFrame(PVID3FrameType aFrameType, uint8 unico
 
 PVMFStatus PVID3ParCom::ReadLyricsCommFrame(uint8 unicodeCheck, uint32 aFramesize, PVID3FrameType aFrameType)
 {
-
     uint32 framesize = aFramesize;
     bool truncate = false;
     if (readByteData(iInputFile, ID3V2_LANGUAGE_SIZE, iID3TagInfo.iID3V2LanguageID) == false)
@@ -3585,6 +3667,78 @@ PVMFStatus PVID3ParCom::GetAlbumArtInfo(PVID3FrameType aFrameType, uint32 aFrame
     return PVMFSuccess;
 }
 
+PVMFStatus PVID3ParCom::GetPopmFrameData(uint32 aFrameSize, OSCL_HeapString<OsclMemAllocator> &aEmailId, uint8* aRating,
+        uint32 &aPlaybackCounter, uint32 &aDataLen)
+{
+    PVMFStatus status = 0;
+    uint32 emailSize = 0;
+    TOsclFileOffset currentfilepos = 0 ;
+    uint32 frameBytesRead = 0;
+    uint32 pbcounter = 0;
+
+    currentfilepos = iInputFile->Tell();
+    //read user email
+    status = readNullTerminatedAsciiString(iInputFile, aEmailId);
+    if (status != PVMFSuccess)
+    {
+        iInputFile->Seek(currentfilepos, Oscl_File::SEEKSET);
+        return PVMFFailure;
+    }
+    //get the email id len
+    emailSize = aEmailId.get_size() + 1 ; // 1 byte for null char
+    frameBytesRead += emailSize;
+
+    // read the rating
+    if (read8(iInputFile, *aRating) == false)
+    {
+        return PVMFFailure;
+    }
+
+    frameBytesRead++;  // for rating byte
+    // check if the counter exist
+    if (aFrameSize > frameBytesRead)
+    {
+        uint32 counterLength = aFrameSize - frameBytesRead;
+        if (counterLength < 4) // 4 is min length of counter
+        {
+            frameBytesRead += counterLength;
+            iInputFile->Seek(counterLength, Oscl_File::SEEKCUR);
+        }
+        else
+        {
+            bool ret = true;
+            if (counterLength == 4)
+                ret = read32(iInputFile, (uint32&)pbcounter);
+            else
+            {
+                uint8* counter = OSCL_ARRAY_NEW(uint8, counterLength + 1);
+                ret = readByteData(iInputFile, counterLength, counter);
+                pbcounter = (uint32)(*counter);
+                OSCL_ARRAY_DELETE(counter);
+            }
+
+            frameBytesRead += counterLength;  // for counter length
+
+            if (!ret)
+            {
+                return PVMFFailure;
+            }
+        }
+    }
+
+
+    aDataLen = frameBytesRead;
+    aPlaybackCounter = pbcounter;
+
+    if (aDataLen > aFrameSize)
+    {
+        iInputFile->Seek(currentfilepos, Oscl_File::SEEKSET);
+        aDataLen = 0;
+        return PVMFFailure;
+    }
+    return PVMFSuccess;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////
 PVMFStatus PVID3ParCom::ReadTrackLengthFrame(uint32 aValueSize, PVID3CharacterSet aCharSet)
@@ -3951,6 +4105,11 @@ PVMFStatus PVID3ParCom::GetFrameTypeFromKvp(const PvmiKvp& aKvp,
         {
             aFrameID = _STRLIT_CHAR(ID3_FRAME_ID_ALBUMART);
             aFrameType = PV_ID3_FRAME_APIC;
+        }
+        else if (pv_mime_strcmp(aKvp.key, KVP_KEY_POPULARIMETER) == 0)
+        {
+            aFrameID = _STRLIT_CHAR(ID3_FRAME_ID_POPULARIMETER);
+            aFrameType = PV_ID3_FRAME_POPULARIMETER;
         }
         else
         {

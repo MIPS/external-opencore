@@ -310,6 +310,15 @@ class MP3Parser
         uint32 GetChannelMode() const;
 
         /**
+        * @brief Retreives and returns layer id for the current
+        * of mp3 file
+        *
+        * @param
+        * @returns
+        */
+        uint32 GetLayerID() const;
+
+        /**
         * @brief Returns the content of decoder specific info.
         *
         * @param None
@@ -486,7 +495,6 @@ class MP3Parser
         uint32 iBinWidth;
         uint32 iMaxTOCFillStepsPerBin;
         uint32 iBinFillCounter;
-
         uint32 iSamplingRate;
         uint32 iSamplesPerFrame;
 

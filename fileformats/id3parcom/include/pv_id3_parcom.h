@@ -350,6 +350,7 @@ class PVID3ParCom
             PV_ID3_FRAME_DESCRIPTION,     /* brief description of the content */
             PV_ID3_FRAME_VERSION,         /* Software version of the authoring software */
             PV_ID3_FRAME_PART_OF_SET,     /* Which part of a set this belongs to */
+            PV_ID3_FRAME_POPULARIMETER,   /* how popular an audio file is */
 
             PV_ID3_FRAME_EEND            /**< End. Marks end of frames.*/
         } PVID3FrameType;
@@ -745,6 +746,16 @@ class PVID3ParCom
         PVMFStatus ReadAlbumArtFrame(PVID3FrameType aFrameType, uint8 unicode, uint32 aFrameSize);
 
         /**
+         * @brief This function is costructing the key-value pair for popularity meter(popm) frame. It
+         * first converts the Popularitymeter frame in to the PvmfPopmStruct and then set the
+         * key_specific_value of the Pvmikvp struct.
+         * @param frame type
+         * @param frame size
+         * @return Success if read successful.
+         */
+        PVMFStatus ReadPopularimeterFrame(uint32 aFrameSize);
+
+        /**
          * @brief This function extracts the albumart information, for ascii data, based on frametype (apic/pic).
          * @param frame type
          * @param frame size
@@ -752,7 +763,7 @@ class PVID3ParCom
          * @param description
          * @param picture type
          * @param data length
-         * @return Success if conversion is successfull.
+         * @return Success if conversion is successful.
             */
         PVMFStatus GetAlbumArtInfo(PVID3FrameType aFrameType, uint32 aFrameSize, OSCL_HeapString<OsclMemAllocator> &ImageFormat,
                                    uint8 &PicType, OSCL_HeapString<OsclMemAllocator> &Description,  uint32 &DataLen);
@@ -769,6 +780,17 @@ class PVID3ParCom
         PVMFStatus GetAlbumArtInfo(PVID3FrameType aFrameType, uint32 aFrameSize, OSCL_HeapString<OsclMemAllocator> &ImageFormat,
                                    uint8 &PicType, OSCL_wHeapString<OsclMemAllocator> &aDescription, uint32 &DataLen);
 
+
+        /**
+         * @brief This function extracts the albumart information, for unicode data, based on frametype (apic/pic).
+         * @param frame size
+         * @param email id
+         * @param rating
+         * @param playback counter
+         * @return Success if conversion is successful.
+         */
+        PVMFStatus GetPopmFrameData(uint32 aFrameSize, OSCL_HeapString<OsclMemAllocator> &aEmailId, uint8 *aRating,
+                                    uint32 &aPlaybackCounter, uint32 &aDataLen);
 
 
         /**

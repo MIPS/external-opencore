@@ -1435,6 +1435,34 @@ uint32 MP3Parser::GetChannelMode() const
 }
 
 /***********************************************************************
+ *  Function : GetLayerID
+ *  Purpose  : Fetch Layer ID for the clip
+ *  Input    : None
+ *  Output   :
+ *  Return   : LayerID
+ *  Modified :
+ ***********************************************************************/
+uint32 MP3Parser::GetLayerID() const
+{
+    uint32 layerId = 0;
+    switch (iMP3HeaderInfo.layerID)
+    {
+        case MPEG_LAYER_I:
+            layerId = 1;
+            break;
+        case MPEG_LAYER_II:
+            layerId = 2;
+            break;
+        case MPEG_LAYER_III:
+            layerId = 3;
+            break;
+        default:
+            break;
+    }
+    return layerId;
+}
+
+/***********************************************************************
  *  Function : GetDurationFromMetadata
  *  Purpose  : Fetch duration value from id3 frame (TLEN - track length)
  *  Input    : None

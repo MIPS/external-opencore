@@ -61,11 +61,13 @@ static const char PVMP3METADATA_TRACKINFO_SAMPLERATE_KEY[] = "track-info/sample-
 static const char PVMP3METADATA_TRACKINFO_AUDIO_FORMAT_KEY[] = "track-info/audio/format";
 static const char PVMP3METADATA_TRACKINFO_AUDIO_CHANNELS_KEY[] = "track-info/audio/channels";
 static const char PVMP3METADATA_TRACKINFO_AUDIO_CHANNEL_MODE_KEY[] = "track-info/audio/channel-mode";
+static const char PVMP3METADATA_TRACKINFO_AUDIO_LAYER_ID_KEY[] = "track-info/audio/layer-id";
 static const char PVMP3METADATA_BITRATE_KEY[] = "bit-rate";
 static const char PVMP3METADATA_SAMPLERATE_KEY[] = "sample-rate";
 static const char PVMP3METADATA_FORMAT_KEY[] = "format";
 static const char PVMP3METADATA_CHANNELS_KEY[] = "channels";
 static const char PVMP3METADATA_CHANNEL_MODE_KEY[] = "channel-mode";
+static const char PVMP3METADATA_LAYER_ID_KEY[] = "layer-id";
 static const char PVMP3METADATA_RANDOM_ACCESS_DENIED_KEY[] = "random-access-denied";
 static const char PVMP3METADATA_SEMICOLON[] = ";";
 static const char PVMP3METADATA_CHARENCUTF8[] = "char-encoding=UTF8";
@@ -251,6 +253,13 @@ OSCL_EXPORT_REF MP3ErrorType IMpeg3File::ParseMp3File()
 
         leavecode = OsclErrNone;
         leavecode = PushKVPKey(PVMP3METADATA_TRACKINFO_AUDIO_FORMAT_KEY, iAvailableMetadataKeys);
+        if (OsclErrNone != leavecode)
+        {
+            return MP3_ERR_NO_MEMORY;
+        }
+
+        leavecode = OsclErrNone;
+        leavecode = PushKVPKey(PVMP3METADATA_TRACKINFO_AUDIO_LAYER_ID_KEY, iAvailableMetadataKeys);
         if (OsclErrNone != leavecode)
         {
             return MP3_ERR_NO_MEMORY;
@@ -646,6 +655,16 @@ OSCL_EXPORT_REF uint32 IMpeg3File::GetNumMetadataValues(PVMFMetadataList& aKeyLi
             // Channel mode
             MP3ContentFormatType mp3info;
             if (GetConfigDetails(mp3info) == MP3_SUCCESS)
+            {
+                // Increment the counter for the number of values found so far
+                ++numvalentries;
+            }
+        }
+        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMP3METADATA_LAYER_ID_KEY) == 0 ||
+                 oscl_strcmp(aKeyList[lcv].get_cstr(), PVMP3METADATA_TRACKINFO_AUDIO_LAYER_ID_KEY) == 0)
+        {
+            // Layer id
+            if (pMP3Parser)
             {
                 // Increment the counter for the number of values found so far
                 ++numvalentries;
@@ -1403,6 +1422,49 @@ OSCL_EXPORT_REF PVMFStatus IMpeg3File::GetMetadataValues(PVMFMetadataList& aKeyL
                         KeyVal.key[KeyLen-1] = NULL_TERM_CHAR;
                         // Copy the value
                         KeyVal.value.uint32_value = mp3info.ChannelMode;
+                        // Set the length and capacity
+                        KeyVal.length = 1;
+                        KeyVal.capacity = 1;
+                    }
+                    else
+                    {
+                        // Memory allocation failed
+                        KeyVal.key = NULL;
+                        break;
+                    }
+                }
+            }
+        }
+        else if (oscl_strcmp(aKeyList[lcv].get_cstr(), PVMP3METADATA_LAYER_ID_KEY) == 0 ||
+                 oscl_strcmp(aKeyList[lcv].get_cstr(), PVMP3METADATA_TRACKINFO_AUDIO_LAYER_ID_KEY) == 0)
+        {
+            // Layer ID
+            if (pMP3Parser)
+            {
+                // Increment the counter for the number of values found so far
+                ++numvalentries;
+
+                // Create a value entry if past the starting index
+                if (numvalentries > aStartingValueIndex)
+                {
+                    KeyLen = oscl_strlen(PVMP3METADATA_TRACKINFO_AUDIO_LAYER_ID_KEY) + 1; // for "track-info/audio/layer-id;"
+                    KeyLen += oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR); // for "valtype="
+                    KeyLen += oscl_strlen(PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR) + 1; // for "uint32" and NULL terminator
+
+                    // Allocate memory for the string
+                    leavecode = 0;
+                    KeyVal.key = (char*) AllocateKVPKeyArray(leavecode, PVMI_KVPVALTYPE_CHARPTR, KeyLen);
+
+                    if (leavecode == 0)
+                    {
+                        // Copy the key string
+                        oscl_strncpy(KeyVal.key, PVMP3METADATA_TRACKINFO_AUDIO_LAYER_ID_KEY, oscl_strlen(PVMP3METADATA_TRACKINFO_AUDIO_LAYER_ID_KEY) + 1);
+                        oscl_strncat(KeyVal.key, PVMP3METADATA_SEMICOLON, oscl_strlen(PVMP3METADATA_SEMICOLON));
+                        oscl_strncat(KeyVal.key, PVMI_KVPVALTYPE_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_STRING_CONSTCHAR));
+                        oscl_strncat(KeyVal.key, PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR, oscl_strlen(PVMI_KVPVALTYPE_UINT32_STRING_CONSTCHAR));
+                        KeyVal.key[KeyLen-1] = NULL_TERM_CHAR;
+                        // Copy the value
+                        KeyVal.value.uint32_value = pMP3Parser->GetLayerID();
                         // Set the length and capacity
                         KeyVal.length = 1;
                         KeyVal.capacity = 1;

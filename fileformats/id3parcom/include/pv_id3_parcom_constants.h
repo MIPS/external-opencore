@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
- * Copyright (C) 1998-2009 PacketVideo
+ * Copyright (C) 1998-2010 PacketVideo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,6 +169,7 @@
 #define ID3_FRAME_ID_COMPOSER       "TCOM"
 #define ID3_FRAME_ID_DESCRIPTION    "TIT3"
 #define ID3_FRAME_ID_VERSION        "TENC"
+#define ID3_FRAME_ID_POPULARIMETER  "POPM"
 
 /*           - List of unsupported frames -            */
 #define ID3_FRAME_ID_ENCRYPTION                     "AENC"
@@ -185,7 +186,6 @@
 #define ID3_FRAME_ID_OWNERSHIP_FRAME                "OWNE"
 #define ID3_FRAME_ID_PRIVATE_FRAME                  "PRIV"
 #define ID3_FRAME_ID_PLAY_COUNTER                   "PCNT"
-#define ID3_FRAME_ID_POPULARIMETER                  "POPM"
 #define ID3_FRAME_ID_POSITION_SYNCH_FRAME           "POSS"
 #define ID3_FRAME_ID_RECOMMENDED_BUFFER_SIZE        "RBUF"
 #define ID3_FRAME_ID_RELATIVE_VOLUME_ADJUSTMENT2    "RVA2"
@@ -319,6 +319,8 @@
 #define KVP_KEY_LYRICS_LEN 6
 #define KVP_KEY_ALBUMART "graphic"
 #define KVP_KEY_ALBUMART_LEN 8
+#define KVP_KEY_POPULARIMETER "popularimeter"
+#define KVP_KEY_POPULARIMETER_LEN 14
 
 #define SEMI_COLON _STRLIT_CHAR(";")
 #define NULL_CHARACTER _STRLIT_CHAR("\0")
@@ -346,10 +348,10 @@
 #define KVP_PARAM_CHAR_ENCODING_UTF8 "char-encoding=UTF8"
 #define KVP_FORMAT_ALBUMART  "format=APIC"
 #define KVP_FORMAT_ID3V1    "format=id3v1"
-#define KVP_VALTYPE_ALBUMART "valtype=ksv"
+#define KVP_VALTYPE_KSV   "valtype=ksv"
 #define KVP_ID3V2_VALUE "id3v2"
-#define KVP_VALTYPE_LYRICS   "valtype=ksv"
 #define KVP_VALTYPE_REQSIZE  "reqsize="
+
 
 //id3v1 Genre Lookup table
 static const uint8 ID3V1_GENRE[150][64]   = {     "Blues", "Classic Rock", "Country", "Dance", "Disco",
