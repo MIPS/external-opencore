@@ -16593,7 +16593,7 @@ PVMFStatus PVPlayerEngine::SetDataStreamOrDataSource(bool aValidDataStream)
         for (uint32 clipIndex = 0; clipIndex < iDataSource->GetNumClips(); clipIndex++)
         {
 
-            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVPlayerEngine::DoSourceNodeQueryTrackSelIF() - Set index of current clip to %d", clipIndex));
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG, (0, "PVPlayerEngine::SetDataStreamOrDataSource() - Set index of current clip to %d", clipIndex));
             iDataSource->SetCurrentClip(clipIndex);
 
             OSCL_wHeapString<OsclMemAllocator> sourceURL;
@@ -16607,7 +16607,7 @@ PVMFStatus PVPlayerEngine::SetDataStreamOrDataSource(bool aValidDataStream)
                 actualURL = oscl_strstr(iDataSource->GetDataSourceURL().get_cstr(), schemeDelimiter.get_cstr());
                 if (actualURL == NULL)
                 {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceNodeQueryTrackSelIF() Unable to skip over file://"));
+                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::SetDataStreamOrDataSource() Unable to skip over file://"));
                     return PVMFErrArgument;
                 }
                 //skip over ://
@@ -16665,7 +16665,7 @@ PVMFStatus PVPlayerEngine::SetDataStreamOrDataSource(bool aValidDataStream)
             }
             else
             {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceNodeQueryTrackSelIF() SetSourceInitializationData failed errcode %d", retval));
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::SetDataStreamOrDataSource() Initialization of Source failed errcode %d", retval));
 
                 // dont ignore update failure for clips index == 0
                 if (clipIndex == 0)
@@ -16677,7 +16677,7 @@ PVMFStatus PVPlayerEngine::SetDataStreamOrDataSource(bool aValidDataStream)
     }
     else
     {
-        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::DoSourceNodeQueryTrackSelIF() Data source type not supported yet so asserting"));
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::SetDataStreamOrDataSource() Data source type not supported yet so asserting"));
         OSCL_ASSERT(false);
         return PVMFFailure;
     }

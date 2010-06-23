@@ -602,12 +602,12 @@ PVMFStatus PVMFParserNodeImpl::QueueMediaSample(PVMFParserNodeTrackPortInfo* aTr
 {
     // Create a Media data pool
     OsclSharedPtr<PVMFMediaDataImpl> mediaDataImpl;
-    mediaDataImpl = aTrackPortInfo->ipResizeableSimpleMediaMsg->allocate(2204);
+    mediaDataImpl = aTrackPortInfo->ipResizeableSimpleMediaMsg->allocate(PVMF_FRAMES_BUFFER_LEN);
     if (NULL == mediaDataImpl.GetRep())
     {
         OsclMemPoolResizableAllocatorObserver* resizableMemPoolAllocObs =
             OSCL_STATIC_CAST(OsclMemPoolResizableAllocatorObserver*, aTrackPortInfo);
-        aTrackPortInfo->ipResizeableMemPoolAllocator->notifyfreeblockavailable(*resizableMemPoolAllocObs, 2204);
+        aTrackPortInfo->ipResizeableMemPoolAllocator->notifyfreeblockavailable(*resizableMemPoolAllocObs, PVMF_FRAMES_BUFFER_LEN);
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, ipDatapathLog, PVLOGMSG_STACK_TRACE, (0, "PVMFParserNodeImpl::QueueMediaSample: No Memory available"));
         return PVMFErrNoMemory;
     }
@@ -619,7 +619,7 @@ PVMFStatus PVMFParserNodeImpl::QueueMediaSample(PVMFParserNodeTrackPortInfo* aTr
     {
         OsclMemPoolResizableAllocatorObserver* resizableMemPoolAllocObs =
             OSCL_STATIC_CAST(OsclMemPoolResizableAllocatorObserver*, aTrackPortInfo);
-        aTrackPortInfo->ipResizeableMemPoolAllocator->notifyfreeblockavailable(*resizableMemPoolAllocObs, 2204);
+        aTrackPortInfo->ipResizeableMemPoolAllocator->notifyfreeblockavailable(*resizableMemPoolAllocObs, PVMF_FRAMES_BUFFER_LEN);
         PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, ipDatapathLog, PVLOGMSG_STACK_TRACE, (0, "PVMFParserNodeImpl::QueueMediaSample: No Memory available"));
         return PVMFErrNoMemory;
     }
@@ -631,14 +631,14 @@ PVMFStatus PVMFParserNodeImpl::QueueMediaSample(PVMFParserNodeTrackPortInfo* aTr
     if (iClipFmtType == PVMF_MIME_AMRFF)
     {
         ipGau->MediaBuffer = NULL;
-        ipGau->NumberOfFrames = 10;
-        ipGau->BufferLen = 2204;
+        ipGau->NumberOfFrames = PVMF_NUM_FRAMES_AMR;
+        ipGau->BufferLen = PVMF_FRAMES_BUFFER_LEN;
     }
     else if (iClipFmtType == PVMF_MIME_WAVFF)
     {
         ipGau->MediaBuffer = (uint8*)refCntrMemFrag.getMemFragPtr();
-        ipGau->BufferLen = 2204;
-        ipGau->NumberOfFrames = 1102;
+        ipGau->BufferLen = PVMF_FRAMES_BUFFER_LEN;
+        ipGau->NumberOfFrames = PVMF_NUM_FRAMES_WAV;
     }
 
     PVMFStatus status = PVMFSuccess;
@@ -814,6 +814,8 @@ PVMFStatus PVMFParserNodeImpl::DoGetNodeMetadataValues()
 
     if (iTrkPortInfoVec.size() > 0)
     {
+        // @TODO Once the GetMetaDataValue API is available at the Fileformat interface level,
+        // the meta data retireval will be moved from the node to the different fileformats.
         // For now just push the mime string for the app to recognise the type of content
         // and random-access-denied to allow seek functionality
         PvmiKvp kvp;

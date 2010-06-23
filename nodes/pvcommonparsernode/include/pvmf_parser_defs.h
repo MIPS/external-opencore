@@ -27,8 +27,16 @@ typedef enum
 #define PVMF_COMMONPARSER_PORT_OUTPUT_FORMATS "x-pvmf/port/formattype"
 #define PVMF_COMMONPARSER_PORT_OUTPUT_FORMATS_VALTYPE "x-pvmf/port/formattype;valtype=char*"
 
+// Metadata supported by the node
 static const char PVMETADATA_TRACKINFO_AUDIO_FORMAT_KEY[] = "track-info/audio/format";
 static const char PVMF_COMMON_PARSER_NODE_RANDOM_ACCESS_DENIED_KEY[] = "random-access-denied";
+
+// Tuneables for different fileformats
+#define PVMF_NUM_FRAMES_AMR 10
+#define PVMF_NUM_FRAMES_WAV 1102
+
+#define PVMF_FRAMES_BUFFER_LEN 2204 // This has to accomodate the biggest frame
+// retrieved by the node.
 
 #endif
 
