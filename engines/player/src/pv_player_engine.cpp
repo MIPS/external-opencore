@@ -3584,6 +3584,14 @@ void PVPlayerEngine::EngineCommandCompleted(PVCommandId aId, OsclAny* aContext, 
         PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR, (0, "PVPlayerEngine::EngineCommandCompleted() iCmdStatusObserver is NULL"));
     }
 
+    // Destroy error handling related extended error message if present. This needs to be
+    // destroyed before data source is removed.
+    if (iCommandCompleteErrMsgInErrorHandling)
+    {
+        iCommandCompleteErrMsgInErrorHandling->removeRef();
+        iCommandCompleteErrMsgInErrorHandling = NULL;
+    }
+
     if (iRemoveDataSource)
     {
         if (iDataSource)
@@ -16176,8 +16184,6 @@ PVMFStatus PVPlayerEngine::DoErrorHandling()
                                    iCurrentCmd[0].GetContext(),
                                    iCommandCompleteStatusInErrorHandling,
                                    OSCL_STATIC_CAST(PVInterface*, iCommandCompleteErrMsgInErrorHandling));
-            iCommandCompleteErrMsgInErrorHandling->removeRef();
-            iCommandCompleteErrMsgInErrorHandling = NULL;
         }
         else
         {
