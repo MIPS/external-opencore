@@ -267,8 +267,6 @@ PVMFStatus PVMFDownloadManagerNode::ThreadLogon()
     if (status != PVMFSuccess)
         return status;
 
-    iLogger = PVLogger::GetLoggerObject("pvdownloadmanagernode");
-
     //logon the sub-nodes.
     if (iProtocolEngineNode.iNode)
         iProtocolEngineNode.iNode->ThreadLogon();
@@ -283,8 +281,6 @@ PVMFStatus PVMFDownloadManagerNode::ThreadLogon()
 //Public API From node interface.
 PVMFStatus PVMFDownloadManagerNode::ThreadLogoff()
 {
-    iLogger = NULL;
-
     //logoff the sub-nodes.
     if (iFormatParserNode.iNode)
         iFormatParserNode.iNode->ThreadLogoff();

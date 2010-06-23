@@ -39,7 +39,6 @@ PVMFFileOutputNode::PVMFFileOutputNode(int32 aPriority)
         , iFileHandle(NULL)
         , iFileOpened(0)
         , iFirstMediaData(false)
-        , iLogger(NULL)
         , iFormat(PVMF_MIME_FORMAT_UNKNOWN)
         , iMaxFileSizeEnabled(false)
         , iMaxDurationEnabled(false)
@@ -80,8 +79,6 @@ PVMFFileOutputNode::PVMFFileOutputNode(int32 aPriority)
         OSCL_CLEANUP_BASE_CLASS(PVMFNodeInterfaceImpl);
         OSCL_LEAVE(err);
     }
-
-    iLogger = PVLogger::GetLoggerObject("PVMFFileOutputNode");
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -101,7 +98,6 @@ PVMFFileOutputNode::~PVMFFileOutputNode()
     {
         OSCL_DELETE(iAlloc);
     }
-    iLogger = NULL;
 }
 
 ////////////////////////////////////////////////////////////////////////////

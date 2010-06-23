@@ -48,11 +48,9 @@ static const char PVAMRMETADATA_INDEX0[] = "index=0";
 PVMFAMRFFParserNode::PVMFAMRFFParserNode(int32 aPriority) :
         PVMFNodeInterfaceImpl(aPriority, "PVMFAMRFFParserNode"),
         iOutPort(NULL),
-        iLogger(NULL),
         iFileHandle(NULL),
         iAMRParser(NULL)
 {
-    iLogger                    = NULL;
     iDataPathLogger            = NULL;
     iClockLogger               = NULL;
     iDownloadComplete          = false;
@@ -166,7 +164,6 @@ void PVMFAMRFFParserNode::Construct()
     iFileServer.Connect();
     iAvailableMetadataKeys.reserve(4);
     iAvailableMetadataKeys.clear();
-    iLogger = PVLogger::GetLoggerObject("PVMFAMRParserNode");
     iDataPathLogger = PVLogger::GetLoggerObject("datapath.sourcenode.amrparsernode");
 }
 

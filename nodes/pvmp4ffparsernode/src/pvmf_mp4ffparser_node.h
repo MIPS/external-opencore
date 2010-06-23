@@ -511,8 +511,6 @@ class PVMFMP4FFParserNode
         // stream id
         uint32 iStreamID;
 
-
-        PVLogger* iLogger;
         PVLogger* iDataPathLogger;
         PVLogger* iAVCDataPathLogger;
         PVLogger* iClockLogger;

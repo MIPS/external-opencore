@@ -287,7 +287,6 @@ OSCL_EXPORT_REF PVMFSocketNode::PVMFSocketNode(int32 aPriority)
         , iMaxTCPRecvBufferSizeToConfigure(-1)
         , iMaxTCPRecvBufferCntToConfigure(-1)
 {
-    iLogger = NULL;
     iDataPathLogger = NULL;
     iDataPathLoggerRTP = NULL;
     iDataPathLoggerRTCP = NULL;
@@ -332,7 +331,6 @@ OSCL_EXPORT_REF PVMFSocketNode::PVMFSocketNode(int32 aPriority)
         OSCL_LEAVE(err);
     }
 
-    iLogger = PVLogger::GetLoggerObject("PVMFSocketNode");
     iDataPathLogger = PVLogger::GetLoggerObject("datapath.socketnode");
     iDataPathLoggerRTP = PVLogger::GetLoggerObject("datapath.socketnode.rtp");
     iDataPathLoggerRTCP = PVLogger::GetLoggerObject("datapath.socketnode.rtcp");

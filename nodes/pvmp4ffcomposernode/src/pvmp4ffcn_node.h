@@ -345,7 +345,6 @@ class PVMp4FFComposerNode
         MediaClockConverter iClockConverter;
 
         // Debug logging
-        PVLogger* iLogger;
         PVLogger* iDataPathLogger;
 
         uint32 iExtensionRefCount;

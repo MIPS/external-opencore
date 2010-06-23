@@ -28,7 +28,6 @@ PVMFMP3FFParserNode::PVMFMP3FFParserNode(int32 aPriority)
         iConfigOk(0),
         iMaxFrameSize(PVMP3FF_DEFAULT_MAX_FRAMESIZE),
         iMP3FormatBitrate(0),
-        iLogger(NULL),
         iGaplessLogger(NULL),
         iSendDecodeFormatSpecificInfo(true),
         iCurrSampleDuration(0)
@@ -114,7 +113,6 @@ void PVMFMP3FFParserNode::Construct()
     iSubNodeCmdVec.reserve(9);
     // initialize clip information vector
     iClipInfoList.reserve(PVMF_MP3_MAX_NUM_TRACKS_GAPLESS);
-    iLogger = PVLogger::GetLoggerObject("PVMFMP3FFParserNode");
     iGaplessLogger = PVLogger::GetLoggerObject("sourcenode.gapless");
 }
 

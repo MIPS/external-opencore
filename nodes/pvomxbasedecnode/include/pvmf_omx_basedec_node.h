@@ -622,7 +622,6 @@ class PVMFOMXBaseDecNode: public PVMFNodeInterfaceImpl
         bool iIsAdded;
 
         // Log related
-        PVLogger* iLogger;
         PVLogger* iDataPathLogger;
         PVLogger* iClockLogger;
         PVLogger *iRunlLogger;

@@ -110,7 +110,6 @@ PVMFOMXVideoDecNode::PVMFOMXVideoDecNode(int32 aPriority) :
     iNodeConfig.iSkipNUntilKeyFrame = PVOMXVIDEODECNODE_CONFIG_SKIPNUNTILKEYFRAME_DEF;
 
     // Get logger objects
-    iLogger = PVLogger::GetLoggerObject("PVMFOMXVideoDecNode");
     iRunlLogger = PVLogger::GetLoggerObject("Run.PVMFOMXVideoDecNode");
     iDataPathLogger = PVLogger::GetLoggerObject("datapath");
     iClockLogger = PVLogger::GetLoggerObject("clock");

@@ -303,9 +303,6 @@ class PVMFFileOutputNode :  public PVMFNodeInterfaceImpl,
         int32 iFileOpened;
 
         bool iFirstMediaData;
-
-        PVLogger* iLogger;
-
         PVMFFormatType iFormat;
 
         PVMFPortVector<PVMFFileOutputInPort, PVMFFileOutputNodeAllocator> iPortVector;

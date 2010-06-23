@@ -259,8 +259,6 @@ class PVMFWAVFFParserNode : public PVMFNodeInterfaceImpl,
         Oscl_Vector<PVMFPortActivity, OsclMemAllocator> iPortActivityQueue;
         // output port
         PVMFWAVFFParserOutPort* iOutPort;
-        // logger object
-        PVLogger* iLogger;
         // file info struct
         PVWAVFileInfo wavinfo;
         // buffer size for track data

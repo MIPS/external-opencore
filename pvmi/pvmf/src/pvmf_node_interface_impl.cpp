@@ -29,16 +29,21 @@
 #endif
 #include "pvmf_media_msg_format_ids.h"
 
-#define PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iBaseLogger,PVLOGMSG_STACK_TRACE,m);
-#define PVMF_NODEINTERFACE_IMPL_INFO(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iBaseLogger,PVLOGMSG_INFO,m);
+#define PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iLogger,PVLOGMSG_STACK_TRACE,m);
+#define PVMF_NODEINTERFACE_IMPL_INFO(m) PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG,iLogger,PVLOGMSG_INFO,m);
 
 OSCL_EXPORT_REF PVMFNodeInterfaceImpl::PVMFNodeInterfaceImpl(int32 aPriority, const char aNodeName[])
         : OsclActiveObject(aPriority, aNodeName),
         iStreamID(0),
         iExtensionRefCount(0),
-        iBaseLogger(NULL)
+        iLogger(NULL)
 {
-    iBaseLogger = PVLogger::GetLoggerObject("PVMFNodeInterfaceImpl");
+    // set the node name
+    iNodeName.Set(aNodeName);
+    // use node's logger string
+    iLogger = PVLogger::GetLoggerObject((char*)iNodeName.Str());
+
+    PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s::PVMFNodeInterfaceImpl() In", iNodeName.Str()));
 
 #if !(OSCL_BYPASS_MEMMGT)
     iAuditCB.pAudit = NULL;
@@ -54,8 +59,6 @@ OSCL_EXPORT_REF PVMFNodeInterfaceImpl::PVMFNodeInterfaceImpl(int32 aPriority, co
         PVMF_NODEINTERFACE_IMPL_INFO((0, "%s::Constructor() MemoryAuditing Tag addition failed", iNodeName.Str()));
     }
 #endif
-    // set the node name
-    iNodeName.Set(aNodeName);
     //intialize node state
     iInterfaceState = EPVMFNodeCreated;
 
@@ -125,6 +128,7 @@ OSCL_EXPORT_REF PVMFNodeInterfaceImpl::~PVMFNodeInterfaceImpl()
         CommandComplete(iCurrentCommand, PVMFFailure);
 
     PVMF_NODEINTERFACE_IMPL_LOGSTACKTRACE((0, "%s ~PVMFNodeInterfaceImpl() Out", iNodeName.Str()));
+    iLogger = NULL;
 }
 
 OSCL_EXPORT_REF PVMFStatus PVMFNodeInterfaceImpl::ThreadLogon()

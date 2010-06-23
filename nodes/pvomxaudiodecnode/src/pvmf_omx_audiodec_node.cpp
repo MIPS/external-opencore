@@ -125,10 +125,8 @@ PVMFOMXAudioDecNode::PVMFOMXAudioDecNode(int32 aPriority) :
     // Do This first in case of Query
     OSCL_TRY(err, iFsiFragmentAlloc.size(PVOMXAUDIODEC_MEDIADATA_POOLNUM, sizeof(channelSampleInfo)));
 
-
     OSCL_TRY(err, iPrivateDataFsiFragmentAlloc.size(PVOMXAUDIODEC_MEDIADATA_POOLNUM, sizeof(OsclAny *)));
 
-    iLogger = PVLogger::GetLoggerObject("PVMFOMXAudioDecNode");
     iRunlLogger = PVLogger::GetLoggerObject("Run.PVMFOMXAudioDecNode");
     iDataPathLogger = PVLogger::GetLoggerObject("datapath");
     iClockLogger = PVLogger::GetLoggerObject("clock");

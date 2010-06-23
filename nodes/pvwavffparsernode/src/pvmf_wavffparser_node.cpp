@@ -44,7 +44,6 @@ static const char PVWAVMETADATA_INDEX0[] = "index=0";
 PVMFWAVFFParserNode::PVMFWAVFFParserNode(int32 aPriority) :
         PVMFNodeInterfaceImpl(aPriority, "PVMFWAVFFParserNode"),
         iOutPort(NULL),
-        iLogger(NULL),
         iWAVParser(NULL),
         iFileHandle(NULL)
 {

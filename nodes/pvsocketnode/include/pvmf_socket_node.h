@@ -899,7 +899,6 @@ class PVMFSocketNode
         * Loggers, Error Trap, Allocator
         **********************************************/
 
-        PVLogger *iLogger;
         PVLogger *iDataPathLogger;
         PVLogger *iDataPathLoggerRTP;
         PVLogger *iDataPathLoggerRTCP;

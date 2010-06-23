@@ -62,7 +62,6 @@ static const uint32 MAX32BITUINT = 0xFFFFFFFF;
 PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
         PVMFNodeInterfaceImpl(aPriority, "PVMFMP4FFParserNode")
         , iPortIter(NULL)
-        , iLogger(NULL)
         , iGaplessLogger(NULL)
         , iBackwardReposFlag(false) /* To avoid backwardlooping :: A flag to remember backward repositioning */
         , iForwardReposFlag(false)
@@ -170,7 +169,6 @@ PVMFMP4FFParserNode::PVMFMP4FFParserNode(int32 aPriority) :
     iJitterBufferDurationInMs = PVMF_MP4FFPARSER_NODE_PSEUDO_STREAMING_BUFFER_DURATION_IN_MS;
     iBaseKey = INVALID;
 
-    iLogger = PVLogger::GetLoggerObject("PVMFMP4FFParserNode");
     iDataPathLogger = PVLogger::GetLoggerObject("datapath.sourcenode.mp4parsernode");
     iAVCDataPathLogger = PVLogger::GetLoggerObject("datapath.sourcenode.mp4parsernode.avc");
     if (iAVCDataPathLogger != NULL)
@@ -297,7 +295,6 @@ PVMFMP4FFParserNode::~PVMFMP4FFParserNode()
         iCPM = NULL;
     }
 
-    iLogger = NULL;
     iDataPathLogger = NULL;
     iAVCDataPathLogger = NULL;
     iClockLogger = NULL;
@@ -6758,6 +6755,7 @@ void PVMFMP4FFParserNode::GetCPMContentType()
 
 bool PVMFMP4FFParserNode::GetCPMMetaDataExtensionInterface()
 {
+    iCPMSequenceInProgress = true;
     PVInterface* temp = NULL;
     bool retVal =
         iCPM->queryInterface(KPVMFMetadataExtensionUuid, temp);

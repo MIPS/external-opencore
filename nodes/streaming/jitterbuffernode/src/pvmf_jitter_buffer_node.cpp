@@ -72,7 +72,6 @@ OSCL_EXPORT_REF PVMFJitterBufferNode::PVMFJitterBufferNode(int32 aPriority,
     ipJitterBufferFactory   =   aJBFactory;
 
     //get logger objects
-    ipLogger = PVLogger::GetLoggerObject("jitterbuffernode");
     ipDataPathLogger = PVLogger::GetLoggerObject("datapath.sourcenode.jitterbuffernode");
     ipDataPathLoggerIn = PVLogger::GetLoggerObject("datapath.sourcenode.jitterbuffernode.in");
     ipDataPathLoggerOut = PVLogger::GetLoggerObject("datapath.sourcenode.jitterbuffernode.out");

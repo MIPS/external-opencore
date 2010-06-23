@@ -563,9 +563,6 @@ class PVMFAACFFParserNode
         void LogMediaData(PVMFSharedMediaDataPtr data, PVMFPortInterface* aPort);
         PVMFStatus ParseAACFile();
 
-
-
-        PVLogger* iLogger;
         OsclFileHandle *iFileHandle;
         Oscl_FileServer iFileServer;
         OSCL_wHeapString<OsclMemAllocator> iSourceURL;

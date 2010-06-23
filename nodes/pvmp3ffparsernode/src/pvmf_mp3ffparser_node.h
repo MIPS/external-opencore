@@ -601,7 +601,6 @@ class PVMFMP3FFParserNode : public PVMFNodeInterfaceImpl,
         bool iFileSizeRecvd;
         uint32 iFileSize;
         // Logger
-        PVLogger *iLogger;
         PVLogger *iGaplessLogger;
 
         // Channel sample info stored in a OsclRefCounterMemFrag

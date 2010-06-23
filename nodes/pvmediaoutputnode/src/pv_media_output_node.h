@@ -255,7 +255,6 @@ class PVMediaOutputNode
         bool SkipMediaDataComplete();
 
         //logger
-        PVLogger* iLogger;
         PVLogger* iReposLogger;
 
         OSCL_HeapString<OsclMemAllocator> iSinkFormatString;

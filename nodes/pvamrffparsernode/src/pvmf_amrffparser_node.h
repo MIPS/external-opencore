@@ -276,7 +276,6 @@ class PVMFAMRFFParserNode :  public PVMFNodeInterfaceImpl
         uint32 iLastNPTCalcInConvertSizeToTime;
         uint32 iFileSizeLastConvertedToTime;
 
-        PVLogger* iLogger;
         PVLogger* iDataPathLogger;
         PVLogger* iClockLogger;
 

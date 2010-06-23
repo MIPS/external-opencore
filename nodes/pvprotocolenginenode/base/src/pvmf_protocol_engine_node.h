@@ -527,7 +527,6 @@ class PVMFProtocolEngineNode :  public PVMFNodeInterfaceImpl,
         PVMFCommandId iCurrentCmdId;
         PVMFPortInterface* iCmdRespPort;
 
-        PVLogger* iLogger;
         PVLogger* iDataPathLogger;
 
         PvmiDataStreamCommandId iCurrentDataStreamCmdId;

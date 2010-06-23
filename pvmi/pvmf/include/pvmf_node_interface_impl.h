@@ -482,9 +482,9 @@ class PVMFNodeInterfaceImpl : public PVMFNodeInterface,
         uint32 iExtensionRefCount;
         // node name
         OsclNameString<PVEXECNAMELEN> iNodeName;
-
-    private:
-        PVLogger* iBaseLogger;
+    public :
+        // logger object
+        PVLogger* iLogger;
 };
 
 #endif //PVMF_NODE_INTERFACE_IMPL_H_INCLUDED

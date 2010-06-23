@@ -576,7 +576,6 @@ class PVMFDownloadManagerNode
         OSCL_wHeapString<OsclMemAllocator> iSourceURL;
         OsclAny*iSourceData;
 
-        PVLogger* iLogger;
         friend class PVMFDownloadManagerSubNodeContainerBase;
         friend class PVMFDownloadManagerSubNodeContainer;
         friend class PVMFDownloadManagerRecognizerContainer;

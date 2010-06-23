@@ -62,8 +62,6 @@ PVMediaOutputNode::~PVMediaOutputNode()
     if (IsAdded())
         RemoveFromScheduler();
 
-    iLogger = NULL;
-
     if (iMIOControl)
     {
         //call disconnect to make sure that there are no
@@ -517,7 +515,6 @@ PVMediaOutputNode::PVMediaOutputNode()
         , iLateMargin(DEFAULT_LATE_MARGIN)
         , iDiagnosticsLogger(NULL)
         , iDiagnosticsLogged(false)
-        , iLogger(NULL)
         , iReposLogger(NULL)
         , iRecentBOSStreamID(0)
 {
@@ -526,7 +523,6 @@ PVMediaOutputNode::PVMediaOutputNode()
 ////////////////////////////////////////////////////////////////////////////
 void PVMediaOutputNode::ConstructL(PvmiMIOControl* aIOInterfacePtr)
 {
-    iLogger = NULL;
     iMIOControl = aIOInterfacePtr;
     iInPortVector.Construct(0);//reserve zero
     iMediaIORequest = ENone;
@@ -535,7 +531,6 @@ void PVMediaOutputNode::ConstructL(PvmiMIOControl* aIOInterfacePtr)
     iMIOClockExtensionPVI = NULL;
     iClockRate = 100000;
 
-    iLogger = PVLogger::GetLoggerObject("PVMediaOutputNode");
     iReposLogger = PVLogger::GetLoggerObject("pvplayerrepos.mionode");
     iDiagnosticsLogger = PVLogger::GetLoggerObject("pvplayerdiagnostics.mionode");
 

@@ -338,7 +338,6 @@ PVMp4FFComposerNode::PVMp4FFComposerNode(int32 aPriority)
     iFileObject = NULL;
     oDiagnosticsLogged = false;
     iDiagnosticsLogger = PVLogger::GetLoggerObject("pvauthordiagnostics.composer.mp4");
-    iLogger = PVLogger::GetLoggerObject("PVMp4FFComposerNode");
     iDataPathLogger = PVLogger::GetLoggerObject("datapath.sinknode.mp4composer");
     int32 err;
     OSCL_TRY(err,
@@ -387,8 +386,6 @@ PVMp4FFComposerNode::PVMp4FFComposerNode(int32 aPriority)
 ////////////////////////////////////////////////////////////////////////////
 PVMp4FFComposerNode::~PVMp4FFComposerNode()
 {
-
-    iLogger = NULL;
     iDataPathLogger = NULL;
 
     if (!oDiagnosticsLogged)

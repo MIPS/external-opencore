@@ -71,7 +71,6 @@ PVMFProtocolEngineNode::PVMFProtocolEngineNode(int32 aPriority) :
         iPortOut(NULL),
         iCurrentCmdId(0),
         iCmdRespPort(NULL),
-        iLogger(NULL),
         iDataPathLogger(NULL),
         iCurrentDataStreamCmdId(0)
 
@@ -108,15 +107,12 @@ PVMFProtocolEngineNode::PVMFProtocolEngineNode(int32 aPriority) :
 
     for (uint32 i = 0; i < EVENT_HANDLER_TOTAL; i++) iEventHandlers[i] = NULL;
 
-    iLogger = PVLogger::GetLoggerObject("PVMFProtocolEngineNode");
     iDataPathLogger = PVLogger::GetLoggerObject(NODEDATAPATHLOGGER_TAG);
 }
 
 PVMFProtocolEngineNode::~PVMFProtocolEngineNode()
 {
-    iLogger = NULL;
     iDataPathLogger = NULL;
-
     Clear(true);
 }
 

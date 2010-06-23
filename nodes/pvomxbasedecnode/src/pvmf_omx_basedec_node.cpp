@@ -279,7 +279,6 @@ OSCL_EXPORT_REF PVMFOMXBaseDecNode::PVMFOMXBaseDecNode(int32 aPriority, const ch
         iSeqNum(0),
         iSeqNum_In(0),
         iIsAdded(true),
-        iLogger(NULL),
         iDataPathLogger(NULL),
         iClockLogger(NULL),
         iExtensionRefCount(0),

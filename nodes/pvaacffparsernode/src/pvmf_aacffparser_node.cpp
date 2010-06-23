@@ -34,7 +34,6 @@ PVMFAACFFParserNode::PVMFAACFFParserNode(int32 aPriority)
     iAACParser = NULL;
     iUseCPMPluginRegistry = false;
     iFileHandle = NULL;
-    iLogger = NULL;
     iFirstFrame = true;
     iDataPathLogger            = NULL;
     iClientClock               = NULL;
@@ -99,14 +98,12 @@ void PVMFAACFFParserNode::ConstructL()
     iAvailableMetadataKeys.reserve(PVMF_AAC_NUM_METADATA_VALUES);
     iAvailableMetadataKeys.clear();
 
-    iLogger = PVLogger::GetLoggerObject("PVMFAACParserNode");
     iDataPathLogger = PVLogger::GetLoggerObject("datapath.sourcenode.aacparsernode");
     iFileServer.Connect();
 }
 
 PVMFAACFFParserNode::~PVMFAACFFParserNode()
 {
-    iLogger = NULL;
     iDataPathLogger = NULL;
 
     if (iDataStreamInterface != NULL)
