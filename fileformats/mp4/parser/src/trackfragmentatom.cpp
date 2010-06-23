@@ -812,7 +812,7 @@ TrackFragmentAtom::getNextNSamples(uint32 startSampleNum,
             {
                 // if MBDS, may need to kick of a http request
                 TOsclFileOffset contentLength = AtomUtils::getContentLength(_pinput);
-                if (((TOsclFileOffset)0 != contentLength) && ((sigmaSampleSize + sampleFileOffset) > contentLength))
+                if (((TOsclFileOffset)0 != contentLength) && ((TOsclFileOffset)(sigmaSampleSize + sampleFileOffset) > contentLength))
                 {
                     // do not skip beyond end of clip
                     // if content length is known
