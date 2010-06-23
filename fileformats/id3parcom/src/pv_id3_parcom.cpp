@@ -1998,10 +1998,6 @@ PVID3ParCom::PVID3FrameType PVID3ParCom::FrameSupportedID3V2(PVID3Version aVersi
         {
             ID3V2FrameTypeReturnValue = PV_ID3_FRAME_EEND;
         }
-        else if (oscl_memcmp(pFrameID, endTestBuf, ID3V2_FRAME_NUM_BYTES_ID) == 0)
-        {
-            ID3V2FrameTypeReturnValue = PV_ID3_FRAME_EEND;
-        }
         else
         {
             // Find whether frame is invalid or unsupported
