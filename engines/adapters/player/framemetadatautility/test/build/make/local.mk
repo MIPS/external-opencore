@@ -186,6 +186,6 @@ TEST_ARGS := -all
 
 SOURCE_ARGS := -source ../../../../../../../extern_libs_v2/wmdrmmd/samples/MD220x176_96_384s_clear_wmv.asf 
 
-include $(LOCAL_PATH)/playready.mk
+-include $(LOCAL_PATH)/playready.mk
 include $(MK)/prog.mk
 

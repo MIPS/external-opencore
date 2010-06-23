@@ -102,5 +102,5 @@ endif
 SYSLIBS += $(SYS_THREAD_LIB)
 SYSLIBS += $(SYS_SOCKET_LIB)
 
-include $(LOCAL_PATH)/playready.mk
+-include $(LOCAL_PATH)/playready.mk
 include $(MK)/prog.mk
