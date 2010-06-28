@@ -369,8 +369,8 @@ PVMFParserReturnCode PVMFAmrParser::Seek(int64 aSeekAt, int64& aSeekedTo)
 {
     LOG_DEBUG_MSG((0, "PVMFAmrParser::Seek() IN"));
 
-    // Use the bitrate and frame len to do the seek
-    OsclOffsetT offset = ((aSeekAt * ((iAmrBitrate + 7) / 8)) / 1000);
+    // Use the frame len to do the seek
+    OsclOffsetT offset = (aSeekAt * iAvgFrameLen) / TIME_STAMP_PER_FRAME;
     uint32 numFrames = offset / iAvgFrameLen;
     offset = iStartOffset + (numFrames * iAvgFrameLen); // Offset in Sync with frame boundaries
 
