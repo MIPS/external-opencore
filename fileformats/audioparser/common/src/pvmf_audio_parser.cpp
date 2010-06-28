@@ -32,6 +32,7 @@ CacheBuffer::CacheBuffer(PvmiDataStreamInterface* apDataStream)
     iMaxBytes = 0;
     ipDataStream = apDataStream;
     iTestDSPos = -1;
+    iRefill = false;
     ipLogger = PVLogger::GetLoggerObject("audioparser");
 
     // Fill buffer with data from current pos of DS
